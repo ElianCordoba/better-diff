@@ -41,8 +41,6 @@ export function getInitialDiffs(codeA: string, codeB: string) {
     const a = nodesA[cursor]
     const b = nodesB[cursor]
 
-    // a == b delete both from array
-
     if (!equals(a, b)) {
       // changes.push({
       //   type: ChangeType.change, index: cursor, hint: getChangeHint(a, b)

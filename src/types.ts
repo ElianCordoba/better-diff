@@ -1,3 +1,5 @@
+import { Node } from './ts-util'
+
 export enum ChangeType {
   addition = 'addition',
   removal = 'removal',
@@ -13,8 +15,6 @@ export interface InitialChange {
 export interface Item {
   node: Node;
   matched: boolean;
-  index: number
-  lastNode?: boolean
 }
 
 enum MatchStatus {

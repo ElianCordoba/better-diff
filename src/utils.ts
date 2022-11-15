@@ -1,5 +1,5 @@
-import { Item } from "./main";
 import { ts, Node } from "./ts-util";
+import { Item } from './types'
 
 export function formatSyntaxKind(kind: any) {
   return ts.Debug.formatSyntaxKind(kind)

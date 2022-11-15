@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "test": "vitest --dir ./tests"
+    "test": "vitest --dir ./tests",
+    "build": "tsc --watch"
   },
   "devDependencies": {
     "vite": "^3.2.3",
