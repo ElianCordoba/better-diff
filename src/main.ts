@@ -1,9 +1,9 @@
 import { getNodesArray, Node } from "./ts-util";
 import { InitialChange, ChangeType, Item } from "./types";
-import { equals, formatSyntaxKind } from "./utils";
+import { equals, formatSyntaxKind, NodeIterator } from "./utils";
 
 
-export function getInitialDiffs(codeA: string, codeB: string) {
+export function getInitialDiffs(codeA: string, codeB: string): InitialChange[] {
   const nodesA = getNodesArray(codeA)
   const nodesB = getNodesArray(codeB)
 
@@ -13,70 +13,69 @@ export function getInitialDiffs(codeA: string, codeB: string) {
   const minLength = Math.min(nodesA.length, nodesB.length)
 
   let cursor = 0;
-  let offset = 1
 
-  function tryMatch(expected: Node) {
-    const MAX_OFFSET = 10;
+  const iterA = NodeIterator(nodesA);
+  const iterB = NodeIterator(nodesB);
 
-    const ahead = nodesB[cursor + offset]
-    const back = nodesB[cursor - offset]
+  let a: Item | undefined;
+  let b: Item | undefined;
 
-    if (equals(expected, ahead)) {
+  do {
+    a = iterA.next();
+    b = iterB.next();
 
-    } else if (equals(expected, back)) {
-
+    if (!a || !b) {
+      break
     }
 
-    offset++
-
-    if (offset >= MAX_OFFSET) {
-      return
-    }
-  }
-
-
-  // Step 2.1
-
-  while (cursor < minLength) {
-    const a = nodesA[cursor]
-    const b = nodesB[cursor]
-
-    if (!equals(a, b)) {
-      // changes.push({
-      //   type: ChangeType.change, index: cursor, hint: getChangeHint(a, b)
-      // })
-
-      tryMatch(a)
+    if (equals(a.node, b.node)) {
+      iterA.markMatched()
+      iterB.markMatched()
+      continue;
     }
 
-    cursor++
-  }
+    const nearbyMatch = iterB.nextNearby(a.node);
 
-  // Step 2.2
+    if (nearbyMatch) {
+      iterA.markMatched()
+      iterB.markMatched()
 
-  const lengthDiff = nodesA.length - nodesB.length
+      changes.push({
+        type: ChangeType.change, index: iterA.getCursor(), hint: getChangeHint(a.node, b.node)
+      })
+      continue;
+    }
 
-  const typeOfChange = lengthDiff > 0 ? ChangeType.addition : ChangeType.removal
+    // No match
+    changes.push({
+      type: ChangeType.removal, index: iterA.getCursor(), hint: getChangeHint(a.node, b.node)
+    })
 
-  while (cursor < maxLength) {
-    changes.push({ type: typeOfChange, index: cursor })
-    cursor++
-  }
+    // En verdad mas que matched seria unmatched pero lo quiero marcar con algo
+    iterA.markMatched()
+  } while (a) // If there are no more nodes, a will be undefined
 
-  if (cursor != maxLength) {
-    console.log('oops')
+  while (b) {
+    b = iterB.next();
+
+    if (!b) {
+      break
+    }
+
+    changes.push({ type: ChangeType.addition, index: iterB.getCursor(), hint: nodeToString(b.node, '+') })
+    iterB.markMatched()
   }
 
   return changes
 }
 
-
-
-//console.log(getInitialDiffs(aNodes, bNodes))
+function nodeToString(node: Node, label: string) {
+  return `${label} (${formatSyntaxKind(node.kind)}) ${node.text ? node.text : ''}`.trimEnd()
+}
 
 function getChangeHint(nodeA: Node, nodeB: Node) {
-  const aString = `A (${formatSyntaxKind(nodeA.kind)}) ${nodeA.text ? nodeA.text : ''}`
-  const bString = `B (${formatSyntaxKind(nodeB.kind)}) ${nodeB.text ? nodeB.text : ''}`
-  return `${aString} -> ${bString}`;
+  const stringA = nodeToString(nodeA, 'A')
+  const stringB = nodeToString(nodeB, 'B')
+  return `${stringA} -> ${stringB}`;
 }
 

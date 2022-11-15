@@ -13,7 +13,7 @@ export function NodeIterator(nodes: Node[]) {
   const items: Item[] = nodes.map((node, index) => ({ node, index, matched: false }))
 
   let lastIndexSeen: number;
-  function next(): Item {
+  function next(): Item | undefined {
     let i = -1
     for (const item of items) {
       i++
@@ -25,23 +25,32 @@ export function NodeIterator(nodes: Node[]) {
       return item
     }
 
-    //lastIndexSeen
-    return { node: undefined, lastNode: true } as any
+    debugger
+    return
   }
 
   const MAX_OFFSET = 50;
-  let offset = 0;
+  let offset = 1;
 
   function nextNearby(expected: Node, startAtIndex = lastIndexSeen): Item | undefined {
     const ahead = items[startAtIndex + offset]
     const back = items[startAtIndex - offset]
 
-    if (!ahead?.matched && equals(expected, ahead.node)) {
+    if (ahead && !ahead.matched && equals(expected, ahead.node)) {
       const index = startAtIndex + offset
+
+      // Set this so the markMatched works
+      lastIndexSeen = index
+
       offset = 0
       return items[index]
-    } else if (!back?.matched && equals(expected, back.node)) {
+    } else if (back && !back.matched && equals(expected, back.node)) {
       const index = startAtIndex - offset
+
+      // Set this so the markMatched works
+      lastIndexSeen = index
+
+
       offset = 0
       return items[index]
     }
@@ -60,6 +69,10 @@ export function NodeIterator(nodes: Node[]) {
     items[index].matched = true
   }
 
-  return { next, markMatched, nextNearby }
+  function getCursor() {
+    return lastIndexSeen
+  }
+
+  return { next, markMatched, nextNearby, getCursor }
 
 }
