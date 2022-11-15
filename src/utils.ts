@@ -9,7 +9,19 @@ export function equals(nodeA: Node, nodeB: Node) {
   return nodeA.kind === nodeB.kind && nodeA.text === nodeB.text
 }
 
-export function NodeIterator(nodes: Node[]) {
+export function listEnded(node: Node): boolean {
+  return node.kind === ts.SyntaxKind.EndOfFileToken
+}
+
+export interface Iterator {
+  next: () => Item | undefined;
+  markMatched: (index?: number) => void;
+  nextNearby: (expected: Node, startAtIndex?: number) => Item | undefined;
+  getCursor: () => number;
+  getItems: () => Item[];
+}
+
+export function NodeIterator(nodes: Node[]): Iterator {
   const items: Item[] = nodes.map((node, index) => ({ node, index, matched: false }))
 
   let lastIndexSeen: number;

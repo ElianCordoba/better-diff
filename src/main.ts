@@ -1,6 +1,6 @@
 import { getNodesArray, Node } from "./ts-util";
 import { InitialChange, ChangeType, Item } from "./types";
-import { equals, formatSyntaxKind, NodeIterator } from "./utils";
+import { equals, formatSyntaxKind, NodeIterator, Iterator, listEnded } from "./utils";
 
 
 export function getInitialDiffs(codeA: string, codeB: string): InitialChange[] {
@@ -33,6 +33,24 @@ export function getInitialDiffs(codeA: string, codeB: string): InitialChange[] {
       break
     }
 
+    if (listEnded(a.node)) {
+      // Mark eof
+      iterA.markMatched()
+
+      const remainingChanges = oneSidedIteration(iterB, ChangeType.addition)
+      changes.push(...remainingChanges)
+      break;
+    }
+
+    if (listEnded(b.node)) {
+      // Mark eof
+      iterB.markMatched()
+
+      const remainingChanges = oneSidedIteration(iterA, ChangeType.removal)
+      changes.push(...remainingChanges)
+      break;
+    }
+
     if (equals(a.node, b.node)) {
       iterA.markMatched()
       iterB.markMatched()
@@ -60,15 +78,19 @@ export function getInitialDiffs(codeA: string, codeB: string): InitialChange[] {
     iterA.markMatched()
   } while (a) // If there are no more nodes, a will be undefined
 
-  while (b) {
-    b = iterB.next();
+  return changes
+}
 
-    if (!b) {
-      break
-    }
+function oneSidedIteration(iter: Iterator, typeOfChange: ChangeType.addition | ChangeType.removal): InitialChange[] {
+  const changes = [];
 
-    changes.push({ type: ChangeType.addition, index: iterB.getCursor(), hint: nodeToString(b.node, '+') })
-    iterB.markMatched()
+  let value = iter.next()
+
+  while (value) {
+    changes.push({ type: typeOfChange, index: iter.getCursor(), hint: nodeToString(value.node, typeOfChange === ChangeType.addition ? '+' : '-') })
+    iter.markMatched()
+
+    value = iter.next()
   }
 
   return changes
