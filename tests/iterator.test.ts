@@ -1,7 +1,6 @@
 import { assert, describe, expect, test } from 'vitest'
-import { Item } from '../../main2'
 import { getNodesArray } from '../src/ts-util'
-import { formatSyntaxKind, NodeIterator2 } from '../experiments/mvp/utils'
+import { formatSyntaxKind, NodeIterator } from '../src/utils'
 
 const aSource = `
   const num = 10
@@ -25,7 +24,7 @@ const aNodes = getNodesArray(aSource)
 describe.only('Should iterate over node list properly', () => {
 
   test('Simple advance', () => {
-    const { next, markMatched } = NodeIterator2(aNodes);
+    const { next, markMatched } = NodeIterator(aNodes);
 
     expect(formatSyntaxKind(next().node.kind)).toBe("SyntaxList")
     markMatched()
@@ -47,7 +46,7 @@ describe.only('Should iterate over node list properly', () => {
   })
 
   test('Advance skipping matched nodes', () => {
-    const { next, markMatched } = NodeIterator2(aNodes);
+    const { next, markMatched } = NodeIterator(aNodes);
 
     markMatched(1)
     markMatched(3)
@@ -64,7 +63,7 @@ describe.only('Should iterate over node list properly', () => {
   })
 
   test.only('Find nearby token', () => {
-    const { nextNearby, markMatched } = NodeIterator2(aNodes);
+    const { nextNearby, markMatched } = NodeIterator(aNodes);
 
     markMatched(1)
     markMatched(2)
