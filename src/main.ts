@@ -7,6 +7,11 @@ export function getInitialDiffs(codeA: string, codeB: string): InitialChange[] {
   const nodesA = getNodesArray(codeA)
   const nodesB = getNodesArray(codeB)
 
+
+
+  const _a = nodesA.map(x => formatSyntaxKind(x.kind))
+  const _b = nodesB.map(x => formatSyntaxKind(x.kind))
+
   const changes: InitialChange[] = []
 
   const maxLength = Math.max(nodesA.length, nodesB.length)

@@ -25,7 +25,6 @@ export function NodeIterator(nodes: Node[]) {
       return item
     }
 
-    debugger
     return
   }
 
@@ -73,6 +72,10 @@ export function NodeIterator(nodes: Node[]) {
     return lastIndexSeen
   }
 
-  return { next, markMatched, nextNearby, getCursor }
+  function getItems() {
+    return items
+  }
+
+  return { next, markMatched, nextNearby, getCursor, getItems }
 
 }
