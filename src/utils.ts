@@ -17,8 +17,6 @@ export interface Iterator {
   next: () => Item | undefined;
   markMatched: (index?: number) => void;
   nextNearby: (expected: Node, startAtIndex?: number) => Item | undefined;
-  getCursor: () => number;
-  getItems: () => Item[];
 }
 
 export function NodeIterator(nodes: Node[]): Iterator {
@@ -80,14 +78,6 @@ export function NodeIterator(nodes: Node[]): Iterator {
     items[index].matched = true
   }
 
-  function getCursor() {
-    return lastIndexSeen
-  }
-
-  function getItems() {
-    return items
-  }
-
-  return { next, markMatched, nextNearby, getCursor, getItems }
+  return { next, markMatched, nextNearby }
 
 }

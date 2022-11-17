@@ -13,15 +13,11 @@ export interface Range {
 
 export interface Change {
   type: ChangeType;
-  index?: number;
 
   // Changes on source
   rangeA: Range | undefined;
   // Changes on revision
   rangeB: Range | undefined;
-
-  hint?: string;
-  text?: string
 }
 
 export interface Item {

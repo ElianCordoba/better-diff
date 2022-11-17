@@ -1,23 +1,13 @@
 import { getNodesArray, Node } from "./ts-util";
 import { Change, ChangeType, Item, Range } from "./types";
-import { equals, formatSyntaxKind, NodeIterator, Iterator, listEnded } from "./utils";
+import { equals, NodeIterator, Iterator, listEnded } from "./utils";
 
 
 export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   const nodesA = getNodesArray(codeA)
   const nodesB = getNodesArray(codeB)
 
-
-
-  const _a = nodesA.map(x => formatSyntaxKind(x.kind))
-  const _b = nodesB.map(x => formatSyntaxKind(x.kind))
-
   const changes: Change[] = []
-
-  const maxLength = Math.max(nodesA.length, nodesB.length)
-  const minLength = Math.min(nodesA.length, nodesB.length)
-
-  let cursor = 0;
 
   const iterA = NodeIterator(nodesA);
   const iterB = NodeIterator(nodesB);
@@ -102,7 +92,6 @@ function getChange(type: ChangeType, a: Node | undefined, b: Node | undefined): 
     type,
     rangeA: a ? getRange(a) : undefined,
     rangeB: b ? getRange(b) : undefined,
-    // hint: getChangeHint(a, b)
   }
 }
 
@@ -111,16 +100,6 @@ function getRange(node: Node): Range {
     start: node.pos,
     end: node.end
   }
-}
-
-function nodeToString(node: Node, label: string) {
-  return `${label} (${formatSyntaxKind(node.kind)}) ${node.text ? node.text : ''}`.trimEnd()
-}
-
-function getChangeHint(nodeA: Node, nodeB: Node) {
-  const stringA = nodeToString(nodeA, 'A')
-  const stringB = nodeToString(nodeB, 'B')
-  return `${stringA} -> ${stringB}`;
 }
 
 export function tryMergeRanges(rangeA: Range, rangeB: Range): Range | undefined {
