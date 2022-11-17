@@ -1,9 +1,9 @@
 import { getNodesArray, Node } from "./ts-util";
-import { InitialChange, ChangeType, Item } from "./types";
+import { Change, ChangeType, Item, Range } from "./types";
 import { equals, formatSyntaxKind, NodeIterator, Iterator, listEnded } from "./utils";
 
 
-export function getInitialDiffs(codeA: string, codeB: string): InitialChange[] {
+export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   const nodesA = getNodesArray(codeA)
   const nodesB = getNodesArray(codeB)
 
@@ -12,7 +12,7 @@ export function getInitialDiffs(codeA: string, codeB: string): InitialChange[] {
   const _a = nodesA.map(x => formatSyntaxKind(x.kind))
   const _b = nodesB.map(x => formatSyntaxKind(x.kind))
 
-  const changes: InitialChange[] = []
+  const changes: Change[] = []
 
   const maxLength = Math.max(nodesA.length, nodesB.length)
   const minLength = Math.min(nodesA.length, nodesB.length)
@@ -63,16 +63,12 @@ export function getInitialDiffs(codeA: string, codeB: string): InitialChange[] {
       iterA.markMatched()
       iterB.markMatched()
 
-      changes.push({
-        type: ChangeType.change, index: iterA.getCursor(), hint: getChangeHint(a.node, b.node)
-      })
+      changes.push(getChange(ChangeType.change, a.node, b.node))
       continue;
     }
 
     // No match
-    changes.push({
-      type: ChangeType.removal, index: iterA.getCursor(), hint: getChangeHint(a.node, b.node)
-    })
+    changes.push(getChange(ChangeType.removal, a.node, b.node))
 
     // En verdad mas que matched seria unmatched pero lo quiero marcar con algo
     iterA.markMatched()
@@ -81,19 +77,40 @@ export function getInitialDiffs(codeA: string, codeB: string): InitialChange[] {
   return changes
 }
 
-function oneSidedIteration(iter: Iterator, typeOfChange: ChangeType.addition | ChangeType.removal): InitialChange[] {
-  const changes = [];
+function oneSidedIteration(iter: Iterator, typeOfChange: ChangeType.addition | ChangeType.removal): Change[] {
+  const changes: Change[] = [];
 
   let value = iter.next()
 
   while (value) {
-    changes.push({ type: typeOfChange, index: iter.getCursor(), hint: nodeToString(value.node, typeOfChange === ChangeType.addition ? '+' : '-') })
+    if (typeOfChange === ChangeType.addition) {
+      changes.push(getChange(typeOfChange, undefined, value.node))
+    } else {
+      changes.push(getChange(typeOfChange, value.node, undefined))
+    }
+
     iter.markMatched()
 
     value = iter.next()
   }
 
   return changes
+}
+
+function getChange(type: ChangeType, a: Node | undefined, b: Node | undefined): Change {
+  return {
+    type,
+    rangeA: a ? getRange(a) : undefined,
+    rangeB: b ? getRange(b) : undefined,
+    // hint: getChangeHint(a, b)
+  }
+}
+
+function getRange(node: Node): Range {
+  return {
+    start: node.pos,
+    end: node.end
+  }
 }
 
 function nodeToString(node: Node, label: string) {
@@ -106,3 +123,49 @@ function getChangeHint(nodeA: Node, nodeB: Node) {
   return `${stringA} -> ${stringB}`;
 }
 
+export function tryMergeRanges(rangeA: Range, rangeB: Range): Range | undefined {
+  if (rangeA.start === rangeB.start && rangeA.end === rangeB.end) {
+    return rangeA
+  }
+
+  let newStart: number;
+  let newEnd: number;
+
+  if (rangeA.end >= rangeB.start && rangeB.end >= rangeA.start) {
+    newStart = Math.min(rangeA.start, rangeB.start)
+    newEnd = Math.max(rangeA.end, rangeB.end)
+
+    return {
+      start: newStart,
+      end: newEnd
+    }
+  }
+}
+
+// TODO: compactar cuando hacemos un push a changes
+export function compactChanges(changes: Change[]) {
+  let additionChanges: Change[] = changes.filter(x => x.type === ChangeType.addition)
+
+  let i = 0;
+
+  let next = additionChanges.at(i + 1)
+
+  while (next) {
+    const current = additionChanges.at(i)
+
+    // rangeB porque estamos en additions
+    const compatible = tryMergeRanges(current?.rangeB!, next?.rangeB!)
+
+    if (compatible) {
+      additionChanges.splice(i, 2, { ...current, rangeB: compatible } as Change)
+      next = additionChanges.at(i + 1)
+      // no i++
+      continue
+    }
+
+    i++
+    next = additionChanges.at(i + 1)
+  }
+
+  return additionChanges
+}

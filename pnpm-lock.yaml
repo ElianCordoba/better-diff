@@ -1,11 +1,13 @@
 lockfileVersion: 5.4
 
 specifiers:
+  kleur: ^4.1.5
   typescript: ^4.8.4
   vite: ^3.2.3
   vitest: ^0.25.2
 
 dependencies:
+  kleur: 4.1.5
   typescript: 4.8.4
 
 devDependencies:
@@ -335,6 +337,11 @@ packages:
     dependencies:
       has: 1.0.3
     dev: true
+
+  /kleur/4.1.5:
+    resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
+    engines: {node: '>=6'}
+    dev: false
 
   /local-pkg/0.4.2:
     resolution: {integrity: sha512-mlERgSPrbxU3BP4qBqAvvwlgW4MTg78iwJdGGnv7kibKjWcJksrG3t6LB5lXI93wXRDvG4NpUgJFmTG4T6rdrg==}

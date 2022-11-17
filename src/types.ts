@@ -6,10 +6,22 @@ export enum ChangeType {
   change = 'change'
 }
 
-export interface InitialChange {
+export interface Range {
+  start: number;
+  end: number;
+}
+
+export interface Change {
   type: ChangeType;
-  index: number;
+  index?: number;
+
+  // Changes on source
+  rangeA: Range | undefined;
+  // Changes on revision
+  rangeB: Range | undefined;
+
   hint?: string;
+  text?: string
 }
 
 export interface Item {
