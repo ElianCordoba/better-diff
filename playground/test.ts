@@ -1,27 +1,16 @@
-import { getInitialDiffs } from "../src/main"
+import { getTextWithDiff } from "../src"
 
-const sourceA = `
-  const num = 10
+const sourceA = `0`
+const sourceB = `1`
 
-  function multiply(number, multiplier) {
-    return number * multiplier
-  }
+const result = getTextWithDiff(sourceA, sourceB);
 
-  multiply(num, 5)
-`
+console.log('Source:')
+console.log(result.sourceA)
 
-const sourceB = `
-  const num = 15
+console.log(`\n`)
+console.log('---------------------------------------------')
+console.log(`\n`)
 
-  function multiply(number, multiplier) {
-    function identity(x) {
-      return x
-    }
-    return identity(number) * multiplier
-  }
-
-  multiply(num, 5)
-`
-
-const result = getInitialDiffs(sourceA, sourceB)
-console.log(result)
+console.log('Revision:')
+console.log(result.sourceB)

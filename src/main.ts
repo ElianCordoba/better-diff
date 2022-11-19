@@ -4,10 +4,10 @@ import { equals, NodeIterator, Iterator, listEnded } from "./utils";
 
 
 export function getInitialDiffs(codeA: string, codeB: string): Change[] {
+  const changes: Change[] = []
+
   const nodesA = getNodesArray(codeA)
   const nodesB = getNodesArray(codeB)
-
-  const changes: Change[] = []
 
   const iterA = NodeIterator(nodesA);
   const iterB = NodeIterator(nodesB);
@@ -21,6 +21,12 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
 
     if (!a || !b) {
       break
+    }
+
+    if (equals(a.node, b.node)) {
+      iterA.markMatched()
+      iterB.markMatched()
+      continue;
     }
 
     if (listEnded(a.node)) {
@@ -41,29 +47,26 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       break;
     }
 
-    if (equals(a.node, b.node)) {
-      iterA.markMatched()
-      iterB.markMatched()
-      continue;
-    }
-
     const nearbyMatch = iterB.nextNearby(a.node);
 
     if (nearbyMatch) {
       iterA.markMatched()
       iterB.markMatched()
 
-      changes.push(getChange(ChangeType.change, a.node, b.node))
+      changes.push(getChange(ChangeType.move, a.node, b.node))
       continue;
     }
 
     // No match
-    changes.push(getChange(ChangeType.removal, a.node, b.node))
+    changes.push(getChange(ChangeType.change, a.node, b.node))
 
     // En verdad mas que matched seria unmatched pero lo quiero marcar con algo
     iterA.markMatched()
+    iterB.markMatched()
   } while (a) // If there are no more nodes, a will be undefined
 
+  // TODO: Enable this after I handle change type in there
+  // return compactChanges(changes)
   return changes
 }
 
@@ -121,30 +124,37 @@ export function tryMergeRanges(rangeA: Range, rangeB: Range): Range | undefined 
   }
 }
 
-// TODO: compactar cuando hacemos un push a changes
+// TODO: Compact at the moment when we push new changes to the array. Mainly to save memory since we will avoid having a big array before the moment of compaction 
 export function compactChanges(changes: Change[]) {
-  let additionChanges: Change[] = changes.filter(x => x.type === ChangeType.addition)
-
   let i = 0;
 
-  let next = additionChanges.at(i + 1)
-
+  let next = changes.at(i + 1)
   while (next) {
-    const current = additionChanges.at(i)
+    const current = changes.at(i)
 
-    // rangeB porque estamos en additions
-    const compatible = tryMergeRanges(current?.rangeB!, next?.rangeB!)
+    if (current?.type !== next.type) {
+      i++
+      next = changes.at(i + 1)
+      continue
+    }
+
+    // TODO: How to compact move
+    const readFrom = current?.type === ChangeType.removal ? 'rangeA' : 'rangeB'
+
+    const currentRange = current![readFrom]!
+    const nextRange = next[readFrom]!
+
+    const compatible = tryMergeRanges(currentRange, nextRange)
 
     if (compatible) {
-      additionChanges.splice(i, 2, { ...current, rangeB: compatible } as Change)
-      next = additionChanges.at(i + 1)
-      // no i++
+      changes.splice(i, 2, { ...current, [readFrom]: compatible } as Change)
+      next = changes.at(i + 1)
       continue
     }
 
     i++
-    next = additionChanges.at(i + 1)
+    next = changes.at(i + 1)
   }
 
-  return additionChanges
+  return changes
 }
