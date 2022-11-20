@@ -1,9 +1,15 @@
 import { Node } from './ts-util'
 
+export interface DiffResult {
+  sourceA: string;
+  sourceB: string
+}
+
 export enum ChangeType {
   addition = 'addition',
   removal = 'removal',
-  change = 'change'
+  change = 'change',
+  move = 'move'
 }
 
 export interface Range {

@@ -1,27 +1,17 @@
-import { getInitialDiffs } from "../src/main"
+import { getSimplifiedDiff } from "../src"
 
-const sourceA = `
-  const num = 10
+const sourceA = `  124`
 
-  function multiply(number, multiplier) {
-    return number * multiplier
-  }
+const sourceB = `  123`
 
-  multiply(num, 5)
-`
+const result = getSimplifiedDiff(sourceA, sourceB);
 
-const sourceB = `
-  const num = 15
+console.log(`\n`)
+console.log('Source:')
+console.log(result.sourceA)
 
-  function multiply(number, multiplier) {
-    function identity(x) {
-      return x
-    }
-    return identity(number) * multiplier
-  }
+console.log('---------------------------------------------')
 
-  multiply(num, 5)
-`
-
-const result = getInitialDiffs(sourceA, sourceB)
-console.log(result)
+console.log('Revision:')
+console.log(result.sourceB)
+console.log(`\n`)

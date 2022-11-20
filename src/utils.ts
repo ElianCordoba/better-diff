@@ -45,6 +45,12 @@ export function NodeIterator(nodes: Node[]): Iterator {
     const ahead = items[startAtIndex + offset]
     const back = items[startAtIndex - offset]
 
+    // We checked everything and nothing was found, exit early
+    if (!ahead && !back) {
+      offset = 0
+      return undefined
+    }
+
     if (ahead && !ahead.matched && equals(expected, ahead.node)) {
       const index = startAtIndex + offset
 
