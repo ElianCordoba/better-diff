@@ -100,7 +100,8 @@ function getChange(type: ChangeType, a: Node | undefined, b: Node | undefined): 
 
 function getRange(node: Node): Range {
   return {
-    start: node.pos,
+    // Each node owns the trivia before until the previous token, so this is the real start
+    start: node.getLeadingTriviaWidth(),
     end: node.end
   }
 }
