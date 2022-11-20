@@ -12,10 +12,10 @@ function readSequence(chars: string[], from: number, to: number) {
 type DrawingFn = (string: string) => string
 
 interface DifferDrawingFns {
-  addition?: DrawingFn;
-  removal?: DrawingFn;
-  change?: DrawingFn;
-  move?: DrawingFn;
+  addition: DrawingFn;
+  removal: DrawingFn;
+  change: DrawingFn;
+  move: DrawingFn;
 }
 
 // Pretty print. Human readable
@@ -35,14 +35,19 @@ export const simplifiedDrawingFunctions: DifferDrawingFns = {
 }
 
 export function applyChangesToSources(sourceA: string, sourceB: string, changes: Change[], drawFunctions?: DifferDrawingFns) {
-  const drawingFunctions = { ...drawFunctions, ...defaultDrawingFunctions }
+  const drawingFunctions: DifferDrawingFns = { ...defaultDrawingFunctions, ...drawFunctions }
 
-  const charsA = sourceA.split('')
-  const charsB = sourceB.split('')
+  let charsA = sourceA.split('')
+  let charsB = sourceB.split('')
 
-  function applyStyle(chars: string[], from: number, to: number, colorFn: any) {
-    const textToMark = readSequence(chars, from, to)
-    chars.splice(from, to, k.underline(colorFn(textToMark)))
+  function applyStyle(chars: string[], from: number, to: number, colorFn: DrawingFn) {
+    const head = chars.slice(0, from);
+
+    const text = chars.slice(from, to).join('')
+
+    const tail = chars.slice(to, chars.length)
+
+    return [...head, colorFn(text), ...tail]
   }
 
   let from, to;
@@ -51,24 +56,24 @@ export function applyChangesToSources(sourceA: string, sourceB: string, changes:
       case ChangeType.addition:
         from = rangeB!.start
         to = rangeB!.end
-        applyStyle(charsB, from, to, drawingFunctions.addition)
+        charsB = applyStyle(charsB, from, to, drawingFunctions.addition)
         break;
 
       case ChangeType.removal:
         from = rangeA!.start
         to = rangeA!.end
-        applyStyle(charsA, from, to, drawingFunctions.removal)
+        charsA = applyStyle(charsA, from, to, drawingFunctions.removal)
         break;
 
       // TODO: Use change drawing func?
       case ChangeType.change:
         from = rangeB!.start
         to = rangeB!.end
-        applyStyle(charsB, from, to, drawingFunctions.addition)
+        charsB = applyStyle(charsB, from, to, drawingFunctions.addition)
 
         from = rangeA!.start
         to = rangeA!.end
-        applyStyle(charsA, from, to, drawingFunctions.removal)
+        charsA = applyStyle(charsA, from, to, drawingFunctions.removal)
         break;
 
       default:

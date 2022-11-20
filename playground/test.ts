@@ -1,16 +1,17 @@
-import { getTextWithDiff } from "../src"
+import { getSimplifiedDiff } from "../src"
 
-const sourceA = `0`
-const sourceB = `1`
+const sourceA = `  124`
 
-const result = getTextWithDiff(sourceA, sourceB);
+const sourceB = `  123`
 
+const result = getSimplifiedDiff(sourceA, sourceB);
+
+console.log(`\n`)
 console.log('Source:')
 console.log(result.sourceA)
 
-console.log(`\n`)
 console.log('---------------------------------------------')
-console.log(`\n`)
 
 console.log('Revision:')
 console.log(result.sourceB)
+console.log(`\n`)

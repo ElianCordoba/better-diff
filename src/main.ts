@@ -100,8 +100,15 @@ function getChange(type: ChangeType, a: Node | undefined, b: Node | undefined): 
 
 function getRange(node: Node): Range {
   return {
-    // Each node owns the trivia before until the previous token, so this is the real start
-    start: node.getLeadingTriviaWidth(),
+    // Each node owns the trivia before until the previous token, for example:
+    //
+    // age = 24
+    //      ^
+    //      Trivia for the number literal starts here, but you don't want to start the diff here
+    //
+    // This is why we add the leading trivia to the `start` of the node, so we get where the actual
+    // value of the node starts and not where the trivia starts
+    start: node.pos + node.getLeadingTriviaWidth(),
     end: node.end
   }
 }
