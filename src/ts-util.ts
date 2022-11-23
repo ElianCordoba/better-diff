@@ -1,9 +1,11 @@
 import _ts from "typescript";
 
 declare namespace MYTS {
+  // deno-lint-ignore no-explicit-any
   let Debug: any;
 }
 type TS = typeof MYTS & typeof _ts;
+// deno-lint-ignore no-explicit-any
 export const ts: TS = (_ts as any);
 
 export type Node = _ts.Node & { text: string };
@@ -16,7 +18,7 @@ export function getNodesArray(source: string) {
     true,
   );
 
-  let tokens: Node[] = [];
+  const tokens: Node[] = [];
 
   function walk(node: Node) {
     //tokens.push(ts.Debug.formatSyntaxKind(node.kind))

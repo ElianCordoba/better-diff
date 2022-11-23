@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, test } from "vitest";
 import { getSimplifiedDiff } from "../../src";
 import { validateDiff } from "../utils";
 

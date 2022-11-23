@@ -1,7 +1,8 @@
+import { SyntaxKind } from "typescript";
 import { Node, ts } from "./ts-util";
 import { Item } from "./types";
 
-export function formatSyntaxKind(kind: any) {
+export function formatSyntaxKind(kind: SyntaxKind) {
   return ts.Debug.formatSyntaxKind(kind);
 }
 

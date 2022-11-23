@@ -1,4 +1,4 @@
-import { assert, describe, expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { getNodesArray } from "../src/ts-util";
 import { formatSyntaxKind, NodeIterator } from "../src/utils";
 
@@ -25,22 +25,24 @@ describe("Should iterate over node list properly", () => {
   test("Simple advance", () => {
     const { next, markMatched } = NodeIterator(aNodes);
 
-    expect(formatSyntaxKind(next()?.node.kind)).toBe("SyntaxList");
+    expect(formatSyntaxKind(next()?.node.kind!)).toBe("SyntaxList");
     markMatched();
 
-    expect(formatSyntaxKind(next()?.node.kind)).toBe("VariableStatement");
+    expect(formatSyntaxKind(next()?.node.kind!)).toBe("VariableStatement");
     markMatched();
 
-    expect(formatSyntaxKind(next()?.node.kind)).toBe("VariableDeclarationList");
+    expect(formatSyntaxKind(next()?.node.kind!)).toBe(
+      "VariableDeclarationList",
+    );
     markMatched();
 
-    expect(formatSyntaxKind(next()?.node.kind)).toBe("ConstKeyword");
+    expect(formatSyntaxKind(next()?.node.kind!)).toBe("ConstKeyword");
     markMatched();
 
-    expect(formatSyntaxKind(next()?.node.kind)).toBe("SyntaxList");
+    expect(formatSyntaxKind(next()?.node.kind!)).toBe("SyntaxList");
     markMatched();
 
-    expect(formatSyntaxKind(next()?.node.kind)).toBe("VariableDeclaration");
+    expect(formatSyntaxKind(next()?.node.kind!)).toBe("VariableDeclaration");
     markMatched();
   });
 
@@ -51,13 +53,15 @@ describe("Should iterate over node list properly", () => {
     markMatched(3);
     markMatched(4);
 
-    expect(formatSyntaxKind(next()?.node.kind)).toBe("SyntaxList");
+    expect(formatSyntaxKind(next()?.node.kind!)).toBe("SyntaxList");
     markMatched();
 
-    expect(formatSyntaxKind(next()?.node.kind)).toBe("VariableDeclarationList");
+    expect(formatSyntaxKind(next()?.node.kind!)).toBe(
+      "VariableDeclarationList",
+    );
     markMatched();
 
-    expect(formatSyntaxKind(next()?.node.kind)).toBe("VariableDeclaration");
+    expect(formatSyntaxKind(next()?.node.kind!)).toBe("VariableDeclaration");
     markMatched();
   });
 

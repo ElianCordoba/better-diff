@@ -1,12 +1,7 @@
 import { Change, ChangeType, Range } from "../src/types";
 
-//@ts-ignore
-// TODO: Importing normally doesnt work with vitest
+//@ts-ignore TODO: Importing normally doesnt work with vitest
 const k = require("kleur");
-
-function readSequence(chars: string[], from: number, to: number) {
-  return chars.slice(from, to).join("");
-}
 
 type DrawingFn = (string: string) => string;
 

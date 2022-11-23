@@ -1,7 +1,6 @@
-import { SyntaxKind } from "typescript";
 import { getNodesArray, Node } from "./ts-util";
 import { Change, ChangeType, Item, Range } from "./types";
-import { equals, Iterator, listEnded, NodeIterator } from "./utils";
+import { equals, Iterator, NodeIterator } from "./utils";
 
 export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -54,7 +53,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     iterB.markMatched();
   } while (a); // If there are no more nodes, a will be undefined
 
-  return compactChanges(changes as any);
+  return compactChanges(changes);
 }
 
 function oneSidedIteration(
@@ -132,7 +131,7 @@ export function tryMergeRanges(
 }
 
 // TODO: Compact at the moment when we push new changes to the array. Mainly to save memory since we will avoid having a big array before the moment of compaction
-export function compactChanges(changes: (Change & { seen: boolean })[]) {
+export function compactChanges(changes: (Change & { seen?: boolean })[]) {
   const newChanges: Change[] = [];
 
   let currentChangeIndex = -1;
