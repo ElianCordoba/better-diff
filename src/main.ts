@@ -21,37 +21,18 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     b = iterB.next();
 
     if (!a || !b) {
-      break
+      const iterOn = !a ? iterB : iterA;
+      const type = !a ? ChangeType.addition : ChangeType.removal
+
+      const remainingChanges = oneSidedIteration(iterOn, type)
+      changes.push(...remainingChanges)
+      break;
     }
 
     if (equals(a.node, b.node)) {
       iterA.markMatched()
       iterB.markMatched()
       continue;
-    }
-
-    if (listEnded(a.node)) {
-      // Mark eof
-      iterA.markMatched()
-
-      const remainingChanges = oneSidedIteration(iterB, ChangeType.addition)
-
-      //TODO: try to remove Ignore EOF
-      remainingChanges.pop()
-      changes.push(...remainingChanges)
-      break;
-    }
-
-    if (listEnded(b.node)) {
-      // Mark eof
-      iterB.markMatched()
-
-      const remainingChanges = oneSidedIteration(iterA, ChangeType.removal)
-
-      //TODO: try to remove Ignore EOF
-      remainingChanges.pop()
-      changes.push(...remainingChanges)
-      break;
     }
 
     const nearbyMatch = iterB.nextNearby(a.node);
@@ -117,9 +98,7 @@ function getRange(node: Node): Range {
     //
     // This is why we add the leading trivia to the `start` of the node, so we get where the actual
     // value of the node starts and not where the trivia starts
-
-    // TODO Try to remove the EOF check
-    start: node.kind === SyntaxKind.EndOfFileToken ? node.pos : node.pos + node.getLeadingTriviaWidth(),
+    start: node.pos + node.getLeadingTriviaWidth(),
     end: node.end
   }
 }
