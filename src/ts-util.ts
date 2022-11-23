@@ -29,5 +29,8 @@ export function getNodesArray(source: string) {
 
   sourceFile.getChildren().forEach(x => walk(x as Node))
 
+  // Remove EOF to simplify things out. It contains trivia that appears broken in the diff if not treated separately
+  tokens.pop()
+
   return tokens
 }

@@ -1,5 +1,4 @@
-import { compactChanges, getInitialDiffs } from "../src/main"
-import { Change, ChangeType } from "../src/types"
+import { Change, ChangeType, Range } from "../src/types"
 
 //@ts-ignore
 // TODO: Importing normally doesnt work with vitest
@@ -40,41 +39,44 @@ export function applyChangesToSources(sourceA: string, sourceB: string, changes:
   let charsA = sourceA.split('')
   let charsB = sourceB.split('')
 
-  function applyStyle(chars: string[], from: number, to: number, colorFn: DrawingFn) {
-    const head = chars.slice(0, from);
+  function applyStyle(chars: string[], start: number, end: number, colorFn: DrawingFn) {
+    const head = chars.slice(0, start);
 
-    const text = chars.slice(from, to).join('')
+    const text = chars.slice(start, end).join('')
 
-    const tail = chars.slice(to, chars.length)
+    const tail = chars.slice(end, chars.length)
 
     return [...head, colorFn(text), ...tail]
   }
 
-  let from, to;
+  // Used to track the characters removed so that we can print property, for example
+  // chars = ['a', 'b', 'c' ]
+  // After we merge 'a' with 'b', c is now at index 1, instead of 2
+
+  let aOffset = 0;
+  let bOffset = 0
+
   for (const { rangeA, rangeB, type } of changes) {
     switch (type) {
-      case ChangeType.addition:
-        from = rangeB!.start
-        to = rangeB!.end
-        charsB = applyStyle(charsB, from, to, drawingFunctions.addition)
-        break;
+      case ChangeType.addition: {
+        const { start, end } = getRanges(rangeB, bOffset)
+        charsB = applyStyle(charsB, start, end, drawingFunctions.addition)
 
-      case ChangeType.removal:
-        from = rangeA!.start
-        to = rangeA!.end
-        charsA = applyStyle(charsA, from, to, drawingFunctions.removal)
+        // The reason of the - 1 is as follows:
+        // If you have a range 3 to 6, means that the characters at index 3, 4 and 5 will be compacted into one
+        // So, 6 - 3 is 3 minus 1 which is the length of the new character
+        bOffset += (end - start) - 1
         break;
+      }
 
-      // TODO: Use change drawing func?
-      case ChangeType.change:
-        from = rangeB!.start
-        to = rangeB!.end
-        charsB = applyStyle(charsB, from, to, drawingFunctions.addition)
+      case ChangeType.removal: {
+        const { start, end } = getRanges(rangeA, aOffset)
+        charsA = applyStyle(charsA, start, end, drawingFunctions.removal)
 
-        from = rangeA!.start
-        to = rangeA!.end
-        charsA = applyStyle(charsA, from, to, drawingFunctions.removal)
+        // The - 1 part is explained above
+        aOffset += (end - start) - 1
         break;
+      }
 
       default:
         console.log('Unhandled type', type)
@@ -84,3 +86,9 @@ export function applyChangesToSources(sourceA: string, sourceB: string, changes:
   return { sourceA: charsA.join(''), sourceB: charsB.join('') }
 }
 
+function getRanges(range: Range | undefined, offset: number) {
+  return {
+    start: range?.start ? range.start - offset : 0,
+    end: range?.end ? range?.end - offset : 0
+  }
+}

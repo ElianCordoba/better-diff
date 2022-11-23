@@ -11,7 +11,7 @@ describe("Basic tests", () => {
     const resultA = "➖0➖"
     const resultB = "➕1➕"
 
-    const { sourceA, sourceB } = getSimplifiedDiff(a, b)
+    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b)
 
     validateDiff(resultA, resultB, sourceA, sourceB)
   })
@@ -24,7 +24,7 @@ describe("Basic tests", () => {
     const resultA = "➖true➖"
     const resultB = "➕false➕"
 
-    const { sourceA, sourceB } = getSimplifiedDiff(a, b)
+    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b)
 
     validateDiff(resultA, resultB, sourceA, sourceB)
   })
@@ -47,7 +47,7 @@ describe("Basic tests", () => {
     let ➕firstName➕ = "elian"
     `
 
-    const { sourceA, sourceB } = getSimplifiedDiff(a, b)
+    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b)
 
     validateDiff(resultA, resultB, sourceA, sourceB)
   })
@@ -70,12 +70,12 @@ describe("Basic tests", () => {
     console.log(➕1➕)
     `
 
-    const { sourceA, sourceB } = getSimplifiedDiff(a, b)
+    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b)
 
     validateDiff(resultA, resultB, sourceA, sourceB)
   })
 
-  test.only("Line added bellow", () => {
+  test("Line added bellow", () => {
 
     const a = `
     let name;
@@ -95,8 +95,155 @@ describe("Basic tests", () => {
     ➕let age;➕
     `
 
-    const { sourceA, sourceB } = getSimplifiedDiff(a, b)
+    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b)
 
     validateDiff(resultA, resultB, sourceA, sourceB)
   })
+
+  test("Line removed bellow", () => {
+
+    const a = `
+    let name;
+    let age;
+    `
+
+    const b = `
+    let name;
+    `
+
+    const resultA = `
+    let name;
+    ➖let age;➖
+    `
+
+    const resultB = `
+    let name;
+    `
+
+    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b)
+
+    validateDiff(resultA, resultB, sourceA, sourceB)
+  })
+})
+
+test("Multiple lines added", () => {
+
+  const a = `
+  `
+
+  const b = `
+  let a;
+  let b;
+  `
+
+  const resultA = `
+  `
+
+  const resultB = `
+  ➕let a;➕
+  ➕let b;➕
+  `
+
+  const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b)
+
+  validateDiff(resultA, resultB, sourceA, sourceB)
+})
+
+test("Multiple lines added 2", () => {
+
+  const a = `
+  `
+
+  const b = `
+  let a;
+  let b;
+  let c;
+  `
+
+  const resultA = `
+  `
+
+  const resultB = `
+  ➕let a;➕
+  ➕let b;➕
+  ➕let c;➕
+  `
+
+  const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b)
+
+  validateDiff(resultA, resultB, sourceA, sourceB)
+})
+
+test.only("Multiple lines added 3. With trivia", () => {
+
+  const a = `
+  `
+
+  const b = `let a;
+    let b;
+  `
+
+  const resultA = `
+  `
+
+  const resultB = `➕let a;➕
+    ➕let b;➕
+  `
+
+  const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b)
+
+  validateDiff(resultA, resultB, sourceA, sourceB)
+})
+
+test("Multiple lines removed 2", () => {
+
+  const a = `
+  let a;
+  let b;
+  let c;
+  `
+
+  const b = `
+  `
+
+  const resultA = `
+  ➖let a;➖
+  ➖let b;➖
+  ➖let c;➖
+  `
+
+  const resultB = `
+  `
+
+  const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b)
+
+  validateDiff(resultA, resultB, sourceA, sourceB)
+})
+
+test.skip("Line added and remove", () => {
+
+  const a = `
+  let up;
+  let middle;
+  `
+
+  const b = `
+  let middle;
+  let down;
+  `
+
+  const resultA = `
+  ➖let up➖;
+  let middle;
+  `
+
+  const resultB = `
+  let up;
+  let middle;
+  ➖let down;➖
+  `
+
+  const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b)
+
+  validateDiff(resultA, resultB, sourceA, sourceB)
 })

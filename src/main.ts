@@ -1,3 +1,4 @@
+import { SyntaxKind } from "typescript";
 import { getNodesArray, Node } from "./ts-util";
 import { Change, ChangeType, Item, Range } from "./types";
 import { equals, NodeIterator, Iterator, listEnded } from "./utils";
@@ -20,31 +21,18 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     b = iterB.next();
 
     if (!a || !b) {
-      break
+      const iterOn = !a ? iterB : iterA;
+      const type = !a ? ChangeType.addition : ChangeType.removal
+
+      const remainingChanges = oneSidedIteration(iterOn, type)
+      changes.push(...remainingChanges)
+      break;
     }
 
     if (equals(a.node, b.node)) {
       iterA.markMatched()
       iterB.markMatched()
       continue;
-    }
-
-    if (listEnded(a.node)) {
-      // Mark eof
-      iterA.markMatched()
-
-      const remainingChanges = oneSidedIteration(iterB, ChangeType.addition)
-      changes.push(...remainingChanges)
-      break;
-    }
-
-    if (listEnded(b.node)) {
-      // Mark eof
-      iterB.markMatched()
-
-      const remainingChanges = oneSidedIteration(iterA, ChangeType.removal)
-      changes.push(...remainingChanges)
-      break;
     }
 
     const nearbyMatch = iterB.nextNearby(a.node);
@@ -58,16 +46,16 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     }
 
     // No match
-    changes.push(getChange(ChangeType.change, a.node, b.node))
+    // TODO: Maybe push change type 'change' ?
+    changes.push(getChange(ChangeType.addition, a.node, b.node))
+    changes.push(getChange(ChangeType.removal, a.node, b.node))
 
     // En verdad mas que matched seria unmatched pero lo quiero marcar con algo
     iterA.markMatched()
     iterB.markMatched()
   } while (a) // If there are no more nodes, a will be undefined
 
-  // TODO: Enable this after I handle change type in there
-  // return compactChanges(changes)
-  return changes
+  return compactChanges(changes as any)
 }
 
 function oneSidedIteration(iter: Iterator, typeOfChange: ChangeType.addition | ChangeType.removal): Change[] {
@@ -92,9 +80,11 @@ function oneSidedIteration(iter: Iterator, typeOfChange: ChangeType.addition | C
 
 function getChange(type: ChangeType, a: Node | undefined, b: Node | undefined): Change {
   return {
-    type,
     rangeA: a ? getRange(a) : undefined,
     rangeB: b ? getRange(b) : undefined,
+    type,
+    nodeA: a,
+    nodeB: b
   }
 }
 
@@ -133,36 +123,63 @@ export function tryMergeRanges(rangeA: Range, rangeB: Range): Range | undefined 
 }
 
 // TODO: Compact at the moment when we push new changes to the array. Mainly to save memory since we will avoid having a big array before the moment of compaction 
-export function compactChanges(changes: Change[]) {
-  let i = 0;
+export function compactChanges(changes: (Change & { seen: boolean })[]) {
+  const newChanges: Change[] = []
 
-  let next = changes.at(i + 1)
-  while (next) {
-    const current = changes.at(i)
+  let currentChangeIndex = -1
+  for (const change of changes) {
+    let candidate = change;
 
-    if (current?.type !== next.type) {
-      i++
-      next = changes.at(i + 1)
+    currentChangeIndex++;
+
+    if (change.seen) {
       continue
     }
 
-    // TODO: How to compact move
-    const readFrom = current?.type === ChangeType.removal ? 'rangeA' : 'rangeB'
-
-    const currentRange = current![readFrom]!
-    const nextRange = next[readFrom]!
-
-    const compatible = tryMergeRanges(currentRange, nextRange)
-
-    if (compatible) {
-      changes.splice(i, 2, { ...current, [readFrom]: compatible } as Change)
-      next = changes.at(i + 1)
+    // TODO
+    if (change.type === ChangeType.move || change.type === ChangeType.change) {
       continue
     }
 
-    i++
-    next = changes.at(i + 1)
+    // We start from the current position since we known that above changes wont be compatible
+    let nextIndex = currentChangeIndex + 1;
+
+    innerLoop: while (nextIndex < changes.length) {
+      const next = changes[nextIndex];
+
+      if (next.seen) {
+        nextIndex++
+        continue
+      }
+
+      if (change.type !== next.type) {
+        nextIndex++
+        continue
+      }
+
+      const readFrom = change!.type === ChangeType.removal ? 'rangeA' : 'rangeB'
+
+      const currentRange = change![readFrom]!
+      const nextRange = next[readFrom]!
+
+      const compatible = tryMergeRanges(currentRange, nextRange)
+
+      if (!compatible) {
+        nextIndex++
+        // No compatibility at i means that we can break early, there will be no compatibility at i + n because ranges keep moving on
+        break innerLoop;
+      }
+
+      changes[nextIndex].seen = true;
+
+      candidate = { ...candidate, [readFrom]: compatible }
+
+      nextIndex++
+      continue
+    }
+
+    newChanges.push(candidate)
   }
 
-  return changes
+  return newChanges
 }
