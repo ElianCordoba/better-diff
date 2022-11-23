@@ -1,15 +1,15 @@
-import { Node } from './ts-util'
+import { Node } from "./ts-util";
 
 export interface DiffResult {
   sourceA: string;
-  sourceB: string
+  sourceB: string;
 }
 
 export enum ChangeType {
-  addition = 'addition',
-  removal = 'removal',
-  change = 'change',
-  move = 'move'
+  addition = "addition",
+  removal = "removal",
+  change = "change",
+  move = "move",
 }
 
 export interface Range {
@@ -35,8 +35,8 @@ export interface Item {
   matched: boolean;
 }
 
-enum MatchStatus {
+export enum MatchStatus {
   NotChecked, // no lo chekiamos todavia
-  NotFound,   // chekiamos pero no estaba
-  Matched     // estaba y lo encontramos
+  NotFound, // chekiamos pero no estaba
+  Matched, // estaba y lo encontramos
 }
