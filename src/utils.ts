@@ -1,9 +1,8 @@
 import { SyntaxKind } from "typescript";
 import { Node, ts } from "./ts-util";
-import { Item } from "./types";
 
-export function formatSyntaxKind(kind: SyntaxKind) {
-  return ts.Debug.formatSyntaxKind(kind);
+export function formatSyntaxKind(data: { kind: SyntaxKind }) {
+  return ts.Debug.formatSyntaxKind(data.kind);
 }
 
 export function equals(nodeA: Node, nodeB: Node) {
