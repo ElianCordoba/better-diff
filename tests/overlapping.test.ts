@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { tryMergeRanges } from "../src/main";
 import { Range } from "../src/types";
 
-describe.only("Should detect range overlapping", () => {
+describe("Should detect range overlapping", () => {
   test("Case 1: Same range", () => {
     const rangeA: Range = {
       start: 1,
@@ -36,7 +36,7 @@ describe.only("Should detect range overlapping", () => {
     });
   });
 
-  test.only("Case 3: No overlap", () => {
+  test("Case 3: No overlap", () => {
     const rangeA: Range = {
       start: 1,
       end: 3,

@@ -9,8 +9,8 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   const nodesA = getNodesArray(codeA);
   const nodesB = getNodesArray(codeB);
 
-  const iterA = NodeIterator(nodesA, 'a');
-  const iterB = NodeIterator(nodesB, 'b');
+  const iterA = new NodeIterator(nodesA, 'a');
+  const iterB = new NodeIterator(nodesB, 'b');
 
   let a: Item | undefined;
   let b: Item | undefined;

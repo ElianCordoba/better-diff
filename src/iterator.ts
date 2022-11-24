@@ -6,89 +6,84 @@ export interface Iterator {
   next: () => Item | undefined;
   markMatched: (index?: number) => void;
   nextNearby: (expected: Node, startAtIndex?: number) => Item | undefined;
-  getItems: () => Item[];
-  getName: () => string;
 }
 
-export function NodeIterator(nodes: Node[], name: string = ''): Iterator {
-  const iteratorName = name;
-  const items: Item[] = nodes.map((node, index) => ({
-    node,
-    index,
-    matched: false,
-  }));
+export class NodeIterator implements Iterator {
+  name: string;
 
-  let lastIndexSeen: number;
-  function next(): Item | undefined {
+  items: Item[];
+  lastIndexSeen = 0
+  offset = 1;
+
+  readonly MAX_OFFSET = 50;
+
+  constructor(nodes: Node[], name: string = '') {
+    this.name = name;
+
+    this.items = nodes.map((node, index) => ({
+      node,
+      index,
+      matched: false,
+    }));
+  }
+
+  next() {
     let i = -1;
-    for (const item of items) {
+    for (const item of this.items) {
       i++;
       if (item.matched) {
         continue;
       }
 
-      lastIndexSeen = i;
+      this.lastIndexSeen = i;
       return item;
     }
 
     return;
   }
 
-  const MAX_OFFSET = 50;
-  let offset = 1;
+  markMatched(index = this.lastIndexSeen) {
+    this.items[index].matched = true;
+  }
 
-  function nextNearby(
+  nextNearby(
     expected: Node,
-    startAtIndex = lastIndexSeen,
+    startAtIndex = this.lastIndexSeen,
   ): Item | undefined {
-    const ahead = items[startAtIndex + offset];
-    const back = items[startAtIndex - offset];
+    const ahead = this.items[startAtIndex + this.offset];
+    const back = this.items[startAtIndex - this.offset];
 
     // We checked everything and nothing was found, exit early
     if (!ahead && !back) {
-      offset = 0;
+      this.offset = 0;
       return undefined;
     }
 
     if (ahead && !ahead.matched && equals(expected, ahead.node)) {
-      const index = startAtIndex + offset;
+      const index = startAtIndex + this.offset;
 
       // Set this so the markMatched works
-      lastIndexSeen = index;
+      this.lastIndexSeen = index;
 
-      offset = 0;
-      return items[index];
+      this.offset = 0;
+      return this.items[index];
     } else if (back && !back.matched && equals(expected, back.node)) {
-      const index = startAtIndex - offset;
+      const index = startAtIndex - this.offset;
 
       // Set this so the markMatched works
-      lastIndexSeen = index;
+      this.lastIndexSeen = index;
 
-      offset = 0;
-      return items[index];
+      this.offset = 0;
+      return this.items[index];
     }
 
-    offset++;
+    this.offset++;
 
-    if (offset >= MAX_OFFSET) {
-      offset = 0;
+    if (this.offset >= this.MAX_OFFSET) {
+      this.offset = 0;
       return undefined;
     }
 
-    return nextNearby(expected, startAtIndex);
+    return this.nextNearby(expected, startAtIndex);
   }
-
-  function markMatched(index = lastIndexSeen) {
-    items[index].matched = true;
-  }
-
-  function getItems() {
-    return items;
-  }
-
-  function getName() {
-    return iteratorName
-  }
-
-  return { next, markMatched, nextNearby, getItems, getName };
 }

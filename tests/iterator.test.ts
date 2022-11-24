@@ -24,59 +24,59 @@ const aNodes = getNodesArray(aSource);
 
 describe("Should iterate over node list properly", () => {
   test("Simple advance", () => {
-    const { next, markMatched } = NodeIterator(aNodes);
+    const iter = new NodeIterator(aNodes);
 
-    expect(formatSyntaxKind(next()?.node.kind!)).toBe("SyntaxList");
-    markMatched();
+    expect(formatSyntaxKind(iter.next()?.node.kind!)).toBe("SyntaxList");
+    iter.markMatched();
 
-    expect(formatSyntaxKind(next()?.node.kind!)).toBe("VariableStatement");
-    markMatched();
+    expect(formatSyntaxKind(iter.next()?.node.kind!)).toBe("VariableStatement");
+    iter.markMatched();
 
-    expect(formatSyntaxKind(next()?.node.kind!)).toBe(
+    expect(formatSyntaxKind(iter.next()?.node.kind!)).toBe(
       "VariableDeclarationList",
     );
-    markMatched();
+    iter.markMatched();
 
-    expect(formatSyntaxKind(next()?.node.kind!)).toBe("ConstKeyword");
-    markMatched();
+    expect(formatSyntaxKind(iter.next()?.node.kind!)).toBe("ConstKeyword");
+    iter.markMatched();
 
-    expect(formatSyntaxKind(next()?.node.kind!)).toBe("SyntaxList");
-    markMatched();
+    expect(formatSyntaxKind(iter.next()?.node.kind!)).toBe("SyntaxList");
+    iter.markMatched();
 
-    expect(formatSyntaxKind(next()?.node.kind!)).toBe("VariableDeclaration");
-    markMatched();
+    expect(formatSyntaxKind(iter.next()?.node.kind!)).toBe("VariableDeclaration");
+    iter.markMatched();
   });
 
   test("Advance skipping matched nodes", () => {
-    const { next, markMatched } = NodeIterator(aNodes);
+    const iter = new NodeIterator(aNodes);
 
-    markMatched(1);
-    markMatched(3);
-    markMatched(4);
+    iter.markMatched(1);
+    iter.markMatched(3);
+    iter.markMatched(4);
 
-    expect(formatSyntaxKind(next()?.node.kind!)).toBe("SyntaxList");
-    markMatched();
+    expect(formatSyntaxKind(iter.next()?.node.kind!)).toBe("SyntaxList");
+    iter.markMatched();
 
-    expect(formatSyntaxKind(next()?.node.kind!)).toBe(
+    expect(formatSyntaxKind(iter.next()?.node.kind!)).toBe(
       "VariableDeclarationList",
     );
-    markMatched();
+    iter.markMatched();
 
-    expect(formatSyntaxKind(next()?.node.kind!)).toBe("VariableDeclaration");
-    markMatched();
+    expect(formatSyntaxKind(iter.next()?.node.kind!)).toBe("VariableDeclaration");
+    iter.markMatched();
   });
 
-  test.only("Find nearby token", () => {
-    const { nextNearby, markMatched } = NodeIterator(aNodes);
+  test("Find nearby token", () => {
+    const iter = new NodeIterator(aNodes);
 
-    markMatched(1);
-    markMatched(2);
-    markMatched(3);
-    markMatched(4);
+    iter.markMatched(1);
+    iter.markMatched(2);
+    iter.markMatched(3);
+    iter.markMatched(4);
 
     const expected = aNodes[0];
 
-    expect(formatSyntaxKind(nextNearby(expected, 5)!.node.kind)).toBe(
+    expect(formatSyntaxKind(iter.nextNearby(expected, 5)!.node.kind)).toBe(
       "SyntaxList",
     );
   });
