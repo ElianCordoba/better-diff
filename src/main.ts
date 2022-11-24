@@ -8,8 +8,8 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   const nodesA = getNodesArray(codeA);
   const nodesB = getNodesArray(codeB);
 
-  const iterA = NodeIterator(nodesA);
-  const iterB = NodeIterator(nodesB);
+  const iterA = NodeIterator(nodesA, 'a');
+  const iterB = NodeIterator(nodesB, 'b');
 
   let a: Item | undefined;
   let b: Item | undefined;
@@ -39,7 +39,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       iterA.markMatched();
       iterB.markMatched();
 
-      changes.push(getChange(ChangeType.move, a.node, b.node));
+      changes.push(getChange(ChangeType.move, a.node, nearbyMatch.node));
       continue;
     }
 
@@ -145,7 +145,8 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
     }
 
     // TODO
-    if (change.type === ChangeType.move || change.type === ChangeType.change) {
+    if (change.type === ChangeType.change) {
+      console.log('Ignoring', change.type)
       continue;
     }
 

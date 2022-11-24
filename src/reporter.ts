@@ -3,13 +3,14 @@ import { Change, ChangeType, Range } from "../src/types";
 //@ts-ignore TODO: Importing normally doesnt work with vitest
 const k = require("kleur");
 
-type DrawingFn = (string: string) => string;
+type DrawingFn = (text: string) => string
 
 interface DifferDrawingFns {
   addition: DrawingFn;
   removal: DrawingFn;
   change: DrawingFn;
-  move: DrawingFn;
+  // TODO: Type
+  move: any;
 }
 
 // Pretty print. Human readable
@@ -17,15 +18,47 @@ export const defaultDrawingFunctions: DifferDrawingFns = {
   addition: (text) => k.underline(k.green(text)),
   removal: (text) => k.underline(k.red(text)),
   change: (text) => k.underline(k.yellow(text)),
-  move: (text) => k.underline(k.blue(text)),
+  move: (text: string) => k.underline(k.blue(text)),
 };
+
+const NumberToEmoji: Record<number, string> = {
+  0: '0️⃣',
+  1: '1️⃣',
+  2: '2️⃣',
+  3: '3️⃣',
+  4: '4️⃣',
+  5: '5️⃣',
+  6: '6️⃣',
+  7: '7️⃣',
+  8: '8️⃣',
+  9: '9️⃣',
+}
 
 // Testing friendly
 export const simplifiedDrawingFunctions: DifferDrawingFns = {
   addition: (text) => `➕${text}➕`,
   removal: (text) => `➖${text}➖`,
   change: (text) => `✏️${text}✏️`,
-  move: (text) => `🔀${text}🔀`,
+  /**
+   * 
+   * @param startSection On the source side the decoration is `5️⃣let name➡️` and on the revision it's `⬅️let name5️⃣` 
+   * @param index Used to match moves
+   */
+  move: (startSection: boolean, index: number) => {
+    return (text: string) => {
+      // TODO
+      if (index > 10 || index < 0) {
+        throw new Error('Not implemented')
+      }
+
+      const number = NumberToEmoji[index];
+      if (startSection) {
+        return `${number} ${text}→`
+      } else {
+        return `←${text}${number} `
+      }
+    }
+  }
 };
 
 export function applyChangesToSources(
@@ -64,6 +97,8 @@ export function applyChangesToSources(
   let aOffset = 0;
   let bOffset = 0;
 
+  let moveCounter = 0
+
   for (const { rangeA, rangeB, type } of changes) {
     switch (type) {
       case ChangeType.addition: {
@@ -86,8 +121,23 @@ export function applyChangesToSources(
         break;
       }
 
+      case ChangeType.move: {
+        const fnA = drawingFunctions.move(true, moveCounter)
+        const resultA = getRanges(rangeA, aOffset);
+        charsA = applyStyle(charsA, resultA.start, resultA.end, fnA);
+        aOffset += (resultA.end - resultA.start) - 1;
+
+        const fnB = drawingFunctions.move(false, moveCounter)
+        const resultB = getRanges(rangeB, bOffset);
+        charsB = applyStyle(charsB, resultB.start, resultB.end, fnB);
+        bOffset += (resultB.end - resultB.start) - 1;
+
+        moveCounter++
+        break
+      }
+
       default:
-        console.log("Unhandled type", type);
+        throw new Error(`Unhandled type "${type}"`);
     }
   }
 

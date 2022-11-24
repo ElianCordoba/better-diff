@@ -19,9 +19,11 @@ export interface Iterator {
   markMatched: (index?: number) => void;
   nextNearby: (expected: Node, startAtIndex?: number) => Item | undefined;
   getItems: () => Item[];
+  getName: () => string;
 }
 
-export function NodeIterator(nodes: Node[]): Iterator {
+export function NodeIterator(nodes: Node[], name: 'a' | 'b'): Iterator {
+  const iteratorName = name;
   const items: Item[] = nodes.map((node, index) => ({
     node,
     index,
@@ -96,5 +98,9 @@ export function NodeIterator(nodes: Node[]): Iterator {
     return items;
   }
 
-  return { next, markMatched, nextNearby, getItems };
+  function getName() {
+    return iteratorName
+  }
+
+  return { next, markMatched, nextNearby, getItems, getName };
 }
