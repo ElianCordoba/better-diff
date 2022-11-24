@@ -94,6 +94,7 @@
   },
   "include": [
     "./src",
+    "./tests",
     "test.ts"
   ]
 }

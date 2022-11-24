@@ -1,6 +1,7 @@
 import { getNodesArray, Node } from "./ts-util";
 import { Change, ChangeType, Item, Range } from "./types";
-import { equals, Iterator, NodeIterator } from "./utils";
+import { equals } from "./utils";
+import { NodeIterator, Iterator } from './iterator'
 
 export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
