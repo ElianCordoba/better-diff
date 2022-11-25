@@ -1,6 +1,6 @@
 import { getNodesArray, Node } from "./ts-util";
 import { Change, ChangeType, Item, Range } from "./types";
-import { equals } from "./utils";
+import { equals, getRange } from "./utils";
 import { NodeIterator, Iterator } from './iterator'
 
 export function getInitialDiffs(codeA: string, codeB: string): Change[] {
@@ -9,8 +9,8 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   const nodesA = getNodesArray(codeA);
   const nodesB = getNodesArray(codeB);
 
-  const iterA = new NodeIterator(nodesA, 'a');
-  const iterB = new NodeIterator(nodesB, 'b');
+  const iterA = new NodeIterator(nodesA, { name: 'a', source: codeA });
+  const iterB = new NodeIterator(nodesB, { name: 'b', source: codeB });
 
   let a: Item | undefined;
   let b: Item | undefined;
@@ -18,6 +18,15 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   do {
     a = iterA.next();
     b = iterB.next();
+
+    // For debugging
+    // console.log('A\n')
+    // iterA.printList()
+    // console.log('\n')
+
+    // console.log('B\n')
+    // iterB.printList()
+    // console.log('\n')
 
     if (!a || !b) {
       const iterOn = !a ? iterB : iterA;
@@ -29,6 +38,9 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     }
 
     if (equals(a.node, b.node)) {
+      if (a.index !== b.index) {
+        changes.push(getChange(ChangeType.move, a.node, b.node));
+      }
       iterA.markMatched();
       iterB.markMatched();
       continue;
@@ -91,21 +103,6 @@ function getChange(
     type,
     nodeA: a,
     nodeB: b,
-  };
-}
-
-function getRange(node: Node): Range {
-  return {
-    // Each node owns the trivia before until the previous token, for example:
-    //
-    // age = 24
-    //      ^
-    //      Trivia for the number literal starts here, but you don't want to start the diff here
-    //
-    // This is why we add the leading trivia to the `start` of the node, so we get where the actual
-    // value of the node starts and not where the trivia starts
-    start: node.pos + node.getLeadingTriviaWidth(),
-    end: node.end,
   };
 }
 

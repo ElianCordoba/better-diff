@@ -33,6 +33,9 @@ export interface Change {
 export interface Item {
   node: Node;
   matched: boolean;
+  matchNumber: number;
+  kind: string;
+  index: number;
 }
 
 export enum MatchStatus {
