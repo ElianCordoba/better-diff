@@ -1,4 +1,5 @@
-import { Change, ChangeType, Range } from "../src/types";
+import { ChangeType, Range } from "../src/types";
+import { Change } from "./change";
 
 //@ts-ignore TODO: Importing normally doesnt work with vitest
 export const k = require("kleur");
@@ -13,12 +14,28 @@ interface DifferDrawingFns {
   move: any;
 }
 
+interface ColorFns {
+  [key: string]: (text: string) => string
+}
+
+export const colorFn: ColorFns = {
+  blue: (x) => k.underline(k.blue(x)),
+  green: (x) => k.underline(k.green(x)),
+  magenta: (x) => k.underline(k.magenta(x)),
+  red: (x) => k.underline(k.red(x)),
+  yellow: (x) => k.underline(k.yellow(x)),
+  cyan: (x) => k.underline(k.cyan(x)),
+  black: (x) => k.underline(k.black(x)),
+  white: (x) => k.underline(k.white(x)),
+  grey: (x) => k.underline(k.grey(x)),
+} as const
+
 // Pretty print. Human readable
 export const defaultDrawingFunctions: DifferDrawingFns = {
-  addition: (text) => k.underline(k.green(text)),
-  removal: (text) => k.underline(k.red(text)),
-  change: (text) => k.underline(k.yellow(text)),
-  move: (text: string) => k.underline(k.blue(text)),
+  addition: colorFn.green,
+  removal: colorFn.red,
+  change: colorFn.yellow,
+  move: colorFn.blue,
 };
 
 // Testing friendly
@@ -32,14 +49,7 @@ export const simplifiedDrawingFunctions: DifferDrawingFns = {
    * @param index Used to match moves
    */
   move: (index: number) => {
-    return (text: string) => {
-      // TODO
-      if (index > 10 || index < 0) {
-        throw new Error('Not implemented')
-      }
-
-      return `${index}🔀${text}`;
-    }
+    return (text: string) => `${index}🔀${text}`
   }
 };
 
@@ -114,7 +124,14 @@ export function getSourceWithChange(
   //
   // To calculate the characters to add we take the difference between the end and the start and subtract one,
   // this is because we need to count for the character we added
-  const charsToAdd = end - start - 1
+  let charsToAdd = end - start - 1
+
+  // TODO: Check if we can remove this
+  // It could be -1 in scenarios where nodes start and end in the same location
+  if (charsToAdd == - 1) {
+    charsToAdd = 0
+  }
+
   const compliment = getComplimentArray(charsToAdd)
 
   return [...head, colorFn(text), ...compliment, ...tail];
