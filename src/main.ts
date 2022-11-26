@@ -1,7 +1,8 @@
 import { getNodesArray, Node } from "./ts-util";
-import { Change, ChangeType, Item, Range } from "./types";
+import { ChangeType, Item, Range } from "./types";
 import { equals, getRange } from "./utils";
 import { NodeIterator, Iterator } from './iterator'
+import { Change } from "./change";
 
 export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -97,13 +98,10 @@ function getChange(
   a: Node | undefined,
   b: Node | undefined,
 ): Change {
-  return {
-    rangeA: a ? getRange(a) : undefined,
-    rangeB: b ? getRange(b) : undefined,
-    type,
-    nodeA: a,
-    nodeB: b,
-  };
+  const rangeA = a ? getRange(a) : undefined;
+  const rangeB = b ? getRange(b) : undefined;
+
+  return new Change(type, rangeA, rangeB, a, b)
 }
 
 export function tryMergeRanges(
@@ -182,7 +180,7 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
 
       changes[nextIndex].seen = true;
 
-      candidate = { ...candidate, [readFrom]: compatible };
+      candidate[readFrom] = compatible
 
       nextIndex++;
       continue;

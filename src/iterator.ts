@@ -1,7 +1,7 @@
 import { Item } from "./types";
 import { equals, formatSyntaxKind, getRange } from "./utils";
 import { Node } from './ts-util'
-import { getSourceWithChange, k } from "./reporter";
+import { colorFn, getSourceWithChange, k } from "./reporter";
 
 export interface Iterator {
   next: () => Item | undefined;
@@ -16,7 +16,8 @@ interface IteratorOptions {
 
 export class NodeIterator implements Iterator {
   name?: string;
-  source?: string;
+  // TODO: Maybe optimize? May consume a lot of memory
+  chars?: string[];
 
   items!: Item[];
   indexOfLastItem = 0
@@ -27,7 +28,7 @@ export class NodeIterator implements Iterator {
 
   constructor(nodes: Node[], options?: IteratorOptions) {
     this.name = options?.name;
-    this.source = options?.source
+    this.chars = options?.source?.split('')
 
     this.items = nodes.map((node, index) => ({
       node,
@@ -114,7 +115,7 @@ export class NodeIterator implements Iterator {
   }
 
   drawRange(node: Node | undefined) {
-    if (!this.source) {
+    if (!this.chars) {
       console.warn('Tried to draw a range but there was no source')
       return;
     }
@@ -135,9 +136,9 @@ export class NodeIterator implements Iterator {
       console.warn('Tried to draw a range but there was no node')
       return;
     }
-    const chars = this.source.split('')
+
     const { start, end } = getRange(nodeToDraw);
-    const result = getSourceWithChange(chars, start, end, x => k.underline(k.magenta(x)))
+    const result = getSourceWithChange(this.chars, start, end, colorFn.magenta)
 
     console.log(result.join(''))
   }
