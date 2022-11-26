@@ -10,8 +10,8 @@ describe("Basic tests", () => {
     a
     `;
 
-    const resultA = a
-    const resultB = a
+    const resultA = a;
+    const resultB = a;
 
     const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
 

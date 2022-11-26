@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { getNodesArray } from "../src/ts-util";
 import { formatSyntaxKind } from "../src/utils";
-import { NodeIterator } from '../src/iterator'
+import { NodeIterator } from "../src/iterator";
 
 const aSource = `
   const num = 10

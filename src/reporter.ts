@@ -4,18 +4,19 @@ import { Change } from "./change";
 //@ts-ignore TODO: Importing normally doesnt work with vitest
 export const k = require("kleur");
 
-type DrawingFn = (text: string) => string
+type DrawingFn = (text: string) => string;
 
 interface DifferDrawingFns {
   addition: DrawingFn;
   removal: DrawingFn;
   change: DrawingFn;
   // TODO: Type
+  // deno-lint-ignore no-explicit-any
   move: any;
 }
 
 interface ColorFns {
-  [key: string]: (text: string) => string
+  [key: string]: (text: string) => string;
 }
 
 export const colorFn: ColorFns = {
@@ -28,7 +29,7 @@ export const colorFn: ColorFns = {
   black: (x) => k.underline(k.black(x)),
   white: (x) => k.underline(k.white(x)),
   grey: (x) => k.underline(k.grey(x)),
-} as const
+} as const;
 
 // Pretty print. Human readable
 export const defaultDrawingFunctions: DifferDrawingFns = {
@@ -44,13 +45,12 @@ export const simplifiedDrawingFunctions: DifferDrawingFns = {
   removal: (text) => `➖${text}➖`,
   change: (text) => `✏️${text}✏️`,
   /**
-   * 
-   * @param startSection On the source side the decoration is `5️⃣let name➡️` and on the revision it's `⬅️let name5️⃣` 
+   * @param startSection On the source side the decoration is `5️⃣let name➡️` and on the revision it's `⬅️let name5️⃣`
    * @param index Used to match moves
    */
   move: (index: number) => {
-    return (text: string) => `${index}🔀${text}`
-  }
+    return (text: string) => `${index}🔀${text}`;
+  },
 };
 
 export function applyChangesToSources(
@@ -68,33 +68,53 @@ export function applyChangesToSources(
   let charsB = sourceB.split("");
 
   // Start at 1 since it's more human friendly
-  let moveCounter = 1
+  let moveCounter = 1;
 
   for (const { rangeA, rangeB, type } of changes) {
     switch (type) {
       case ChangeType.addition: {
         const { start, end } = getRanges(rangeB);
-        charsB = getSourceWithChange(charsB, start, end, drawingFunctions.addition);
+        charsB = getSourceWithChange(
+          charsB,
+          start,
+          end,
+          drawingFunctions.addition,
+        );
         break;
       }
 
       case ChangeType.removal: {
         const { start, end } = getRanges(rangeA);
-        charsA = getSourceWithChange(charsA, start, end, drawingFunctions.removal);
+        charsA = getSourceWithChange(
+          charsA,
+          start,
+          end,
+          drawingFunctions.removal,
+        );
         break;
       }
 
       case ChangeType.move: {
-        const drawFn = drawingFunctions.move(moveCounter)
+        const drawFn = drawingFunctions.move(moveCounter);
 
         const resultA = getRanges(rangeA);
-        charsA = getSourceWithChange(charsA, resultA.start, resultA.end, drawFn);
+        charsA = getSourceWithChange(
+          charsA,
+          resultA.start,
+          resultA.end,
+          drawFn,
+        );
 
         const resultB = getRanges(rangeB);
-        charsB = getSourceWithChange(charsB, resultB.start, resultB.end, drawFn);
+        charsB = getSourceWithChange(
+          charsB,
+          resultB.start,
+          resultB.end,
+          drawFn,
+        );
 
-        moveCounter++
-        break
+        moveCounter++;
+        break;
       }
 
       default:
@@ -124,15 +144,15 @@ export function getSourceWithChange(
   //
   // To calculate the characters to add we take the difference between the end and the start and subtract one,
   // this is because we need to count for the character we added
-  let charsToAdd = end - start - 1
+  let charsToAdd = end - start - 1;
 
   // TODO: Check if we can remove this
   // It could be -1 in scenarios where nodes start and end in the same location
-  if (charsToAdd == - 1) {
-    charsToAdd = 0
+  if (charsToAdd == -1) {
+    charsToAdd = 0;
   }
 
-  const compliment = getComplimentArray(charsToAdd)
+  const compliment = getComplimentArray(charsToAdd);
 
   return [...head, colorFn(text), ...compliment, ...tail];
 }
@@ -145,5 +165,5 @@ function getRanges(range: Range | undefined) {
 }
 
 function getComplimentArray(length: number): string[] {
-  return new Array(length).fill('')
+  return new Array(length).fill("");
 }

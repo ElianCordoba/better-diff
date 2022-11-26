@@ -1,7 +1,7 @@
 import { getNodesArray, Node } from "./ts-util";
 import { ChangeType, Item, Range } from "./types";
 import { equals, getRange } from "./utils";
-import { NodeIterator, Iterator } from './iterator'
+import { Iterator, NodeIterator } from "./iterator";
 import { Change } from "./change";
 
 export function getInitialDiffs(codeA: string, codeB: string): Change[] {
@@ -10,8 +10,8 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   const nodesA = getNodesArray(codeA);
   const nodesB = getNodesArray(codeB);
 
-  const iterA = new NodeIterator(nodesA, { name: 'a', source: codeA });
-  const iterB = new NodeIterator(nodesB, { name: 'b', source: codeB });
+  const iterA = new NodeIterator(nodesA, { name: "a", source: codeA });
+  const iterB = new NodeIterator(nodesB, { name: "b", source: codeB });
 
   let a: Item | undefined;
   let b: Item | undefined;
@@ -101,7 +101,7 @@ function getChange(
   const rangeA = a ? getRange(a) : undefined;
   const rangeB = b ? getRange(b) : undefined;
 
-  return new Change(type, rangeA, rangeB, a, b)
+  return new Change(type, rangeA, rangeB, a, b);
 }
 
 export function tryMergeRanges(
@@ -132,7 +132,7 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
 
   let currentChangeIndex = -1;
   for (const change of changes) {
-    let candidate = change;
+    const candidate = change;
 
     currentChangeIndex++;
 
@@ -142,7 +142,7 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
 
     // TODO
     if (change.type === ChangeType.change) {
-      console.log('Ignoring', change.type)
+      console.log("Ignoring", change.type);
       continue;
     }
 
@@ -180,7 +180,7 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
 
       changes[nextIndex].seen = true;
 
-      candidate[readFrom] = compatible
+      candidate[readFrom] = compatible;
 
       nextIndex++;
       continue;
