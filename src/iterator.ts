@@ -39,10 +39,10 @@ export class NodeIterator implements Iterator {
     } as Item));
   }
 
-  next() {
-    let i = -1;
-    for (const item of this.items) {
-      i++;
+  next(startFrom = 0) {
+    for (let i = startFrom; i < this.items.length; i++) {
+      const item = this.items[i];
+
       if (item.matched) {
         continue;
       }
@@ -50,8 +50,6 @@ export class NodeIterator implements Iterator {
       this.indexOfLastItem = i;
       return item;
     }
-
-    return;
   }
 
   markMatched(index = this.indexOfLastItem) {

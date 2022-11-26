@@ -47,6 +47,19 @@ describe("Should iterate over node list properly", () => {
     iter.markMatched();
   });
 
+  test.only("Advance from non zero position", () => {
+    const iter = new NodeIterator(aNodes);
+
+    expect(formatSyntaxKind(iter.next(3)?.node!)).toBe("ConstKeyword");
+    iter.markMatched();
+
+    expect(formatSyntaxKind(iter.next(4)?.node!)).toBe("SyntaxList");
+    iter.markMatched();
+
+    expect(formatSyntaxKind(iter.next(5)?.node!)).toBe("VariableDeclaration");
+    iter.markMatched();
+  });
+
   test("Advance skipping matched nodes", () => {
     const iter = new NodeIterator(aNodes);
 
