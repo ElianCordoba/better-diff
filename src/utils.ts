@@ -31,3 +31,10 @@ export function getRange(node: Node): Range {
     end: node.end,
   };
 }
+
+export function mergeRanges(currentRange: Range, newRange: Range) {
+  return {
+    start: Math.min(currentRange.start, newRange.start),
+    end: Math.max(currentRange.end, newRange.end)
+  }
+}

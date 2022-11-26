@@ -1,6 +1,6 @@
 import { getNodesArray, Node } from "./ts-util";
 import { ChangeType, Item, Range } from "./types";
-import { equals, getRange } from "./utils";
+import { equals, getRange, mergeRanges } from "./utils";
 import { Iterator, NodeIterator } from "./iterator";
 import { Change } from "./change";
 
@@ -50,10 +50,24 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     const nearbyMatch = iterB.nextNearby(a.node);
 
     if (nearbyMatch) {
-      iterA.markMatched();
-      iterB.markMatched();
+      // Try match the following nodes on each to the longest common subsequence (LCS)
+      const lcs = getLCS(iterA, iterB, a.index, nearbyMatch.index)
 
-      changes.push(getChange(ChangeType.move, a.node, nearbyMatch.node));
+      let rangeA: Range = { start: 0, end: 0 }
+      let rangeB: Range = { start: 0, end: 0 }
+
+      for (let index = 0; index < lcs; index++) {
+        a = iterA.next()
+        b = iterB.next(nearbyMatch.index)
+
+        iterA.markMatched();
+        iterB.markMatched();
+
+        rangeA = mergeRanges(rangeA, getRange(a!.node))
+        rangeB = mergeRanges(rangeB, getRange(b!.node))
+      }
+
+      changes.push(getChange(ChangeType.move, a!.node, nearbyMatch.node, rangeA, rangeB));
       continue;
     }
 
@@ -97,9 +111,16 @@ function getChange(
   type: ChangeType,
   a: Node | undefined,
   b: Node | undefined,
+  rangeA?: Range,
+  rangeB?: Range
 ): Change {
-  const rangeA = a ? getRange(a) : undefined;
-  const rangeB = b ? getRange(b) : undefined;
+  if (!rangeA) {
+    rangeA = a ? getRange(a) : undefined;
+  }
+
+  if (!rangeB) {
+    rangeB = b ? getRange(b) : undefined;
+  }
 
   return new Change(type, rangeA, rangeB, a, b);
 }
@@ -190,4 +211,33 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
   }
 
   return newChanges;
+}
+
+export function getLCS(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number): number {
+  // Represents how long is the sequence
+  let sequence = 0
+
+  while (true) {
+    const nextA = iterA.peek(indexA)
+
+    if (!nextA) {
+      break
+    }
+
+    const nextB = iterB.peek(indexB)
+
+    if (!nextB) {
+      break
+    }
+
+    if (!equals(nextA, nextB)) {
+      break;
+    }
+
+    indexA++
+    indexB++
+    sequence++
+  }
+
+  return sequence
 }

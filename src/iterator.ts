@@ -7,6 +7,7 @@ export interface Iterator {
   next: () => Item | undefined;
   markMatched: (index?: number) => void;
   nextNearby: (expected: Node, startAtIndex?: number) => Item | undefined;
+  peek: (index: number) => Node | undefined
 }
 
 interface IteratorOptions {
@@ -50,6 +51,16 @@ export class NodeIterator implements Iterator {
       this.indexOfLastItem = i;
       return item;
     }
+  }
+
+  peek(index: number) {
+    const item = this.items[index];
+
+    if (!item || item.matched) {
+      return
+    }
+
+    return item.node
   }
 
   markMatched(index = this.indexOfLastItem) {
