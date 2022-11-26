@@ -2,10 +2,10 @@ import { Node, ts } from "./ts-util";
 import { Range } from "./types";
 
 export function formatSyntaxKind(data: any) {
-  const textValue = data.text ? `| "${data.text}"` : '';
+  const textValue = data.text ? `| "${data.text}"` : "";
   const kind: string = ts.Debug.formatSyntaxKind(data.kind);
 
-  return `${kind.padEnd(25)} ${textValue}`.trim()
+  return `${kind.padEnd(25)} ${textValue}`.trim();
 }
 
 export function equals(nodeA: Node, nodeB: Node) {

@@ -1,6 +1,6 @@
 import { Item } from "./types";
 import { equals, formatSyntaxKind, getRange } from "./utils";
-import { Node } from './ts-util'
+import { Node } from "./ts-util";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 
 export interface Iterator {
@@ -11,7 +11,7 @@ export interface Iterator {
 
 interface IteratorOptions {
   name?: string;
-  source?: string
+  source?: string;
 }
 
 export class NodeIterator implements Iterator {
@@ -20,22 +20,22 @@ export class NodeIterator implements Iterator {
   chars?: string[];
 
   items!: Item[];
-  indexOfLastItem = 0
+  indexOfLastItem = 0;
   offset = 1;
-  matchNumber = 0
+  matchNumber = 0;
 
   readonly MAX_OFFSET = 50;
 
   constructor(nodes: Node[], options?: IteratorOptions) {
     this.name = options?.name;
-    this.chars = options?.source?.split('')
+    this.chars = options?.source?.split("");
 
     this.items = nodes.map((node, index) => ({
       node,
       index,
       matched: false,
       matchNumber: 0,
-      kind: formatSyntaxKind(node)
+      kind: formatSyntaxKind(node),
     } as Item));
   }
 
@@ -55,7 +55,7 @@ export class NodeIterator implements Iterator {
   }
 
   markMatched(index = this.indexOfLastItem) {
-    // TODO: Should only apply for moves, otherwise a move, addition and move 
+    // TODO: Should only apply for moves, otherwise a move, addition and move
     // will display 1 for the first move and 3 for the second
     this.matchNumber++;
     this.items[index].matched = true;
@@ -104,42 +104,42 @@ export class NodeIterator implements Iterator {
   }
 
   printList() {
-    const list = this.items.map(x => {
-      const kind = formatSyntaxKind(x.node)
-      const colorFn = x.matched ? k.blue : k.grey
+    const list = this.items.map((x) => {
+      const kind = formatSyntaxKind(x.node);
+      const colorFn = x.matched ? k.blue : k.grey;
 
-      return `${String(x.matchNumber).padEnd(3)}| ${colorFn(kind)}`
-    })
+      return `${String(x.matchNumber).padEnd(3)}| ${colorFn(kind)}`;
+    });
 
-    console.log(list.join('\n'))
+    console.log(list.join("\n"));
   }
 
   drawRange(node: Node | undefined) {
     if (!this.chars) {
-      console.warn('Tried to draw a range but there was no source')
+      console.warn("Tried to draw a range but there was no source");
       return;
     }
 
     let nodeToDraw: Node | undefined;
 
     if (node) {
-      nodeToDraw = node
+      nodeToDraw = node;
     } else {
       const next = this.next();
 
       if (next) {
-        nodeToDraw = next.node
+        nodeToDraw = next.node;
       }
     }
 
     if (!nodeToDraw) {
-      console.warn('Tried to draw a range but there was no node')
+      console.warn("Tried to draw a range but there was no node");
       return;
     }
 
     const { start, end } = getRange(nodeToDraw);
-    const result = getSourceWithChange(this.chars, start, end, colorFn.magenta)
+    const result = getSourceWithChange(this.chars, start, end, colorFn.magenta);
 
-    console.log(result.join(''))
+    console.log(result.join(""));
   }
 }

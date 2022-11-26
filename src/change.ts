@@ -11,20 +11,34 @@ export class Change {
     public rangeB: Range | undefined,
     // For debugging porpoises, maybe remove in the future
     public nodeA: Node | undefined,
-    public nodeB: Node | undefined
-  ) { }
+    public nodeB: Node | undefined,
+  ) {}
 
   draw(charsA: string[], charsB: string[]) {
     if (this.rangeA) {
-      console.log('----A----')
-      console.log(getSourceWithChange(charsA, this.rangeA.start, this.rangeA.end, colorFn.green).join(''))
-      console.log('\n')
+      console.log("----A----");
+      console.log(
+        getSourceWithChange(
+          charsA,
+          this.rangeA.start,
+          this.rangeA.end,
+          colorFn.green,
+        ).join(""),
+      );
+      console.log("\n");
     }
 
     if (this.rangeB) {
-      console.log('----B----')
-      console.log(getSourceWithChange(charsB, this.rangeB.start, this.rangeB.end, colorFn.green).join(''))
-      console.log('\n')
+      console.log("----B----");
+      console.log(
+        getSourceWithChange(
+          charsB,
+          this.rangeB.start,
+          this.rangeB.end,
+          colorFn.green,
+        ).join(""),
+      );
+      console.log("\n");
     }
   }
 }
