@@ -1,6 +1,7 @@
 import { Node, ts } from "./ts-util";
 import { Range } from "./types";
 
+// deno-lint-ignore no-explicit-any
 export function formatSyntaxKind(data: any) {
   const textValue = data.text ? `| "${data.text}"` : "";
   const kind: string = ts.Debug.formatSyntaxKind(data.kind);

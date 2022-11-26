@@ -132,7 +132,7 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
 
   let currentChangeIndex = -1;
   for (const change of changes) {
-    let candidate = change;
+    const candidate = change;
 
     currentChangeIndex++;
 

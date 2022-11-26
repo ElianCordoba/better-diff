@@ -11,6 +11,7 @@ interface DifferDrawingFns {
   removal: DrawingFn;
   change: DrawingFn;
   // TODO: Type
+  // deno-lint-ignore no-explicit-any
   move: any;
 }
 
