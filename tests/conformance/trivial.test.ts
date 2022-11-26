@@ -3,6 +3,21 @@ import { getSimplifiedDiff } from "../../src";
 import { validateDiff } from "../utils";
 
 describe("Basic tests", () => {
+  test("Ignore trivia", () => {
+    const a = "a";
+
+    const b = `
+    a
+    `;
+
+    const resultA = a
+    const resultB = a
+
+    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+
+    validateDiff(resultA, resultB, sourceA, sourceB);
+  });
+
   test("Single line changes 1", () => {
     const a = "0";
     const b = "1";
@@ -203,33 +218,6 @@ test("Multiple lines removed 2", () => {
   `;
 
   const resultB = `
-  `;
-
-  const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
-
-  validateDiff(resultA, resultB, sourceA, sourceB);
-});
-
-test.skip("Line added and remove", () => {
-  const a = `
-  let up;
-  let middle;
-  `;
-
-  const b = `
-  let middle;
-  let down;
-  `;
-
-  const resultA = `
-  ➖let up➖;
-  let middle;
-  `;
-
-  const resultB = `
-  let up;
-  let middle;
-  ➖let down;➖
   `;
 
   const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);

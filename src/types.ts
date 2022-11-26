@@ -17,22 +17,12 @@ export interface Range {
   end: number;
 }
 
-export interface Change {
-  type: ChangeType;
-
-  // Changes on source
-  rangeA: Range | undefined;
-  // Changes on revision
-  rangeB: Range | undefined;
-
-  // For debugging porpoises, maybe remove in the future
-  nodeA: Node | undefined;
-  nodeB: Node | undefined;
-}
-
 export interface Item {
   node: Node;
   matched: boolean;
+  matchNumber: number;
+  kind: string;
+  index: number;
 }
 
 export enum MatchStatus {

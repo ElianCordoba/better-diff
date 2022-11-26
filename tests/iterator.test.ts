@@ -26,24 +26,24 @@ describe("Should iterate over node list properly", () => {
   test("Simple advance", () => {
     const iter = new NodeIterator(aNodes);
 
-    expect(formatSyntaxKind(iter.next()?.node.kind!)).toBe("SyntaxList");
+    expect(formatSyntaxKind(iter.next()?.node!)).toBe("SyntaxList");
     iter.markMatched();
 
-    expect(formatSyntaxKind(iter.next()?.node.kind!)).toBe("VariableStatement");
+    expect(formatSyntaxKind(iter.next()?.node!)).toBe("VariableStatement");
     iter.markMatched();
 
-    expect(formatSyntaxKind(iter.next()?.node.kind!)).toBe(
+    expect(formatSyntaxKind(iter.next()?.node!)).toBe(
       "VariableDeclarationList",
     );
     iter.markMatched();
 
-    expect(formatSyntaxKind(iter.next()?.node.kind!)).toBe("ConstKeyword");
+    expect(formatSyntaxKind(iter.next()?.node!)).toBe("ConstKeyword");
     iter.markMatched();
 
-    expect(formatSyntaxKind(iter.next()?.node.kind!)).toBe("SyntaxList");
+    expect(formatSyntaxKind(iter.next()?.node!)).toBe("SyntaxList");
     iter.markMatched();
 
-    expect(formatSyntaxKind(iter.next()?.node.kind!)).toBe("VariableDeclaration");
+    expect(formatSyntaxKind(iter.next()?.node!)).toBe("VariableDeclaration");
     iter.markMatched();
   });
 
@@ -54,15 +54,15 @@ describe("Should iterate over node list properly", () => {
     iter.markMatched(3);
     iter.markMatched(4);
 
-    expect(formatSyntaxKind(iter.next()?.node.kind!)).toBe("SyntaxList");
+    expect(formatSyntaxKind(iter.next()?.node!)).toBe("SyntaxList");
     iter.markMatched();
 
-    expect(formatSyntaxKind(iter.next()?.node.kind!)).toBe(
+    expect(formatSyntaxKind(iter.next()?.node!)).toBe(
       "VariableDeclarationList",
     );
     iter.markMatched();
 
-    expect(formatSyntaxKind(iter.next()?.node.kind!)).toBe("VariableDeclaration");
+    expect(formatSyntaxKind(iter.next()?.node!)).toBe("VariableDeclaration");
     iter.markMatched();
   });
 
@@ -76,7 +76,7 @@ describe("Should iterate over node list properly", () => {
 
     const expected = aNodes[0];
 
-    expect(formatSyntaxKind(iter.nextNearby(expected, 5)!.node.kind)).toBe(
+    expect(formatSyntaxKind(iter.nextNearby(expected, 5)!.node)).toBe(
       "SyntaxList",
     );
   });

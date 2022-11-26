@@ -18,11 +18,11 @@ export function getNodesArray(source: string) {
     true,
   );
 
-  const tokens: Node[] = [];
+  const nodes: Node[] = [];
 
   function walk(node: Node) {
-    //tokens.push(ts.Debug.formatSyntaxKind(node.kind))
-    tokens.push(node);
+    //nodes.push(ts.Debug.formatSyntaxKind(node.kind))
+    nodes.push(node);
 
     // { node, depth, scopeStart, scopeEnd }
 
@@ -32,7 +32,7 @@ export function getNodesArray(source: string) {
   sourceFile.getChildren().forEach((x) => walk(x as Node));
 
   // Remove EOF to simplify things out. It contains trivia that appears broken in the diff if not treated separately
-  tokens.pop();
+  nodes.pop();
 
-  return tokens;
+  return nodes;
 }

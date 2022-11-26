@@ -1,6 +1,7 @@
 import { Item } from "./types";
-import { equals } from "./utils";
+import { equals, formatSyntaxKind, getRange } from "./utils";
 import { Node } from './ts-util'
+import { colorFn, getSourceWithChange, k } from "./reporter";
 
 export interface Iterator {
   next: () => Item | undefined;
@@ -8,23 +9,34 @@ export interface Iterator {
   nextNearby: (expected: Node, startAtIndex?: number) => Item | undefined;
 }
 
-export class NodeIterator implements Iterator {
-  name: string;
+interface IteratorOptions {
+  name?: string;
+  source?: string
+}
 
-  items: Item[];
-  lastIndexSeen = 0
+export class NodeIterator implements Iterator {
+  name?: string;
+  // TODO: Maybe optimize? May consume a lot of memory
+  chars?: string[];
+
+  items!: Item[];
+  indexOfLastItem = 0
   offset = 1;
+  matchNumber = 0
 
   readonly MAX_OFFSET = 50;
 
-  constructor(nodes: Node[], name: string = '') {
-    this.name = name;
+  constructor(nodes: Node[], options?: IteratorOptions) {
+    this.name = options?.name;
+    this.chars = options?.source?.split('')
 
     this.items = nodes.map((node, index) => ({
       node,
       index,
       matched: false,
-    }));
+      matchNumber: 0,
+      kind: formatSyntaxKind(node)
+    } as Item));
   }
 
   next() {
@@ -35,20 +47,24 @@ export class NodeIterator implements Iterator {
         continue;
       }
 
-      this.lastIndexSeen = i;
+      this.indexOfLastItem = i;
       return item;
     }
 
     return;
   }
 
-  markMatched(index = this.lastIndexSeen) {
+  markMatched(index = this.indexOfLastItem) {
+    // TODO: Should only apply for moves, otherwise a move, addition and move 
+    // will display 1 for the first move and 3 for the second
+    this.matchNumber++;
     this.items[index].matched = true;
+    this.items[index].matchNumber = this.matchNumber;
   }
 
   nextNearby(
     expected: Node,
-    startAtIndex = this.lastIndexSeen,
+    startAtIndex = this.indexOfLastItem,
   ): Item | undefined {
     const ahead = this.items[startAtIndex + this.offset];
     const back = this.items[startAtIndex - this.offset];
@@ -63,7 +79,7 @@ export class NodeIterator implements Iterator {
       const index = startAtIndex + this.offset;
 
       // Set this so the markMatched works
-      this.lastIndexSeen = index;
+      this.indexOfLastItem = index;
 
       this.offset = 0;
       return this.items[index];
@@ -71,7 +87,7 @@ export class NodeIterator implements Iterator {
       const index = startAtIndex - this.offset;
 
       // Set this so the markMatched works
-      this.lastIndexSeen = index;
+      this.indexOfLastItem = index;
 
       this.offset = 0;
       return this.items[index];
@@ -85,5 +101,45 @@ export class NodeIterator implements Iterator {
     }
 
     return this.nextNearby(expected, startAtIndex);
+  }
+
+  printList() {
+    const list = this.items.map(x => {
+      const kind = formatSyntaxKind(x.node)
+      const colorFn = x.matched ? k.blue : k.grey
+
+      return `${String(x.matchNumber).padEnd(3)}| ${colorFn(kind)}`
+    })
+
+    console.log(list.join('\n'))
+  }
+
+  drawRange(node: Node | undefined) {
+    if (!this.chars) {
+      console.warn('Tried to draw a range but there was no source')
+      return;
+    }
+
+    let nodeToDraw: Node | undefined;
+
+    if (node) {
+      nodeToDraw = node
+    } else {
+      const next = this.next();
+
+      if (next) {
+        nodeToDraw = next.node
+      }
+    }
+
+    if (!nodeToDraw) {
+      console.warn('Tried to draw a range but there was no node')
+      return;
+    }
+
+    const { start, end } = getRange(nodeToDraw);
+    const result = getSourceWithChange(this.chars, start, end, colorFn.magenta)
+
+    console.log(result.join(''))
   }
 }

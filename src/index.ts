@@ -1,6 +1,7 @@
+import { Change } from "./change";
 import { getInitialDiffs } from "./main";
 import { applyChangesToSources, simplifiedDrawingFunctions } from "./reporter";
-import { Change, DiffResult } from "./types";
+import { DiffResult } from "./types";
 
 export function getDiff(sourceA: string, sourceB: string): DiffResult {
   const diffs = getInitialDiffs(sourceA, sourceB);
