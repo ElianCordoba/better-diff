@@ -15,9 +15,18 @@ interface DifferDrawingFns {
   move: any;
 }
 
-interface ColorFns {
-  [key: string]: (text: string) => string;
-}
+type Colors =
+  "blue" |
+  "green" |
+  "magenta" |
+  "red" |
+  "yellow" |
+  "cyan" |
+  "black" |
+  "white" |
+  "grey"
+
+type ColorFns = Record<Colors, (text: string) => string>
 
 export const colorFn: ColorFns = {
   blue: (x) => k.underline(k.blue(x)),

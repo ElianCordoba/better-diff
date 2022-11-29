@@ -1,5 +1,5 @@
 import { Item } from "./types";
-import { equals, formatSyntaxKind, getRange } from "./utils";
+import { equals, formatSyntaxKind, getNodeForPrinting, getRange } from "./utils";
 import { Node } from "./ts-util";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 
@@ -114,11 +114,22 @@ export class NodeIterator implements Iterator {
   }
 
   printList() {
-    const list = this.items.map((x) => {
-      const kind = formatSyntaxKind(x.node);
-      const colorFn = x.matched ? k.blue : k.grey;
+    console.log(`${colorFn.blue('index')} | ${colorFn.magenta('match n°')} | ${colorFn.red('         kind          ')} | ${colorFn.yellow('text')}`);
 
-      return `${String(x.matchNumber).padEnd(3)}| ${colorFn(kind)}`;
+    const list = this.items.map((x, i) => {
+      const colorFn = x.matched ? k.green : k.grey;
+
+      const index = String(i).padStart(3).padEnd(6)
+
+      const matchNumber = String(x.matchNumber).padStart(5).padEnd(10)
+
+      const { kind, text } = getNodeForPrinting(x)
+      const _kind = kind.padStart(5).padEnd(25);
+      const _text = text.padStart(5)
+
+      const row = `${index}|${matchNumber}|${colorFn(_kind)}|${_text}`
+
+      return colorFn(row);
     });
 
     console.log(list.join("\n"));

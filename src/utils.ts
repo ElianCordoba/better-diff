@@ -1,12 +1,39 @@
+import { SyntaxKind } from "typescript";
 import { Node, ts } from "./ts-util";
-import { Range } from "./types";
+import { Item, Range } from "./types";
 
 // deno-lint-ignore no-explicit-any
 export function formatSyntaxKind(data: any) {
   const textValue = data.text ? `| "${data.text}"` : "";
   const kind: string = ts.Debug.formatSyntaxKind(data.kind);
 
-  return `${kind.padEnd(25)} ${textValue}`.trim();
+  return `${kind.padEnd(25)}${textValue}`.trim();
+}
+
+export function getNodeForPrinting(item: Item) {
+  const hasText = item.node.text || ''
+  const isString = item.node.kind === SyntaxKind.StringLiteral
+
+  let text;
+
+  if (isString) {
+    text = `"${hasText}"`
+  } else {
+    text = hasText
+  }
+
+  return {
+    kind: ts.Debug.formatSyntaxKind(item.node.kind),
+    text
+  }
+}
+
+export function assertEqualItems(a: Item, b: Item) {
+  const match = equals(a.node, b.node)
+
+  if (!match) {
+    throw new Error(`Assertion failed: a (${formatSyntaxKind(a.node)}) does not match b (${formatSyntaxKind(b.node)})`)
+  }
 }
 
 export function equals(nodeA: Node, nodeB: Node) {
