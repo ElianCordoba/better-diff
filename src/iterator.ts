@@ -6,7 +6,7 @@ import { colorFn, getSourceWithChange, k } from "./reporter";
 export interface Iterator {
   next: () => Item | undefined;
   markMatched: (index?: number) => void;
-  nextNearby: (expected: Node, startAtIndex?: number) => Item | undefined;
+  getCandidatesNodes: (expected: Node, startAtIndex?: number) => number[];
   peek: (index: number) => Node | undefined
 }
 
@@ -22,10 +22,9 @@ export class NodeIterator implements Iterator {
 
   items!: Item[];
   indexOfLastItem = 0;
-  offset = 1;
   matchNumber = 0;
 
-  readonly MAX_OFFSET = 50;
+  readonly MAX_OFFSET = 500;
 
   constructor(nodes: Node[], options?: IteratorOptions) {
     this.name = options?.name;
@@ -71,45 +70,47 @@ export class NodeIterator implements Iterator {
     this.items[index].matchNumber = this.matchNumber;
   }
 
-  nextNearby(
+  getCandidatesNodes(
     expected: Node,
-    startAtIndex = this.indexOfLastItem,
-  ): Item | undefined {
-    const ahead = this.items[startAtIndex + this.offset];
-    const back = this.items[startAtIndex - this.offset];
+  ): number[] {
 
-    // We checked everything and nothing was found, exit early
-    if (!ahead && !back) {
-      this.offset = 0;
-      return undefined;
+    // This variable will hold the indexes of known nodes that match the node we are looking for.
+    // We returns more than once in order to calculate the LCS from a multiple places and then take the best result
+    const candidates: number[] = []
+
+    // Start from the next node
+    let offset = 0
+
+    const search = (startFrom: number): void => {
+      const ahead = this.items[startFrom + offset];
+      const back = this.items[startFrom - offset];
+
+      // We checked everything and nothing was found, exit early
+      if (!ahead && !back) {
+        return;
+      }
+
+      const foundAhead = ahead && !ahead.matched && equals(expected, ahead.node)
+      const foundBack = back && !back.matched && equals(expected, back.node)
+
+      if (foundAhead || foundBack) {
+        const index = foundAhead ? startFrom + offset : startFrom - offset;
+
+        candidates.push(index);
+      }
+
+      offset++;
+
+      if (offset >= this.MAX_OFFSET) {
+        return;
+      }
+
+      return search(startFrom);
     }
 
-    if (ahead && !ahead.matched && equals(expected, ahead.node)) {
-      const index = startAtIndex + this.offset;
+    search(this.indexOfLastItem)
 
-      // Set this so the markMatched works
-      this.indexOfLastItem = index;
-
-      this.offset = 0;
-      return this.items[index];
-    } else if (back && !back.matched && equals(expected, back.node)) {
-      const index = startAtIndex - this.offset;
-
-      // Set this so the markMatched works
-      this.indexOfLastItem = index;
-
-      this.offset = 0;
-      return this.items[index];
-    }
-
-    this.offset++;
-
-    if (this.offset >= this.MAX_OFFSET) {
-      this.offset = 0;
-      return undefined;
-    }
-
-    return this.nextNearby(expected, startAtIndex);
+    return candidates
   }
 
   printList() {
