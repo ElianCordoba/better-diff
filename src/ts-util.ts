@@ -1,4 +1,4 @@
-import _ts from "typescript";
+import _ts, { SyntaxKind } from "typescript";
 
 declare namespace MYTS {
   // deno-lint-ignore no-explicit-any
@@ -21,18 +21,18 @@ export function getNodesArray(source: string) {
   const nodes: Node[] = [];
 
   function walk(node: Node) {
-    //nodes.push(ts.Debug.formatSyntaxKind(node.kind))
-    nodes.push(node);
-
-    // { node, depth, scopeStart, scopeEnd }
-
-    node.getChildren().forEach((x) => walk(x as Node));
+    // TODO: https://github.com/ElianCordoba/better-diff/issues/7
+    if (node.kind !== 348) {
+      // { node, depth, scopeStart, scopeEnd }
+      nodes.push(node);
+      node.getChildren().forEach((x) => walk(x as Node));
+    }
   }
 
   sourceFile.getChildren().forEach((x) => walk(x as Node));
 
   // Remove EOF to simplify things out. It contains trivia that appears broken in the diff if not treated separately
-  nodes.pop();
-
-  return nodes;
+  //nodes.pop();
+  // TODO: https://github.com/ElianCordoba/better-diff/issues/7
+  return nodes.filter(({ kind }) => kind !== SyntaxKind.EndOfFileToken && kind !== SyntaxKind.SyntaxList);
 }
