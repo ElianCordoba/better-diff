@@ -79,7 +79,8 @@ describe("Should iterate over node list properly", () => {
     iter.markMatched();
   });
 
-  test("Find nearby token", () => {
+  // TODO: Refactor and add more test to check for multiple matches
+  test("Find nearby nodes", () => {
     const iter = new NodeIterator(aNodes);
 
     iter.markMatched(1);
@@ -89,7 +90,9 @@ describe("Should iterate over node list properly", () => {
 
     const expected = aNodes[0];
 
-    expect(formatSyntaxKind(iter.nextNearby(expected, 5)!.node)).toBe(
+    const index = iter.getCandidatesNodes(expected)[0]
+
+    expect(formatSyntaxKind(iter.items[index])).toBe(
       "SyntaxList",
     );
   });
