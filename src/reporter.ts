@@ -49,7 +49,7 @@ export const simplifiedDrawingFunctions: DifferDrawingFns = {
    * @param index Used to match moves
    */
   move: (index: number) => {
-    return (text: string) => `${index}🔀${text}`;
+    return (text: string) => `${index}🔀${text}⏹️`;
   },
 };
 
