@@ -29,6 +29,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     // iterB.printList()
     // console.log('\n')
 
+    // One of the iterators finished. We will traverse the remaining nodes in the other iterator
     if (!a || !b) {
       const iterOn = !a ? iterB : iterA;
       const type = !a ? ChangeType.addition : ChangeType.removal;
@@ -38,36 +39,77 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       break;
     }
 
-    if (equals(a.node, b.node)) {
-      if (a.index !== b.index) {
-        changes.push(getChange(ChangeType.move, a.node, b.node));
-      }
+    // Given a node a we look in the b side to find possible matches
+    const candidatesMatches = iterB.getCandidatesNodes(a.node);
+
+    if (candidatesMatches.length === 1) {
       iterA.markMatched();
-      iterB.markMatched();
+      iterB.markMatched(candidatesMatches[0]);
+
+      if (equals(a.node, b.node)) {
+        if (a?.index === b.index) {
+          continue;
+        } else {
+          // TODO: Do the LCS stuff here?
+          changes.push(getChange(ChangeType.move, a!.node, b!.node));
+        }
+      }
+
       continue;
     }
 
-    const nearbyMatch = iterB.nextNearby(a.node);
+    if (candidatesMatches.length > 1) {
+      function getLCS(candidates: number[]) {
+        let bestResult = 0;
+        let bestIndex = 0;
 
-    if (nearbyMatch) {
-      // Try match the following nodes on each to the longest common subsequence (LCS)
-      const lcs = getLCS(iterA, iterB, a.index, nearbyMatch.index)
+        for (const index of candidates) {
+          const lcs = getSequenceLength(iterA, iterB, a!.index, index)
 
-      let rangeA: Range = { start: 0, end: 0 }
-      let rangeB: Range = { start: 0, end: 0 }
+          if (lcs > bestResult) {
+            bestResult = lcs
+            bestIndex = index
+          }
+        }
 
-      for (let index = 0; index < lcs; index++) {
+        return { bestIndex, bestResult }
+      }
+
+      let { bestIndex, bestResult } = getLCS(candidatesMatches)
+
+      let rangeA: Range | undefined;
+      let rangeB: Range | undefined;
+
+      for (let index = bestIndex; index < bestIndex + bestResult; index++) {
         a = iterA.next()
-        b = iterB.next(nearbyMatch.index)
+        b = iterB.next(index)
 
         iterA.markMatched();
         iterB.markMatched();
 
-        rangeA = mergeRanges(rangeA, getRange(a!.node))
-        rangeB = mergeRanges(rangeB, getRange(b!.node))
+        // TODO: Don't calculate this if it's not a change
+
+        if (!rangeA) {
+          rangeA = getRange(a!.node)
+        } else {
+          rangeA = mergeRanges(rangeA, getRange(a!.node))
+        }
+
+        if (!rangeB) {
+          rangeB = getRange(b!.node)
+        } else {
+          rangeB = mergeRanges(rangeB, getRange(b!.node))
+        }
       }
 
-      changes.push(getChange(ChangeType.move, a!.node, nearbyMatch.node, rangeA, rangeB));
+      // If both iterators are in the same position means that the code is exactly the same. No need to report anything
+      const noChange = iterA.indexOfLastItem === iterB.indexOfLastItem
+
+      if (noChange) {
+        continue
+      }
+
+      changes.push(getChange(ChangeType.move, a!.node, iterB.peek(bestIndex), rangeA, rangeB));
       continue;
     }
 
@@ -92,6 +134,7 @@ function oneSidedIteration(
 
   let value = iter.next();
 
+  // TODO: Compact
   while (value) {
     if (typeOfChange === ChangeType.addition) {
       changes.push(getChange(typeOfChange, undefined, value.node));
@@ -213,7 +256,7 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
   return newChanges;
 }
 
-export function getLCS(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number): number {
+export function getSequenceLength(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number): number {
   // Represents how long is the sequence
   let sequence = 0
 

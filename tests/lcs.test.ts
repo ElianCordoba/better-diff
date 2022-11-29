@@ -1,6 +1,6 @@
 import { vi, describe, expect, test } from "vitest";
 import { Iterator } from '../src/iterator'
-import { getLCS } from "../src/main";
+import { getSequenceLength } from "../src/main";
 
 class MockIterator {
   constructor(public items: any[]) { }
@@ -30,11 +30,11 @@ describe("Properly calculate LCS", () => {
     const iterA: any = new MockIterator(charsA)
     const iterB: any = new MockIterator(charsB)
 
-    let lcs = getLCS(iterA, iterB, 0, 0)
+    let lcs = getSequenceLength(iterA, iterB, 0, 0)
 
     expect(lcs).toBe(2)
 
-    lcs = getLCS(iterB, iterA, 0, 0)
+    lcs = getSequenceLength(iterB, iterA, 0, 0)
 
     expect(lcs).toBe(2)
   })
@@ -46,7 +46,7 @@ describe("Properly calculate LCS", () => {
     const iterA: any = new MockIterator(charsA)
     const iterB: any = new MockIterator(charsB)
 
-    const lcs = getLCS(iterA, iterB, 0, 0)
+    const lcs = getSequenceLength(iterA, iterB, 0, 0)
 
     expect(lcs).toBe(3)
   })
