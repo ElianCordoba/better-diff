@@ -1,6 +1,6 @@
 import { getNodesArray, Node } from "./ts-util";
 import { ChangeType, Item, Range } from "./types";
-import { equals, getRange, mergeRanges } from "./utils";
+import { assertEqualItems, equals, getRange, mergeRanges } from "./utils";
 import { Iterator, NodeIterator } from "./iterator";
 import { Change } from "./change";
 
@@ -42,18 +42,32 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     // Given a node a we look in the b side to find possible matches
     const candidatesMatches = iterB.getCandidatesNodes(a.node);
 
+    // We didn't find any node on B side to match the current A side node
+    if (candidatesMatches.length === 0) {
+      // TODO: Maybe push change type 'change' ?
+      changes.push(getChange(ChangeType.addition, a.node, b.node));
+      changes.push(getChange(ChangeType.removal, a.node, b.node));
+
+      iterA.markMatched();
+      iterB.markMatched();
+      continue
+    }
+
+    // Fast path:TODO 
     if (candidatesMatches.length === 1) {
       iterA.markMatched();
       iterB.markMatched(candidatesMatches[0]);
 
-      if (equals(a.node, b.node)) {
-        if (a?.index === b.index) {
-          continue;
-        } else {
-          // TODO: Do the LCS stuff here?
-          changes.push(getChange(ChangeType.move, a!.node, b!.node));
-        }
+      // TODO: Maybe add a heuristic so that we don't need this check?
+      assertEqualItems(a, b)
+
+      if (a?.index === b.index) {
+        continue;
+      } else {
+        // TODO: Do the LCS stuff here?
+        changes.push(getChange(ChangeType.move, a!.node, b!.node));
       }
+
 
       continue;
     }
@@ -112,15 +126,6 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       changes.push(getChange(ChangeType.move, a!.node, iterB.peek(bestIndex), rangeA, rangeB));
       continue;
     }
-
-    // No match
-    // TODO: Maybe push change type 'change' ?
-    changes.push(getChange(ChangeType.addition, a.node, b.node));
-    changes.push(getChange(ChangeType.removal, a.node, b.node));
-
-    // En verdad mas que matched seria unmatched pero lo quiero marcar con algo
-    iterA.markMatched();
-    iterB.markMatched();
   } while (a); // If there are no more nodes, a will be undefined
 
   return compactChanges(changes);
