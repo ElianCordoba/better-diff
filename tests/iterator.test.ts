@@ -92,7 +92,7 @@ describe("Should iterate over node list properly", () => {
 
     const index = iter.getCandidatesNodes(expected)[0]
 
-    expect(formatSyntaxKind(iter.items[index])).toBe(
+    expect(formatSyntaxKind(iter.items[index].node)).toBe(
       "SyntaxList",
     );
   });

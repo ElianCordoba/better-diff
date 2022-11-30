@@ -3,9 +3,9 @@ import { Node, ts } from "./ts-util";
 import { Item, Range } from "./types";
 
 // deno-lint-ignore no-explicit-any
-export function formatSyntaxKind(data: any) {
-  const textValue = data.text ? `| "${data.text}"` : "";
-  const kind: string = ts.Debug.formatSyntaxKind(data.kind);
+export function formatSyntaxKind(node: Node) {
+  const textValue = node.text ? `| "${node.text}"` : "";
+  const kind: string = ts.Debug.formatSyntaxKind(node.kind);
 
   return `${kind.padEnd(25)}${textValue}`.trim();
 }

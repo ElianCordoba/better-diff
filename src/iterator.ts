@@ -24,6 +24,7 @@ export class NodeIterator implements Iterator {
   indexOfLastItem = 0;
   matchNumber = 0;
 
+  // TODO: Find real value or make it configurable via CLI option
   readonly MAX_OFFSET = 500;
 
   constructor(nodes: Node[], options?: IteratorOptions) {
@@ -35,7 +36,6 @@ export class NodeIterator implements Iterator {
       index,
       matched: false,
       matchNumber: 0,
-      kind: formatSyntaxKind(node),
     } as Item));
   }
 
