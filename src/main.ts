@@ -307,6 +307,10 @@ function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator) {
   let bestResult = 0;
   let bestIndex = 0;
 
+  if (candidates.length === 0) {
+    return { bestIndex, bestResult };
+  }
+
   for (const index of candidates) {
     const lcs = getSequenceLength(iterA, iterB, iterA.indexOfLastItem, index);
 
