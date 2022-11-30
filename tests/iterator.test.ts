@@ -27,70 +27,70 @@ describe.skip("Should iterate over node list properly", () => {
     const iter = new Iterator(aNodes);
 
     expect(formatSyntaxKind(iter.next()?.node!)).toBe("SyntaxList");
-    iter.markMatched();
+    iter.mark();
 
     expect(formatSyntaxKind(iter.next()?.node!)).toBe("VariableStatement");
-    iter.markMatched();
+    iter.mark();
 
     expect(formatSyntaxKind(iter.next()?.node!)).toBe(
       "VariableDeclarationList",
     );
-    iter.markMatched();
+    iter.mark();
 
     expect(formatSyntaxKind(iter.next()?.node!)).toBe("ConstKeyword");
-    iter.markMatched();
+    iter.mark();
 
     expect(formatSyntaxKind(iter.next()?.node!)).toBe("SyntaxList");
-    iter.markMatched();
+    iter.mark();
 
     expect(formatSyntaxKind(iter.next()?.node!)).toBe("VariableDeclaration");
-    iter.markMatched();
+    iter.mark();
   });
 
   test.only("Advance from non zero position", () => {
     const iter = new Iterator(aNodes);
 
     expect(formatSyntaxKind(iter.next(3)?.node!)).toBe("ConstKeyword");
-    iter.markMatched();
+    iter.mark();
 
     expect(formatSyntaxKind(iter.next(4)?.node!)).toBe("SyntaxList");
-    iter.markMatched();
+    iter.mark();
 
     expect(formatSyntaxKind(iter.next(5)?.node!)).toBe("VariableDeclaration");
-    iter.markMatched();
+    iter.mark();
   });
 
   test("Advance skipping matched nodes", () => {
     const iter = new Iterator(aNodes);
 
-    iter.markMatched(1);
-    iter.markMatched(3);
-    iter.markMatched(4);
+    iter.mark(1);
+    iter.mark(3);
+    iter.mark(4);
 
     expect(formatSyntaxKind(iter.next()?.node!)).toBe("SyntaxList");
-    iter.markMatched();
+    iter.mark();
 
     expect(formatSyntaxKind(iter.next()?.node!)).toBe(
       "VariableDeclarationList",
     );
-    iter.markMatched();
+    iter.mark();
 
     expect(formatSyntaxKind(iter.next()?.node!)).toBe("VariableDeclaration");
-    iter.markMatched();
+    iter.mark();
   });
 
   // TODO: Refactor and add more test to check for multiple matches
   test("Find nearby nodes", () => {
     const iter = new Iterator(aNodes);
 
-    iter.markMatched(1);
-    iter.markMatched(2);
-    iter.markMatched(3);
-    iter.markMatched(4);
+    iter.mark(1);
+    iter.mark(2);
+    iter.mark(3);
+    iter.mark(4);
 
     const expected = aNodes[0];
 
-    const index = iter.getCandidatesNodes(expected)[0];
+    const index = iter.getCandidates(expected)[0];
 
     expect(formatSyntaxKind(iter.items[index].node)).toBe(
       "SyntaxList",

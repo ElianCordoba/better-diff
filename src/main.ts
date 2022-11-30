@@ -46,8 +46,8 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     // B: 1 2 3
     // From the perspective of A, the LCS is [1, 2], but from the other perspective it's the real maxima [1, 2, 3]
     // More about this in the move tests
-    const candidatesAtoB = iterB.getCandidatesNodes(a.node);
-    const candidatesBtoA = iterA.getCandidatesNodes(b.node);
+    const candidatesAtoB = iterB.getCandidates(a.node);
+    const candidatesBtoA = iterA.getCandidates(b.node);
 
     // We didn't find any match
     if (candidatesAtoB.length === 0 && candidatesBtoA.length === 0) {
@@ -55,8 +55,8 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       changes.push(getChange(ChangeType.addition, a.node, b.node));
       changes.push(getChange(ChangeType.removal, a.node, b.node));
 
-      iterA.markMatched();
-      iterB.markMatched();
+      iterA.mark();
+      iterB.mark();
       continue;
     }
 
@@ -95,8 +95,8 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       indexA++;
       indexB++;
 
-      iterA.markMatched();
-      iterB.markMatched();
+      iterA.mark();
+      iterB.mark();
 
       // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
       if (a?.index === b?.index) {
@@ -155,7 +155,7 @@ function oneSidedIteration(
       changes.push(getChange(typeOfChange, value.node, undefined));
     }
 
-    iter.markMatched();
+    iter.mark();
 
     value = iter.next();
   }

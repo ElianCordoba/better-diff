@@ -55,7 +55,7 @@ export class Iterator {
     return item.node;
   }
 
-  markMatched(index = this.indexOfLastItem) {
+  mark(index = this.indexOfLastItem) {
     // TODO: Should only apply for moves, otherwise a move, addition and move
     // will display 1 for the first move and 3 for the second
     this.matchNumber++;
@@ -63,7 +63,7 @@ export class Iterator {
     this.items[index].matchNumber = this.matchNumber;
   }
 
-  getCandidatesNodes(
+  getCandidates(
     expected: Node,
   ): number[] {
     // This variable will hold the indexes of known nodes that match the node we are looking for.
@@ -127,7 +127,7 @@ export class Iterator {
     console.log(list.join("\n"));
   }
 
-  drawRange(node: Node | undefined) {
+  printRange(node: Node | undefined) {
     if (!this.chars) {
       console.warn("Tried to draw a range but there was no source");
       return;
