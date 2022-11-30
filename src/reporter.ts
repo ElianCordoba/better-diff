@@ -10,9 +10,7 @@ interface DifferDrawingFns {
   addition: DrawingFn;
   removal: DrawingFn;
   change: DrawingFn;
-  // TODO: Type
-  // deno-lint-ignore no-explicit-any
-  move: any;
+  move: (matchNumber: number) => DrawingFn;
 }
 
 type Colors =
@@ -45,7 +43,7 @@ export const defaultDrawingFunctions: DifferDrawingFns = {
   addition: colorFn.green,
   removal: colorFn.red,
   change: colorFn.yellow,
-  move: colorFn.blue,
+  move: _ => text => colorFn.blue(text),
 };
 
 // Testing friendly
@@ -53,13 +51,7 @@ export const simplifiedDrawingFunctions: DifferDrawingFns = {
   addition: (text) => `➕${text}➕`,
   removal: (text) => `➖${text}➖`,
   change: (text) => `✏️${text}✏️`,
-  /**
-   * @param startSection On the source side the decoration is `5️⃣let name➡️` and on the revision it's `⬅️let name5️⃣`
-   * @param index Used to match moves
-   */
-  move: (index: number) => {
-    return (text: string) => `${index}🔀${text}⏹️`;
-  },
+  move: matchNumber => text => `${matchNumber}🔀${text}⏹️`,
 };
 
 export function applyChangesToSources(
