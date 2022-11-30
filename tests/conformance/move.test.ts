@@ -55,6 +55,36 @@ describe("Properly report lines added", () => {
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
 
+  test("Multi characters move 2", () => {
+    const a = `
+      console.log()
+      let name = 'Elian'
+      let age;
+    `;
+
+    const b = `
+      let age;
+      console.log()
+      let name = 'Elian'
+    `;
+
+    const resultA = `
+      1🔀console.log()
+      let name = 'Elian'⏹️
+      2🔀let age;⏹️
+    `;
+
+    const resultB = `
+      2🔀let age;⏹️
+      1🔀console.log()
+      let name = 'Elian'⏹️
+    `;
+
+    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+
+    validateDiff(resultA, resultB, sourceA, sourceB);
+  });
+
   test("LCS case", () => {
     const a = `
       1
