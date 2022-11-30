@@ -53,79 +53,63 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       continue
     }
 
-    // Fast path:TODO 
-    if (candidatesMatches.length === 1) {
-      iterA.markMatched();
-      iterB.markMatched(candidatesMatches[0]);
+    function getLCS(candidates: number[]) {
+      let bestResult = 0;
+      let bestIndex = 0;
 
-      // TODO: Maybe add a heuristic so that we don't need this check?
-      assertEqualItems(a, b)
+      for (const index of candidates) {
+        const lcs = getSequenceLength(iterA, iterB, a!.index, index)
 
-      if (a?.index === b.index) {
-        continue;
-      } else {
-        // TODO: Do the LCS stuff here?
-        changes.push(getChange(ChangeType.move, a!.node, b!.node));
+        if (lcs > bestResult) {
+          bestResult = lcs
+          bestIndex = index
+        }
       }
 
-
-      continue;
+      return { bestIndex, bestResult }
     }
 
-    if (candidatesMatches.length > 1) {
-      function getLCS(candidates: number[]) {
-        let bestResult = 0;
-        let bestIndex = 0;
+    let { bestIndex, bestResult } = getLCS(candidatesMatches)
 
-        for (const index of candidates) {
-          const lcs = getSequenceLength(iterA, iterB, a!.index, index)
+    let rangeA: Range | undefined;
+    let rangeB: Range | undefined;
 
-          if (lcs > bestResult) {
-            bestResult = lcs
-            bestIndex = index
-          }
-        }
+    for (let index = bestIndex; index < bestIndex + bestResult; index++) {
+      a = iterA.next()
+      b = iterB.next(index)
 
-        return { bestIndex, bestResult }
-      }
+      iterA.markMatched();
+      iterB.markMatched();
 
-      let { bestIndex, bestResult } = getLCS(candidatesMatches)
-
-      let rangeA: Range | undefined;
-      let rangeB: Range | undefined;
-
-      for (let index = bestIndex; index < bestIndex + bestResult; index++) {
-        a = iterA.next()
-        b = iterB.next(index)
-
-        iterA.markMatched();
-        iterB.markMatched();
-
-        // TODO: Don't calculate this if it's not a change
-
-        if (!rangeA) {
-          rangeA = getRange(a!.node)
-        } else {
-          rangeA = mergeRanges(rangeA, getRange(a!.node))
-        }
-
-        if (!rangeB) {
-          rangeB = getRange(b!.node)
-        } else {
-          rangeB = mergeRanges(rangeB, getRange(b!.node))
-        }
-      }
-
-      // If both iterators are in the same position means that the code is exactly the same. No need to report anything
-      const noChange = iterA.indexOfLastItem === iterB.indexOfLastItem
-
-      if (noChange) {
+      // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
+      if (a?.index === b?.index) {
         continue
       }
 
-      changes.push(getChange(ChangeType.move, a!.node, iterB.peek(bestIndex), rangeA, rangeB));
-      continue;
+      if (!rangeA) {
+        rangeA = getRange(a!.node)
+      } else {
+        rangeA = mergeRanges(rangeA, getRange(a!.node))
+      }
+
+      if (!rangeB) {
+        rangeB = getRange(b!.node)
+      } else {
+        rangeB = mergeRanges(rangeB, getRange(b!.node))
+      }
     }
+
+    const noChange = iterA.indexOfLastItem === iterB.indexOfLastItem
+
+    // Again, if the nodes are in the same index means that we don't need to report anything
+    if (noChange) {
+      continue
+    }
+
+    // Otherwise, it was a change
+    changes.push(getChange(ChangeType.move, a!.node, iterB.peek(bestIndex), rangeA, rangeB));
+    continue;
+
   } while (a); // If there are no more nodes, a will be undefined
 
   return compactChanges(changes);
