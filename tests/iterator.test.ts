@@ -47,6 +47,19 @@ describe("Should iterate over node list properly", () => {
     iter.markMatched();
   });
 
+  test.only("Advance from non zero position", () => {
+    const iter = new NodeIterator(aNodes);
+
+    expect(formatSyntaxKind(iter.next(3)?.node!)).toBe("ConstKeyword");
+    iter.markMatched();
+
+    expect(formatSyntaxKind(iter.next(4)?.node!)).toBe("SyntaxList");
+    iter.markMatched();
+
+    expect(formatSyntaxKind(iter.next(5)?.node!)).toBe("VariableDeclaration");
+    iter.markMatched();
+  });
+
   test("Advance skipping matched nodes", () => {
     const iter = new NodeIterator(aNodes);
 
@@ -66,7 +79,8 @@ describe("Should iterate over node list properly", () => {
     iter.markMatched();
   });
 
-  test("Find nearby token", () => {
+  // TODO: Refactor and add more test to check for multiple matches
+  test("Find nearby nodes", () => {
     const iter = new NodeIterator(aNodes);
 
     iter.markMatched(1);
@@ -76,7 +90,9 @@ describe("Should iterate over node list properly", () => {
 
     const expected = aNodes[0];
 
-    expect(formatSyntaxKind(iter.nextNearby(expected, 5)!.node)).toBe(
+    const index = iter.getCandidatesNodes(expected)[0]
+
+    expect(formatSyntaxKind(iter.items[index].node)).toBe(
       "SyntaxList",
     );
   });

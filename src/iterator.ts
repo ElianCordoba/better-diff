@@ -1,12 +1,13 @@
 import { Item } from "./types";
-import { equals, formatSyntaxKind, getRange } from "./utils";
+import { equals, formatSyntaxKind, getNodeForPrinting, getRange } from "./utils";
 import { Node } from "./ts-util";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 
 export interface Iterator {
   next: () => Item | undefined;
   markMatched: (index?: number) => void;
-  nextNearby: (expected: Node, startAtIndex?: number) => Item | undefined;
+  getCandidatesNodes: (expected: Node, startAtIndex?: number) => number[];
+  peek: (index: number) => Node | undefined
 }
 
 interface IteratorOptions {
@@ -21,10 +22,10 @@ export class NodeIterator implements Iterator {
 
   items!: Item[];
   indexOfLastItem = 0;
-  offset = 1;
   matchNumber = 0;
 
-  readonly MAX_OFFSET = 50;
+  // TODO: Find real value or make it configurable via CLI option
+  readonly MAX_OFFSET = 500;
 
   constructor(nodes: Node[], options?: IteratorOptions) {
     this.name = options?.name;
@@ -35,14 +36,13 @@ export class NodeIterator implements Iterator {
       index,
       matched: false,
       matchNumber: 0,
-      kind: formatSyntaxKind(node),
     } as Item));
   }
 
-  next() {
-    let i = -1;
-    for (const item of this.items) {
-      i++;
+  next(startFrom = 0) {
+    for (let i = startFrom; i < this.items.length; i++) {
+      const item = this.items[i];
+
       if (item.matched) {
         continue;
       }
@@ -50,8 +50,16 @@ export class NodeIterator implements Iterator {
       this.indexOfLastItem = i;
       return item;
     }
+  }
 
-    return;
+  peek(index: number) {
+    const item = this.items[index];
+
+    if (!item || item.matched) {
+      return
+    }
+
+    return item.node
   }
 
   markMatched(index = this.indexOfLastItem) {
@@ -62,53 +70,66 @@ export class NodeIterator implements Iterator {
     this.items[index].matchNumber = this.matchNumber;
   }
 
-  nextNearby(
+  getCandidatesNodes(
     expected: Node,
-    startAtIndex = this.indexOfLastItem,
-  ): Item | undefined {
-    const ahead = this.items[startAtIndex + this.offset];
-    const back = this.items[startAtIndex - this.offset];
+  ): number[] {
 
-    // We checked everything and nothing was found, exit early
-    if (!ahead && !back) {
-      this.offset = 0;
-      return undefined;
+    // This variable will hold the indexes of known nodes that match the node we are looking for.
+    // We returns more than once in order to calculate the LCS from a multiple places and then take the best result
+    const candidates: number[] = []
+
+    // Start from the next node
+    let offset = 0
+
+    const search = (startFrom: number): void => {
+      const ahead = this.items[startFrom + offset];
+      const back = this.items[startFrom - offset];
+
+      // We checked everything and nothing was found, exit early
+      if (!ahead && !back) {
+        return;
+      }
+
+      const foundAhead = ahead && !ahead.matched && equals(expected, ahead.node)
+      const foundBack = back && !back.matched && equals(expected, back.node)
+
+      if (foundAhead || foundBack) {
+        const index = foundAhead ? startFrom + offset : startFrom - offset;
+
+        candidates.push(index);
+      }
+
+      offset++;
+
+      if (offset >= this.MAX_OFFSET) {
+        return;
+      }
+
+      return search(startFrom);
     }
 
-    if (ahead && !ahead.matched && equals(expected, ahead.node)) {
-      const index = startAtIndex + this.offset;
+    search(this.indexOfLastItem)
 
-      // Set this so the markMatched works
-      this.indexOfLastItem = index;
-
-      this.offset = 0;
-      return this.items[index];
-    } else if (back && !back.matched && equals(expected, back.node)) {
-      const index = startAtIndex - this.offset;
-
-      // Set this so the markMatched works
-      this.indexOfLastItem = index;
-
-      this.offset = 0;
-      return this.items[index];
-    }
-
-    this.offset++;
-
-    if (this.offset >= this.MAX_OFFSET) {
-      this.offset = 0;
-      return undefined;
-    }
-
-    return this.nextNearby(expected, startAtIndex);
+    return candidates
   }
 
   printList() {
-    const list = this.items.map((x) => {
-      const kind = formatSyntaxKind(x.node);
-      const colorFn = x.matched ? k.blue : k.grey;
+    console.log(`${colorFn.blue('index')} | ${colorFn.magenta('match n°')} | ${colorFn.red('         kind          ')} | ${colorFn.yellow('text')}`);
 
-      return `${String(x.matchNumber).padEnd(3)}| ${colorFn(kind)}`;
+    const list = this.items.map((x, i) => {
+      const colorFn = x.matched ? k.green : k.grey;
+
+      const index = String(i).padStart(3).padEnd(6)
+
+      const matchNumber = String(x.matchNumber).padStart(5).padEnd(10)
+
+      const { kind, text } = getNodeForPrinting(x)
+      const _kind = kind.padStart(5).padEnd(25);
+      const _text = text.padStart(5)
+
+      const row = `${index}|${matchNumber}|${colorFn(_kind)}|${_text}`
+
+      return colorFn(row);
     });
 
     console.log(list.join("\n"));

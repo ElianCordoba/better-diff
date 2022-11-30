@@ -1,6 +1,6 @@
 import { getNodesArray, Node } from "./ts-util";
 import { ChangeType, Item, Range } from "./types";
-import { equals, getRange } from "./utils";
+import { assertEqualItems, equals, getRange, mergeRanges } from "./utils";
 import { Iterator, NodeIterator } from "./iterator";
 import { Change } from "./change";
 
@@ -29,6 +29,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     // iterB.printList()
     // console.log('\n')
 
+    // One of the iterators finished. We will traverse the remaining nodes in the other iterator
     if (!a || !b) {
       const iterOn = !a ? iterB : iterA;
       const type = !a ? ChangeType.addition : ChangeType.removal;
@@ -38,33 +39,77 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       break;
     }
 
-    if (equals(a.node, b.node)) {
-      if (a.index !== b.index) {
-        changes.push(getChange(ChangeType.move, a.node, b.node));
+    // Given a node a we look in the b side to find possible matches
+    const candidatesMatches = iterB.getCandidatesNodes(a.node);
+
+    // We didn't find any node on B side to match the current A side node
+    if (candidatesMatches.length === 0) {
+      // TODO: Maybe push change type 'change' ?
+      changes.push(getChange(ChangeType.addition, a.node, b.node));
+      changes.push(getChange(ChangeType.removal, a.node, b.node));
+
+      iterA.markMatched();
+      iterB.markMatched();
+      continue
+    }
+
+    function getLCS(candidates: number[]) {
+      let bestResult = 0;
+      let bestIndex = 0;
+
+      for (const index of candidates) {
+        const lcs = getSequenceLength(iterA, iterB, a!.index, index)
+
+        if (lcs > bestResult) {
+          bestResult = lcs
+          bestIndex = index
+        }
       }
-      iterA.markMatched();
-      iterB.markMatched();
-      continue;
+
+      return { bestIndex, bestResult }
     }
 
-    const nearbyMatch = iterB.nextNearby(a.node);
+    let { bestIndex, bestResult } = getLCS(candidatesMatches)
 
-    if (nearbyMatch) {
+    let rangeA: Range | undefined;
+    let rangeB: Range | undefined;
+
+    for (let index = bestIndex; index < bestIndex + bestResult; index++) {
+      a = iterA.next()
+      b = iterB.next(index)
+
       iterA.markMatched();
       iterB.markMatched();
 
-      changes.push(getChange(ChangeType.move, a.node, nearbyMatch.node));
-      continue;
+      // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
+      if (a?.index === b?.index) {
+        continue
+      }
+
+      if (!rangeA) {
+        rangeA = getRange(a!.node)
+      } else {
+        rangeA = mergeRanges(rangeA, getRange(a!.node))
+      }
+
+      if (!rangeB) {
+        rangeB = getRange(b!.node)
+      } else {
+        rangeB = mergeRanges(rangeB, getRange(b!.node))
+      }
     }
 
-    // No match
-    // TODO: Maybe push change type 'change' ?
-    changes.push(getChange(ChangeType.addition, a.node, b.node));
-    changes.push(getChange(ChangeType.removal, a.node, b.node));
+    const noChange = iterA.indexOfLastItem === iterB.indexOfLastItem
 
-    // En verdad mas que matched seria unmatched pero lo quiero marcar con algo
-    iterA.markMatched();
-    iterB.markMatched();
+    // Again, if the nodes are in the same index means that we don't need to report anything
+    if (noChange) {
+      continue
+    }
+
+    // Otherwise, it was a change
+    changes.push(getChange(ChangeType.move, a!.node, iterB.peek(bestIndex), rangeA, rangeB));
+    continue;
+
   } while (a); // If there are no more nodes, a will be undefined
 
   return compactChanges(changes);
@@ -78,6 +123,7 @@ function oneSidedIteration(
 
   let value = iter.next();
 
+  // TODO: Compact
   while (value) {
     if (typeOfChange === ChangeType.addition) {
       changes.push(getChange(typeOfChange, undefined, value.node));
@@ -97,9 +143,16 @@ function getChange(
   type: ChangeType,
   a: Node | undefined,
   b: Node | undefined,
+  rangeA?: Range,
+  rangeB?: Range
 ): Change {
-  const rangeA = a ? getRange(a) : undefined;
-  const rangeB = b ? getRange(b) : undefined;
+  if (!rangeA) {
+    rangeA = a ? getRange(a) : undefined;
+  }
+
+  if (!rangeB) {
+    rangeB = b ? getRange(b) : undefined;
+  }
 
   return new Change(type, rangeA, rangeB, a, b);
 }
@@ -190,4 +243,33 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
   }
 
   return newChanges;
+}
+
+export function getSequenceLength(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number): number {
+  // Represents how long is the sequence
+  let sequence = 0
+
+  while (true) {
+    const nextA = iterA.peek(indexA)
+
+    if (!nextA) {
+      break
+    }
+
+    const nextB = iterB.peek(indexB)
+
+    if (!nextB) {
+      break
+    }
+
+    if (!equals(nextA, nextB)) {
+      break;
+    }
+
+    indexA++
+    indexB++
+    sequence++
+  }
+
+  return sequence
 }

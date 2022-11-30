@@ -14,13 +14,13 @@ test("Simple move", () => {
   `;
 
   const resultA = `
-  1🔀a
-  2🔀b
+  1🔀a⏹️
+  2🔀b⏹️
   `;
 
   const resultB = `
-  2🔀b
-  1🔀a
+  2🔀b⏹️
+  1🔀a⏹️
   `;
 
   const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
@@ -40,13 +40,155 @@ test("Multi characters move", () => {
   `;
 
   const resultA = `
-  1🔀aa
-  2🔀bb
+  1🔀aa⏹️
+  2🔀bb⏹️
   `;
 
   const resultB = `
-  2🔀bb
-  1🔀aa
+  2🔀bb⏹️
+  1🔀aa⏹️
+  `;
+
+  const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+
+  validateDiff(resultA, resultB, sourceA, sourceB);
+});
+
+test.skip("LCS case", () => {
+  const a = `
+    1
+    2
+    3
+  `;
+
+  const b = `
+    1
+    2
+    'x'
+    1
+    2
+    3
+  `;
+
+  const resultA = `
+    1🔀1
+    2
+    3⏹️
+  `;
+
+  const resultB = `
+    ➕1➕
+    ➕2➕
+    ➕'x'➕
+    1🔀1
+    2
+    3⏹️
+  `;
+
+  const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+
+  validateDiff(resultA, resultB, sourceA, sourceB);
+});
+
+test.skip("LCS case 2", () => {
+  const a = `
+    1
+    2
+    'x'
+    1
+    2
+    3
+  `;
+
+  const b = `
+    1
+    2
+    3
+  `;
+
+  const resultA = `
+    1🔀1
+    2
+    3⏹️
+  `;
+
+  const resultB = `
+    ➕1➕
+    ➕2➕
+    ➕'x'➕
+    1🔀1
+    2
+    3⏹️
+  `;
+
+  const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+
+  validateDiff(resultA, resultB, sourceA, sourceB);
+});
+
+test.skip("LCS case x", () => {
+  const a = `
+    1
+    2
+    'x'
+    1
+    2
+    3
+  `;
+
+  const b = `
+    1
+    2
+    3
+  `;
+
+  const resultA = `
+    1🔀'x'
+    1
+    2
+    3⏹️
+  `;
+
+  const resultB = `
+    ➖1➖
+    ➖2➖
+    ➖'x'➖
+    1🔀1
+    2
+    3⏹️
+  `;
+
+  const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+
+  validateDiff(resultA, resultB, sourceA, sourceB);
+});
+
+test.skip("LCS case 3", () => {
+  const a = `
+    'x'
+    1
+    2
+    3
+  `;
+
+  const b = `
+    'x'
+    1
+    2
+    1
+    2
+    3
+  `;
+
+  const resultA = a
+
+  const resultB = `
+    'x'
+    1
+    2
+    ➕1➕
+    ➕2➕
+    ➕3➕
   `;
 
   const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);

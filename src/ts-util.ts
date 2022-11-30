@@ -1,4 +1,5 @@
 import _ts from "typescript";
+import { formatSyntaxKind } from "./utils";
 
 declare namespace MYTS {
   // deno-lint-ignore no-explicit-any
@@ -8,7 +9,7 @@ type TS = typeof MYTS & typeof _ts;
 // deno-lint-ignore no-explicit-any
 export const ts: TS = (_ts as any);
 
-export type Node = _ts.Node & { text: string };
+export type Node = _ts.Node & { text: string, prettyKind: string };
 
 export function getNodesArray(source: string) {
   const sourceFile = _ts.createSourceFile(
@@ -21,11 +22,9 @@ export function getNodesArray(source: string) {
   const nodes: Node[] = [];
 
   function walk(node: Node) {
-    //nodes.push(ts.Debug.formatSyntaxKind(node.kind))
+    // TODO: Think about this data that we could: depth, scopeStart, scopeEnd
+    (node as any).__prettyKind = formatSyntaxKind(node)
     nodes.push(node);
-
-    // { node, depth, scopeStart, scopeEnd }
-
     node.getChildren().forEach((x) => walk(x as Node));
   }
 
@@ -34,5 +33,5 @@ export function getNodesArray(source: string) {
   // Remove EOF to simplify things out. It contains trivia that appears broken in the diff if not treated separately
   nodes.pop();
 
-  return nodes;
+  return nodes
 }

@@ -21,7 +21,6 @@ export interface Item {
   node: Node;
   matched: boolean;
   matchNumber: number;
-  kind: string;
   index: number;
 }
 
