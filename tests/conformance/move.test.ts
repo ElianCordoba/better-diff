@@ -180,7 +180,7 @@ test.skip("LCS case 3", () => {
     3
   `;
 
-  const resultA = a
+  const resultA = a;
 
   const resultB = `
     'x'

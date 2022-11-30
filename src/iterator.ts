@@ -1,5 +1,5 @@
 import { Item } from "./types";
-import { equals, formatSyntaxKind, getNodeForPrinting, getRange } from "./utils";
+import { equals, getNodeForPrinting, getRange } from "./utils";
 import { Node } from "./ts-util";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 
@@ -7,7 +7,7 @@ export interface Iterator {
   next: () => Item | undefined;
   markMatched: (index?: number) => void;
   getCandidatesNodes: (expected: Node, startAtIndex?: number) => number[];
-  peek: (index: number) => Node | undefined
+  peek: (index: number) => Node | undefined;
 }
 
 interface IteratorOptions {
@@ -56,10 +56,10 @@ export class NodeIterator implements Iterator {
     const item = this.items[index];
 
     if (!item || item.matched) {
-      return
+      return;
     }
 
-    return item.node
+    return item.node;
   }
 
   markMatched(index = this.indexOfLastItem) {
@@ -73,13 +73,12 @@ export class NodeIterator implements Iterator {
   getCandidatesNodes(
     expected: Node,
   ): number[] {
-
     // This variable will hold the indexes of known nodes that match the node we are looking for.
     // We returns more than once in order to calculate the LCS from a multiple places and then take the best result
-    const candidates: number[] = []
+    const candidates: number[] = [];
 
     // Start from the next node
-    let offset = 0
+    let offset = 0;
 
     const search = (startFrom: number): void => {
       const ahead = this.items[startFrom + offset];
@@ -90,8 +89,8 @@ export class NodeIterator implements Iterator {
         return;
       }
 
-      const foundAhead = ahead && !ahead.matched && equals(expected, ahead.node)
-      const foundBack = back && !back.matched && equals(expected, back.node)
+      const foundAhead = ahead && !ahead.matched && equals(expected, ahead.node);
+      const foundBack = back && !back.matched && equals(expected, back.node);
 
       if (foundAhead || foundBack) {
         const index = foundAhead ? startFrom + offset : startFrom - offset;
@@ -106,11 +105,11 @@ export class NodeIterator implements Iterator {
       }
 
       return search(startFrom);
-    }
+    };
 
-    search(this.indexOfLastItem)
+    search(this.indexOfLastItem);
 
-    return candidates
+    return candidates;
   }
 
   printList() {
@@ -119,15 +118,15 @@ export class NodeIterator implements Iterator {
     const list = this.items.map((x, i) => {
       const colorFn = x.matched ? k.green : k.grey;
 
-      const index = String(i).padStart(3).padEnd(6)
+      const index = String(i).padStart(3).padEnd(6);
 
-      const matchNumber = String(x.matchNumber).padStart(5).padEnd(10)
+      const matchNumber = String(x.matchNumber).padStart(5).padEnd(10);
 
-      const { kind, text } = getNodeForPrinting(x)
+      const { kind, text } = getNodeForPrinting(x);
       const _kind = kind.padStart(5).padEnd(25);
-      const _text = text.padStart(5)
+      const _text = text.padStart(5);
 
-      const row = `${index}|${matchNumber}|${colorFn(_kind)}|${_text}`
+      const row = `${index}|${matchNumber}|${colorFn(_kind)}|${_text}`;
 
       return colorFn(row);
     });

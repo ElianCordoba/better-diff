@@ -9,7 +9,7 @@ type TS = typeof MYTS & typeof _ts;
 // deno-lint-ignore no-explicit-any
 export const ts: TS = (_ts as any);
 
-export type Node = _ts.Node & { text: string, prettyKind: string };
+export type Node = _ts.Node & { text: string; __prettyKind: string };
 
 export function getNodesArray(source: string) {
   const sourceFile = _ts.createSourceFile(
@@ -23,7 +23,7 @@ export function getNodesArray(source: string) {
 
   function walk(node: Node) {
     // TODO: Think about this data that we could: depth, scopeStart, scopeEnd
-    (node as any).__prettyKind = formatSyntaxKind(node)
+    node.__prettyKind = formatSyntaxKind(node);
     nodes.push(node);
     node.getChildren().forEach((x) => walk(x as Node));
   }
@@ -33,5 +33,5 @@ export function getNodesArray(source: string) {
   // Remove EOF to simplify things out. It contains trivia that appears broken in the diff if not treated separately
   nodes.pop();
 
-  return nodes
+  return nodes;
 }

@@ -14,17 +14,17 @@ interface DifferDrawingFns {
 }
 
 type Colors =
-  "blue" |
-  "green" |
-  "magenta" |
-  "red" |
-  "yellow" |
-  "cyan" |
-  "black" |
-  "white" |
-  "grey"
+  | "blue"
+  | "green"
+  | "magenta"
+  | "red"
+  | "yellow"
+  | "cyan"
+  | "black"
+  | "white"
+  | "grey";
 
-type ColorFns = Record<Colors, (text: string) => string>
+type ColorFns = Record<Colors, (text: string) => string>;
 
 export const colorFn: ColorFns = {
   blue: (x) => k.underline(k.blue(x)),
@@ -43,7 +43,7 @@ export const defaultDrawingFunctions: DifferDrawingFns = {
   addition: colorFn.green,
   removal: colorFn.red,
   change: colorFn.yellow,
-  move: _ => text => colorFn.blue(text),
+  move: (_) => (text) => colorFn.blue(text),
 };
 
 // Testing friendly
@@ -51,7 +51,7 @@ export const simplifiedDrawingFunctions: DifferDrawingFns = {
   addition: (text) => `➕${text}➕`,
   removal: (text) => `➖${text}➖`,
   change: (text) => `✏️${text}✏️`,
-  move: matchNumber => text => `${matchNumber}🔀${text}⏹️`,
+  move: (matchNumber) => (text) => `${matchNumber}🔀${text}⏹️`,
 };
 
 export function applyChangesToSources(

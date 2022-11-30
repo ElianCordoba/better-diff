@@ -1,6 +1,6 @@
 import { getNodesArray, Node } from "./ts-util";
 import { ChangeType, Item, Range } from "./types";
-import { assertEqualItems, equals, getRange, mergeRanges } from "./utils";
+import { equals, getRange, mergeRanges } from "./utils";
 import { Iterator, NodeIterator } from "./iterator";
 import { Change } from "./change";
 
@@ -50,7 +50,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
 
       iterA.markMatched();
       iterB.markMatched();
-      continue
+      continue;
     }
 
     function getLCS(candidates: number[]) {
@@ -58,58 +58,65 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       let bestIndex = 0;
 
       for (const index of candidates) {
-        const lcs = getSequenceLength(iterA, iterB, a!.index, index)
+        const lcs = getSequenceLength(iterA, iterB, a!.index, index);
 
         if (lcs > bestResult) {
-          bestResult = lcs
-          bestIndex = index
+          bestResult = lcs;
+          bestIndex = index;
         }
       }
 
-      return { bestIndex, bestResult }
+      return { bestIndex, bestResult };
     }
 
-    let { bestIndex, bestResult } = getLCS(candidatesMatches)
+    const { bestIndex, bestResult } = getLCS(candidatesMatches);
 
     let rangeA: Range | undefined;
     let rangeB: Range | undefined;
 
     for (let index = bestIndex; index < bestIndex + bestResult; index++) {
-      a = iterA.next()
-      b = iterB.next(index)
+      a = iterA.next();
+      b = iterB.next(index);
 
       iterA.markMatched();
       iterB.markMatched();
 
       // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
       if (a?.index === b?.index) {
-        continue
+        continue;
       }
 
       if (!rangeA) {
-        rangeA = getRange(a!.node)
+        rangeA = getRange(a!.node);
       } else {
-        rangeA = mergeRanges(rangeA, getRange(a!.node))
+        rangeA = mergeRanges(rangeA, getRange(a!.node));
       }
 
       if (!rangeB) {
-        rangeB = getRange(b!.node)
+        rangeB = getRange(b!.node);
       } else {
-        rangeB = mergeRanges(rangeB, getRange(b!.node))
+        rangeB = mergeRanges(rangeB, getRange(b!.node));
       }
     }
 
-    const noChange = iterA.indexOfLastItem === iterB.indexOfLastItem
+    const noChange = iterA.indexOfLastItem === iterB.indexOfLastItem;
 
     // Again, if the nodes are in the same index means that we don't need to report anything
     if (noChange) {
-      continue
+      continue;
     }
 
     // Otherwise, it was a change
-    changes.push(getChange(ChangeType.move, a!.node, iterB.peek(bestIndex), rangeA, rangeB));
+    changes.push(
+      getChange(
+        ChangeType.move,
+        a!.node,
+        iterB.peek(bestIndex),
+        rangeA,
+        rangeB,
+      ),
+    );
     continue;
-
   } while (a); // If there are no more nodes, a will be undefined
 
   return compactChanges(changes);
@@ -144,7 +151,7 @@ function getChange(
   a: Node | undefined,
   b: Node | undefined,
   rangeA?: Range,
-  rangeB?: Range
+  rangeB?: Range,
 ): Change {
   if (!rangeA) {
     rangeA = a ? getRange(a) : undefined;
@@ -245,31 +252,36 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
   return newChanges;
 }
 
-export function getSequenceLength(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number): number {
+export function getSequenceLength(
+  iterA: Iterator,
+  iterB: Iterator,
+  indexA: number,
+  indexB: number,
+): number {
   // Represents how long is the sequence
-  let sequence = 0
+  let sequence = 0;
 
   while (true) {
-    const nextA = iterA.peek(indexA)
+    const nextA = iterA.peek(indexA);
 
     if (!nextA) {
-      break
+      break;
     }
 
-    const nextB = iterB.peek(indexB)
+    const nextB = iterB.peek(indexB);
 
     if (!nextB) {
-      break
+      break;
     }
 
     if (!equals(nextA, nextB)) {
       break;
     }
 
-    indexA++
-    indexB++
-    sequence++
+    indexA++;
+    indexB++;
+    sequence++;
   }
 
-  return sequence
+  return sequence;
 }
