@@ -34,5 +34,5 @@ export function getNodesArray(source: string) {
   nodes.pop();
 
   // TODO: https://github.com/ElianCordoba/better-diff/issues/7
-  return nodes.filter(x => x.kind !== SyntaxKind.SyntaxList);
+  return nodes.filter((x) => x.kind !== SyntaxKind.SyntaxList);
 }

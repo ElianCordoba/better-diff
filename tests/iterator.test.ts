@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { getNodesArray } from "../src/ts-util";
 import { formatSyntaxKind } from "../src/utils";
-import { NodeIterator } from "../src/iterator";
+import { Iterator } from "../src/iterator";
 
 const aSource = `
   const num = 10
@@ -24,7 +24,7 @@ const aNodes = getNodesArray(aSource);
 
 describe.skip("Should iterate over node list properly", () => {
   test("Simple advance", () => {
-    const iter = new NodeIterator(aNodes);
+    const iter = new Iterator(aNodes);
 
     expect(formatSyntaxKind(iter.next()?.node!)).toBe("SyntaxList");
     iter.markMatched();
@@ -48,7 +48,7 @@ describe.skip("Should iterate over node list properly", () => {
   });
 
   test.only("Advance from non zero position", () => {
-    const iter = new NodeIterator(aNodes);
+    const iter = new Iterator(aNodes);
 
     expect(formatSyntaxKind(iter.next(3)?.node!)).toBe("ConstKeyword");
     iter.markMatched();
@@ -61,7 +61,7 @@ describe.skip("Should iterate over node list properly", () => {
   });
 
   test("Advance skipping matched nodes", () => {
-    const iter = new NodeIterator(aNodes);
+    const iter = new Iterator(aNodes);
 
     iter.markMatched(1);
     iter.markMatched(3);
@@ -81,7 +81,7 @@ describe.skip("Should iterate over node list properly", () => {
 
   // TODO: Refactor and add more test to check for multiple matches
   test("Find nearby nodes", () => {
-    const iter = new NodeIterator(aNodes);
+    const iter = new Iterator(aNodes);
 
     iter.markMatched(1);
     iter.markMatched(2);

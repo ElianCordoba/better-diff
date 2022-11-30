@@ -3,19 +3,12 @@ import { equals, getNodeForPrinting, getRange } from "./utils";
 import { Node } from "./ts-util";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 
-export interface Iterator {
-  next: () => Item | undefined;
-  markMatched: (index?: number) => void;
-  getCandidatesNodes: (expected: Node, startAtIndex?: number) => number[];
-  peek: (index: number) => Node | undefined;
-}
-
 interface IteratorOptions {
   name?: string;
   source?: string;
 }
 
-export class NodeIterator implements Iterator {
+export class Iterator {
   name?: string;
   // TODO: Maybe optimize? May consume a lot of memory
   chars?: string[];
@@ -113,7 +106,7 @@ export class NodeIterator implements Iterator {
   }
 
   printList() {
-    console.log(`${colorFn.blue('index')} | ${colorFn.magenta('match n°')} | ${colorFn.red('         kind          ')} | ${colorFn.yellow('text')}`);
+    console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
     const list = this.items.map((x, i) => {
       const colorFn = x.matched ? k.green : k.grey;

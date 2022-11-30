@@ -123,7 +123,7 @@ test.skip("LCS case 2", () => {
 
   const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
 
-  validateDiff(resultA, resultB, sourceA, sourceB);
+  validateDiff(resultA, resultB, sourceA, "sourceB");
 });
 
 test.skip("LCS case x", () => {
