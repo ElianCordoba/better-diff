@@ -74,6 +74,28 @@ describe("Properly report line changes", () => {
 
   test("Single line change 5", () => {
     const a = `
+    let name = "elian"
+    `;
+
+    const b = `
+    let firstName = "eliam"
+    `;
+
+    const resultA = `
+    let ➖name➖ = ➖"elian"➖
+    `;
+
+    const resultB = `
+    let ➕firstName➕ = ➕"eliam"➕
+    `;
+
+    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+
+    validateDiff(resultA, resultB, sourceA, sourceB);
+  });
+
+  test("Single line change 6", () => {
+    const a = `
     console.log(0)
     `;
 
