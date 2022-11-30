@@ -1,7 +1,7 @@
 import { getNodesArray, Node } from "./ts-util";
 import { ChangeType, Item, Range } from "./types";
 import { equals, getRange, mergeRanges } from "./utils";
-import { Iterator, NodeIterator } from "./iterator";
+import { Iterator } from "./iterator";
 import { Change } from "./change";
 
 export function getInitialDiffs(codeA: string, codeB: string): Change[] {
@@ -10,8 +10,8 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   const nodesA = getNodesArray(codeA);
   const nodesB = getNodesArray(codeB);
 
-  const iterA = new NodeIterator(nodesA, { name: "a", source: codeA });
-  const iterB = new NodeIterator(nodesB, { name: "b", source: codeB });
+  const iterA = new Iterator(nodesA, { name: "a", source: codeA });
+  const iterB = new Iterator(nodesB, { name: "b", source: codeB });
 
   let a: Item | undefined;
   let b: Item | undefined;
@@ -39,47 +39,64 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       break;
     }
 
-    // Given a node a we look in the b side to find possible matches
-    const candidatesMatches = iterB.getCandidatesNodes(a.node);
+    // We will try to match the code, comparing a node to another one on the other iterator
+    // For a node X in the iterator A, we could get multiple possible matches on iterator B
+    // But, we also check from the perspective of the iterator B, this is because of the following example
+    // A: 1 2 x 1 2 3
+    // B: 1 2 3
+    // From the perspective of A, the LCS is [1, 2], but from the other perspective it's the real maxima [1, 2, 3]
+    // More about this in the move tests
+    const candidatesAtoB = iterB.getCandidates(a.node);
+    const candidatesBtoA = iterA.getCandidates(b.node);
 
-    // We didn't find any node on B side to match the current A side node
-    if (candidatesMatches.length === 0) {
+    // We didn't find any match
+    if (candidatesAtoB.length === 0 && candidatesBtoA.length === 0) {
       // TODO: Maybe push change type 'change' ?
       changes.push(getChange(ChangeType.addition, a.node, b.node));
       changes.push(getChange(ChangeType.removal, a.node, b.node));
 
-      iterA.markMatched();
-      iterB.markMatched();
+      iterA.mark();
+      iterB.mark();
       continue;
     }
 
-    function getLCS(candidates: number[]) {
-      let bestResult = 0;
-      let bestIndex = 0;
+    const lcsAtoB = getLCS(candidatesAtoB, iterA, iterB);
+    const lcsBtoA = getLCS(candidatesBtoA, iterB, iterA);
 
-      for (const index of candidates) {
-        const lcs = getSequenceLength(iterA, iterB, a!.index, index);
+    let bestIndex: number;
+    let bestResult: number;
+    let indexA: number;
+    let indexB: number;
 
-        if (lcs > bestResult) {
-          bestResult = lcs;
-          bestIndex = index;
-        }
-      }
+    // For simplicity the A to B perspective has preference
+    if (lcsAtoB.bestResult >= lcsBtoA.bestResult) {
+      bestIndex = lcsAtoB.bestIndex;
+      bestResult = lcsAtoB.bestResult;
 
-      return { bestIndex, bestResult };
+      // If the best LCS is found on the A to B perspective, indexA is the current position since we moved on the b side
+      indexA = a.index;
+      indexB = bestIndex;
+    } else {
+      bestIndex = lcsBtoA.bestIndex;
+      bestResult = lcsBtoA.bestResult;
+
+      // This is the opposite of the above branch, since the best LCS was on the A side, there is were we need to reposition the cursor
+      indexA = bestIndex;
+      indexB = b.index;
     }
-
-    const { bestIndex, bestResult } = getLCS(candidatesMatches);
 
     let rangeA: Range | undefined;
     let rangeB: Range | undefined;
 
     for (let index = bestIndex; index < bestIndex + bestResult; index++) {
-      a = iterA.next();
-      b = iterB.next(index);
+      a = iterA.next(indexA);
+      b = iterB.next(indexB);
 
-      iterA.markMatched();
-      iterB.markMatched();
+      indexA++;
+      indexB++;
+
+      iterA.mark();
+      iterB.mark();
 
       // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
       if (a?.index === b?.index) {
@@ -138,7 +155,7 @@ function oneSidedIteration(
       changes.push(getChange(typeOfChange, value.node, undefined));
     }
 
-    iter.markMatched();
+    iter.mark();
 
     value = iter.next();
   }
@@ -284,4 +301,24 @@ export function getSequenceLength(
   }
 
   return sequence;
+}
+
+function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator) {
+  let bestResult = 0;
+  let bestIndex = 0;
+
+  if (candidates.length === 0) {
+    return { bestIndex, bestResult };
+  }
+
+  for (const index of candidates) {
+    const lcs = getSequenceLength(iterA, iterB, iterA.indexOfLastItem, index);
+
+    if (lcs > bestResult) {
+      bestResult = lcs;
+      bestIndex = index;
+    }
+  }
+
+  return { bestIndex, bestResult };
 }

@@ -3,19 +3,12 @@ import { equals, getNodeForPrinting, getRange } from "./utils";
 import { Node } from "./ts-util";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 
-export interface Iterator {
-  next: () => Item | undefined;
-  markMatched: (index?: number) => void;
-  getCandidatesNodes: (expected: Node, startAtIndex?: number) => number[];
-  peek: (index: number) => Node | undefined;
-}
-
 interface IteratorOptions {
   name?: string;
   source?: string;
 }
 
-export class NodeIterator implements Iterator {
+export class Iterator {
   name?: string;
   // TODO: Maybe optimize? May consume a lot of memory
   chars?: string[];
@@ -62,7 +55,7 @@ export class NodeIterator implements Iterator {
     return item.node;
   }
 
-  markMatched(index = this.indexOfLastItem) {
+  mark(index = this.indexOfLastItem) {
     // TODO: Should only apply for moves, otherwise a move, addition and move
     // will display 1 for the first move and 3 for the second
     this.matchNumber++;
@@ -70,7 +63,7 @@ export class NodeIterator implements Iterator {
     this.items[index].matchNumber = this.matchNumber;
   }
 
-  getCandidatesNodes(
+  getCandidates(
     expected: Node,
   ): number[] {
     // This variable will hold the indexes of known nodes that match the node we are looking for.
@@ -113,7 +106,7 @@ export class NodeIterator implements Iterator {
   }
 
   printList() {
-    console.log(`${colorFn.blue('index')} | ${colorFn.magenta('match n°')} | ${colorFn.red('         kind          ')} | ${colorFn.yellow('text')}`);
+    console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
     const list = this.items.map((x, i) => {
       const colorFn = x.matched ? k.green : k.grey;
@@ -134,7 +127,7 @@ export class NodeIterator implements Iterator {
     console.log(list.join("\n"));
   }
 
-  drawRange(node: Node | undefined) {
+  printRange(node: Node | undefined) {
     if (!this.chars) {
       console.warn("Tried to draw a range but there was no source");
       return;

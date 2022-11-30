@@ -2,26 +2,47 @@ import { describe, test } from "vitest";
 import { getSimplifiedDiff } from "../../src";
 import { validateDiff } from "../utils";
 
-describe("Properly report lines added", () => {
-  test("Simple move", () => {
+
+describe("Properly report line changes", () => {
+  test("Single line change 1", () => {
+    const a = "0";
+    const b = "1";
+
+    const resultA = "➖0➖";
+    const resultB = "➕1➕";
+
+    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+
+    validateDiff(resultA, resultB, sourceA, sourceB);
+  });
+
+  test("Single line change 2", () => {
+    const a = "true";
+    const b = "false";
+
+    const resultA = "➖true➖";
+    const resultB = "➕false➕";
+
+    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+
+    validateDiff(resultA, resultB, sourceA, sourceB);
+  });
+
+  test("Single line change 3", () => {
     const a = `
-      a
-      b
+    let name = "elian"
     `;
 
     const b = `
-      b
-      a
+    let firstName = "elian"
     `;
 
     const resultA = `
-      1🔀a⏹️
-      2🔀b⏹️
+    let ➖name➖ = "elian"
     `;
 
     const resultB = `
-      2🔀b⏹️
-      1🔀a⏹️
+    let ➕firstName➕ = "elian"
     `;
 
     const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
@@ -29,25 +50,21 @@ describe("Properly report lines added", () => {
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
 
-  test("Multi characters move", () => {
+  test("Single line change 4", () => {
     const a = `
-      aa
-      bb
+    let name = "elian"
     `;
 
     const b = `
-      bb
-      aa
+    let name = "eliam"
     `;
 
     const resultA = `
-      1🔀aa⏹️
-      2🔀bb⏹️
+    let name = ➖"elian"➖
     `;
 
     const resultB = `
-      2🔀bb⏹️
-      1🔀aa⏹️
+    let name = ➕"eliam"➕
     `;
 
     const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
@@ -55,35 +72,21 @@ describe("Properly report lines added", () => {
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
 
-  test("LCS case", () => {
+  test("Single line change 5", () => {
     const a = `
-      1
-      2
-      3
+    let name = "elian"
     `;
 
     const b = `
-      1
-      2
-      'x'
-      1
-      2
-      3
+    let firstName = "eliam"
     `;
 
     const resultA = `
-      1🔀1
-      2
-      3⏹️
+    let ➖name➖ = ➖"elian"➖
     `;
 
     const resultB = `
-      ➕1➕
-      ➕2➕
-      ➕'x'➕
-      1🔀1
-      2
-      3⏹️
+    let ➕firstName➕ = ➕"eliam"➕
     `;
 
     const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
@@ -91,78 +94,25 @@ describe("Properly report lines added", () => {
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
 
-  test("LCS case 2", () => {
+  test("Single line change 6", () => {
     const a = `
-      1
-      2
-      'x'
-      1
-      2
-      3
+    console.log(0)
     `;
 
     const b = `
-      1
-      2
-      3
+    console.log(1)
     `;
 
     const resultA = `
-      ➖1➖
-      ➖2➖
-      ➖'x'➖
-      1🔀1
-      2
-      3⏹️
+    console.log(➖0➖)
     `;
 
     const resultB = `
-      1🔀1
-      2
-      3⏹️
+    console.log(➕1➕)
     `;
 
     const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
-
-  test("LCS case 3", () => {
-    const a = `
-      'x'
-      1
-      2
-      3
-    `;
-
-    const b = `
-      'x'
-      1
-      2
-      1
-      2
-      3
-    `;
-
-    const resultA = `
-      'x'
-      1
-      2
-      1🔀3⏹️
-    `;
-
-    const resultB = `
-      'x'
-      1
-      2
-      ➕1➕
-      ➕2➕
-      1🔀3⏹️
-    `;
-
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
 })
