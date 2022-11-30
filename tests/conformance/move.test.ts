@@ -54,7 +54,7 @@ test("Multi characters move", () => {
   validateDiff(resultA, resultB, sourceA, sourceB);
 });
 
-test.skip("LCS case", () => {
+test("LCS case", () => {
   const a = `
     1
     2

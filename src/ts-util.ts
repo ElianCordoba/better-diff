@@ -1,4 +1,4 @@
-import _ts from "typescript";
+import _ts, { SyntaxKind } from "typescript";
 import { formatSyntaxKind } from "./utils";
 
 declare namespace MYTS {
@@ -33,5 +33,6 @@ export function getNodesArray(source: string) {
   // Remove EOF to simplify things out. It contains trivia that appears broken in the diff if not treated separately
   nodes.pop();
 
-  return nodes;
+  // TODO: https://github.com/ElianCordoba/better-diff/issues/7
+  return nodes.filter(x => x.kind !== SyntaxKind.SyntaxList);
 }
