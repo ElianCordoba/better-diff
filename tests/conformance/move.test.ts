@@ -127,8 +127,7 @@ describe("Properly report lines added", () => {
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
 
-  // TODO: Fix
-  test.skip("LCS case 3", () => {
+  test("LCS case 3", () => {
     const a = `
       'x'
       1
