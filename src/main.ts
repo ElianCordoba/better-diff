@@ -29,6 +29,11 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     // iterB.printList()
     // console.log('\n')
 
+    // We are done, no more nodes left to check
+    if (!a && !b) {
+      break
+    }
+
     // One of the iterators finished. We will traverse the remaining nodes in the other iterator
     if (!a || !b) {
       const iterOn = !a ? iterB : iterA;
