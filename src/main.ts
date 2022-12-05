@@ -31,7 +31,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
 
     // We are done, no more nodes left to check
     if (!a && !b) {
-      break
+      break;
     }
 
     // One of the iterators finished. We will traverse the remaining nodes in the other iterator
@@ -223,7 +223,7 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
     }
 
     if (change.type === ChangeType.move) {
-      newChanges.push(change)
+      newChanges.push(change);
       continue;
     }
 

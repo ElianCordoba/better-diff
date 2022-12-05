@@ -59,7 +59,7 @@ describe("Properly report lines added", () => {
       let b;
     `;
 
-    const resultA = a
+    const resultA = a;
 
     const resultB = `
       ➕let➕ ➕a;➕
@@ -80,7 +80,7 @@ describe("Properly report lines added", () => {
       let c;
     `;
 
-    const resultA = a
+    const resultA = a;
 
     const resultB = `
       ➕let➕ ➕a;➕
@@ -110,5 +110,4 @@ describe("Properly report lines added", () => {
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
-})
-
+});

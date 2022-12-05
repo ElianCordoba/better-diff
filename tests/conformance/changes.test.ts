@@ -2,7 +2,6 @@ import { describe, test } from "vitest";
 import { getSimplifiedDiff } from "../../src";
 import { validateDiff } from "../utils";
 
-
 describe("Properly report line changes", () => {
   test("Single line change 1", () => {
     const a = "0";
@@ -115,4 +114,4 @@ describe("Properly report line changes", () => {
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
-})
+});

@@ -49,4 +49,4 @@ describe("Ignore trivia", () => {
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
-})
+});

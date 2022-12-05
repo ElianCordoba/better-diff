@@ -64,7 +64,7 @@ describe("Properly report lines removed", () => {
       ➖let➖ ➖b;➖
     `;
 
-    const resultB = b
+    const resultB = b;
 
     const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
 
@@ -86,7 +86,7 @@ describe("Properly report lines removed", () => {
       ➖let➖ ➖c;➖
     `;
 
-    const resultB = b
+    const resultB = b;
 
     const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
 
@@ -110,4 +110,4 @@ describe("Properly report lines removed", () => {
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
-})
+});

@@ -194,5 +194,4 @@ describe("Properly report lines added", () => {
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
-
-})
+});
