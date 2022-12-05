@@ -15,7 +15,7 @@ describe("Properly report lines removed", () => {
 
     const resultA = `
       let name;
-      ➖let age;➖
+      ➖let➖ ➖age;➖
     `;
 
     const resultB = `
@@ -38,7 +38,7 @@ describe("Properly report lines removed", () => {
     `;
 
     const resultA = `
-      ➖let age;➖
+      ➖let➖ ➖age;➖
       1🔀let name;⏹️
     `;
 
@@ -60,11 +60,11 @@ describe("Properly report lines removed", () => {
     const b = "";
 
     const resultA = `
-      ➖let a;➖
-      ➖let b;➖
+      ➖let➖ ➖a;➖
+      ➖let➖ ➖b;➖
     `;
 
-    const resultB = b
+    const resultB = b;
 
     const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
 
@@ -81,12 +81,12 @@ describe("Properly report lines removed", () => {
     const b = "";
 
     const resultA = `
-      ➖let a;➖
-      ➖let b;➖
-      ➖let c;➖
+      ➖let➖ ➖a;➖
+      ➖let➖ ➖b;➖
+      ➖let➖ ➖c;➖
     `;
 
-    const resultB = b
+    const resultB = b;
 
     const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
 
@@ -100,8 +100,8 @@ describe("Properly report lines removed", () => {
 
     const b = "";
 
-    const resultA = `➖let a;➖
-      ➖let b;➖
+    const resultA = `➖let➖ ➖a;➖
+      ➖let➖ ➖b;➖
     `;
 
     const resultB = b;
@@ -110,4 +110,4 @@ describe("Properly report lines removed", () => {
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
-})
+});
