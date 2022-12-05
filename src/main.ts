@@ -222,9 +222,8 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
       continue;
     }
 
-    // TODO
-    if (change.type === ChangeType.change) {
-      console.log("Ignoring", change.type);
+    if (change.type === ChangeType.move) {
+      newChanges.push(change)
       continue;
     }
 
