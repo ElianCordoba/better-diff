@@ -110,4 +110,30 @@ describe("Properly report lines removed", () => {
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
+
+  test("Deleted wrapped code", () => {
+    const a = `
+      while (true) {
+        callFn()
+      }
+    `;
+
+    const b = `
+      callFn()
+    `;
+
+    const resultA = `
+      ➖while➖ ➖(true)➖ ➖{➖
+        1🔀callFn()⏹️
+      ➖}➖
+    `;
+
+    const resultB = `
+      1🔀callFn()⏹️
+    `;
+
+    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+
+    validateDiff(resultA, resultB, sourceA, sourceB);
+  });
 });

@@ -36,8 +36,8 @@ export function getNodesArray(source: string) {
     if (hasText || isReservedWord || isPunctuation) {
       // Note, we don't spread the current node into a new variable because we want to preserve the prototype, so that we can use methods like getLeadingTriviaWidth
       node.prettyKind = formatSyntaxKind(node);
+      node.depth = depth;
       nodes.push(node);
-      node.getChildren().forEach((x) => walk(x as Node));
     }
 
     depth++;

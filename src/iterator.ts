@@ -155,4 +155,15 @@ export class Iterator {
 
     console.log(result.join(""));
   }
+
+  printDepth() {
+    for (const { node } of this.items) {
+      console.log(
+        `(${node.depth})`,
+        new Array(node.depth + 1).join("-"),
+        colorFn.cyan(node.prettyKind),
+        `(${node.pos} ${node.end})`,
+      );
+    }
+  }
 }

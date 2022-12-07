@@ -194,4 +194,28 @@ describe("Properly report lines added", () => {
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
+
+  test("Two moves in same line", () => {
+    let a = `
+      print('elian')
+      let age = 24
+    `;
+
+    let b = `
+      let age = 24 && print('elian')
+    `;
+
+    const resultA = `
+      1🔀print('elian')⏹️
+      2🔀let age = 24⏹️
+    `;
+
+    const resultB = `
+      2🔀let age = 24⏹️ ➕&&➕ 1🔀print('elian')⏹️
+    `;
+
+    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+
+    validateDiff(resultA, resultB, sourceA, sourceB);
+  });
 });
