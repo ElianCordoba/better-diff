@@ -20,15 +20,6 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     a = iterA.next();
     b = iterB.next();
 
-    // For debugging
-    // console.log('A\n')
-    // iterA.printList()
-    // console.log('\n')
-
-    // console.log('B\n')
-    // iterB.printList()
-    // console.log('\n')
-
     // We are done, no more nodes left to check
     if (!a && !b) {
       break;
