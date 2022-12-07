@@ -199,11 +199,11 @@ describe("Properly report lines added", () => {
     let a = `
       print('elian')
       let age = 24
-      `
+    `;
 
     let b = `
       let age = 24 && print('elian')
-    `
+    `;
 
     const resultA = `
       1🔀print('elian')⏹️
