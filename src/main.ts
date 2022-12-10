@@ -63,6 +63,8 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     let bestResult: number;
     let indexA: number;
     let indexB: number;
+    let expressionA: number;
+    let expressionB: number;
 
     // For simplicity the A to B perspective has preference
     if (lcsAtoB.bestResult >= lcsBtoA.bestResult) {
@@ -81,12 +83,19 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       indexB = b.index;
     }
 
+    expressionA = iterA.peek(indexA)?.expressionNumber!
+    expressionB = iterB.peek(indexB)?.expressionNumber!
+
     let rangeA: Range | undefined;
     let rangeB: Range | undefined;
 
     for (let index = bestIndex; index < bestIndex + bestResult; index++) {
       a = iterA.next(indexA);
       b = iterB.next(indexB);
+
+      if (!equals(a?.node!, b?.node!)) {
+        throw new Error(`Misaligned matcher. A: ${indexA} (${a?.node?.prettyKind}), B: ${indexB} (${b?.node?.prettyKind})`)
+      }
 
       indexA++;
       indexB++;
@@ -112,24 +121,119 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       }
     }
 
-    const noChange = iterA.indexOfLastItem === iterB.indexOfLastItem;
+    // If the nodes are not in the same position then it's a move
+    // TODO: Reported in the readme, this is too sensible
+    const didChange = iterA.indexOfLastItem !== iterB.indexOfLastItem;
 
-    // Again, if the nodes are in the same index means that we don't need to report anything
-    if (noChange) {
-      continue;
+    if (didChange) {
+      changes.push(
+        getChange(
+          ChangeType.move,
+          a!.node,
+          iterB.peek(bestIndex),
+          rangeA,
+          rangeB,
+        ),
+      );
     }
 
-    // Otherwise, it was a change
-    changes.push(
-      getChange(
-        ChangeType.move,
-        a!.node,
-        iterB.peek(bestIndex),
-        rangeA,
-        rangeB,
-      ),
-    );
-    continue;
+    // We are done matching the common part, now we need finish both expressions
+
+    let remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA)
+    const remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB)
+
+    if (remainingNodesA.length) {
+      console.log('Iter A still has nodes')
+
+      let i = 0;
+      while (i < remainingNodesA.length) {
+        const current: Node = iterA.next(i)!.node
+
+        // same thing as getCandidates :S
+        function searchCandidatesInList(nodes: Node[], expected: Node) {
+          const candidates: number[] = []
+
+          for (const node of nodes) {
+            if (equals(node, expected)) {
+              candidates.push(node.index)
+            }
+          }
+
+          return candidates
+        }
+
+        const candidatesInRemainingNodes = searchCandidatesInList(remainingNodesB, current)
+        const candidates = candidatesInRemainingNodes.length ? candidatesInRemainingNodes : iterB.getCandidates(current);
+
+        // Something added or removed
+        if (!candidates.length) {
+          // TODO: IDK if we should pass the index, but it doesn't work otherwise
+          iterA.mark()
+          changes.push(getChange(ChangeType.removal, current, undefined))
+          i++
+
+          continue;
+        }
+
+        let _rangeA: Range | undefined;
+        let _rangeB: Range | undefined;
+
+        const lcs = getLCS(candidates, iterA, iterB);
+
+        let _indexA = current?.index!;
+        let _indexB = lcs.bestIndex;
+
+        for (let _index = lcs.bestIndex; _index < lcs.bestIndex + lcs.bestResult; _index++) {
+          a = iterA.next(_indexA);
+          b = iterB.next(_indexB);
+
+          _indexA++;
+          _indexB++;
+
+          iterA.mark();
+          iterB.mark();
+
+          // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
+          if (a?.index === b?.index) {
+            continue;
+          }
+
+          if (!_rangeA) {
+            _rangeA = getRange(a!.node);
+          } else {
+            _rangeA = mergeRanges(_rangeA, getRange(a!.node));
+          }
+
+          if (!_rangeB) {
+            _rangeB = getRange(b!.node);
+          } else {
+            _rangeB = mergeRanges(_rangeB, getRange(b!.node));
+          }
+        }
+
+        const noChange = iterA.indexOfLastItem === iterB.indexOfLastItem;
+
+        if (!noChange) {
+          // Otherwise, it was a change
+          changes.push(
+            getChange(
+              ChangeType.move,
+              a!.node,
+              iterB.peek(bestIndex),
+              rangeA,
+              rangeB,
+            ),
+          );
+        }
+
+        i += lcs.bestResult
+      }
+
+      if (i != remainingNodesA.length) {
+        debugger
+        console.log('oops, a')
+      }
+    }
   } while (a); // If there are no more nodes, a will be undefined
 
   return compactChanges(changes);
