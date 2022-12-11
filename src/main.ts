@@ -86,40 +86,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     expressionA = iterA.peek(indexA)?.expressionNumber!
     expressionB = iterB.peek(indexB)?.expressionNumber!
 
-    let rangeA: Range | undefined;
-    let rangeB: Range | undefined;
-
-    for (let index = bestIndex; index < bestIndex + bestResult; index++) {
-      a = iterA.next(indexA);
-      b = iterB.next(indexB);
-
-      if (!equals(a?.node!, b?.node!)) {
-        throw new Error(`Misaligned matcher. A: ${indexA} (${a?.node?.prettyKind}), B: ${indexB} (${b?.node?.prettyKind})`)
-      }
-
-      indexA++;
-      indexB++;
-
-      iterA.mark();
-      iterB.mark();
-
-      // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
-      if (a?.index === b?.index) {
-        continue;
-      }
-
-      if (!rangeA) {
-        rangeA = getRange(a!.node);
-      } else {
-        rangeA = mergeRanges(rangeA, getRange(a!.node));
-      }
-
-      if (!rangeB) {
-        rangeB = getRange(b!.node);
-      } else {
-        rangeB = mergeRanges(rangeB, getRange(b!.node));
-      }
-    }
+    const { rangeA, rangeB } = matchSubsequence({ bestIndex, bestResult }, iterA, iterB, indexA, indexB)
 
     // If the nodes are not in the same position then it's a move
     // TODO: Reported in the readme, this is too sensible
@@ -175,41 +142,11 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
           continue;
         }
 
-        let _rangeA: Range | undefined;
-        let _rangeB: Range | undefined;
-
         const lcs = getLCS(candidates, iterA, iterB);
-
         let _indexA = current?.index!;
         let _indexB = lcs.bestIndex;
 
-        for (let _index = lcs.bestIndex; _index < lcs.bestIndex + lcs.bestResult; _index++) {
-          a = iterA.next(_indexA);
-          b = iterB.next(_indexB);
-
-          _indexA++;
-          _indexB++;
-
-          iterA.mark();
-          iterB.mark();
-
-          // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
-          if (a?.index === b?.index) {
-            continue;
-          }
-
-          if (!_rangeA) {
-            _rangeA = getRange(a!.node);
-          } else {
-            _rangeA = mergeRanges(_rangeA, getRange(a!.node));
-          }
-
-          if (!_rangeB) {
-            _rangeB = getRange(b!.node);
-          } else {
-            _rangeB = mergeRanges(_rangeB, getRange(b!.node));
-          }
-        }
+        const { rangeA, rangeB } = matchSubsequence(lcs, iterA, iterB, _indexA, _indexB)
 
         const noChange = iterA.indexOfLastItem === iterB.indexOfLastItem;
 
@@ -402,7 +339,9 @@ export function getSequenceLength(
   return sequence;
 }
 
-function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator) {
+interface LCSResult { bestIndex: number; bestResult: number; }
+
+function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator): LCSResult {
   let bestResult = 0;
   let bestIndex = 0;
 
@@ -420,4 +359,54 @@ function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator) {
   }
 
   return { bestIndex, bestResult };
+}
+
+// This function has side effects, it's mutates data in the iterators
+function matchSubsequence(lcsResult: LCSResult, iterA: Iterator, iterB: Iterator, indexA: number, indexB: number): { rangeA: Range, rangeB: Range } {
+  const { bestIndex, bestResult } = lcsResult
+  let a: Item;
+  let b: Item;
+
+  // let indexA: number;
+  // let indexB: number;
+
+  let rangeA: Range | undefined;
+  let rangeB: Range | undefined;
+
+  for (let index = bestIndex; index < bestIndex + bestResult; index++) {
+    a = iterA.next(indexA)!;
+    b = iterB.next(indexB)!;
+
+    if (!equals(a?.node!, b?.node!)) {
+      throw new Error(`Misaligned matcher. A: ${indexA} (${a?.node?.prettyKind}), B: ${indexB} (${b?.node?.prettyKind})`)
+    }
+
+    indexA++;
+    indexB++;
+
+    iterA.mark();
+    iterB.mark();
+
+    // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
+    if (a?.index === b?.index) {
+      continue;
+    }
+
+    if (!rangeA) {
+      rangeA = getRange(a!.node);
+    } else {
+      rangeA = mergeRanges(rangeA, getRange(a!.node));
+    }
+
+    if (!rangeB) {
+      rangeB = getRange(b!.node);
+    } else {
+      rangeB = mergeRanges(rangeB, getRange(b!.node));
+    }
+  }
+
+  return {
+    rangeA: rangeA!, rangeB: rangeB!
+  }
+
 }
