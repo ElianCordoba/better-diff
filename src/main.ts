@@ -86,22 +86,10 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     expressionA = iterA.peek(indexA)?.expressionNumber!
     expressionB = iterB.peek(indexB)?.expressionNumber!
 
-    const { rangeA, rangeB } = matchSubsequence({ bestIndex, bestResult }, iterA, iterB, indexA, indexB)
+    const change = matchSubsequence({ bestIndex, bestResult }, iterA, iterB, indexA, indexB)
 
-    // If the nodes are not in the same position then it's a move
-    // TODO: Reported in the readme, this is too sensible
-    const didChange = iterA.indexOfLastItem !== iterB.indexOfLastItem;
-
-    if (didChange) {
-      changes.push(
-        getChange(
-          ChangeType.move,
-          a!.node,
-          iterB.peek(bestIndex),
-          rangeA,
-          rangeB,
-        ),
-      );
+    if (change) {
+      changes.push(change)
     }
 
     // We are done matching the common part, now we need finish both expressions
@@ -112,64 +100,15 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     if (remainingNodesA.length) {
       console.log('Iter A still has nodes')
 
-      let i = 0;
-      while (i < remainingNodesA.length) {
-        const current: Node = iterA.next(i)!.node
+      const newChanges = finishSequenceMatching(iterA, iterB, remainingNodesA, remainingNodesB)
+      changes.push(...newChanges)
+    }
 
-        // same thing as getCandidates :S
-        function searchCandidatesInList(nodes: Node[], expected: Node) {
-          const candidates: number[] = []
+    if (remainingNodesB.length) {
+      console.log('Iter B still has nodes')
 
-          for (const node of nodes) {
-            if (equals(node, expected)) {
-              candidates.push(node.index)
-            }
-          }
-
-          return candidates
-        }
-
-        const candidatesInRemainingNodes = searchCandidatesInList(remainingNodesB, current)
-        const candidates = candidatesInRemainingNodes.length ? candidatesInRemainingNodes : iterB.getCandidates(current);
-
-        // Something added or removed
-        if (!candidates.length) {
-          // TODO: IDK if we should pass the index, but it doesn't work otherwise
-          iterA.mark()
-          changes.push(getChange(ChangeType.removal, current, undefined))
-          i++
-
-          continue;
-        }
-
-        const lcs = getLCS(candidates, iterA, iterB);
-        let _indexA = current?.index!;
-        let _indexB = lcs.bestIndex;
-
-        const { rangeA, rangeB } = matchSubsequence(lcs, iterA, iterB, _indexA, _indexB)
-
-        const noChange = iterA.indexOfLastItem === iterB.indexOfLastItem;
-
-        if (!noChange) {
-          // Otherwise, it was a change
-          changes.push(
-            getChange(
-              ChangeType.move,
-              a!.node,
-              iterB.peek(bestIndex),
-              rangeA,
-              rangeB,
-            ),
-          );
-        }
-
-        i += lcs.bestResult
-      }
-
-      if (i != remainingNodesA.length) {
-        debugger
-        console.log('oops, a')
-      }
+      const newChanges = finishSequenceMatching(iterB, iterA, remainingNodesB, remainingNodesA)
+      changes.push(...newChanges)
     }
   } while (a); // If there are no more nodes, a will be undefined
 
@@ -362,7 +301,7 @@ function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator): LCSResu
 }
 
 // This function has side effects, it's mutates data in the iterators
-function matchSubsequence(lcsResult: LCSResult, iterA: Iterator, iterB: Iterator, indexA: number, indexB: number): { rangeA: Range, rangeB: Range } {
+function matchSubsequence(lcsResult: LCSResult, iterA: Iterator, iterB: Iterator, indexA: number, indexB: number): Change | undefined {
   const { bestIndex, bestResult } = lcsResult
   let a: Item;
   let b: Item;
@@ -405,8 +344,71 @@ function matchSubsequence(lcsResult: LCSResult, iterA: Iterator, iterB: Iterator
     }
   }
 
-  return {
-    rangeA: rangeA!, rangeB: rangeB!
+  // If the nodes are not in the same position then it's a move
+  // TODO: Reported in the readme, this is too sensible
+  const didChange = iterA.indexOfLastItem !== iterB.indexOfLastItem;
+
+  if (didChange) {
+    return getChange(
+      ChangeType.move,
+      iterA.getLastSeen(),// TODO: IDK
+      iterB.peek(bestIndex), // TODO: IDK
+      rangeA,
+      rangeB,
+    )
+
+  }
+}
+
+function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodesA: Node[], remainingNodesB: Node[]): Change[] {
+  const changes: Change[] = []
+
+  let i = 0;
+  while (i < remainingNodesA.length) {
+    const current: Node = iterA.next(i)!.node
+
+    const candidatesInRemainingNodes = searchCandidatesInList(remainingNodesB, current)
+    const candidates = candidatesInRemainingNodes.length ? candidatesInRemainingNodes : iterB.getCandidates(current);
+
+    // Something added or removed
+    if (!candidates.length) {
+      iterA.mark()
+      changes.push(getChange(ChangeType.removal, current, undefined))
+      i++
+
+      continue;
+    }
+
+    const lcs = getLCS(candidates, iterA, iterB);
+    let _indexA = current?.index!;
+    let _indexB = lcs.bestIndex;
+
+    const change = matchSubsequence(lcs, iterA, iterB, _indexA, _indexB)
+
+    if (change) {
+      changes.push(change)
+    }
+
+
+    i += lcs.bestResult
   }
 
+  if (i != remainingNodesA.length) {
+    throw new Error(`After finishing the whole sequence matching the length didn't match, expected ${remainingNodesA.length} but got ${i}`)
+  }
+
+  return changes
+}
+
+// same thing as getCandidates :S
+function searchCandidatesInList(nodes: Node[], expected: Node) {
+  const candidates: number[] = []
+
+  for (const node of nodes) {
+    if (equals(node, expected)) {
+      candidates.push(node.index)
+    }
+  }
+
+  return candidates
 }

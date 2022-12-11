@@ -60,6 +60,10 @@ export class Iterator {
     return item.node;
   }
 
+  getLastSeen() {
+    return this.items[this.indexOfLastItem].node
+  }
+
   mark(index = this.indexOfLastItem) {
     // TODO: Should only apply for moves, otherwise a move, addition and move
     // will display 1 for the first move and 3 for the second
