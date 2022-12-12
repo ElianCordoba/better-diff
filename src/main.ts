@@ -63,8 +63,6 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     let bestResult: number;
     let indexA: number;
     let indexB: number;
-    let expressionA: number;
-    let expressionB: number;
 
     // For simplicity the A to B perspective has preference
     if (lcsAtoB.bestResult >= lcsBtoA.bestResult) {
@@ -83,8 +81,10 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       indexB = b.index;
     }
 
-    expressionA = iterA.peek(indexA)?.expressionNumber!
-    expressionB = iterB.peek(indexB)?.expressionNumber!
+    // This are the expressions we are matching. We store the them so that at the end of the LCS matching we can finish 
+    // matching these before moving on another expression
+    const expressionA = iterA.peek(indexA)?.expressionNumber!
+    const expressionB = iterB.peek(indexB)?.expressionNumber!
 
     const change = matchSubsequence({ bestIndex, bestResult }, iterA, iterB, indexA, indexB)
 
@@ -92,24 +92,41 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       changes.push(change)
     }
 
-    // We are done matching the common part, now we need finish both expressions
+    // We look for remaining nodes at index + bestResult because we don't want to include the already matched ones
+    const remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult)
+    const remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult)
 
-    let remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA)
-    const remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB)
-
-    if (remainingNodesA.length) {
-      console.log('Iter A still has nodes')
-
-      const newChanges = finishSequenceMatching(iterA, iterB, remainingNodesA, remainingNodesB)
-      changes.push(...newChanges)
+    // If we finished matching the LCS and we don't have any remaining nodes in neither expression, then we are we are done with the matching and we can move on
+    if (!remainingNodesA.length && !remainingNodesB.length) {
+      continue
     }
 
-    if (remainingNodesB.length) {
-      console.log('Iter B still has nodes')
+    // If we still have nodes remaining, means that after the LCS the expression still had more nodes that we need to match before moving on
 
-      const newChanges = finishSequenceMatching(iterB, iterA, remainingNodesB, remainingNodesA)
-      changes.push(...newChanges)
+    // Fast path: The following are two fast paths, they if we have an side with no nodes remaining while the other still has. 
+    // If this is the case, then it's a simple push of additions or removals
+
+    // No more nodes on the A side but still remaining on the B side. Report new additions
+    if (!remainingNodesA.length && remainingNodesB.length) {
+      for (const node of remainingNodesB) {
+        iterB.mark(node.index)
+        changes.push(getChange(ChangeType.addition, undefined, node));
+      }
+      continue
     }
+
+    // No more nodes on the B side but still remaining on the A side. Report new removals
+    if (!remainingNodesB.length && !remainingNodesA.length) {
+      for (const node of remainingNodesA) {
+        iterA.mark(node.index)
+        changes.push(getChange(ChangeType.removal, node, undefined));
+      }
+      continue
+    }
+
+    // If there are still nodes on both side, we need try match them, otherwise we report the addition/removal
+    changes.push(...finishSequenceMatching(iterA, iterB, remainingNodesA, remainingNodesB))
+    changes.push(...finishSequenceMatching(iterB, iterA, remainingNodesB, remainingNodesA))
   } while (a); // If there are no more nodes, a will be undefined
 
   return compactChanges(changes);
@@ -351,12 +368,11 @@ function matchSubsequence(lcsResult: LCSResult, iterA: Iterator, iterB: Iterator
   if (didChange) {
     return getChange(
       ChangeType.move,
-      iterA.getLastSeen(),// TODO: IDK
-      iterB.peek(bestIndex), // TODO: IDK
+      a!.node,
+      b!.node,
       rangeA,
       rangeB,
     )
-
   }
 }
 
@@ -393,9 +409,10 @@ function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodes
     i += lcs.bestResult
   }
 
-  if (i != remainingNodesA.length) {
-    throw new Error(`After finishing the whole sequence matching the length didn't match, expected ${remainingNodesA.length} but got ${i}`)
-  }
+  // TODO
+  // if (i != remainingNodesA.length) {
+  //   throw new Error(`After finishing the whole sequence matching the length didn't match, expected ${remainingNodesA.length} but got ${i}`)
+  // }
 
   return changes
 }
