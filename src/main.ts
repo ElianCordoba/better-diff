@@ -94,7 +94,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
 
     // We look for remaining nodes at index + bestResult because we don't want to include the already matched ones
     const remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult)
-    const remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult)
+    let remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult)
 
     // If we finished matching the LCS and we don't have any remaining nodes in neither expression, then we are we are done with the matching and we can move on
     if (!remainingNodesA.length && !remainingNodesB.length) {
@@ -126,6 +126,11 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
 
     // If there are still nodes on both side, we need try match them, otherwise we report the addition/removal
     changes.push(...finishSequenceMatching(iterA, iterB, remainingNodesA, remainingNodesB))
+
+    // TODO: Maybe an optimization, could run faster if we call "finishSequenceMatching" on the one it has the most / least nodes to recalculate
+
+    // After the "finishSequenceMatching" we need to recalculate B nodes since previously unmatched ones could have been matched
+    remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult)
     changes.push(...finishSequenceMatching(iterB, iterA, remainingNodesB, remainingNodesA))
   } while (a); // If there are no more nodes, a will be undefined
 
