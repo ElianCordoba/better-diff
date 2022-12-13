@@ -45,20 +45,20 @@ export function getNodesArray(source: string) {
 
     // TODO: If we only need nodes with text representation, we can use the tokenizer and add the leading trivia as a property
     // Only include visible node, nodes that represent some text in the source code.
-    //if (hasText || isReservedWord || isPunctuation) {
-    // Note, we don't spread the current node into a new variable because we want to preserve the prototype, so that we can use methods like getLeadingTriviaWidth
-    node.prettyKind = formatSyntaxKind(node);
-    node.depth = depth;
-    // TODO!
-    // node.index = i
+    if (hasText || isReservedWord || isPunctuation) {
+      // Note, we don't spread the current node into a new variable because we want to preserve the prototype, so that we can use methods like getLeadingTriviaWidth
+      node.prettyKind = formatSyntaxKind(node);
+      node.depth = depth;
+      // TODO!
+      // node.index = i
 
-    // TODO: Remove round for debugging
-    node.expressionNumber = Math.round(expressionNumber)
-    //node.expressionNumber = expressionNumber
-    /// TODO: Store expression start and end?
+      // TODO: Remove round for debugging
+      node.expressionNumber = Math.round(expressionNumber)
+      //node.expressionNumber = expressionNumber
+      /// TODO: Store expression start and end?
 
-    nodes.push(node);
-    //}
+      nodes.push(node);
+    }
 
     depth++;
     node.getChildren().forEach((x) => walk(x as Node, depth, expressionNumber));
@@ -67,8 +67,8 @@ export function getNodesArray(source: string) {
 
   sourceFile.getChildren().forEach((x) => walk(x as Node));
 
-  nodes.shift()
-  nodes.pop()
+  // nodes.shift()
+  // nodes.pop()
 
   // TODO: Since we are popping and shifting the index gets messed up, do this in the main walk fn
 

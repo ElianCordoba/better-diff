@@ -3,7 +3,7 @@ import { getSimplifiedDiff } from "../../src";
 import { validateDiff } from "../utils";
 
 describe("Properly report moves in a same sequence", () => {
-  test.only("One line splitted into two. Case 1", () => {
+  test("One line splitted into two. Case 1", () => {
     let a = `
       let age = 24 && print('elian')
     `;
@@ -27,7 +27,7 @@ describe("Properly report moves in a same sequence", () => {
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
 
-  test.only("One line splitted into two. Case 2", () => {
+  test("One line splitted into two. Case 2", () => {
     let a = `
       let age = 24 && print('elian')
     `;
@@ -51,7 +51,7 @@ describe("Properly report moves in a same sequence", () => {
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
 
-  test.only("One line splitted into two. Case 3", () => {
+  test("One line splitted into two. Case 3", () => {
     let a = `
       let age = print('elian') && 24
     `;
@@ -75,7 +75,7 @@ describe("Properly report moves in a same sequence", () => {
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
 
-  test.only("One line splitted into two. Case 4", () => {
+  test("One line splitted into two. Case 4", () => {
     let a = `
       let age = print('elian') && 24
     `;
@@ -99,7 +99,7 @@ describe("Properly report moves in a same sequence", () => {
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
 
-  test.only("Two lines merged into one. Case 1", () => {
+  test("Two lines merged into one. Case 1", () => {
     let a = `
       let age = 24
       print('elian')
@@ -111,11 +111,11 @@ describe("Properly report moves in a same sequence", () => {
 
     const resultA = `
       let age = 24
-      ➖print('elian')➖
+      1🔀print('elian')⏹️
     `;
 
     const resultB = `
-      let age = 24 ➕&&➕ ➕print('elian')➕
+      let age = 24 ➕&&➕ 1🔀print('elian')⏹️
     `;
 
     const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
@@ -158,11 +158,12 @@ describe("Properly report moves in a same sequence", () => {
     `;
 
     const resultA = `
-    TODO
+      let age = 1🔀24⏹️
+      2🔀print('elian')⏹️
     `;
 
     const resultB = `
-    TODO
+      let age = 2🔀print('elian')⏹️ ➕&&➕ 1🔀24⏹️
     `;
 
     const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
@@ -181,11 +182,12 @@ describe("Properly report moves in a same sequence", () => {
     `;
 
     const resultA = `
-    TODO
+      1🔀print('elian')⏹️
+      2🔀let age =⏹️ 3🔀24⏹️
     `;
 
     const resultB = `
-    TODO
+      2🔀let age =⏹️ 1🔀print('elian')⏹️ ➕&&➕ 3🔀24⏹️
     `;
 
     const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);

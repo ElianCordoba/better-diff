@@ -93,7 +93,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     }
 
     // We look for remaining nodes at index + bestResult because we don't want to include the already matched ones
-    const remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult)
+    let remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult)
     let remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult)
 
     // If we finished matching the LCS and we don't have any remaining nodes in neither expression, then we are we are done with the matching and we can move on
@@ -103,34 +103,16 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
 
     // If we still have nodes remaining, means that after the LCS the expression still had more nodes that we need to match before moving on
 
-    // Fast path: The following are two fast paths, they if we have an side with no nodes remaining while the other still has. 
-    // If this is the case, then it's a simple push of additions or removals
-
-    // No more nodes on the A side but still remaining on the B side. Report new additions
-    if (!remainingNodesA.length && remainingNodesB.length) {
-      for (const node of remainingNodesB) {
-        iterB.mark(node.index)
-        changes.push(getChange(ChangeType.addition, undefined, node));
-      }
-      continue
-    }
-
-    // No more nodes on the B side but still remaining on the A side. Report new removals
-    if (!remainingNodesB.length && !remainingNodesA.length) {
-      for (const node of remainingNodesA) {
-        iterA.mark(node.index)
-        changes.push(getChange(ChangeType.removal, node, undefined));
-      }
-      continue
-    }
-
     // If there are still nodes on both side, we need try match them, otherwise we report the addition/removal
     changes.push(...finishSequenceMatching(iterA, iterB, remainingNodesA, remainingNodesB))
 
     // TODO: Maybe an optimization, could run faster if we call "finishSequenceMatching" on the one it has the most / least nodes to recalculate
 
-    // After the "finishSequenceMatching" we need to recalculate B nodes since previously unmatched ones could have been matched
+    // After calling `finishSequenceMatching` we need to recalculate the remaining nodes since previously unmatched ones could have been matched now
+    remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult)
     remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult)
+
+    // This time we call `finishSequenceMatching` with the arguments inverted in order to check the other perspective
     changes.push(...finishSequenceMatching(iterB, iterA, remainingNodesB, remainingNodesA))
   } while (a); // If there are no more nodes, a will be undefined
 
@@ -371,13 +353,26 @@ function matchSubsequence(lcsResult: LCSResult, iterA: Iterator, iterB: Iterator
   const didChange = iterA.indexOfLastItem !== iterB.indexOfLastItem;
 
   if (didChange) {
-    return getChange(
-      ChangeType.move,
-      a!.node,
-      b!.node,
-      rangeA,
-      rangeB,
-    )
+    // Since this function is reversible we need to check the perspective so that we know if the change is an addition or a removal
+    const perspectiveAtoB = iterA.name === 'a';
+
+    if (perspectiveAtoB) {
+      return getChange(
+        ChangeType.move,
+        a!.node,
+        b!.node,
+        rangeA,
+        rangeB,
+      )
+    } else {
+      return getChange(
+        ChangeType.move,
+        b!.node,
+        a!.node,
+        rangeB,
+        rangeA,
+      )
+    }
   }
 }
 
@@ -394,17 +389,25 @@ function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodes
     // Something added or removed
     if (!candidates.length) {
       iterA.mark()
-      changes.push(getChange(ChangeType.removal, current, undefined))
-      i++
 
+      // Since this function is reversible we need to check the perspective so that we know if the change is an addition or a removal
+      const perspectiveAtoB = iterA.name === 'a';
+
+      if (perspectiveAtoB) {
+        changes.push(getChange(ChangeType.removal, current, undefined))
+      } else {
+        changes.push(getChange(ChangeType.addition, undefined, current))
+      }
+
+      i++
       continue;
     }
 
     const lcs = getLCS(candidates, iterA, iterB);
-    let _indexA = current?.index!;
-    let _indexB = lcs.bestIndex;
+    const indexA = current?.index!;
+    const indexB = lcs.bestIndex;
 
-    const change = matchSubsequence(lcs, iterA, iterB, _indexA, _indexB)
+    const change = matchSubsequence(lcs, iterA, iterB, indexA, indexB)
 
     if (change) {
       changes.push(change)
