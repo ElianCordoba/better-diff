@@ -32,16 +32,11 @@ export class Iterator {
     } as Item));
   }
 
-  next(startFrom = 0, onlyExpressions = false) {
+  next(startFrom = 0) {
     for (let i = startFrom; i < this.items.length; i++) {
       const item = this.items[i];
 
       if (item.matched) {
-        continue;
-      }
-
-      if (onlyExpressions && !item.node.expressionNumber) {
-        console.log('Skipped non expression node')
         continue;
       }
 
