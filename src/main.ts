@@ -51,8 +51,8 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       changes.push(getChange(ChangeType.addition, a.node, b.node));
       changes.push(getChange(ChangeType.removal, a.node, b.node));
 
-      iterA.mark();
-      iterB.mark();
+      iterA.mark(a.index);
+      iterB.mark(b.index);
       continue;
     }
 
@@ -135,7 +135,7 @@ function oneSidedIteration(
       changes.push(getChange(typeOfChange, value.node, undefined));
     }
 
-    iter.mark();
+    iter.mark(value.index);
 
     value = iter.next();
   }
@@ -327,8 +327,8 @@ function matchSubsequence(lcsResult: LCSResult, iterA: Iterator, iterB: Iterator
     indexA++;
     indexB++;
 
-    iterA.mark();
-    iterB.mark();
+    iterA.mark(a.index);
+    iterB.mark(b.index);
 
     // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
     if (a?.index === b?.index) {
@@ -350,7 +350,7 @@ function matchSubsequence(lcsResult: LCSResult, iterA: Iterator, iterB: Iterator
 
   // If the nodes are not in the same position then it's a move
   // TODO: Reported in the readme, this is too sensible
-  const didChange = iterA.indexOfLastItem !== iterB.indexOfLastItem;
+  const didChange = a!.index !== b!.index
 
   if (didChange) {
     // Since this function is reversible we need to check the perspective so that we know if the change is an addition or a removal

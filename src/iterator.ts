@@ -14,7 +14,7 @@ export class Iterator {
   chars?: string[];
 
   items!: Item[];
-  indexOfLastItem = 0;
+  private indexOfLastItem = 0;
   matchNumber = 0;
 
   // TODO: Find real value or make it configurable via CLI option
@@ -60,7 +60,7 @@ export class Iterator {
     return item.node;
   }
 
-  mark(index = this.indexOfLastItem) {
+  mark(index: number) {
     // TODO: Should only apply for moves, otherwise a move, addition and move
     // will display 1 for the first move and 3 for the second
     this.matchNumber++;
