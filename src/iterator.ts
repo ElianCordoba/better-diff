@@ -182,17 +182,4 @@ export class Iterator {
 
     console.log(result.join(""));
   }
-
-  // TODO: Maybe delete
-  printDepth() {
-    for (const { node } of this.items) {
-      console.log(
-        `(${node.index})`,
-        `| ${String(node.expressionNumber || '-').padEnd(1)} |`,
-        new Array(node.depth + 1).join("-"),
-        colorFn.cyan(node.prettyKind),
-        `(${node.pos} ${node.end})`,
-      );
-    }
-  }
 }
