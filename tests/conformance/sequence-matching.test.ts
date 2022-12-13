@@ -195,5 +195,67 @@ describe("Properly report moves in a same sequence", () => {
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
 
+  test("Back and forth example", () => {
+    let a = `
+      let age = 24 && print('elian')
+      fn()
+      1
+    `
 
+    let b = `
+      let age = 24 || fn()
+      print('elian')
+    `
+
+    const resultA = `
+      let age = 24 ➖&&➖ 1🔀print('elian')⏹️
+      2🔀fn()⏹️
+      ➖1➖
+    `;
+
+    const resultB = `
+      let age = 24 ➕||➕ 2🔀fn()⏹️
+      1🔀print('elian')⏹️
+    `;
+
+    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+
+    validateDiff(resultA, resultB, sourceA, sourceB);
+  });
+
+
+
+
+
+
+
+
+  test("Mid sequence", () => {
+    const a = `
+      let up;
+      let middle;
+    `;
+
+    const b = `
+      let middle;
+      let down;
+    `;
+
+    const resultA = `
+      2🔀let⏹️ ➖up➖3🔀;⏹️
+      1🔀let middle;⏹️
+    `;
+
+    const resultB = `
+      1🔀let middle;⏹️
+      2🔀let⏹️ ➕down➕3🔀;⏹️
+    `;
+
+    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+
+    validateDiff(resultA, resultB, sourceA, sourceB);
+  });
 })
+
+
+
