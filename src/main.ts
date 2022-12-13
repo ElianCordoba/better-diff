@@ -56,8 +56,8 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       continue;
     }
 
-    const lcsAtoB = getLCS(candidatesAtoB, iterA, iterB);
-    const lcsBtoA = getLCS(candidatesBtoA, iterB, iterA);
+    const lcsAtoB = getLCS(candidatesAtoB, iterA, iterB, a.index);
+    const lcsBtoA = getLCS(candidatesBtoA, iterB, iterA, b.index);
 
     let bestIndex: number;
     let bestResult: number;
@@ -284,7 +284,7 @@ export function getSequenceLength(
 
 interface LCSResult { bestIndex: number; bestResult: number; }
 
-function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator): LCSResult {
+function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator, indexA: number): LCSResult {
   let bestResult = 0;
   let bestIndex = 0;
 
@@ -293,7 +293,7 @@ function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator): LCSResu
   }
 
   for (const index of candidates) {
-    const lcs = getSequenceLength(iterA, iterB, iterA.indexOfLastItem, index);
+    const lcs = getSequenceLength(iterA, iterB, indexA, index);
 
     if (lcs > bestResult) {
       bestResult = lcs;
@@ -381,14 +381,14 @@ function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodes
 
   let i = 0;
   while (i < remainingNodesA.length) {
-    const current: Node = iterA.next(i)!.node
+    const current: Node = remainingNodesA[i]
 
     const candidatesInRemainingNodes = searchCandidatesInList(remainingNodesB, current)
     const candidates = candidatesInRemainingNodes.length ? candidatesInRemainingNodes : iterB.getCandidates(current);
 
     // Something added or removed
     if (!candidates.length) {
-      iterA.mark()
+      iterA.mark(current.index)
 
       // Since this function is reversible we need to check the perspective so that we know if the change is an addition or a removal
       const perspectiveAtoB = iterA.name === 'a';
@@ -403,7 +403,11 @@ function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodes
       continue;
     }
 
-    const lcs = getLCS(candidates, iterA, iterB);
+    const lcs = getLCS(candidates, iterA, iterB, current.index);
+
+    if (lcs.bestResult === 0) {
+      throw new Error("LCS resulted in 0")
+    }
     const indexA = current?.index!;
     const indexB = lcs.bestIndex;
 
@@ -417,7 +421,7 @@ function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodes
     i += lcs.bestResult
   }
 
-  // TODO
+  // TODO: This should be enabled but, since the code that assigns the expression number doesn't work properly, it breaks if I enable this.
   // if (i != remainingNodesA.length) {
   //   throw new Error(`After finishing the whole sequence matching the length didn't match, expected ${remainingNodesA.length} but got ${i}`)
   // }
