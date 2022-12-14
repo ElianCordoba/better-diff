@@ -1,5 +1,5 @@
 import { describe, test } from "vitest";
-import { getSimplifiedDiff } from "../../src";
+import { getTextWithDiffs } from "../../src";
 import { validateDiff } from "../utils";
 
 describe("Properly report moves in a same sequence", () => {
@@ -22,7 +22,7 @@ describe("Properly report moves in a same sequence", () => {
       1🔀let age = 24⏹️
     `;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -46,7 +46,7 @@ describe("Properly report moves in a same sequence", () => {
       1🔀print('elian')⏹️
     `;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -70,7 +70,7 @@ describe("Properly report moves in a same sequence", () => {
       3🔀let age =⏹️ 2🔀24⏹️
     `;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -94,7 +94,7 @@ describe("Properly report moves in a same sequence", () => {
       1🔀print('elian')⏹️
     `;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -118,7 +118,7 @@ describe("Properly report moves in a same sequence", () => {
       let age = 24 ➕&&➕ 1🔀print('elian')⏹️
     `;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -142,7 +142,7 @@ describe("Properly report moves in a same sequence", () => {
       2🔀let age = 24⏹️ ➕&&➕ 1🔀print('elian')⏹️
     `;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -166,7 +166,7 @@ describe("Properly report moves in a same sequence", () => {
       let age = 2🔀print('elian')⏹️ ➕&&➕ 1🔀24⏹️
     `;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -190,7 +190,7 @@ describe("Properly report moves in a same sequence", () => {
       3🔀let age =⏹️ 1🔀print('elian')⏹️ ➕&&➕ 2🔀24⏹️
     `;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -218,7 +218,7 @@ describe("Properly report moves in a same sequence", () => {
       1🔀print('elian')⏹️
     `;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -244,7 +244,7 @@ describe("Properly report moves in a same sequence", () => {
       2🔀let⏹️ ➕down➕3🔀;⏹️
     `;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });

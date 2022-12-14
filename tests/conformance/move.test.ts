@@ -1,5 +1,5 @@
 import { describe, test } from "vitest";
-import { getSimplifiedDiff } from "../../src";
+import { getTextWithDiffs } from "../../src";
 import { validateDiff } from "../utils";
 
 describe("Properly report lines added", () => {
@@ -24,7 +24,7 @@ describe("Properly report lines added", () => {
       1🔀a⏹️
     `;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -50,7 +50,7 @@ describe("Properly report lines added", () => {
       1🔀aa⏹️
     `;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -80,7 +80,7 @@ describe("Properly report lines added", () => {
       let name = 'Elian'⏹️
     `;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -116,7 +116,7 @@ describe("Properly report lines added", () => {
       3⏹️
     `;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -152,7 +152,7 @@ describe("Properly report lines added", () => {
       3⏹️
     `;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -190,7 +190,7 @@ describe("Properly report lines added", () => {
       1🔀3⏹️
     `;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });

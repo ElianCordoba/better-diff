@@ -1,26 +1,20 @@
 import { Change } from "./change";
 import { getInitialDiffs } from "./main";
-import { applyChangesToSources, simplifiedDrawingFunctions } from "./reporter";
+import { applyChangesToSources, asciiRenderFn, DiffRendererFn } from "./reporter";
 import { DiffResult } from "./types";
 
-export function getDiff(sourceA: string, sourceB: string): DiffResult {
-  const diffs = getInitialDiffs(sourceA, sourceB);
-  const sourcesWithDiff = applyChangesToSources(sourceA, sourceB, diffs);
-
-  return sourcesWithDiff;
-}
-
-export function getSimplifiedDiff(
+export function getTextWithDiffs(
   sourceA: string,
   sourceB: string,
-): [DiffResult, Change[]] {
-  const diffs = getInitialDiffs(sourceA, sourceB);
+  renderFn: DiffRendererFn = asciiRenderFn,
+): { diffs: DiffResult; changes: Change[] } {
+  const changes = getInitialDiffs(sourceA, sourceB);
   const sourcesWithDiff = applyChangesToSources(
     sourceA,
     sourceB,
-    diffs,
-    simplifiedDrawingFunctions,
+    changes,
+    renderFn,
   );
 
-  return [sourcesWithDiff, diffs];
+  return { diffs: sourcesWithDiff, changes: changes };
 }

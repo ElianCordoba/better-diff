@@ -4,13 +4,13 @@ import { Change } from "./change";
 //@ts-ignore TODO: Importing normally doesnt work with vitest
 export const k = require("kleur");
 
-type DrawingFn = (text: string) => string;
+type RenderFn = (text: string) => string;
 
-interface DifferDrawingFns {
-  addition: DrawingFn;
-  removal: DrawingFn;
-  change: DrawingFn;
-  move: (matchNumber: number) => DrawingFn;
+export interface DiffRendererFn {
+  addition: RenderFn;
+  removal: RenderFn;
+  change: RenderFn;
+  move: (matchNumber: number) => RenderFn;
 }
 
 type Colors =
@@ -27,27 +27,27 @@ type Colors =
 type ColorFns = Record<Colors, (text: string) => string>;
 
 export const colorFn: ColorFns = {
-  blue: (x) => k.underline(k.blue(x)),
-  green: (x) => k.underline(k.green(x)),
-  magenta: (x) => k.underline(k.magenta(x)),
-  red: (x) => k.underline(k.red(x)),
-  yellow: (x) => k.underline(k.yellow(x)),
-  cyan: (x) => k.underline(k.cyan(x)),
-  black: (x) => k.underline(k.black(x)),
-  white: (x) => k.underline(k.white(x)),
-  grey: (x) => k.underline(k.grey(x)),
+  blue: k.blue,
+  green: k.green,
+  magenta: k.magenta,
+  red: k.red,
+  yellow: k.yellow,
+  cyan: k.cyan,
+  black: k.black,
+  white: k.white,
+  grey: k.grey,
 } as const;
 
 // Pretty print. Human readable
-export const defaultDrawingFunctions: DifferDrawingFns = {
+export const prettyRenderFn: DiffRendererFn = {
   addition: colorFn.green,
   removal: colorFn.red,
   change: colorFn.yellow,
-  move: (_) => (text) => colorFn.blue(text),
+  move: (_) => (text) => k.blue().underline(text),
 };
 
 // Testing friendly
-export const simplifiedDrawingFunctions: DifferDrawingFns = {
+export const asciiRenderFn: DiffRendererFn = {
   addition: (text) => `➕${text}➕`,
   removal: (text) => `➖${text}➖`,
   change: (text) => `✏️${text}✏️`,
@@ -58,10 +58,10 @@ export function applyChangesToSources(
   sourceA: string,
   sourceB: string,
   changes: Change[],
-  drawFunctions?: DifferDrawingFns,
+  drawFunctions?: DiffRendererFn,
 ) {
-  const drawingFunctions: DifferDrawingFns = {
-    ...defaultDrawingFunctions,
+  const drawingFunctions: DiffRendererFn = {
+    ...prettyRenderFn,
     ...drawFunctions,
   };
 
@@ -130,7 +130,7 @@ export function getSourceWithChange(
   chars: string[],
   start: number,
   end: number,
-  colorFn: DrawingFn,
+  colorFn: RenderFn,
 ) {
   const head = chars.slice(0, start);
 
@@ -146,12 +146,6 @@ export function getSourceWithChange(
   // To calculate the characters to add we take the difference between the end and the start and subtract one,
   // this is because we need to count for the character we added
   let charsToAdd = end - start - 1;
-
-  // TODO: Check if we can remove this
-  // It could be -1 in scenarios where nodes start and end in the same location
-  if (charsToAdd == -1) {
-    charsToAdd = 0;
-  }
 
   const compliment = getComplimentArray(charsToAdd);
 
