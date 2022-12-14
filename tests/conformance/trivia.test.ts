@@ -1,5 +1,5 @@
 import { describe, test } from "vitest";
-import { getSimplifiedDiff } from "../../src";
+import { getTextWithDiffs } from "../../src";
 import { validateDiff } from "../utils";
 
 describe("Ignore trivia", () => {
@@ -13,7 +13,7 @@ describe("Ignore trivia", () => {
     const resultA = a;
     const resultB = b;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -28,7 +28,7 @@ describe("Ignore trivia", () => {
     const resultA = a;
     const resultB = b;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -45,7 +45,7 @@ describe("Ignore trivia", () => {
     const resultA = a;
     const resultB = b;
 
-    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
