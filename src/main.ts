@@ -20,11 +20,6 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     a = iterA.next();
     b = iterB.next();
 
-    // We are done, no more nodes left to check
-    if (!a && !b) {
-      break;
-    }
-
     // One of the iterators finished. We will traverse the remaining nodes in the other iterator
     if (!a || !b) {
       const iterOn = !a ? iterB : iterA;
@@ -51,13 +46,13 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       changes.push(getChange(ChangeType.addition, a.node, b.node));
       changes.push(getChange(ChangeType.removal, a.node, b.node));
 
-      iterA.mark();
-      iterB.mark();
+      iterA.mark(a.index);
+      iterB.mark(b.index);
       continue;
     }
 
-    const lcsAtoB = getLCS(candidatesAtoB, iterA, iterB);
-    const lcsBtoA = getLCS(candidatesBtoA, iterB, iterA);
+    const lcsAtoB = getLCS(candidatesAtoB, iterA, iterB, a.index);
+    const lcsBtoA = getLCS(candidatesBtoA, iterB, iterA, b.index);
 
     let bestIndex: number;
     let bestResult: number;
@@ -81,56 +76,50 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       indexB = b.index;
     }
 
-    let rangeA: Range | undefined;
-    let rangeB: Range | undefined;
+    // This are the expressions we are matching. We store the them so that at the end of the LCS matching we can finish
+    // matching these before moving on another expression
+    const expressionA = iterA.peek(indexA)?.expressionNumber!;
+    const expressionB = iterB.peek(indexB)?.expressionNumber!;
 
-    for (let index = bestIndex; index < bestIndex + bestResult; index++) {
-      a = iterA.next(indexA);
-      b = iterB.next(indexB);
+    const change = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult);
 
-      indexA++;
-      indexB++;
-
-      iterA.mark();
-      iterB.mark();
-
-      // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
-      if (a?.index === b?.index) {
-        continue;
-      }
-
-      if (!rangeA) {
-        rangeA = getRange(a!.node);
-      } else {
-        rangeA = mergeRanges(rangeA, getRange(a!.node));
-      }
-
-      if (!rangeB) {
-        rangeB = getRange(b!.node);
-      } else {
-        rangeB = mergeRanges(rangeB, getRange(b!.node));
-      }
+    if (change) {
+      changes.push(change);
     }
 
-    const noChange = iterA.indexOfLastItem === iterB.indexOfLastItem;
+    // We look for remaining nodes at index + bestResult because we don't want to include the already matched ones
+    let remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult);
+    let remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult);
 
-    // Again, if the nodes are in the same index means that we don't need to report anything
-    if (noChange) {
+    // If we finished matching the LCS and we don't have any remaining nodes in either expression, then we are done with the matching and we can move on
+    if (!remainingNodesA.length && !remainingNodesB.length) {
       continue;
     }
 
-    // Otherwise, it was a change
-    changes.push(
-      getChange(
-        ChangeType.move,
-        a!.node,
-        iterB.peek(bestIndex),
-        rangeA,
-        rangeB,
-      ),
-    );
-    continue;
-  } while (a); // If there are no more nodes, a will be undefined
+    // If we still have nodes remaining, means that after the LCS the expression had more nodes that we need to match before moving on, for example
+    //
+    //
+    // console.log(0)
+    //
+    // --------------
+    //
+    // console.log(1)
+    //
+    //
+    // The LCS will only match the `console.log(` part, but before moving into another expression we need to match the remaining of the expression
+
+    // First we complete the A side, if applicable
+    changes.push(...finishSequenceMatching(iterA, iterB, remainingNodesA, remainingNodesB));
+
+    // TODO: Maybe an optimization, could run faster if we call "finishSequenceMatching" on the one it has the most / least nodes to recalculate
+
+    // After calling `finishSequenceMatching` we need to recalculate the remaining nodes since previously unmatched ones could have been matched now
+    remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult);
+    remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult);
+
+    // Finally we complete the matching of the B side. This time we call `finishSequenceMatching` with the arguments inverted in order to check the other perspective
+    changes.push(...finishSequenceMatching(iterB, iterA, remainingNodesB, remainingNodesA));
+  } while (a || b); // Loop until both iterators are done, at that point they will return undefined and the loop will break
 
   return compactChanges(changes);
 }
@@ -151,7 +140,7 @@ function oneSidedIteration(
       changes.push(getChange(typeOfChange, value.node, undefined));
     }
 
-    iter.mark();
+    iter.mark(value.index);
 
     value = iter.next();
   }
@@ -235,9 +224,7 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
         continue;
       }
 
-      const readFrom = change!.type === ChangeType.removal
-        ? "rangeA"
-        : "rangeB";
+      const readFrom = change!.type === ChangeType.removal ? "rangeA" : "rangeB";
 
       const currentRange = change![readFrom]!;
       const nextRange = next[readFrom]!;
@@ -298,7 +285,7 @@ export function getSequenceLength(
   return sequence;
 }
 
-function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator) {
+function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator, indexA: number) {
   let bestResult = 0;
   let bestIndex = 0;
 
@@ -307,7 +294,7 @@ function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator) {
   }
 
   for (const index of candidates) {
-    const lcs = getSequenceLength(iterA, iterB, iterA.indexOfLastItem, index);
+    const lcs = getSequenceLength(iterA, iterB, indexA, index);
 
     if (lcs > bestResult) {
       bestResult = lcs;
@@ -316,4 +303,136 @@ function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator) {
   }
 
   return { bestIndex, bestResult };
+}
+
+// This function has side effects, mutates data in the iterators
+function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, indexOfBestResult: number, lcs: number): Change | undefined {
+  let a: Item;
+  let b: Item;
+
+  let rangeA: Range | undefined;
+  let rangeB: Range | undefined;
+
+  for (let index = indexOfBestResult; index < indexOfBestResult + lcs; index++) {
+    a = iterA.next(indexA)!;
+    b = iterB.next(indexB)!;
+
+    if (!equals(a?.node!, b?.node!)) {
+      throw new Error(`Misaligned matcher. A: ${indexA} (${a?.node?.prettyKind}), B: ${indexB} (${b?.node?.prettyKind})`);
+    }
+
+    indexA++;
+    indexB++;
+
+    iterA.mark(a.index);
+    iterB.mark(b.index);
+
+    // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
+    if (a?.index === b?.index) {
+      continue;
+    }
+
+    if (!rangeA) {
+      rangeA = getRange(a!.node);
+    } else {
+      rangeA = mergeRanges(rangeA, getRange(a!.node));
+    }
+
+    if (!rangeB) {
+      rangeB = getRange(b!.node);
+    } else {
+      rangeB = mergeRanges(rangeB, getRange(b!.node));
+    }
+  }
+
+  // If the nodes are not in the same position then it's a move
+  // TODO: Reported in the readme, this is too sensible
+  const didChange = a!.index !== b!.index;
+
+  if (didChange) {
+    // Since this function is reversible we need to check the perspective so that we know if the change is an addition or a removal
+    const perspectiveAtoB = iterA.name === "a";
+
+    if (perspectiveAtoB) {
+      return getChange(
+        ChangeType.move,
+        a!.node,
+        b!.node,
+        rangeA,
+        rangeB,
+      );
+    } else {
+      return getChange(
+        ChangeType.move,
+        b!.node,
+        a!.node,
+        rangeB,
+        rangeA,
+      );
+    }
+  }
+}
+
+function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodesA: Node[], remainingNodesB: Node[]): Change[] {
+  const changes: Change[] = [];
+
+  let i = 0;
+  while (i < remainingNodesA.length) {
+    const current: Node = remainingNodesA[i];
+
+    const candidatesInRemainingNodes = searchCandidatesInList(remainingNodesB, current);
+    const candidates = candidatesInRemainingNodes.length ? candidatesInRemainingNodes : iterB.getCandidates(current);
+
+    // Something added or removed
+    if (!candidates.length) {
+      iterA.mark(current.index);
+
+      // Since this function is reversible we need to check the perspective so that we know if the change is an addition or a removal
+      const perspectiveAtoB = iterA.name === "a";
+
+      if (perspectiveAtoB) {
+        changes.push(getChange(ChangeType.removal, current, undefined));
+      } else {
+        changes.push(getChange(ChangeType.addition, undefined, current));
+      }
+
+      i++;
+      continue;
+    }
+
+    const { bestIndex, bestResult } = getLCS(candidates, iterA, iterB, current.index);
+
+    if (bestResult === 0) {
+      throw new Error("LCS resulted in 0");
+    }
+    const indexA = current?.index!;
+    const indexB = bestIndex;
+
+    const change = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult);
+
+    if (change) {
+      changes.push(change);
+    }
+
+    i += bestResult;
+  }
+
+  // TODO: This should be enabled but, since the code that assigns the expression number doesn't work properly, it breaks if I enable this.
+  // if (i != remainingNodesA.length) {
+  //   throw new Error(`After finishing the whole sequence matching the length didn't match, expected ${remainingNodesA.length} but got ${i}`)
+  // }
+
+  return changes;
+}
+
+function searchCandidatesInList(nodes: Node[], expected: Node) {
+  const candidates: number[] = [];
+
+  for (const node of nodes) {
+    if (equals(node, expected)) {
+      candidates.push(node.index);
+    }
+  }
+
+  return candidates;
 }

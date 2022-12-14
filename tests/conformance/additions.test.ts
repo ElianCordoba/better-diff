@@ -110,4 +110,30 @@ describe("Properly report lines added", () => {
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
+
+  test("Added wrapped code", () => {
+    const a = `
+      callFn()
+    `;
+
+    const b = `
+      while (true) {
+        callFn()
+      }
+    `;
+
+    const resultA = `
+      1🔀callFn()⏹️
+    `;
+
+    const resultB = `
+      ➕while➕ ➕(true)➕ ➕{➕
+        1🔀callFn()⏹️
+      ➕}➕
+    `;
+
+    const [{ sourceA, sourceB }] = getSimplifiedDiff(a, b);
+
+    validateDiff(resultA, resultB, sourceA, sourceB);
+  });
 });

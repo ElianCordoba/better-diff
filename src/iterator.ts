@@ -14,7 +14,7 @@ export class Iterator {
   chars?: string[];
 
   items!: Item[];
-  indexOfLastItem = 0;
+  private indexOfLastItem = 0;
   matchNumber = 0;
 
   // TODO: Find real value or make it configurable via CLI option
@@ -55,7 +55,7 @@ export class Iterator {
     return item.node;
   }
 
-  mark(index = this.indexOfLastItem) {
+  mark(index: number) {
     // TODO: Should only apply for moves, otherwise a move, addition and move
     // will display 1 for the first move and 3 for the second
     this.matchNumber++;
@@ -105,21 +105,48 @@ export class Iterator {
     return candidates;
   }
 
+  getNodesFromExpression(expression: number, startIndex: number) {
+    const remainingNodes: Node[] = [];
+    let i = startIndex;
+    while (true) {
+      const next = this.items[i];
+
+      if (!next || next.node.expressionNumber === expression) {
+        break;
+      }
+
+      if (next.matched) {
+        i++;
+        continue;
+      }
+
+      remainingNodes.push(next.node);
+      i++;
+    }
+
+    return remainingNodes;
+  }
+
   printList() {
-    console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
+    console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("exp n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
-    const list = this.items.map((x, i) => {
-      const colorFn = x.matched ? k.green : k.grey;
+    const list = this.items.map((x) => {
+      let colorFn = x.matched ? k.green : k.grey;
 
-      const index = String(i).padStart(3).padEnd(6);
+      const index = String(x.index).padStart(3).padEnd(6);
 
       const matchNumber = String(x.matchNumber).padStart(5).padEnd(10);
+      const expressionNumber = String(x.node.expressionNumber || "-").padStart(5).padEnd(8);
 
       const { kind, text } = getNodeForPrinting(x);
       const _kind = kind.padStart(5).padEnd(25);
-      const _text = text.padStart(5);
+      const _text = ` ${text}`;
 
-      const row = `${index}|${matchNumber}|${colorFn(_kind)}|${_text}`;
+      const row = `${index}|${matchNumber}|${expressionNumber}|${colorFn(_kind)}|${_text}`;
+
+      if (x.index === this.indexOfLastItem) {
+        colorFn = k.cyan;
+      }
 
       return colorFn(row);
     });
@@ -154,16 +181,5 @@ export class Iterator {
     const result = getSourceWithChange(this.chars, start, end, colorFn.magenta);
 
     console.log(result.join(""));
-  }
-
-  printDepth() {
-    for (const { node } of this.items) {
-      console.log(
-        `(${node.depth})`,
-        new Array(node.depth + 1).join("-"),
-        colorFn.cyan(node.prettyKind),
-        `(${node.pos} ${node.end})`,
-      );
-    }
   }
 }
