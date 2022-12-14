@@ -20,11 +20,6 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     a = iterA.next();
     b = iterB.next();
 
-    // We are done, no more nodes left to check
-    if (!a && !b) {
-      break;
-    }
-
     // One of the iterators finished. We will traverse the remaining nodes in the other iterator
     if (!a || !b) {
       const iterOn = !a ? iterB : iterA;
@@ -96,14 +91,24 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     let remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult)
     let remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult)
 
-    // If we finished matching the LCS and we don't have any remaining nodes in neither expression, then we are we are done with the matching and we can move on
+    // If we finished matching the LCS and we don't have any remaining nodes in either expression, then we are done with the matching and we can move on
     if (!remainingNodesA.length && !remainingNodesB.length) {
       continue
     }
 
-    // If we still have nodes remaining, means that after the LCS the expression still had more nodes that we need to match before moving on
+    // If we still have nodes remaining, means that after the LCS the expression had more nodes that we need to match before moving on, for example
+    //
+    //
+    // console.log(0)
+    //
+    // --------------
+    //
+    // console.log(1)
+    //
+    //
+    // The LCS will only match the `console.log(` part, but before moving into another expression we need to match the remaining of the expression
 
-    // If there are still nodes on both side, we need try match them, otherwise we report the addition/removal
+    // First we complete the A side, if applicable
     changes.push(...finishSequenceMatching(iterA, iterB, remainingNodesA, remainingNodesB))
 
     // TODO: Maybe an optimization, could run faster if we call "finishSequenceMatching" on the one it has the most / least nodes to recalculate
@@ -112,9 +117,9 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult)
     remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult)
 
-    // This time we call `finishSequenceMatching` with the arguments inverted in order to check the other perspective
+    // Finally we complete the matching of the B side. This time we call `finishSequenceMatching` with the arguments inverted in order to check the other perspective
     changes.push(...finishSequenceMatching(iterB, iterA, remainingNodesB, remainingNodesA))
-  } while (a); // If there are no more nodes, a will be undefined
+  } while (a || b); // Loop until both iterators are done, at that point they will return undefined and the loop will break
 
   return compactChanges(changes);
 }
@@ -282,9 +287,7 @@ export function getSequenceLength(
   return sequence;
 }
 
-interface LCSResult { bestIndex: number; bestResult: number; }
-
-function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator, indexA: number): LCSResult {
+function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator, indexA: number) {
   let bestResult = 0;
   let bestIndex = 0;
 
@@ -304,13 +307,10 @@ function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator, indexA: 
   return { bestIndex, bestResult };
 }
 
-// This function has side effects, it's mutates data in the iterators
+// This function has side effects, mutates data in the iterators
 function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, indexOfBestResult: number, lcs: number): Change | undefined {
   let a: Item;
   let b: Item;
-
-  // let indexA: number;
-  // let indexB: number;
 
   let rangeA: Range | undefined;
   let rangeB: Range | undefined;
@@ -428,7 +428,6 @@ function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodes
   return changes
 }
 
-// same thing as getCandidates :S
 function searchCandidatesInList(nodes: Node[], expected: Node) {
   const candidates: number[] = []
 
