@@ -2,7 +2,7 @@
   "scripts": {
     "test": "vitest --dir ./tests",
     "build": "tsc --watch",
-    "prepare": "npm run format && npm run lint",
+    "check": "npm run format && npm run lint",
     "format": "deno fmt --options-line-width 300",
     "lint": "deno lint --ignore=node_modules,diff,internal,dist,tests,test.ts"
   },
