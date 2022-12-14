@@ -10,7 +10,7 @@ type TS = typeof MYTS & typeof _ts;
 export const ts: TS = (_ts as any);
 
 interface ExtraNodeData {
-  index: number
+  index: number;
   text: string;
   depth: number;
   prettyKind: string;
@@ -33,14 +33,14 @@ export function getNodesArray(source: string) {
     const isReservedWord = node.kind >= SyntaxKind.FirstKeyword && node.kind <= SyntaxKind.LastKeyword;
     const isPunctuation = node.kind >= SyntaxKind.FirstPunctuation && node.kind <= SyntaxKind.LastPunctuation;
 
-    const isElement = node.kind >= SyntaxKind.Block && node.kind <= SyntaxKind.MissingDeclaration
+    const isElement = node.kind >= SyntaxKind.Block && node.kind <= SyntaxKind.MissingDeclaration;
 
-    const isExpression = node.kind >= SyntaxKind.ArrayLiteralExpression && node.kind <= SyntaxKind.SatisfiesExpression || isElement// || node.kind === SyntaxKind.SyntaxList
+    const isExpression = node.kind >= SyntaxKind.ArrayLiteralExpression && node.kind <= SyntaxKind.SatisfiesExpression || isElement; // || node.kind === SyntaxKind.SyntaxList
 
     if (isExpression) {
-      expressionNumber++
+      expressionNumber++;
     } else {
-      expressionNumber += 0.1
+      expressionNumber += 0.1;
     }
 
     // TODO: If we only need nodes with text representation, we can use the tokenizer and add the leading trivia as a property
@@ -53,7 +53,7 @@ export function getNodesArray(source: string) {
       // node.index = i
 
       // TODO: Remove round for debugging
-      node.expressionNumber = Math.round(expressionNumber)
+      node.expressionNumber = Math.round(expressionNumber);
       //node.expressionNumber = expressionNumber
       /// TODO: Store expression start and end?
 
@@ -62,7 +62,6 @@ export function getNodesArray(source: string) {
 
     depth++;
     node.getChildren().forEach((x) => walk(x as Node, depth, expressionNumber));
-
   }
 
   sourceFile.getChildren().forEach((x) => walk(x as Node));
@@ -73,8 +72,8 @@ export function getNodesArray(source: string) {
   // TODO: Since we are popping and shifting the index gets messed up, do this in the main walk fn
 
   nodes.map((node, i) => {
-    node.index = i
-  })
+    node.index = i;
+  });
 
   return nodes;
 }

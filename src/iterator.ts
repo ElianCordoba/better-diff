@@ -106,8 +106,8 @@ export class Iterator {
   }
 
   getNodesFromExpression(expression: number, startIndex: number) {
-    const remainingNodes: Node[] = []
-    let i = startIndex
+    const remainingNodes: Node[] = [];
+    let i = startIndex;
     while (true) {
       const next = this.items[i];
 
@@ -116,15 +116,15 @@ export class Iterator {
       }
 
       if (next.matched) {
-        i++
-        continue
+        i++;
+        continue;
       }
 
-      remainingNodes.push(next.node)
-      i++
+      remainingNodes.push(next.node);
+      i++;
     }
 
-    return remainingNodes
+    return remainingNodes;
   }
 
   printList() {
@@ -136,7 +136,7 @@ export class Iterator {
       const index = String(x.index).padStart(3).padEnd(6);
 
       const matchNumber = String(x.matchNumber).padStart(5).padEnd(10);
-      const expressionNumber = String(x.node.expressionNumber || '-').padStart(5).padEnd(8)
+      const expressionNumber = String(x.node.expressionNumber || "-").padStart(5).padEnd(8);
 
       const { kind, text } = getNodeForPrinting(x);
       const _kind = kind.padStart(5).padEnd(25);
@@ -145,7 +145,7 @@ export class Iterator {
       const row = `${index}|${matchNumber}|${expressionNumber}|${colorFn(_kind)}|${_text}`;
 
       if (x.index === this.indexOfLastItem) {
-        colorFn = k.cyan
+        colorFn = k.cyan;
       }
 
       return colorFn(row);

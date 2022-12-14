@@ -200,12 +200,12 @@ describe("Properly report moves in a same sequence", () => {
       let age = 24 && print('elian')
       fn()
       1
-    `
+    `;
 
     let b = `
       let age = 24 || fn()
       print('elian')
-    `
+    `;
 
     const resultA = `
       let age = 24 ➖&&➖ 1🔀print('elian')⏹️
@@ -222,13 +222,6 @@ describe("Properly report moves in a same sequence", () => {
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
-
-
-
-
-
-
-
 
   test("Mid sequence", () => {
     const a = `
@@ -255,7 +248,4 @@ describe("Properly report moves in a same sequence", () => {
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
-})
-
-
-
+});

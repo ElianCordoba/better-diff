@@ -76,24 +76,24 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       indexB = b.index;
     }
 
-    // This are the expressions we are matching. We store the them so that at the end of the LCS matching we can finish 
+    // This are the expressions we are matching. We store the them so that at the end of the LCS matching we can finish
     // matching these before moving on another expression
-    const expressionA = iterA.peek(indexA)?.expressionNumber!
-    const expressionB = iterB.peek(indexB)?.expressionNumber!
+    const expressionA = iterA.peek(indexA)?.expressionNumber!;
+    const expressionB = iterB.peek(indexB)?.expressionNumber!;
 
-    const change = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult)
+    const change = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult);
 
     if (change) {
-      changes.push(change)
+      changes.push(change);
     }
 
     // We look for remaining nodes at index + bestResult because we don't want to include the already matched ones
-    let remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult)
-    let remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult)
+    let remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult);
+    let remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult);
 
     // If we finished matching the LCS and we don't have any remaining nodes in either expression, then we are done with the matching and we can move on
     if (!remainingNodesA.length && !remainingNodesB.length) {
-      continue
+      continue;
     }
 
     // If we still have nodes remaining, means that after the LCS the expression had more nodes that we need to match before moving on, for example
@@ -109,16 +109,16 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     // The LCS will only match the `console.log(` part, but before moving into another expression we need to match the remaining of the expression
 
     // First we complete the A side, if applicable
-    changes.push(...finishSequenceMatching(iterA, iterB, remainingNodesA, remainingNodesB))
+    changes.push(...finishSequenceMatching(iterA, iterB, remainingNodesA, remainingNodesB));
 
     // TODO: Maybe an optimization, could run faster if we call "finishSequenceMatching" on the one it has the most / least nodes to recalculate
 
     // After calling `finishSequenceMatching` we need to recalculate the remaining nodes since previously unmatched ones could have been matched now
-    remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult)
-    remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult)
+    remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult);
+    remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult);
 
     // Finally we complete the matching of the B side. This time we call `finishSequenceMatching` with the arguments inverted in order to check the other perspective
-    changes.push(...finishSequenceMatching(iterB, iterA, remainingNodesB, remainingNodesA))
+    changes.push(...finishSequenceMatching(iterB, iterA, remainingNodesB, remainingNodesA));
   } while (a || b); // Loop until both iterators are done, at that point they will return undefined and the loop will break
 
   return compactChanges(changes);
@@ -224,9 +224,7 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
         continue;
       }
 
-      const readFrom = change!.type === ChangeType.removal
-        ? "rangeA"
-        : "rangeB";
+      const readFrom = change!.type === ChangeType.removal ? "rangeA" : "rangeB";
 
       const currentRange = change![readFrom]!;
       const nextRange = next[readFrom]!;
@@ -320,7 +318,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     b = iterB.next(indexB)!;
 
     if (!equals(a?.node!, b?.node!)) {
-      throw new Error(`Misaligned matcher. A: ${indexA} (${a?.node?.prettyKind}), B: ${indexB} (${b?.node?.prettyKind})`)
+      throw new Error(`Misaligned matcher. A: ${indexA} (${a?.node?.prettyKind}), B: ${indexB} (${b?.node?.prettyKind})`);
     }
 
     indexA++;
@@ -349,11 +347,11 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
   // If the nodes are not in the same position then it's a move
   // TODO: Reported in the readme, this is too sensible
-  const didChange = a!.index !== b!.index
+  const didChange = a!.index !== b!.index;
 
   if (didChange) {
     // Since this function is reversible we need to check the perspective so that we know if the change is an addition or a removal
-    const perspectiveAtoB = iterA.name === 'a';
+    const perspectiveAtoB = iterA.name === "a";
 
     if (perspectiveAtoB) {
       return getChange(
@@ -362,7 +360,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
         b!.node,
         rangeA,
         rangeB,
-      )
+      );
     } else {
       return getChange(
         ChangeType.move,
@@ -370,54 +368,53 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
         a!.node,
         rangeB,
         rangeA,
-      )
+      );
     }
   }
 }
 
 function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodesA: Node[], remainingNodesB: Node[]): Change[] {
-  const changes: Change[] = []
+  const changes: Change[] = [];
 
   let i = 0;
   while (i < remainingNodesA.length) {
-    const current: Node = remainingNodesA[i]
+    const current: Node = remainingNodesA[i];
 
-    const candidatesInRemainingNodes = searchCandidatesInList(remainingNodesB, current)
+    const candidatesInRemainingNodes = searchCandidatesInList(remainingNodesB, current);
     const candidates = candidatesInRemainingNodes.length ? candidatesInRemainingNodes : iterB.getCandidates(current);
 
     // Something added or removed
     if (!candidates.length) {
-      iterA.mark(current.index)
+      iterA.mark(current.index);
 
       // Since this function is reversible we need to check the perspective so that we know if the change is an addition or a removal
-      const perspectiveAtoB = iterA.name === 'a';
+      const perspectiveAtoB = iterA.name === "a";
 
       if (perspectiveAtoB) {
-        changes.push(getChange(ChangeType.removal, current, undefined))
+        changes.push(getChange(ChangeType.removal, current, undefined));
       } else {
-        changes.push(getChange(ChangeType.addition, undefined, current))
+        changes.push(getChange(ChangeType.addition, undefined, current));
       }
 
-      i++
+      i++;
       continue;
     }
 
     const { bestIndex, bestResult } = getLCS(candidates, iterA, iterB, current.index);
 
     if (bestResult === 0) {
-      throw new Error("LCS resulted in 0")
+      throw new Error("LCS resulted in 0");
     }
     const indexA = current?.index!;
     const indexB = bestIndex;
 
-    const change = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult)
+    const change = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult);
 
     if (change) {
-      changes.push(change)
+      changes.push(change);
     }
 
-
-    i += bestResult
+    i += bestResult;
   }
 
   // TODO: This should be enabled but, since the code that assigns the expression number doesn't work properly, it breaks if I enable this.
@@ -425,17 +422,17 @@ function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodes
   //   throw new Error(`After finishing the whole sequence matching the length didn't match, expected ${remainingNodesA.length} but got ${i}`)
   // }
 
-  return changes
+  return changes;
 }
 
 function searchCandidatesInList(nodes: Node[], expected: Node) {
-  const candidates: number[] = []
+  const candidates: number[] = [];
 
   for (const node of nodes) {
     if (equals(node, expected)) {
-      candidates.push(node.index)
+      candidates.push(node.index);
     }
   }
 
-  return candidates
+  return candidates;
 }
