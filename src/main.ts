@@ -86,7 +86,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     const expressionA = iterA.peek(indexA)?.expressionNumber!
     const expressionB = iterB.peek(indexB)?.expressionNumber!
 
-    const change = matchSubsequence({ bestIndex, bestResult }, iterA, iterB, indexA, indexB)
+    const change = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult)
 
     if (change) {
       changes.push(change)
@@ -305,8 +305,7 @@ function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator, indexA: 
 }
 
 // This function has side effects, it's mutates data in the iterators
-function matchSubsequence(lcsResult: LCSResult, iterA: Iterator, iterB: Iterator, indexA: number, indexB: number): Change | undefined {
-  const { bestIndex, bestResult } = lcsResult
+function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, indexOfBestResult: number, lcs: number): Change | undefined {
   let a: Item;
   let b: Item;
 
@@ -316,7 +315,7 @@ function matchSubsequence(lcsResult: LCSResult, iterA: Iterator, iterB: Iterator
   let rangeA: Range | undefined;
   let rangeB: Range | undefined;
 
-  for (let index = bestIndex; index < bestIndex + bestResult; index++) {
+  for (let index = indexOfBestResult; index < indexOfBestResult + lcs; index++) {
     a = iterA.next(indexA)!;
     b = iterB.next(indexB)!;
 
@@ -403,22 +402,22 @@ function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodes
       continue;
     }
 
-    const lcs = getLCS(candidates, iterA, iterB, current.index);
+    const { bestIndex, bestResult } = getLCS(candidates, iterA, iterB, current.index);
 
-    if (lcs.bestResult === 0) {
+    if (bestResult === 0) {
       throw new Error("LCS resulted in 0")
     }
     const indexA = current?.index!;
-    const indexB = lcs.bestIndex;
+    const indexB = bestIndex;
 
-    const change = matchSubsequence(lcs, iterA, iterB, indexA, indexB)
+    const change = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult)
 
     if (change) {
       changes.push(change)
     }
 
 
-    i += lcs.bestResult
+    i += bestResult
   }
 
   // TODO: This should be enabled but, since the code that assigns the expression number doesn't work properly, it breaks if I enable this.
