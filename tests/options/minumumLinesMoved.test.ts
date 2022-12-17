@@ -118,4 +118,30 @@ describe("Properly report lines moved respecting the option 'minimumLinesMoved'"
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
+
+  test("Bigger move with 'minimumLinesMoved' set to 2, inversed", () => {
+    const a = `
+      x
+    `;
+
+    const b = `
+      x
+
+      a
+    `;
+
+    const resultA = `
+      x
+    `;
+
+    const resultB = `
+      x
+
+      ➕a➕
+    `;
+
+    const { sourceA, sourceB } = getTextWithDiffs(a, b, { minimumLinesMoved: 3 }).diffs;
+
+    validateDiff(resultA, resultB, sourceA, sourceB);
+  });
 });
