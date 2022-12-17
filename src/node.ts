@@ -10,6 +10,8 @@ export class Node {
     public prettyKind: string,
     public expressionNumber: number,
     public lineNumber: number,
+    public matched: boolean = false,
+    public matchNumber: number = 0,
     getSourceFn?: () => string,
   ) {}
 

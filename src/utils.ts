@@ -1,7 +1,7 @@
 import { SyntaxKind } from "typescript";
 import { Node } from "./node";
 import { ts, TSNode } from "./ts-util";
-import { Item, Range } from "./types";
+import { Range } from "./types";
 
 export function formatSyntaxKind(node: TSNode) {
   const textValue = node.text ? `| "${node.text}"` : "";
@@ -10,9 +10,9 @@ export function formatSyntaxKind(node: TSNode) {
   return `${kind.padEnd(25)}${textValue}`.trim();
 }
 
-export function getNodeForPrinting(item: Item) {
-  const hasText = item.node.text || "";
-  const isString = item.node.kind === SyntaxKind.StringLiteral;
+export function getNodeForPrinting(item: Node) {
+  const hasText = item.text || "";
+  const isString = item.kind === SyntaxKind.StringLiteral;
 
   let text;
 
@@ -23,7 +23,7 @@ export function getNodeForPrinting(item: Item) {
   }
 
   return {
-    kind: ts.Debug.formatSyntaxKind(item.node.kind),
+    kind: ts.Debug.formatSyntaxKind(item.kind),
     text,
   };
 }

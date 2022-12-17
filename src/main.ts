@@ -1,5 +1,5 @@
 import { getNodesArray } from "./ts-util";
-import { ChangeType, Item, Range } from "./types";
+import { ChangeType, Range } from "./types";
 import { equals, mergeRanges } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
@@ -20,8 +20,8 @@ export function getInitialDiffs(codeA: string, codeB: string, options: Required<
   const iterA = new Iterator(nodesA, { name: "a", source: codeA });
   const iterB = new Iterator(nodesB, { name: "b", source: codeB });
 
-  let a: Item | undefined;
-  let b: Item | undefined;
+  let a: Node | undefined;
+  let b: Node | undefined;
 
   do {
     a = iterA.next();
@@ -44,14 +44,14 @@ export function getInitialDiffs(codeA: string, codeB: string, options: Required<
     // B: 1 2 3
     // From the perspective of A, the LCS is [1, 2], but from the other perspective it's the real maxima [1, 2, 3]
     // More about this in the move tests
-    const candidatesAtoB = iterB.getCandidates(a.node);
-    const candidatesBtoA = iterA.getCandidates(b.node);
+    const candidatesAtoB = iterB.getCandidates(a);
+    const candidatesBtoA = iterA.getCandidates(b);
 
     // We didn't find any match
     if (candidatesAtoB.length === 0 && candidatesBtoA.length === 0) {
       // TODO: Maybe push change type 'change' ?
-      changes.push(getChange(ChangeType.addition, a.node, b.node));
-      changes.push(getChange(ChangeType.removal, a.node, b.node));
+      changes.push(getChange(ChangeType.addition, a, b));
+      changes.push(getChange(ChangeType.removal, a, b));
 
       iterA.mark(a.index);
       iterB.mark(b.index);
@@ -142,9 +142,9 @@ function oneSidedIteration(
   // TODO: Compact
   while (value) {
     if (typeOfChange === ChangeType.addition) {
-      changes.push(getChange(typeOfChange, undefined, value.node));
+      changes.push(getChange(typeOfChange, undefined, value));
     } else {
-      changes.push(getChange(typeOfChange, value.node, undefined));
+      changes.push(getChange(typeOfChange, value, undefined));
     }
 
     iter.mark(value.index);
@@ -314,8 +314,8 @@ function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator, indexA: 
 
 // This function has side effects, mutates data in the iterators
 function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, indexOfBestResult: number, lcs: number): Change | undefined {
-  let a: Item;
-  let b: Item;
+  let a: Node;
+  let b: Node;
 
   let rangeA: Range | undefined;
   let rangeB: Range | undefined;
@@ -324,8 +324,8 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     a = iterA.next(indexA)!;
     b = iterB.next(indexB)!;
 
-    if (!equals(a?.node!, b?.node!)) {
-      throw new Error(`Misaligned matcher. A: ${indexA} (${a?.node?.prettyKind}), B: ${indexB} (${b?.node?.prettyKind})`);
+    if (!equals(a!, b!)) {
+      throw new Error(`Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
     }
 
     indexA++;
@@ -340,15 +340,15 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     }
 
     if (!rangeA) {
-      rangeA = a!.node.getPosition();
+      rangeA = a.getPosition();
     } else {
-      rangeA = mergeRanges(rangeA, a!.node.getPosition());
+      rangeA = mergeRanges(rangeA, a.getPosition());
     }
 
     if (!rangeB) {
-      rangeB = b!.node.getPosition();
+      rangeB = b.getPosition();
     } else {
-      rangeB = mergeRanges(rangeB, b!.node.getPosition());
+      rangeB = mergeRanges(rangeB, b.getPosition());
     }
   }
 
@@ -361,7 +361,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     const perspectiveAtoB = iterA.name === "a";
 
     if (perspectiveAtoB) {
-      const linesMoved = Math.abs(a!.node.lineNumber - b!.node.lineNumber);
+      const linesMoved = Math.abs(a!.lineNumber - b!.lineNumber);
 
       // Ignoring move if the code hasn't move far enough
       if (linesMoved < systemOptions!.minimumLinesMoved) {
@@ -370,16 +370,16 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
       return getChange(
         ChangeType.move,
-        a!.node,
-        b!.node,
+        a!,
+        b!,
         rangeA,
         rangeB,
       );
     } else {
       return getChange(
         ChangeType.move,
-        b!.node,
-        a!.node,
+        b!,
+        a!,
         rangeB,
         rangeA,
       );

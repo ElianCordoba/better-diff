@@ -1,4 +1,3 @@
-import { Item } from "./types";
 import { equals, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
@@ -13,7 +12,7 @@ export class Iterator {
   // TODO: Maybe optimize? May consume a lot of memory
   chars?: string[];
 
-  items!: Item[];
+  items!: Node[];
   private indexOfLastItem = 0;
   matchNumber = 0;
 
@@ -24,12 +23,7 @@ export class Iterator {
     this.name = options?.name;
     this.chars = options?.source?.split("");
 
-    this.items = nodes.map((node, index) => ({
-      node,
-      index,
-      matched: false,
-      matchNumber: 0,
-    } as Item));
+    this.items = nodes;
   }
 
   next(startFrom = 0) {
@@ -52,7 +46,7 @@ export class Iterator {
       return;
     }
 
-    return item.node;
+    return item;
   }
 
   mark(index: number) {
@@ -82,8 +76,8 @@ export class Iterator {
         return;
       }
 
-      const foundAhead = ahead && !ahead.matched && equals(expected, ahead.node);
-      const foundBack = back && !back.matched && equals(expected, back.node);
+      const foundAhead = ahead && !ahead.matched && equals(expected, ahead);
+      const foundBack = back && !back.matched && equals(expected, back);
 
       if (foundAhead || foundBack) {
         const index = foundAhead ? startFrom + offset : startFrom - offset;
@@ -111,7 +105,7 @@ export class Iterator {
     while (true) {
       const next = this.items[i];
 
-      if (!next || next.node.expressionNumber === expression) {
+      if (!next || next.expressionNumber === expression) {
         break;
       }
 
@@ -120,7 +114,7 @@ export class Iterator {
         continue;
       }
 
-      remainingNodes.push(next.node);
+      remainingNodes.push(next);
       i++;
     }
 
@@ -136,7 +130,7 @@ export class Iterator {
       const index = String(x.index).padStart(3).padEnd(6);
 
       const matchNumber = String(x.matchNumber).padStart(5).padEnd(10);
-      const expressionNumber = String(x.node.expressionNumber || "-").padStart(5).padEnd(8);
+      const expressionNumber = String(x.expressionNumber || "-").padStart(5).padEnd(8);
 
       const { kind, text } = getNodeForPrinting(x);
       const _kind = kind.padStart(5).padEnd(25);
@@ -168,7 +162,7 @@ export class Iterator {
       const next = this.next();
 
       if (next) {
-        nodeToDraw = next.node;
+        nodeToDraw = next;
       }
     }
 
