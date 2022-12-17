@@ -1,9 +1,10 @@
-import { getNodesArray, Node } from "./ts-util";
+import { getNodesArray } from "./ts-util";
 import { ChangeType, Item, Range } from "./types";
 import { equals, getRange, mergeRanges } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
 import { Options } from "./index";
+import { Node } from "./node";
 
 // Top level variable so it's accessible across the functions
 let systemOptions: Required<Options>;

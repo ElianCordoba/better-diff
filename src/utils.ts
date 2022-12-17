@@ -1,8 +1,9 @@
 import { SyntaxKind } from "typescript";
-import { Node, ts } from "./ts-util";
+import { Node } from "./node";
+import { ts, TSNode } from "./ts-util";
 import { Item, Range } from "./types";
 
-export function formatSyntaxKind(node: Node) {
+export function formatSyntaxKind(node: TSNode) {
   const textValue = node.text ? `| "${node.text}"` : "";
   const kind: string = ts.Debug.formatSyntaxKind(node.kind);
 
@@ -36,16 +37,9 @@ export function listEnded(node: Node): boolean {
 }
 
 export function getRange(node: Node): Range {
+  // TODO get loc function
   return {
-    // Each node owns the trivia before until the previous token, for example:
-    //
-    // age = 24
-    //      ^
-    //      Trivia for the number literal starts here, but you don't want to start the diff here
-    //
-    // This is why we add the leading trivia to the `start` of the node, so we get where the actual
-    // value of the node starts and not where the trivia starts
-    start: node.pos + node.getLeadingTriviaWidth(),
+    start: node.start,
     end: node.end,
   };
 }

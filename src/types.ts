@@ -1,4 +1,4 @@
-import { Node } from "./ts-util";
+import { Node } from "./node";
 
 export interface DiffResult {
   sourceA: string;

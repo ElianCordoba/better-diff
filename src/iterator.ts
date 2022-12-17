@@ -1,7 +1,7 @@
 import { Item } from "./types";
 import { equals, getNodeForPrinting, getRange } from "./utils";
-import { Node } from "./ts-util";
 import { colorFn, getSourceWithChange, k } from "./reporter";
+import { Node } from "./node";
 
 interface IteratorOptions {
   name?: string;
