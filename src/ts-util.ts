@@ -51,7 +51,7 @@ export function getNodesArray(source: string) {
       node.prettyKind = formatSyntaxKind(node);
       node.depth = depth;
 
-      node.lineNumber = getLineNumber(sourceFile, node.pos + node.getLeadingTriviaWidth())
+      node.lineNumber = getLineNumber(sourceFile, node.pos + node.getLeadingTriviaWidth());
       // TODO: Remove round for debugging
       node.expressionNumber = Math.round(expressionNumber);
       //node.expressionNumber = expressionNumber
@@ -76,5 +76,5 @@ export function getNodesArray(source: string) {
 
 // This wrapper exists because the underling TS function is marked as internal
 function getLineNumber(sourceFile: SourceFile, start: number) {
-  return (_ts as any).getLineAndCharacterOfPosition(sourceFile, start).line + 1
+  return (_ts as any).getLineAndCharacterOfPosition(sourceFile, start).line + 1;
 }

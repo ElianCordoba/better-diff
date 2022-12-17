@@ -16,20 +16,20 @@ export interface Options {
   // ; console.log(0)
   //
   // In this case the whole "console.log(0)" would be consider a move because the exact positions don't match
-  minimumLinesMoved?: number
+  minimumLinesMoved?: number;
 }
 
 const defaultOptions: Options = {
   renderFn: asciiRenderFn,
-  minimumLinesMoved: 0
-}
+  minimumLinesMoved: 0,
+};
 
 export function getTextWithDiffs(
   sourceA: string,
   sourceB: string,
-  options?: Options
+  options?: Options,
 ): { diffs: DiffResult; changes: Change[] } {
-  const _options = { ...defaultOptions, ...(options || {}) } as Required<Options>
+  const _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
 
   const changes = getInitialDiffs(sourceA, sourceB, _options);
   const sourcesWithDiff = applyChangesToSources(
