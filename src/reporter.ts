@@ -145,7 +145,7 @@ export function getSourceWithChange(
   //
   // To calculate the characters to add we take the difference between the end and the start and subtract one,
   // this is because we need to count for the character we added
-  let charsToAdd = end - start - 1;
+  const charsToAdd = end - start - 1;
 
   const compliment = getComplimentArray(charsToAdd);
 

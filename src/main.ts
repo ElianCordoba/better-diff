@@ -3,8 +3,14 @@ import { ChangeType, Item, Range } from "./types";
 import { equals, getRange, mergeRanges } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
+import { Options } from "./index";
 
-export function getInitialDiffs(codeA: string, codeB: string): Change[] {
+// Top level variable so it's accessible across the functions
+let systemOptions: Required<Options>;
+
+export function getInitialDiffs(codeA: string, codeB: string, options: Required<Options>): Change[] {
+  systemOptions = options;
+
   const changes: Change[] = [];
 
   const nodesA = getNodesArray(codeA);
@@ -354,6 +360,13 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     const perspectiveAtoB = iterA.name === "a";
 
     if (perspectiveAtoB) {
+      const linesMoved = Math.abs(a!.node.lineNumber - b!.node.lineNumber);
+
+      // Ignoring move if the code hasn't move far enough
+      if (linesMoved < systemOptions!.minimumLinesMoved) {
+        return;
+      }
+
       return getChange(
         ChangeType.move,
         a!.node,
