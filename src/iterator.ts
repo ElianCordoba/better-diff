@@ -1,5 +1,5 @@
 import { Item } from "./types";
-import { equals, getNodeForPrinting, getRange } from "./utils";
+import { equals, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
 
@@ -177,7 +177,7 @@ export class Iterator {
       return;
     }
 
-    const { start, end } = getRange(nodeToDraw);
+    const { start, end } = nodeToDraw.getPosition();
     const result = getSourceWithChange(this.chars, start, end, colorFn.magenta);
 
     console.log(result.join(""));

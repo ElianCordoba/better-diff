@@ -36,14 +36,6 @@ export function listEnded(node: Node): boolean {
   return node.kind === ts.SyntaxKind.EndOfFileToken;
 }
 
-export function getRange(node: Node): Range {
-  // TODO get loc function
-  return {
-    start: node.start,
-    end: node.end,
-  };
-}
-
 export function mergeRanges(currentRange: Range, newRange: Range) {
   return {
     start: Math.min(currentRange.start, newRange.start),

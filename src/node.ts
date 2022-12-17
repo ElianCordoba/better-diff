@@ -12,4 +12,11 @@ export class Node {
     public lineNumber: number,
     getSourceFn?: () => string,
   ) {}
+
+  getPosition() {
+    return {
+      start: this.start,
+      end: this.end,
+    };
+  }
 }

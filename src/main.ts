@@ -1,6 +1,6 @@
 import { getNodesArray } from "./ts-util";
 import { ChangeType, Item, Range } from "./types";
-import { equals, getRange, mergeRanges } from "./utils";
+import { equals, mergeRanges } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
 import { Options } from "./index";
@@ -163,11 +163,11 @@ function getChange(
   rangeB?: Range,
 ): Change {
   if (!rangeA) {
-    rangeA = a ? getRange(a) : undefined;
+    rangeA = a?.getPosition();
   }
 
   if (!rangeB) {
-    rangeB = b ? getRange(b) : undefined;
+    rangeB = b?.getPosition();
   }
 
   return new Change(type, rangeA, rangeB, a, b);
@@ -340,15 +340,15 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     }
 
     if (!rangeA) {
-      rangeA = getRange(a!.node);
+      rangeA = a!.node.getPosition();
     } else {
-      rangeA = mergeRanges(rangeA, getRange(a!.node));
+      rangeA = mergeRanges(rangeA, a!.node.getPosition());
     }
 
     if (!rangeB) {
-      rangeB = getRange(b!.node);
+      rangeB = b!.node.getPosition();
     } else {
-      rangeB = mergeRanges(rangeB, getRange(b!.node));
+      rangeB = mergeRanges(rangeB, b!.node.getPosition());
     }
   }
 
