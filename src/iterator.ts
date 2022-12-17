@@ -12,23 +12,20 @@ export class Iterator {
   // TODO: Maybe optimize? May consume a lot of memory
   chars?: string[];
 
-  items!: Node[];
   private indexOfLastItem = 0;
   matchNumber = 0;
 
   // TODO: Find real value or make it configurable via CLI option
   readonly MAX_OFFSET = 500;
 
-  constructor(nodes: Node[], options?: IteratorOptions) {
+  constructor(private nodes: Node[], options?: IteratorOptions) {
     this.name = options?.name;
     this.chars = options?.source?.split("");
-
-    this.items = nodes;
   }
 
   next(startFrom = 0) {
-    for (let i = startFrom; i < this.items.length; i++) {
-      const item = this.items[i];
+    for (let i = startFrom; i < this.nodes.length; i++) {
+      const item = this.nodes[i];
 
       if (item.matched) {
         continue;
@@ -40,7 +37,7 @@ export class Iterator {
   }
 
   peek(index: number) {
-    const item = this.items[index];
+    const item = this.nodes[index];
 
     if (!item || item.matched) {
       return;
@@ -53,8 +50,8 @@ export class Iterator {
     // TODO: Should only apply for moves, otherwise a move, addition and move
     // will display 1 for the first move and 3 for the second
     this.matchNumber++;
-    this.items[index].matched = true;
-    this.items[index].matchNumber = this.matchNumber;
+    this.nodes[index].matched = true;
+    this.nodes[index].matchNumber = this.matchNumber;
   }
 
   getCandidates(
@@ -68,8 +65,8 @@ export class Iterator {
     let offset = 0;
 
     const search = (startFrom: number): void => {
-      const ahead = this.items[startFrom + offset];
-      const back = this.items[startFrom - offset];
+      const ahead = this.nodes[startFrom + offset];
+      const back = this.nodes[startFrom - offset];
 
       // We checked everything and nothing was found, exit early
       if (!ahead && !back) {
@@ -103,7 +100,7 @@ export class Iterator {
     const remainingNodes: Node[] = [];
     let i = startIndex;
     while (true) {
-      const next = this.items[i];
+      const next = this.nodes[i];
 
       if (!next || next.expressionNumber === expression) {
         break;
@@ -124,7 +121,7 @@ export class Iterator {
   printList() {
     console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("exp n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
-    const list = this.items.map((x) => {
+    const list = this.nodes.map((x) => {
       let colorFn = x.matched ? k.green : k.grey;
 
       const index = String(x.index).padStart(3).padEnd(6);
