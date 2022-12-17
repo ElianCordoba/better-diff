@@ -76,5 +76,6 @@ export function getNodesArray(source: string) {
 
 // This wrapper exists because the underling TS function is marked as internal
 function getLineNumber(sourceFile: SourceFile, start: number) {
+  // deno-lint-ignore no-explicit-any
   return (_ts as any).getLineAndCharacterOfPosition(sourceFile, start).line + 1;
 }
