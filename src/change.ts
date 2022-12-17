@@ -1,6 +1,6 @@
 import { ChangeType, Range } from "./types";
-import { Node } from "./ts-util";
 import { colorFn, getSourceWithChange } from "./reporter";
+import { Node } from "./node";
 
 export class Change {
   constructor(

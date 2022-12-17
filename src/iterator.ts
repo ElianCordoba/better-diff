@@ -1,7 +1,6 @@
-import { Item } from "./types";
-import { equals, getNodeForPrinting, getRange } from "./utils";
-import { Node } from "./ts-util";
+import { equals, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
+import { Node } from "./node";
 
 interface IteratorOptions {
   name?: string;
@@ -13,28 +12,20 @@ export class Iterator {
   // TODO: Maybe optimize? May consume a lot of memory
   chars?: string[];
 
-  items!: Item[];
   private indexOfLastItem = 0;
   matchNumber = 0;
 
   // TODO: Find real value or make it configurable via CLI option
   readonly MAX_OFFSET = 500;
 
-  constructor(nodes: Node[], options?: IteratorOptions) {
+  constructor(private nodes: Node[], options?: IteratorOptions) {
     this.name = options?.name;
     this.chars = options?.source?.split("");
-
-    this.items = nodes.map((node, index) => ({
-      node,
-      index,
-      matched: false,
-      matchNumber: 0,
-    } as Item));
   }
 
   next(startFrom = 0) {
-    for (let i = startFrom; i < this.items.length; i++) {
-      const item = this.items[i];
+    for (let i = startFrom; i < this.nodes.length; i++) {
+      const item = this.nodes[i];
 
       if (item.matched) {
         continue;
@@ -46,21 +37,21 @@ export class Iterator {
   }
 
   peek(index: number) {
-    const item = this.items[index];
+    const item = this.nodes[index];
 
     if (!item || item.matched) {
       return;
     }
 
-    return item.node;
+    return item;
   }
 
   mark(index: number) {
     // TODO: Should only apply for moves, otherwise a move, addition and move
     // will display 1 for the first move and 3 for the second
     this.matchNumber++;
-    this.items[index].matched = true;
-    this.items[index].matchNumber = this.matchNumber;
+    this.nodes[index].matched = true;
+    this.nodes[index].matchNumber = this.matchNumber;
   }
 
   getCandidates(
@@ -74,16 +65,16 @@ export class Iterator {
     let offset = 0;
 
     const search = (startFrom: number): void => {
-      const ahead = this.items[startFrom + offset];
-      const back = this.items[startFrom - offset];
+      const ahead = this.nodes[startFrom + offset];
+      const back = this.nodes[startFrom - offset];
 
       // We checked everything and nothing was found, exit early
       if (!ahead && !back) {
         return;
       }
 
-      const foundAhead = ahead && !ahead.matched && equals(expected, ahead.node);
-      const foundBack = back && !back.matched && equals(expected, back.node);
+      const foundAhead = ahead && !ahead.matched && equals(expected, ahead);
+      const foundBack = back && !back.matched && equals(expected, back);
 
       if (foundAhead || foundBack) {
         const index = foundAhead ? startFrom + offset : startFrom - offset;
@@ -109,9 +100,9 @@ export class Iterator {
     const remainingNodes: Node[] = [];
     let i = startIndex;
     while (true) {
-      const next = this.items[i];
+      const next = this.nodes[i];
 
-      if (!next || next.node.expressionNumber === expression) {
+      if (!next || next.expressionNumber === expression) {
         break;
       }
 
@@ -120,7 +111,7 @@ export class Iterator {
         continue;
       }
 
-      remainingNodes.push(next.node);
+      remainingNodes.push(next);
       i++;
     }
 
@@ -130,13 +121,13 @@ export class Iterator {
   printList() {
     console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("exp n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
-    const list = this.items.map((x) => {
+    const list = this.nodes.map((x) => {
       let colorFn = x.matched ? k.green : k.grey;
 
       const index = String(x.index).padStart(3).padEnd(6);
 
       const matchNumber = String(x.matchNumber).padStart(5).padEnd(10);
-      const expressionNumber = String(x.node.expressionNumber || "-").padStart(5).padEnd(8);
+      const expressionNumber = String(x.expressionNumber || "-").padStart(5).padEnd(8);
 
       const { kind, text } = getNodeForPrinting(x);
       const _kind = kind.padStart(5).padEnd(25);
@@ -168,7 +159,7 @@ export class Iterator {
       const next = this.next();
 
       if (next) {
-        nodeToDraw = next.node;
+        nodeToDraw = next;
       }
     }
 
@@ -177,7 +168,7 @@ export class Iterator {
       return;
     }
 
-    const { start, end } = getRange(nodeToDraw);
+    const { start, end } = nodeToDraw.getPosition();
     const result = getSourceWithChange(this.chars, start, end, colorFn.magenta);
 
     console.log(result.join(""));

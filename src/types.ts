@@ -1,5 +1,3 @@
-import { Node } from "./ts-util";
-
 export interface DiffResult {
   sourceA: string;
   sourceB: string;
@@ -15,13 +13,6 @@ export enum ChangeType {
 export interface Range {
   start: number;
   end: number;
-}
-
-export interface Item {
-  node: Node;
-  matched: boolean;
-  matchNumber: number;
-  index: number;
 }
 
 export enum MatchStatus {

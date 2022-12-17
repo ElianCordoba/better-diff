@@ -1,17 +1,18 @@
 import { SyntaxKind } from "typescript";
-import { Node, ts } from "./ts-util";
-import { Item, Range } from "./types";
+import { Node } from "./node";
+import { ts, TSNode } from "./ts-util";
+import { Range } from "./types";
 
-export function formatSyntaxKind(node: Node) {
+export function formatSyntaxKind(node: TSNode) {
   const textValue = node.text ? `| "${node.text}"` : "";
   const kind: string = ts.Debug.formatSyntaxKind(node.kind);
 
   return `${kind.padEnd(25)}${textValue}`.trim();
 }
 
-export function getNodeForPrinting(item: Item) {
-  const hasText = item.node.text || "";
-  const isString = item.node.kind === SyntaxKind.StringLiteral;
+export function getNodeForPrinting(item: Node) {
+  const hasText = item.text || "";
+  const isString = item.kind === SyntaxKind.StringLiteral;
 
   let text;
 
@@ -22,7 +23,7 @@ export function getNodeForPrinting(item: Item) {
   }
 
   return {
-    kind: ts.Debug.formatSyntaxKind(item.node.kind),
+    kind: ts.Debug.formatSyntaxKind(item.kind),
     text,
   };
 }
@@ -33,21 +34,6 @@ export function equals(nodeA: Node, nodeB: Node) {
 
 export function listEnded(node: Node): boolean {
   return node.kind === ts.SyntaxKind.EndOfFileToken;
-}
-
-export function getRange(node: Node): Range {
-  return {
-    // Each node owns the trivia before until the previous token, for example:
-    //
-    // age = 24
-    //      ^
-    //      Trivia for the number literal starts here, but you don't want to start the diff here
-    //
-    // This is why we add the leading trivia to the `start` of the node, so we get where the actual
-    // value of the node starts and not where the trivia starts
-    start: node.pos + node.getLeadingTriviaWidth(),
-    end: node.end,
-  };
 }
 
 export function mergeRanges(currentRange: Range, newRange: Range) {
