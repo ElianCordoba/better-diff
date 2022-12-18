@@ -1,6 +1,7 @@
 import { equals, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
+import { getOptions } from "./index";
 
 interface IteratorOptions {
   name?: string;
@@ -14,9 +15,6 @@ export class Iterator {
 
   private indexOfLastItem = 0;
   matchNumber = 0;
-
-  // TODO: Find real value or make it configurable via CLI option
-  readonly MAX_OFFSET = 500;
 
   constructor(private nodes: Node[], options?: IteratorOptions) {
     this.name = options?.name;
@@ -84,7 +82,7 @@ export class Iterator {
 
       offset++;
 
-      if (offset >= this.MAX_OFFSET) {
+      if (offset >= getOptions().maxMatchingOffset) {
         return;
       }
 

@@ -3,6 +3,7 @@ import { getInitialDiffs } from "./main";
 import { applyChangesToSources, asciiRenderFn, DiffRendererFn } from "./reporter";
 import { DiffResult } from "./types";
 
+// These options have their own tests under the /tests/options folder
 export interface Options {
   renderFn?: DiffRendererFn;
 
@@ -17,21 +18,32 @@ export interface Options {
   //
   // In this case the whole "console.log(0)" would be consider a move because the exact positions don't match
   minimumLinesMoved?: number;
-}
 
-const defaultOptions: Options = {
-  renderFn: asciiRenderFn,
-  minimumLinesMoved: 0,
-};
+  // Indicates how many nodes are we going to check while trying to find a match. Note that this is number is doubled since we look both backwards and forwards
+  // For example:
+  //
+  // x
+  //
+  // ---------------
+  //
+  // 1
+  // 2
+  // 3
+  // x
+  //
+  // There are 3 node of distances between the two "x", if "maxMatchingOffset" is set to less than 3 the move won't be found and it will be reported as an addition/removal.
+  // This is present so that we have acceptable performance on long files where many nodes are present
+  maxMatchingOffset?: number;
+}
 
 export function getTextWithDiffs(
   sourceA: string,
   sourceB: string,
   options?: Options,
 ): { diffs: DiffResult; changes: Change[] } {
-  const _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
+  _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
 
-  const changes = getInitialDiffs(sourceA, sourceB, _options);
+  const changes = getInitialDiffs(sourceA, sourceB);
   const sourcesWithDiff = applyChangesToSources(
     sourceA,
     sourceB,
@@ -40,4 +52,16 @@ export function getTextWithDiffs(
   );
 
   return { diffs: sourcesWithDiff, changes: changes };
+}
+
+const defaultOptions: Options = {
+  renderFn: asciiRenderFn,
+  minimumLinesMoved: 0,
+  // TODO: Look for a good value
+  maxMatchingOffset: 200,
+};
+
+let _options: Required<Options>;
+export function getOptions(): Required<Options> {
+  return _options;
 }
