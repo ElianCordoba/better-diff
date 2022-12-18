@@ -3,15 +3,10 @@ import { ChangeType, Range } from "./types";
 import { equals, mergeRanges } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
-import { Options } from "./index";
+import { getOptions } from "./index";
 import { Node } from "./node";
 
-// Top level variable so it's accessible across the functions
-let systemOptions: Required<Options>;
-
-export function getInitialDiffs(codeA: string, codeB: string, options: Required<Options>): Change[] {
-  systemOptions = options;
-
+export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
 
   const nodesA = getNodesArray(codeA);
@@ -364,7 +359,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
       const linesMoved = Math.abs(a!.lineNumber - b!.lineNumber);
 
       // Ignoring move if the code hasn't move far enough
-      if (linesMoved < systemOptions!.minimumLinesMoved) {
+      if (linesMoved < getOptions().minimumLinesMoved) {
         return;
       }
 
