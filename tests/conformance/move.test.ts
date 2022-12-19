@@ -216,4 +216,26 @@ describe("Properly report lines added", () => {
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
+
+  test("Mix of move with deletions and additions", () => {
+    const a = `
+      console.log() && 3
+    `;
+
+    const b = `
+      fn(console.log())
+    `;
+
+    const resultA = `
+      1🔀console.log()⏹️ ➖&&➖ ➖3➖
+    `;
+
+    const resultB = `
+      ➕fn(➕1🔀console.log()⏹️➕)➕
+    `;
+
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
+
+    validateDiff(resultA, resultB, sourceA, sourceB);
+  });
 });
