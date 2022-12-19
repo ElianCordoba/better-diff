@@ -2,6 +2,7 @@ import { equals, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
 import { getOptions } from "./index";
+import { Candidate } from "./types";
 
 interface IteratorOptions {
   name?: string;
@@ -54,10 +55,10 @@ export class Iterator {
 
   getCandidates(
     expected: Node,
-  ): number[] {
+  ): Candidate[] {
     // This variable will hold the indexes of known nodes that match the node we are looking for.
     // We returns more than once in order to calculate the LCS from a multiple places and then take the best result
-    const candidates: number[] = [];
+    const candidates: Candidate[] = [];
 
     // Start from the next node
     let offset = 0;
@@ -76,8 +77,9 @@ export class Iterator {
 
       if (foundAhead || foundBack) {
         const index = foundAhead ? startFrom + offset : startFrom - offset;
+        const expressionNumber = foundAhead ? ahead.expressionNumber : back.expressionNumber;
 
-        candidates.push(index);
+        candidates.push({ index, expressionNumber });
       }
 
       offset++;
@@ -171,4 +173,5 @@ export class Iterator {
 
     console.log(result.join(""));
   }
+
 }
