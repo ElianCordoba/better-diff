@@ -1,5 +1,5 @@
 import { getNodesArray } from "./ts-util";
-import { ChangeType, Range } from "./types";
+import { Candidate, ChangeType, Range } from "./types";
 import { equals, mergeRanges } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
@@ -287,20 +287,38 @@ export function getSequenceLength(
   return sequence;
 }
 
-function getLCS(candidates: number[], iterA: Iterator, iterB: Iterator, indexA: number) {
+function getLCS(candidates: Candidate[], iterA: Iterator, iterB: Iterator, indexA: number) {
   let bestResult = 0;
   let bestIndex = 0;
+  let bestExpression = 0;
 
   if (candidates.length === 0) {
     return { bestIndex, bestResult };
   }
 
-  for (const index of candidates) {
+  for (const { index, expressionNumber } of candidates) {
     const lcs = getSequenceLength(iterA, iterB, indexA, index);
 
-    if (lcs > bestResult) {
+    // There are 2 conditions to set the new best candidate
+    // 1) The new result is simply better that the previous one.
+    // 2) There is a tie but the new candidate is less deep
+    //
+    // Why do we favour the candidate with less depth? Because of the following example:
+    //
+    // fn1(fn2(1))
+    //
+    // Under the correct circumstances, we could find ourself with the above code example, with the "fn1(fn2(" part already matched, missing the rest
+    // If we assume that "1" is an addition, next on the matching list is the first ")", without the depth check, we would take the closing parenthesis after the "1"
+    // and match it with the opening paren of "fn1". A lower depth means that it will be closer to the expression we are matching
+    //
+    // The test that covers this logic is the one called "Properly match closing paren"
+    if (
+      lcs > bestResult ||
+      lcs === bestResult && expressionNumber < bestExpression
+    ) {
       bestResult = lcs;
       bestIndex = index;
+      bestExpression = expressionNumber;
     }
   }
 
@@ -434,12 +452,12 @@ function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodes
   return changes;
 }
 
-function searchCandidatesInList(nodes: Node[], expected: Node) {
-  const candidates: number[] = [];
+function searchCandidatesInList(nodes: Node[], expected: Node): Candidate[] {
+  const candidates: Candidate[] = [];
 
   for (const node of nodes) {
     if (equals(node, expected)) {
-      candidates.push(node.index);
+      candidates.push({ index: node.index, expressionNumber: node.expressionNumber });
     }
   }
 

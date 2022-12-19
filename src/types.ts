@@ -20,3 +20,8 @@ export enum MatchStatus {
   NotFound, // chekiamos pero no estaba
   Matched, // estaba y lo encontramos
 }
+
+export interface Candidate {
+  index: number;
+  expressionNumber: number;
+}
