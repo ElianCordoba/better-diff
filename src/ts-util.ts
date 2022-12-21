@@ -1,6 +1,5 @@
 import _ts, { SourceFile, SyntaxKind } from "typescript";
 import { Node } from "./node";
-import { formatSyntaxKind } from "./utils";
 
 declare namespace MYTS {
   // deno-lint-ignore no-explicit-any
@@ -22,9 +21,9 @@ export function getNodesArray(source: string) {
 
   const nodes: Node[] = [];
   const allNodes: Node[] = []
+  let depth = 0
 
-  function walk(node: TSNode, expressionNumber = 0, depth = 0) {
-    const k = formatSyntaxKind(node.kind, node.text)
+  function walk(node: TSNode) {
     const n = new Node({ start: 0, end: 0, kind: node.kind, text: 'no-text', lineNumber: -1, expressionNumber: depth })
 
     allNodes.push(n)
@@ -49,8 +48,9 @@ export function getNodesArray(source: string) {
       nodes.push(new Node({ start, end: node.end, kind: node.kind, text: hasText!, expressionNumber: depth, lineNumber }));
     }
 
-    depth++;
-    node.getChildren().forEach((x) => walk(x as TSNode, expressionNumber, depth));
+    depth++
+    node.getChildren().forEach((x) => walk(x as TSNode));
+    depth--
   }
 
   sourceFile.getChildren().forEach((x) => walk(x as TSNode));
@@ -60,9 +60,24 @@ export function getNodesArray(source: string) {
     node.index = i;
   });
 
-  // console.table(nodes.map(x => ({ kind: x.prettyKind, depth: x.depth })))
+  function smoothDepth(nodes: Node[]) {
+    const result: Node[] = [];
 
-  return [nodes, allNodes];
+    let currentDepth = 0;
+    for (const node of nodes) {
+      if (node.expressionNumber > currentDepth + 1) {
+        node.expressionNumber = currentDepth + 1;
+      }
+      currentDepth = node.expressionNumber;
+      result.push(node);
+    }
+
+    return result;
+  }
+
+  const smoothenNodes = smoothDepth(nodes)
+
+  return [smoothenNodes, allNodes];
 }
 
 // This wrapper exists because the underling TS function is marked as internal
