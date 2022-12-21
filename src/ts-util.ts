@@ -55,29 +55,23 @@ export function getNodesArray(source: string) {
 
   sourceFile.getChildren().forEach((x) => walk(x as TSNode));
 
-  // TODO(Perf): Calculate the index in the walk function so that we don't need to reiterate the list
-  nodes.map((node, i) => {
-    node.index = i;
-  });
+  // TODO(Perf): Maybe do this inside the walk.
+  // Before returning the result we need process the data one last time.
+  let i = 0
+  let currentDepth = 0;
 
-  function smoothDepth(nodes: Node[]) {
-    const result: Node[] = [];
-
-    let currentDepth = 0;
-    for (const node of nodes) {
-      if (node.expressionNumber > currentDepth + 1) {
-        node.expressionNumber = currentDepth + 1;
-      }
-      currentDepth = node.expressionNumber;
-      result.push(node);
+  for (const node of nodes) {
+    if (node.expressionNumber > currentDepth + 1) {
+      node.expressionNumber = currentDepth + 1;
     }
+    currentDepth = node.expressionNumber;
 
-    return result;
+    node.index = i
+
+    i++
   }
 
-  const smoothenNodes = smoothDepth(nodes)
-
-  return [smoothenNodes, allNodes];
+  return [nodes, allNodes];
 }
 
 // This wrapper exists because the underling TS function is marked as internal

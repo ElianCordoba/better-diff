@@ -3,11 +3,11 @@ import { Node } from "./node";
 import { ts, TSNode } from "./ts-util";
 import { Range } from "./types";
 
-export function formatSyntaxKind(node: TSNode) {
-  const textValue = node.text ? `| "${node.text}"` : "";
-  const kind: string = ts.Debug.formatSyntaxKind(node.kind);
+export function formatSyntaxKind(kind: SyntaxKind, text?: string) {
+  const textValue = text ? `| "${text}"` : "";
+  const formattedKind = ts.Debug.formatSyntaxKind(kind);
 
-  return `${kind.padEnd(25)}${textValue}`.trim();
+  return `${formattedKind.padEnd(25)}${textValue}`.trim();
 }
 
 export function getNodeForPrinting(item: Node) {
