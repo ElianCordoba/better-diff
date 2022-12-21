@@ -174,4 +174,12 @@ export class Iterator {
     console.log(result.join(""));
   }
 
+  printDepth() {
+    for (const node of this.nodes) {
+      console.log(
+        new Array(node.expressionNumber + 1).join("-"),
+        colorFn.cyan(node.prettyKind),
+      );
+    }
+  }
 }
