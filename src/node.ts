@@ -12,7 +12,7 @@ interface NodeArgs {
 }
 
 export class Node {
-  index: number = -1;
+  index = -1;
   start: number;
   end: number;
   kind: SyntaxKind;
@@ -20,8 +20,8 @@ export class Node {
   prettyKind: string;
   expressionNumber: number;
   lineNumber: number;
-  matched: boolean = false;
-  matchNumber: number = 0;
+  matched = false;
+  matchNumber = 0;
   //getSourceFn?: () => string,
   constructor(args: NodeArgs) {
     const { start, end, kind, expressionNumber, lineNumber, text } = args;
@@ -32,7 +32,7 @@ export class Node {
     this.text = text;
 
     this.expressionNumber = expressionNumber;
-    this.lineNumber = lineNumber
+    this.lineNumber = lineNumber;
   }
 
   getPosition() {

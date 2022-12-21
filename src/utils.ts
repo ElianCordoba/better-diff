@@ -1,6 +1,6 @@
 import { SyntaxKind } from "typescript";
 import { Node } from "./node";
-import { ts, TSNode } from "./ts-util";
+import { ts } from "./ts-util";
 import { Range } from "./types";
 
 export function formatSyntaxKind(kind: SyntaxKind, text?: string) {

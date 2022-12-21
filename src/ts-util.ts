@@ -20,14 +20,14 @@ export function getNodesArray(source: string) {
   );
 
   const nodes: Node[] = [];
-  const allNodes: Node[] = []
-  let depth = 0
+  const allNodes: Node[] = [];
+  let depth = 0;
 
   function walk(node: TSNode) {
-    const n = new Node({ start: 0, end: 0, kind: node.kind, text: 'no-text', lineNumber: -1, expressionNumber: depth })
+    const n = new Node({ start: 0, end: 0, kind: node.kind, text: "no-text", lineNumber: -1, expressionNumber: depth });
 
-    allNodes.push(n)
-    const hasText = typeof node.text !== 'undefined' ? node.getText() : undefined;
+    allNodes.push(n);
+    const hasText = typeof node.text !== "undefined" ? node.getText() : undefined;
     const isReservedWord = node.kind >= SyntaxKind.FirstKeyword && node.kind <= SyntaxKind.LastKeyword;
     const isPunctuation = node.kind >= SyntaxKind.FirstPunctuation && node.kind <= SyntaxKind.LastPunctuation;
 
@@ -48,16 +48,16 @@ export function getNodesArray(source: string) {
       nodes.push(new Node({ start, end: node.end, kind: node.kind, text: hasText!, expressionNumber: depth, lineNumber }));
     }
 
-    depth++
+    depth++;
     node.getChildren().forEach((x) => walk(x as TSNode));
-    depth--
+    depth--;
   }
 
   sourceFile.getChildren().forEach((x) => walk(x as TSNode));
 
   // TODO(Perf): Maybe do this inside the walk.
   // Before returning the result we need process the data one last time.
-  let i = 0
+  let i = 0;
   let currentDepth = 0;
 
   for (const node of nodes) {
@@ -66,9 +66,9 @@ export function getNodesArray(source: string) {
     }
     currentDepth = node.expressionNumber;
 
-    node.index = i
+    node.index = i;
 
-    i++
+    i++;
   }
 
   return [nodes, allNodes];
