@@ -183,11 +183,11 @@ describe("Properly report moves in a same sequence", () => {
 
     const resultA = `
       1🔀print('elian')⏹️
-      3🔀let age =⏹️ 2🔀24⏹️
+      2🔀let age =⏹️ 3🔀24⏹️
     `;
 
     const resultB = `
-      3🔀let age =⏹️ 1🔀print('elian')⏹️ ➕&&➕ 2🔀24⏹️
+      2🔀let age =⏹️ 1🔀print('elian')⏹️ ➕&&➕ 3🔀24⏹️
     `;
 
     const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
