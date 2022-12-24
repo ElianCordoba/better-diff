@@ -142,7 +142,7 @@ export class Iterator {
       }
 
       list.push(colorFn(row));
-    };
+    }
 
     console.log(list.join("\n"));
   }

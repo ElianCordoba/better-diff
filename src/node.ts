@@ -7,7 +7,7 @@ interface NodeArgs {
   kind: SyntaxKind;
   text: string;
   lineNumberStart: number;
-  lineNumberEnd: number
+  lineNumberEnd: number;
   index?: number;
 }
 
@@ -18,7 +18,7 @@ export class Node {
   text: string;
   prettyKind: string;
   lineNumberStart: number;
-  lineNumberEnd: number
+  lineNumberEnd: number;
   index = -1;
   expressionNumber: number = -1;
   matched = false;
@@ -33,7 +33,7 @@ export class Node {
     this.text = text;
 
     this.lineNumberStart = lineNumberStart;
-    this.lineNumberEnd = lineNumberEnd
+    this.lineNumberEnd = lineNumberEnd;
   }
 
   getPosition() {

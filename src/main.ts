@@ -90,7 +90,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     }
 
     // TODO: The code bellow may be removed / reworked once I implement https://github.com/ElianCordoba/better-diff/issues/18
-    continue
+    continue;
 
     // We look for remaining nodes at index + bestResult because we don't want to include the already matched ones
     let remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult);

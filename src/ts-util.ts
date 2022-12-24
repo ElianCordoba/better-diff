@@ -69,7 +69,7 @@ export function getNodesArray(source: string) {
     i++;
   }
 
-  return nodes
+  return nodes;
 }
 
 // This wrapper exists because the underling TS function is marked as internal

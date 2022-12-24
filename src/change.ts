@@ -12,7 +12,7 @@ export class Change {
     // For debugging porpoises, maybe remove in the future
     public nodeA: Node | undefined,
     public nodeB: Node | undefined,
-  ) { }
+  ) {}
 
   draw(charsA: string[], charsB: string[]) {
     if (this.rangeA) {
