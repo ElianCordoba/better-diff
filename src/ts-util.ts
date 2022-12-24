@@ -1,7 +1,7 @@
-import _ts, { SourceFile, SyntaxKind } from "typescript";
+import _ts from "typescript";
 import { Node } from "./node";
-import { formatSyntaxKind } from "./utils";
 
+// TODO: Clean this up, ts vs _ts
 declare namespace MYTS {
   // deno-lint-ignore no-explicit-any
   let Debug: any;
@@ -21,30 +21,17 @@ export function getNodesArray(source: string) {
   );
 
   const nodes: Node[] = [];
+  let depth = 0;
 
-  function walk(node: TSNode, expressionNumber = 0) {
-    const hasText = node.text;
-    const isReservedWord = node.kind >= SyntaxKind.FirstKeyword && node.kind <= SyntaxKind.LastKeyword;
-    const isPunctuation = node.kind >= SyntaxKind.FirstPunctuation && node.kind <= SyntaxKind.LastPunctuation;
-
-    const isElement = node.kind >= SyntaxKind.Block && node.kind <= SyntaxKind.MissingDeclaration;
-
-    const isExpression = node.kind >= SyntaxKind.ArrayLiteralExpression && node.kind <= SyntaxKind.SatisfiesExpression || isElement; // || node.kind === SyntaxKind.SyntaxList
-
-    if (isExpression) {
-      expressionNumber++;
-    } else {
-      expressionNumber += 0.1;
-    }
+  function walk(node: TSNode) {
+    const hasText = typeof node.text !== "undefined" ? node.getText() : undefined;
+    const isReservedWord = node.kind >= _ts.SyntaxKind.FirstKeyword && node.kind <= _ts.SyntaxKind.LastKeyword;
+    const isPunctuation = node.kind >= _ts.SyntaxKind.FirstPunctuation && node.kind <= _ts.SyntaxKind.LastPunctuation;
 
     // Only include visible node, nodes that represent some text in the source code.
     if (hasText || isReservedWord || isPunctuation) {
-      const prettyKind = formatSyntaxKind(node);
-      const lineNumber = getLineNumber(sourceFile, node.pos + node.getLeadingTriviaWidth());
-      // TODO: Remove round for debugging
-      const _expressionNumber = Math.round(expressionNumber);
-
-      /// TODO: Store expression start and end?
+      const lineNumberStart = getLineNumber(sourceFile, node.pos + node.getLeadingTriviaWidth());
+      const lineNumberEnd = getLineNumber(sourceFile, node.end);
 
       // Each node owns the trivia before until the previous token, for example:
       //
@@ -56,25 +43,37 @@ export function getNodesArray(source: string) {
       // value of the node starts and not where the trivia starts
       const start = node.pos + node.getLeadingTriviaWidth();
 
-      // TODO: The 0 is temporal, read more bellow
-      nodes.push(new Node(0, start, node.end, node.kind, node.text, prettyKind, _expressionNumber, lineNumber));
+      nodes.push(new Node({ start, end: node.end, kind: node.kind, text: hasText!, lineNumberStart: lineNumberStart, lineNumberEnd }));
     }
 
-    node.getChildren().forEach((x) => walk(x as TSNode, expressionNumber));
+    depth++;
+    node.getChildren().forEach((x) => walk(x as TSNode));
+    depth--;
   }
 
   sourceFile.getChildren().forEach((x) => walk(x as TSNode));
 
-  // TODO(Perf): Calculate the index in the walk function so that we don't need to reiterate the list
-  nodes.map((node, i) => {
+  // TODO(Perf): Maybe do this inside the walk.
+  // Before returning the result we need process the data one last time.
+  let i = 0;
+  let currentDepth = 0;
+
+  for (const node of nodes) {
+    if (node.expressionNumber > currentDepth + 1) {
+      node.expressionNumber = currentDepth + 1;
+    }
+    currentDepth = node.expressionNumber;
+
     node.index = i;
-  });
+
+    i++;
+  }
 
   return nodes;
 }
 
 // This wrapper exists because the underling TS function is marked as internal
-function getLineNumber(sourceFile: SourceFile, start: number) {
+function getLineNumber(sourceFile: _ts.SourceFile, start: number) {
   // deno-lint-ignore no-explicit-any
   return (_ts as any).getLineAndCharacterOfPosition(sourceFile, start).line + 1;
 }
