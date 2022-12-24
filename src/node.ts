@@ -6,33 +6,34 @@ interface NodeArgs {
   end: number;
   kind: SyntaxKind;
   text: string;
-  expressionNumber: number;
-  lineNumber: number;
+  lineNumberStart: number;
+  lineNumberEnd: number
   index?: number;
 }
 
 export class Node {
-  index = -1;
   start: number;
   end: number;
   kind: SyntaxKind;
   text: string;
   prettyKind: string;
-  expressionNumber: number;
-  lineNumber: number;
+  lineNumberStart: number;
+  lineNumberEnd: number
+  index = -1;
+  expressionNumber: number = -1;
   matched = false;
   matchNumber = 0;
   //getSourceFn?: () => string,
   constructor(args: NodeArgs) {
-    const { start, end, kind, expressionNumber, lineNumber, text } = args;
+    const { start, end, kind, lineNumberStart, lineNumberEnd, text } = args;
     this.start = start;
     this.end = end;
     this.kind = kind;
     this.prettyKind = formatSyntaxKind(kind, text);
     this.text = text;
 
-    this.expressionNumber = expressionNumber;
-    this.lineNumber = lineNumber;
+    this.lineNumberStart = lineNumberStart;
+    this.lineNumberEnd = lineNumberEnd
   }
 
   getPosition() {

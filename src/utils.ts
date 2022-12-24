@@ -29,7 +29,7 @@ export function getNodeForPrinting(item: Node) {
 }
 
 export function equals(nodeA: Node, nodeB: Node) {
-  return nodeA.kind === nodeB.kind && nodeA.text === nodeB.text;
+  return nodeA?.kind === nodeB?.kind && nodeA?.text === nodeB?.text;
 }
 
 export function listEnded(node: Node): boolean {

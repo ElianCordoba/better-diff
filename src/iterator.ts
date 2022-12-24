@@ -121,26 +121,28 @@ export class Iterator {
   printList() {
     console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("exp n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
-    const list = this.nodes.map((x) => {
-      let colorFn = x.matched ? k.green : k.grey;
+    const list: string[] = [];
 
-      const index = String(x.index).padStart(3).padEnd(6);
+    for (const node of this.nodes) {
+      let colorFn = node.matched ? k.green : k.grey;
 
-      const matchNumber = String(x.matchNumber).padStart(5).padEnd(10);
-      const expressionNumber = String(x.expressionNumber || "-").padStart(5).padEnd(8);
+      const index = String(node.index).padStart(3).padEnd(6);
 
-      const { kind, text } = getNodeForPrinting(x);
+      const matchNumber = String(node.matchNumber).padStart(5).padEnd(10);
+      const expressionNumber = String(node.expressionNumber || "-").padStart(5).padEnd(8);
+
+      const { kind, text } = getNodeForPrinting(node);
       const _kind = kind.padStart(5).padEnd(25);
       const _text = ` ${text}`;
 
       const row = `${index}|${matchNumber}|${expressionNumber}|${colorFn(_kind)}|${_text}`;
 
-      if (x.index === this.indexOfLastItem) {
+      if (node.index === this.indexOfLastItem) {
         colorFn = k.cyan;
       }
 
-      return colorFn(row);
-    });
+      list.push(colorFn(row));
+    };
 
     console.log(list.join("\n"));
   }
@@ -177,6 +179,7 @@ export class Iterator {
   printDepth() {
     for (const node of this.nodes) {
       console.log(
+        `(${node.expressionNumber + 1})`,
         new Array(node.expressionNumber + 1).join("-"),
         colorFn.cyan(node.prettyKind),
       );

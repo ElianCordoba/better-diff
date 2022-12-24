@@ -24,16 +24,14 @@ export function getNodesArray(source: string) {
   let depth = 0;
 
   function walk(node: TSNode) {
-    const n = new Node({ start: 0, end: 0, kind: node.kind, text: "no-text", lineNumber: -1, expressionNumber: depth });
-
-    allNodes.push(n);
     const hasText = typeof node.text !== "undefined" ? node.getText() : undefined;
     const isReservedWord = node.kind >= SyntaxKind.FirstKeyword && node.kind <= SyntaxKind.LastKeyword;
     const isPunctuation = node.kind >= SyntaxKind.FirstPunctuation && node.kind <= SyntaxKind.LastPunctuation;
 
     // Only include visible node, nodes that represent some text in the source code.
     if (hasText || isReservedWord || isPunctuation) {
-      const lineNumber = getLineNumber(sourceFile, node.pos + node.getLeadingTriviaWidth());
+      const lineNumberStart = getLineNumber(sourceFile, node.pos + node.getLeadingTriviaWidth());
+      const lineNumberEnd = getLineNumber(sourceFile, node.end);
 
       // Each node owns the trivia before until the previous token, for example:
       //
@@ -45,7 +43,7 @@ export function getNodesArray(source: string) {
       // value of the node starts and not where the trivia starts
       const start = node.pos + node.getLeadingTriviaWidth();
 
-      nodes.push(new Node({ start, end: node.end, kind: node.kind, text: hasText!, expressionNumber: depth, lineNumber }));
+      nodes.push(new Node({ start, end: node.end, kind: node.kind, text: hasText!, lineNumberStart: lineNumberStart, lineNumberEnd }));
     }
 
     depth++;
@@ -71,7 +69,7 @@ export function getNodesArray(source: string) {
     i++;
   }
 
-  return [nodes, allNodes];
+  return nodes
 }
 
 // This wrapper exists because the underling TS function is marked as internal

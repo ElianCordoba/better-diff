@@ -89,6 +89,9 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       changes.push(change);
     }
 
+    // TODO: The code bellow may be removed / reworked once I implement https://github.com/ElianCordoba/better-diff/issues/18
+    continue
+
     // We look for remaining nodes at index + bestResult because we don't want to include the already matched ones
     let remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult);
     let remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult);
@@ -374,7 +377,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     const perspectiveAtoB = iterA.name === "a";
 
     if (perspectiveAtoB) {
-      const linesMoved = Math.abs(a!.lineNumber - b!.lineNumber);
+      const linesMoved = Math.abs(a!.lineNumberStart - b!.lineNumberStart);
 
       // Ignoring move if the code hasn't move far enough
       if (linesMoved < getOptions().minimumLinesMoved) {
