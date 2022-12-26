@@ -1,22 +1,13 @@
-import _ts from "typescript";
+import ts from "typescript";
 import { Node } from "./node";
 
-// TODO: Clean this up, ts vs _ts
-declare namespace MYTS {
-  // deno-lint-ignore no-explicit-any
-  let Debug: any;
-}
-type TS = typeof MYTS & typeof _ts;
-// deno-lint-ignore no-explicit-any
-export const ts: TS = (_ts as any);
-
-export type TSNode = _ts.Node & { text: string };
+type TSNode = ts.Node & { text: string };
 
 export function getNodesArray(source: string) {
-  const sourceFile = _ts.createSourceFile(
+  const sourceFile = ts.createSourceFile(
     "source.ts",
     source,
-    _ts.ScriptTarget.ESNext,
+    ts.ScriptTarget.ESNext,
     true,
   );
 
@@ -25,8 +16,8 @@ export function getNodesArray(source: string) {
 
   function walk(node: TSNode) {
     const hasText = typeof node.text !== "undefined" ? node.getText() : undefined;
-    const isReservedWord = node.kind >= _ts.SyntaxKind.FirstKeyword && node.kind <= _ts.SyntaxKind.LastKeyword;
-    const isPunctuation = node.kind >= _ts.SyntaxKind.FirstPunctuation && node.kind <= _ts.SyntaxKind.LastPunctuation;
+    const isReservedWord = node.kind >= ts.SyntaxKind.FirstKeyword && node.kind <= ts.SyntaxKind.LastKeyword;
+    const isPunctuation = node.kind >= ts.SyntaxKind.FirstPunctuation && node.kind <= ts.SyntaxKind.LastPunctuation;
 
     // Only include visible node, nodes that represent some text in the source code.
     if (hasText || isReservedWord || isPunctuation) {
@@ -73,7 +64,7 @@ export function getNodesArray(source: string) {
 }
 
 // This wrapper exists because the underling TS function is marked as internal
-function getLineNumber(sourceFile: _ts.SourceFile, start: number) {
+function getLineNumber(sourceFile: ts.SourceFile, start: number) {
   // deno-lint-ignore no-explicit-any
-  return (_ts as any).getLineAndCharacterOfPosition(sourceFile, start).line + 1;
+  return (ts as any).getLineAndCharacterOfPosition(sourceFile, start).line + 1;
 }

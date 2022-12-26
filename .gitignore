@@ -2,5 +2,6 @@
 dist
 node_modules
 internal
+scripts
 diff
 ./test.ts

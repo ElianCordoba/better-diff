@@ -6,6 +6,10 @@ export function validateDiff(
   resultA: string,
   resultB: string,
 ) {
-  expect(resultA.trim()).toEqual(expectedA.trim());
-  expect(resultB.trim()).toEqual(expectedB.trim());
+  function trimLines(text: string) {
+    return text.split("\n").map((s) => s.trim()).join("");
+  }
+
+  expect(trimLines(resultA)).toEqual(trimLines(expectedA));
+  expect(trimLines(resultB)).toEqual(trimLines(expectedB));
 }
