@@ -46,8 +46,6 @@ describe("Align source after diffing", () => {
 
     const { changes } = getTextWithDiffs(a, b);
 
-    console.log(changes.map((x) => x.type));
-
     const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
