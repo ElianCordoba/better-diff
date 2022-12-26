@@ -95,6 +95,6 @@
   "include": [
     "./src",
     "./tests",
-    "internal/test.ts"
+    "./scripts"
   ]
 }
