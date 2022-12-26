@@ -1,18 +1,18 @@
-import { SyntaxKind } from "typescript";
+import ts from "typescript";
 import { Node } from "./node";
-import { ts } from "./ts-util";
 import { Range } from "./types";
 
-export function formatSyntaxKind(kind: SyntaxKind, text?: string) {
+export function formatSyntaxKind(kind: ts.SyntaxKind, text?: string) {
   const textValue = text ? `| "${text}"` : "";
-  const formattedKind = ts.Debug.formatSyntaxKind(kind);
+  // The cast is because the underling function is marked as internal and we don't get typings
+  const formattedKind = (ts as any).Debug.formatSyntaxKind(kind);
 
   return `${formattedKind.padEnd(25)}${textValue}`.trim();
 }
 
 export function getNodeForPrinting(item: Node) {
   const hasText = item.text || "";
-  const isString = item.kind === SyntaxKind.StringLiteral;
+  const isString = item.kind === ts.SyntaxKind.StringLiteral;
 
   let text;
 
@@ -23,7 +23,7 @@ export function getNodeForPrinting(item: Node) {
   }
 
   return {
-    kind: ts.Debug.formatSyntaxKind(item.kind),
+    kind: (ts as any).Debug.formatSyntaxKind(item.kind),
     text,
   };
 }
