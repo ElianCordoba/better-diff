@@ -7,7 +7,7 @@ export function validateDiff(
   resultB: string,
 ) {
   function trimLines(text: string) {
-    return text.split('\n').map(s => s.trim()).join('')
+    return text.split("\n").map((s) => s.trim()).join("");
   }
 
   expect(trimLines(resultA)).toEqual(trimLines(expectedA));

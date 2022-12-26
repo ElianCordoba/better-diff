@@ -1,7 +1,7 @@
 import ts from "typescript";
 import { Node } from "./node";
 
-type TSNode = ts.Node & { text: string }
+type TSNode = ts.Node & { text: string };
 
 export function getNodesArray(source: string) {
   const sourceFile = ts.createSourceFile(

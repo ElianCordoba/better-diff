@@ -164,11 +164,11 @@ export function getComplimentArray(length: number, fillInCharacter = ""): string
 }
 
 // This function returns both sources with the lines aligned, here an example with line number included:
-// 
+//
 // 1) x
 //
 // --------
-// 
+//
 // 1) "hello"
 // 2) x
 //
@@ -212,12 +212,12 @@ export function getAlignedSources(a: string, b: string, changes: Change[], align
   // if this is the case then we don't need to do work. This is not always the case, for example you can have
   //
   // if (true)
-  // 
+  //
   // ---------
   //
   // if (
   //  true
-  // )  
+  // )
   //
   // In this case the moves don't match so we calculate the difference and then insert the new lines on the side that correspond
   for (const { nodeA, nodeB, type } of changes) {

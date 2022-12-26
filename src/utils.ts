@@ -5,6 +5,7 @@ import { Range } from "./types";
 export function formatSyntaxKind(kind: ts.SyntaxKind, text?: string) {
   const textValue = text ? `| "${text}"` : "";
   // The cast is because the underling function is marked as internal and we don't get typings
+  // deno-lint-ignore no-explicit-any
   const formattedKind = (ts as any).Debug.formatSyntaxKind(kind);
 
   return `${formattedKind.padEnd(25)}${textValue}`.trim();
@@ -23,6 +24,7 @@ export function getNodeForPrinting(item: Node) {
   }
 
   return {
+    // deno-lint-ignore no-explicit-any
     kind: (ts as any).Debug.formatSyntaxKind(item.kind),
     text,
   };

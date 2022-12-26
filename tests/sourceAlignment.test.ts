@@ -9,122 +9,122 @@ describe("Align source after diffing", () => {
     const a = `
       x
       a
-    `
+    `;
 
     const b = `
       x
-    `
+    `;
 
-    const expectedA = a
+    const expectedA = a;
     const expectedB = `
       x
       <<Alignment>>
-    `
+    `;
 
-    const { changes } = getTextWithDiffs(a, b)
+    const { changes } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>")
+    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>");
 
-    validateDiff(expectedA, expectedB, resultA, resultB)
+    validateDiff(expectedA, expectedB, resultA, resultB);
   });
 
   test("Align before removal", () => {
     const a = `
       a
       x
-    `
+    `;
 
     const b = `
       x
-    `
+    `;
 
-    const expectedA = a
+    const expectedA = a;
     const expectedB = `
       <<Alignment>>
       x
-    `
+    `;
 
-    const { changes } = getTextWithDiffs(a, b)
+    const { changes } = getTextWithDiffs(a, b);
 
-    console.log(changes.map(x => x.type))
+    console.log(changes.map((x) => x.type));
 
-    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>")
+    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>");
 
-    validateDiff(expectedA, expectedB, resultA, resultB)
+    validateDiff(expectedA, expectedB, resultA, resultB);
   });
 
   test("Align after addition", () => {
     const a = `
       x
-    `
+    `;
 
     const b = `
       x
       a
-    `
+    `;
 
     const expectedA = `
       x
       <<Alignment>>
-    `
-    const expectedB = b
+    `;
+    const expectedB = b;
 
-    const { changes } = getTextWithDiffs(a, b)
+    const { changes } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>")
+    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>");
 
-    validateDiff(expectedA, expectedB, resultA, resultB)
+    validateDiff(expectedA, expectedB, resultA, resultB);
   });
 
   test("Align before addition", () => {
     const a = `
       x
-    `
+    `;
 
     const b = `
       a
       x
-    `
+    `;
 
     const expectedA = `
       <<Alignment>>
       x
-    `
-    const expectedB = b
+    `;
+    const expectedB = b;
 
-    const { changes } = getTextWithDiffs(a, b)
+    const { changes } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>")
+    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>");
 
-    validateDiff(expectedA, expectedB, resultA, resultB)
+    validateDiff(expectedA, expectedB, resultA, resultB);
   });
 
   test("Align move. Case 1", () => {
     const a = `
       x
       z
-    `
+    `;
 
     const b = `
       x
       1
       2
       z
-    `
+    `;
 
     const expectedA = `
       x
       <<Alignment>>
       <<Alignment>>
       z
-    `
-    const expectedB = b
+    `;
+    const expectedB = b;
 
-    const { changes } = getTextWithDiffs(a, b)
+    const { changes } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>")
+    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>");
 
-    validateDiff(expectedA, expectedB, resultA, resultB)
+    validateDiff(expectedA, expectedB, resultA, resultB);
   });
 
   // TODO: https://github.com/ElianCordoba/better-diff/issues/19
@@ -133,32 +133,32 @@ describe("Align source after diffing", () => {
       x
       1
       2
-    `
+    `;
 
     const b = `
       x
       z
-    `
+    `;
 
     const expectedA = `
       x
       1
       2
       <<Alignment>>
-    `
+    `;
 
     const expectedB = `
       x
       <<Alignment>>
       <<Alignment>>
       z
-    `
+    `;
 
-    const { changes } = getTextWithDiffs(a, b)
+    const { changes } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>")
+    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>");
 
-    validateDiff(expectedA, expectedB, resultA, resultB)
+    validateDiff(expectedA, expectedB, resultA, resultB);
   });
 
   // TODO: https://github.com/ElianCordoba/better-diff/issues/19
@@ -167,7 +167,7 @@ describe("Align source after diffing", () => {
       x
       if (true) {}  
       z
-    `
+    `;
 
     const b = `
       x
@@ -177,7 +177,7 @@ describe("Align source after diffing", () => {
     
       }
       z
-    `
+    `;
 
     const expectedA = `
       x
@@ -187,7 +187,7 @@ describe("Align source after diffing", () => {
       <<Alignment>>
       <<Alignment>>
       z
-    `
+    `;
 
     const expectedB = `
       x
@@ -197,13 +197,13 @@ describe("Align source after diffing", () => {
     
       }
       z
-    `
+    `;
 
-    const { changes } = getTextWithDiffs(a, b)
+    const { changes } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>")
+    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>");
 
-    validateDiff(expectedA, expectedB, resultA, resultB)
+    validateDiff(expectedA, expectedB, resultA, resultB);
   });
 
   // TODO: https://github.com/ElianCordoba/better-diff/issues/19
@@ -223,4 +223,4 @@ describe("Align source after diffing", () => {
   //   z
   //   y
   // `;
-})
+});

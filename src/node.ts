@@ -20,7 +20,7 @@ export class Node {
   lineNumberStart: number;
   lineNumberEnd: number;
   index = -1;
-  expressionNumber: number = -1;
+  expressionNumber = -1;
   matched = false;
   matchNumber = 0;
   //getSourceFn?: () => string,
