@@ -96,5 +96,8 @@
     "./src",
     "./tests",
     "./scripts"
+  ],
+  "exclude": [
+    "./ui"
   ]
 }
