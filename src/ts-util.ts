@@ -34,7 +34,7 @@ export function getNodesArray(source: string) {
       // value of the node starts and not where the trivia starts
       const start = node.pos + node.getLeadingTriviaWidth();
 
-      nodes.push(new Node({ start, end: node.end, kind: node.kind, text: hasText!, lineNumberStart, lineNumberEnd }));
+      nodes.push(new Node({ start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd }));
     }
 
     depth++;
