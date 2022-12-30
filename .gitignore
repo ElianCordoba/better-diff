@@ -5,3 +5,6 @@ internal
 scripts
 diff
 ./test.ts
+
+./frontend/node_modules
+./ui/node_modules
