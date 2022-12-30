@@ -378,14 +378,14 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     // Since this function is reversible we need to check the perspective so that we know if the change is an addition or a removal
     const perspectiveAtoB = iterA.name === "a";
 
+    const linesMoved = Math.abs(a!.lineNumberStart - b!.lineNumberStart);
+
+    // Ignoring move if the code hasn't move far enough
+    if (linesMoved < getOptions().minimumLinesMoved) {
+      return;
+    }
+
     if (perspectiveAtoB) {
-      const linesMoved = Math.abs(a!.lineNumberStart - b!.lineNumberStart);
-
-      // Ignoring move if the code hasn't move far enough
-      if (linesMoved < getOptions().minimumLinesMoved) {
-        return;
-      }
-
       return getChange(
         ChangeType.move,
         a!,
