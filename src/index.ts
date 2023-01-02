@@ -1,3 +1,4 @@
+import { AlignmentTable } from "./alignmentTable";
 import { Change } from "./change";
 import { getInitialDiffs } from "./main";
 import { applyChangesToSources, asciiRenderFn, DiffRendererFn } from "./reporter";
@@ -40,10 +41,10 @@ export function getTextWithDiffs(
   sourceA: string,
   sourceB: string,
   options?: Options,
-): { diffs: DiffResult; changes: Change[] } {
+): { diffs: DiffResult; changes: Change[], alignmentTable: AlignmentTable } {
   _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
 
-  const changes = getInitialDiffs(sourceA, sourceB);
+  const { changes, alignmentTable } = getInitialDiffs(sourceA, sourceB);
   const sourcesWithDiff = applyChangesToSources(
     sourceA,
     sourceB,
@@ -51,7 +52,7 @@ export function getTextWithDiffs(
     _options.renderFn,
   );
 
-  return { diffs: sourcesWithDiff, changes: changes };
+  return { diffs: sourcesWithDiff, changes: changes, alignmentTable };
 }
 
 const defaultOptions: Options = {

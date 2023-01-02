@@ -44,3 +44,12 @@ export function mergeRanges(currentRange: Range, newRange: Range) {
     end: Math.max(currentRange.end, newRange.end),
   };
 }
+
+export function* range(end: number, start: number = 0) {
+  let i = start - 1;
+
+  while (i < end - 1) {
+    i++
+    yield i
+  }
+}

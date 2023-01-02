@@ -1,13 +1,15 @@
 import { getNodesArray } from "./ts-util";
 import { Candidate, ChangeType, Range } from "./types";
-import { equals, mergeRanges } from "./utils";
+import { equals, mergeRanges, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
 import { getOptions } from "./index";
 import { Node } from "./node";
+import { AlignmentTable } from "./alignmentTable";
 
-export function getInitialDiffs(codeA: string, codeB: string): Change[] {
+export function getInitialDiffs(codeA: string, codeB: string): { changes: Change[], alignmentTable: AlignmentTable } {
   const changes: Change[] = [];
+  const alignmentTable = new AlignmentTable()
 
   const nodesA = getNodesArray(codeA);
   const nodesB = getNodesArray(codeB);
@@ -27,7 +29,8 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
       const iterOn = !a ? iterB : iterA;
       const type = !a ? ChangeType.addition : ChangeType.removal;
 
-      const remainingChanges = oneSidedIteration(iterOn, type);
+      const remainingChanges = oneSidedIteration(alignmentTable, iterOn, type);
+      // Track: Change push
       changes.push(...remainingChanges);
       break;
     }
@@ -44,12 +47,20 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
 
     // We didn't find any match
     if (candidatesAtoB.length === 0 && candidatesBtoA.length === 0) {
-      // TODO: Maybe push change type 'change' ?
+      // Track: Change push
       changes.push(getChange(ChangeType.addition, a, b));
       changes.push(getChange(ChangeType.removal, a, b));
 
       iterA.mark(a.index);
       iterB.mark(b.index);
+
+      const widthA = Math.abs(a.lineNumberStart - a.lineNumberEnd) + 1;
+      const widthB = Math.abs(b.lineNumberStart - b.lineNumberEnd) + 1;
+
+      if (widthA !== widthB) {
+        console.log('TODOOOOO')
+      }
+
       continue;
     }
 
@@ -83,53 +94,58 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     const expressionA = iterA.peek(indexA)?.expressionNumber!;
     const expressionB = iterB.peek(indexB)?.expressionNumber!;
 
-    const change = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult);
+    const change = matchSubsequence(alignmentTable, iterA, iterB, indexA, indexB, bestIndex, bestResult);
 
     if (change) {
+      // Track: Change push
       changes.push(change);
     }
 
     // TODO: The code bellow may be removed / reworked once I implement https://github.com/ElianCordoba/better-diff/issues/18
     continue;
 
-    // We look for remaining nodes at index + bestResult because we don't want to include the already matched ones
-    let remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult);
-    let remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult);
+    // // We look for remaining nodes at index + bestResult because we don't want to include the already matched ones
+    // let remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult);
+    // let remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult);
 
-    // If we finished matching the LCS and we don't have any remaining nodes in either expression, then we are done with the matching and we can move on
-    if (!remainingNodesA.length && !remainingNodesB.length) {
-      continue;
-    }
+    // // If we finished matching the LCS and we don't have any remaining nodes in either expression, then we are done with the matching and we can move on
+    // if (!remainingNodesA.length && !remainingNodesB.length) {
+    //   continue;
+    // }
 
-    // If we still have nodes remaining, means that after the LCS the expression had more nodes that we need to match before moving on, for example
-    //
-    //
-    // console.log(0)
-    //
-    // --------------
-    //
-    // console.log(1)
-    //
-    //
-    // The LCS will only match the `console.log(` part, but before moving into another expression we need to match the remaining of the expression
+    // // If we still have nodes remaining, means that after the LCS the expression had more nodes that we need to match before moving on, for example
+    // //
+    // //
+    // // console.log(0)
+    // //
+    // // --------------
+    // //
+    // // console.log(1)
+    // //
+    // //
+    // // The LCS will only match the `console.log(` part, but before moving into another expression we need to match the remaining of the expression
 
-    // First we complete the A side, if applicable
-    changes.push(...finishSequenceMatching(iterA, iterB, remainingNodesA, remainingNodesB));
+    // // First we complete the A side, if applicable
+    // changes.push(...finishSequenceMatching(alignmentTable, iterA, iterB, remainingNodesA, remainingNodesB));
 
-    // TODO: Maybe an optimization, could run faster if we call "finishSequenceMatching" on the one it has the most / least nodes to recalculate
+    // // TODO: Maybe an optimization, could run faster if we call "finishSequenceMatching" on the one it has the most / least nodes to recalculate
 
-    // After calling `finishSequenceMatching` we need to recalculate the remaining nodes since previously unmatched ones could have been matched now
-    remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult);
-    remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult);
+    // // After calling `finishSequenceMatching` we need to recalculate the remaining nodes since previously unmatched ones could have been matched now
+    // remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult);
+    // remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult);
 
-    // Finally we complete the matching of the B side. This time we call `finishSequenceMatching` with the arguments inverted in order to check the other perspective
-    changes.push(...finishSequenceMatching(iterB, iterA, remainingNodesB, remainingNodesA));
+    // // Finally we complete the matching of the B side. This time we call `finishSequenceMatching` with the arguments inverted in order to check the other perspective
+    // changes.push(...finishSequenceMatching(alignmentTable, iterB, iterA, remainingNodesB, remainingNodesA));
   } while (a || b); // Loop until both iterators are done, at that point they will return undefined and the loop will break
 
-  return compactChanges(changes);
+  return {
+    changes: compactChanges(changes),
+    alignmentTable,
+  }
 }
 
 function oneSidedIteration(
+  alignmentTable: AlignmentTable,
   iter: Iterator,
   typeOfChange: ChangeType.addition | ChangeType.removal,
 ): Change[] {
@@ -137,11 +153,21 @@ function oneSidedIteration(
 
   let value = iter.next();
 
+  const alignAt: number[] = []
+
   // TODO: Compact
   while (value) {
+    // const width = value.lineNumberStart - value.lineNumberEnd + 1
+
+    if (!alignAt.includes(value.lineNumberStart)) {
+      alignAt.push(value.lineNumberStart)
+    }
+
     if (typeOfChange === ChangeType.addition) {
+      // alignmentTable.add('a', value.lineNumberStart, width)
       changes.push(getChange(typeOfChange, undefined, value));
     } else {
+      // alignmentTable.add('b', value.lineNumberStart, width)
       changes.push(getChange(typeOfChange, value, undefined));
     }
 
@@ -149,6 +175,13 @@ function oneSidedIteration(
 
     value = iter.next();
   }
+
+  const side = typeOfChange === ChangeType.addition ? 'a' : 'b'
+  for (const i of alignAt) {
+    alignmentTable.add(side, i, 1)
+  }
+
+  alignmentTable.print()
 
   return changes;
 }
@@ -331,16 +364,43 @@ function getLCS(candidates: Candidate[], iterA: Iterator, iterB: Iterator, index
 }
 
 // This function has side effects, mutates data in the iterators
-function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, indexOfBestResult: number, lcs: number): Change | undefined {
+function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, indexOfBestResult: number, lcs: number): Change | undefined {
   let a: Node;
   let b: Node;
 
   let rangeA: Range | undefined;
   let rangeB: Range | undefined;
 
+  let lineOffsetA = indexA;
+  let lineOffsetB = indexB;
+
   for (let index = indexOfBestResult; index < indexOfBestResult + lcs; index++) {
     a = iterA.next(indexA)!;
     b = iterB.next(indexB)!;
+
+    // TODO, include line end
+
+    const startA = a.lineNumberStart - lineOffsetA
+    const startB = b.lineNumberStart - lineOffsetB
+
+    if (startA !== startB) {
+      const linesDiff = Math.abs(startA - startB)
+
+      if (startA < startB) {
+        lineOffsetB += linesDiff
+
+        for (const lineToInsert of range(b.lineNumberStart + linesDiff, b.lineNumberStart)) {
+          alignmentTable.add('a', lineToInsert, 1)
+        }
+
+      } else {
+        lineOffsetA += linesDiff
+
+        for (const lineToInsert of range(a.lineNumberStart + linesDiff, a.lineNumberStart)) {
+          alignmentTable.add('b', lineToInsert, 1)
+        }
+      }
+    }
 
     if (!equals(a!, b!)) {
       throw new Error(`Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
@@ -370,11 +430,13 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     }
   }
 
+  alignmentTable.print()
+
   // If the nodes are not in the same position then it's a move
   // TODO: Reported in the readme, this is too sensible
-  const didChange = a!.index !== b!.index;
+  const didMove = a!.index !== b!.index;
 
-  if (didChange) {
+  if (didMove) {
     // Since this function is reversible we need to check the perspective so that we know if the change is an addition or a removal
     const perspectiveAtoB = iterA.name === "a";
 
@@ -405,7 +467,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   }
 }
 
-function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodesA: Node[], remainingNodesB: Node[]): Change[] {
+function finishSequenceMatching(alignmentTable: AlignmentTable, iterA: Iterator, iterB: Iterator, remainingNodesA: Node[], remainingNodesB: Node[]): Change[] {
   const changes: Change[] = [];
 
   let i = 0;
@@ -440,7 +502,7 @@ function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodes
     const indexA = current?.index!;
     const indexB = bestIndex;
 
-    const change = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult);
+    const change = matchSubsequence(alignmentTable, iterA, iterB, indexA, indexB, bestIndex, bestResult);
 
     if (change) {
       changes.push(change);

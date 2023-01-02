@@ -1,4 +1,5 @@
 import { ChangeType, Range } from "../src/types";
+import { AlignmentTable } from "./alignmentTable";
 import { Change } from "./change";
 
 //@ts-ignore TODO: Importing normally doesnt work with vitest
@@ -161,6 +162,40 @@ function getRanges(range: Range | undefined) {
 
 export function getComplimentArray(length: number, fillInCharacter = ""): string[] {
   return new Array(length).fill(fillInCharacter);
+}
+
+export function getAlignedSources2(alignmentTable: AlignmentTable, a: string, b: string, alignmentText = "\n") {
+  let linesA = a.replace(/\n$/, "").split("\n");
+  let linesB = b.replace(/\n$/, "").split("\n");
+
+  function insertNewlines(insertAtLine: number, linesToInsert: number, side: "a" | "b"): string[] {
+    const chars = side === "a" ? linesA : linesB;
+
+    // The -1 is because line number start at 1 but we need 0-indexed number for the array slice
+    const insertAt = (insertAtLine - 1);
+
+    const head = chars.slice(0, insertAt);
+    const tail = chars.slice(insertAt, chars.length);
+
+    const compliment = getComplimentArray(linesToInsert, alignmentText);
+
+    const newChars = [...head, ...compliment, ...tail];
+
+    return newChars
+  }
+
+  for (const [lineNumber, extraLines] of Object.entries(alignmentTable.a)) {
+    linesA = insertNewlines(Number(lineNumber), extraLines, 'a')
+  }
+
+  for (const [lineNumber, extraLines] of Object.entries(alignmentTable.b)) {
+    linesB = insertNewlines(Number(lineNumber), extraLines, 'b')
+  }
+
+  return {
+    a: linesA.join("\n"),
+    b: linesB.join("\n"),
+  };
 }
 
 // This function returns both sources with the lines aligned, here an example with line number included:

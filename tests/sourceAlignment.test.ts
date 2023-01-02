@@ -1,11 +1,10 @@
-import { describe, expect, test } from "vitest";
+import { describe, test } from "vitest";
 import { getTextWithDiffs } from "../src";
-import { getSequenceLength } from "../src/main";
-import { getAlignedSources } from "../src/reporter";
+import { getAlignedSources2 } from "../src/reporter";
 import { validateDiff } from "./utils";
 
 describe("Align source after diffing", () => {
-  test("Align after removal", () => {
+  test("Simple align. Case 1", () => {
     const a = `
       x
       a
@@ -21,14 +20,14 @@ describe("Align source after diffing", () => {
       <<Alignment>>
     `;
 
-    const { changes } = getTextWithDiffs(a, b);
+    const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
 
-  test("Align before removal", () => {
+  test("Simple align. Case 2", () => {
     const a = `
       a
       x
@@ -44,14 +43,14 @@ describe("Align source after diffing", () => {
       x
     `;
 
-    const { changes } = getTextWithDiffs(a, b);
+    const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
 
-  test("Align after addition", () => {
+  test("Simple align. Case 3", () => {
     const a = `
       x
     `;
@@ -67,14 +66,14 @@ describe("Align source after diffing", () => {
     `;
     const expectedB = b;
 
-    const { changes } = getTextWithDiffs(a, b);
+    const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
 
-  test("Align before addition", () => {
+  test("Simple align. Case 4", () => {
     const a = `
       x
     `;
@@ -90,9 +89,65 @@ describe("Align source after diffing", () => {
     `;
     const expectedB = b;
 
-    const { changes } = getTextWithDiffs(a, b);
+    const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+
+    validateDiff(expectedA, expectedB, resultA, resultB);
+  });
+
+  test("Simple align. Case 5", () => {
+    const a = `
+      1
+      1
+      x
+      1
+      1
+    `;
+
+    const b = `
+      x
+    `;
+
+    const expectedA = a;
+    const expectedB = `
+      <<Alignment>>
+      <<Alignment>>
+      x
+      <<Alignment>>
+      <<Alignment>>
+    `;
+
+    const { alignmentTable } = getTextWithDiffs(a, b);
+
+    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+
+    validateDiff(expectedA, expectedB, resultA, resultB);
+  });
+
+  test("Simple align. Case 6", () => {
+    const a = `
+      console.log(1)
+    `;
+
+    const b = `
+      console
+      .
+      log
+      (1)
+    `;
+
+    const expectedA = `
+      console.log(1)
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>>
+    `;
+    const expectedB = b;
+
+    const { alignmentTable } = getTextWithDiffs(a, b);
+
+    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
@@ -118,15 +173,14 @@ describe("Align source after diffing", () => {
     `;
     const expectedB = b;
 
-    const { changes } = getTextWithDiffs(a, b);
+    const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
 
-  // TODO: https://github.com/ElianCordoba/better-diff/issues/19
-  test.skip("Align move. Case 2", () => {
+  test("Align move. Case 2", () => {
     const a = `
       x
       1
@@ -142,64 +196,124 @@ describe("Align source after diffing", () => {
       x
       1
       2
-      <<Alignment>>
     `;
 
     const expectedB = `
       x
-      <<Alignment>>
-      <<Alignment>>
       z
+      <<Alignment>>
     `;
 
-    const { changes } = getTextWithDiffs(a, b);
+    const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
 
-  // TODO: https://github.com/ElianCordoba/better-diff/issues/19
-  test.skip("Align invisible move", () => {
+  test("Align format change. Case 1", () => {
     const a = `
-      x
-      if (true) {}  
-      z
+      console.log()
     `;
 
     const b = `
-      x
-      if (
-        true
-      ) {
-    
-      }
-      z
+      1
+      2
+      3
+      console
+      .
+      log()
     `;
 
     const expectedA = `
-      x
-      if (true) {}
       <<Alignment>>
       <<Alignment>>
       <<Alignment>>
+      console.log()
       <<Alignment>>
-      z
+      <<Alignment>>
     `;
 
     const expectedB = `
-      x
-      if (
-        true
-      ) {
-    
-      }
-      z
+      1
+      2
+      3
+      console
+      .
+      log()
     `;
 
-    const { changes } = getTextWithDiffs(a, b);
+    const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources(a, b, changes, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+
+    validateDiff(expectedA, expectedB, resultA, resultB);
+  });
+
+  test("Align format change", () => {
+    const a = `
+      1
+      console.log()
+      2
+    `;
+
+    const b = `
+      1
+      console
+      .
+      log()
+      2
+    `;
+
+    const expectedA = `
+      1
+      console.log()
+      <<Alignment>>
+      <<Alignment>>
+      2
+    `;
+
+    const expectedB = b;
+
+    const { alignmentTable } = getTextWithDiffs(a, b);
+
+    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+
+    validateDiff(expectedA, expectedB, resultA, resultB);
+  });
+
+  test("Align with new lines added", () => {
+    const a = `
+      console.log()
+    `;
+
+    const b = `
+      1
+      2
+
+
+      console.log()
+    `;
+
+    const expectedA = `
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>>
+      console.log()
+    `;
+
+    const expectedB = `
+      1
+      2
+      <<Alignment>>
+      <<Alignment>>
+      console.log()
+    `;
+
+    const { alignmentTable } = getTextWithDiffs(a, b);
+
+    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
