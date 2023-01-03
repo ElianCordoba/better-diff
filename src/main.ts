@@ -150,24 +150,17 @@ function oneSidedIteration(
   typeOfChange: ChangeType.addition | ChangeType.removal,
 ): Change[] {
   const changes: Change[] = [];
+  const side = typeOfChange === ChangeType.addition ? 'a' : 'b'
 
   let value = iter.next();
 
-  const alignAt: number[] = []
-
   // TODO: Compact
   while (value) {
-    // const width = value.lineNumberStart - value.lineNumberEnd + 1
-
-    if (!alignAt.includes(value.lineNumberStart)) {
-      alignAt.push(value.lineNumberStart)
-    }
+    alignmentTable.add(side, value.lineNumberStart)
 
     if (typeOfChange === ChangeType.addition) {
-      // alignmentTable.add('a', value.lineNumberStart, width)
       changes.push(getChange(typeOfChange, undefined, value));
     } else {
-      // alignmentTable.add('b', value.lineNumberStart, width)
       changes.push(getChange(typeOfChange, value, undefined));
     }
 
@@ -175,13 +168,6 @@ function oneSidedIteration(
 
     value = iter.next();
   }
-
-  const side = typeOfChange === ChangeType.addition ? 'a' : 'b'
-  for (const i of alignAt) {
-    alignmentTable.add(side, i)
-  }
-
-  alignmentTable.print()
 
   return changes;
 }
@@ -379,14 +365,12 @@ function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB
     b = iterB.next(indexB)!;
 
     if (!lineOffsetA) {
-      lineOffsetA = a!.realLineNumberStart;
+      lineOffsetA = a!.lineNumberStart;
     }
 
     if (!lineOffsetB) {
-      lineOffsetB = b!.realLineNumberStart
+      lineOffsetB = b!.lineNumberStart
     }
-
-    // TODO, include line end
 
     const startA = a.lineNumberStart - lineOffsetA
     const startB = b.lineNumberStart - lineOffsetB
