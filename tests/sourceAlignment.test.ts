@@ -282,7 +282,59 @@ describe("Align source after diffing", () => {
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
 
-  test("Align with new lines added", () => {
+  test.skip("Align with trivia. Case 1", () => {
+    const a = `
+      console.log()
+    `;
+
+    const b = `
+
+
+      console.log()
+    `;
+
+    const expectedA = `
+      <<Alignment>>
+      <<Alignment>>
+      console.log()
+    `;
+
+    const expectedB = b;
+
+    const { alignmentTable } = getTextWithDiffs(a, b);
+
+    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+
+    validateDiff(expectedA, expectedB, resultA, resultB);
+  });
+
+  test.skip("Align with trivia. Case 2", () => {
+    const a = `
+      console.log()
+
+
+    `;
+
+    const b = `
+      console.log()
+    `;
+
+    const expectedA = a;
+
+    const expectedB = `
+      console.log()
+      <<Alignment>>
+      <<Alignment>>
+    `;
+
+    const { alignmentTable } = getTextWithDiffs(a, b);
+
+    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+
+    validateDiff(expectedA, expectedB, resultA, resultB);
+  });
+
+  test.skip("Align with new lines added", () => {
     const a = `
       console.log()
     `;
