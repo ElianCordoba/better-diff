@@ -417,8 +417,6 @@ function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB
     }
   }
 
-  alignmentTable.print()
-
   // If the nodes are not in the same position then it's a move
   // TODO: Reported in the readme, this is too sensible
   const didMove = a!.index !== b!.index;

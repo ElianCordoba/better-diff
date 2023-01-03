@@ -1,6 +1,6 @@
 import { describe, test } from "vitest";
 import { getTextWithDiffs } from "../src";
-import { getAlignedSources2 } from "../src/reporter";
+import { getAlignedSources } from "../src/reporter";
 import { validateDiff } from "./utils";
 
 describe("Align source after diffing", () => {
@@ -22,7 +22,7 @@ describe("Align source after diffing", () => {
 
     const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
@@ -45,7 +45,7 @@ describe("Align source after diffing", () => {
 
     const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
@@ -68,7 +68,7 @@ describe("Align source after diffing", () => {
 
     const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
@@ -91,7 +91,7 @@ describe("Align source after diffing", () => {
 
     const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
@@ -120,7 +120,7 @@ describe("Align source after diffing", () => {
 
     const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
@@ -147,7 +147,7 @@ describe("Align source after diffing", () => {
 
     const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
@@ -175,7 +175,7 @@ describe("Align source after diffing", () => {
 
     const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
@@ -206,7 +206,7 @@ describe("Align source after diffing", () => {
 
     const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
@@ -245,7 +245,7 @@ describe("Align source after diffing", () => {
 
     const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
@@ -277,7 +277,7 @@ describe("Align source after diffing", () => {
 
     const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
@@ -303,7 +303,7 @@ describe("Align source after diffing", () => {
 
     const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
@@ -329,7 +329,7 @@ describe("Align source after diffing", () => {
 
     const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
@@ -365,7 +365,7 @@ describe("Align source after diffing", () => {
 
     const { alignmentTable } = getTextWithDiffs(a, b);
 
-    const { a: resultA, b: resultB } = getAlignedSources2(alignmentTable, a, b, "<<Alignment>>");
+    const { a: resultA, b: resultB } = getAlignedSources(alignmentTable, a, b, "<<Alignment>>");
 
     validateDiff(expectedA, expectedB, resultA, resultB);
   });
