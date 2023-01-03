@@ -1,14 +1,13 @@
-type LineNumber = number;
-
 export class AlignmentTable {
-  a: LineNumber[] = []
-  b: LineNumber[] = []
+  // We store the line numbers where we will insert lines, on each side independently.
+  a: Set<number> = new Set()
+  b: Set<number> = new Set()
 
-  add(side: 'a' | 'b', line: LineNumber) {
+  add(side: 'a' | 'b', line: number) {
     if (side === 'a') {
-      this.a.push(line)
+      this.a.add(line)
     } else {
-      this.b.push(line)
+      this.b.add(line)
     }
   }
 
