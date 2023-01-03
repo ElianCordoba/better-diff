@@ -1,18 +1,14 @@
 type LineNumber = number;
-type ExtraLinesBellow = number;
 
 export class AlignmentTable {
-  a: Record<LineNumber, ExtraLinesBellow> = {}
-  b: Record<LineNumber, ExtraLinesBellow> = {}
+  a: Record<LineNumber, boolean> = {}
+  b: Record<LineNumber, boolean> = {}
 
-  add(side: 'a' | 'b', line: LineNumber, newLines: number) {
-    const _side = side === 'a' ? this.a : this.b
-    const currentValue = _side[line] || 0
-
+  add(side: 'a' | 'b', line: LineNumber) {
     if (side === 'a') {
-      this.a[line] = currentValue + newLines
+      this.a[line] = true
     } else {
-      this.b[line] = currentValue + newLines
+      this.b[line] = true
     }
   }
 

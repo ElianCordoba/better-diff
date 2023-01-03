@@ -178,7 +178,7 @@ function oneSidedIteration(
 
   const side = typeOfChange === ChangeType.addition ? 'a' : 'b'
   for (const i of alignAt) {
-    alignmentTable.add(side, i, 1)
+    alignmentTable.add(side, i)
   }
 
   alignmentTable.print()
@@ -398,14 +398,14 @@ function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB
         lineOffsetB += linesDiff
 
         for (const lineToInsert of range(b.lineNumberStart + linesDiff, b.lineNumberStart)) {
-          alignmentTable.add('a', lineToInsert, 1)
+          alignmentTable.add('a', lineToInsert)
         }
 
       } else {
         lineOffsetA += linesDiff
 
         for (const lineToInsert of range(a.lineNumberStart + linesDiff, a.lineNumberStart)) {
-          alignmentTable.add('b', lineToInsert, 1)
+          alignmentTable.add('b', lineToInsert)
         }
       }
     }

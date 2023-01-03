@@ -168,7 +168,7 @@ export function getAlignedSources2(alignmentTable: AlignmentTable, a: string, b:
   let linesA = a.replace(/\n$/, "").split("\n");
   let linesB = b.replace(/\n$/, "").split("\n");
 
-  function insertNewlines(insertAtLine: number, linesToInsert: number, side: "a" | "b"): string[] {
+  function insertNewlines(insertAtLine: number, side: "a" | "b"): string[] {
     const chars = side === "a" ? linesA : linesB;
 
     // The -1 is because line number start at 1 but we need 0-indexed number for the array slice
@@ -177,19 +177,19 @@ export function getAlignedSources2(alignmentTable: AlignmentTable, a: string, b:
     const head = chars.slice(0, insertAt);
     const tail = chars.slice(insertAt, chars.length);
 
-    const compliment = getComplimentArray(linesToInsert, alignmentText);
+    const compliment = getComplimentArray(1, alignmentText);
 
     const newChars = [...head, ...compliment, ...tail];
 
     return newChars
   }
 
-  for (const [lineNumber, extraLines] of Object.entries(alignmentTable.a)) {
-    linesA = insertNewlines(Number(lineNumber), extraLines, 'a')
+  for (const [lineNumber] of Object.entries(alignmentTable.a)) {
+    linesA = insertNewlines(Number(lineNumber), 'a')
   }
 
-  for (const [lineNumber, extraLines] of Object.entries(alignmentTable.b)) {
-    linesB = insertNewlines(Number(lineNumber), extraLines, 'b')
+  for (const [lineNumber] of Object.entries(alignmentTable.b)) {
+    linesB = insertNewlines(Number(lineNumber), 'b')
   }
 
   return {
