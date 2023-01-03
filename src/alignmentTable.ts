@@ -1,14 +1,14 @@
 type LineNumber = number;
 
 export class AlignmentTable {
-  a: Record<LineNumber, boolean> = {}
-  b: Record<LineNumber, boolean> = {}
+  a: LineNumber[] = []
+  b: LineNumber[] = []
 
   add(side: 'a' | 'b', line: LineNumber) {
     if (side === 'a') {
-      this.a[line] = true
+      this.a.push(line)
     } else {
-      this.b[line] = true
+      this.b.push(line)
     }
   }
 

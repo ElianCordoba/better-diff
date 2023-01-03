@@ -184,12 +184,12 @@ export function getAlignedSources2(alignmentTable: AlignmentTable, a: string, b:
     return newChars
   }
 
-  for (const [lineNumber] of Object.entries(alignmentTable.a)) {
-    linesA = insertNewlines(Number(lineNumber), 'a')
+  for (const lineNumber of alignmentTable.a) {
+    linesA = insertNewlines(lineNumber, 'a')
   }
 
-  for (const [lineNumber] of Object.entries(alignmentTable.b)) {
-    linesB = insertNewlines(Number(lineNumber), 'b')
+  for (const lineNumber of alignmentTable.b) {
+    linesB = insertNewlines(lineNumber, 'b')
   }
 
   return {
