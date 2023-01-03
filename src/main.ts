@@ -351,26 +351,19 @@ function getLCS(candidates: Candidate[], iterA: Iterator, iterB: Iterator, index
 
 // This function has side effects, mutates data in the iterators
 function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, indexOfBestResult: number, lcs: number): Change | undefined {
-  let a: Node;
-  let b: Node;
-
   let rangeA: Range | undefined;
   let rangeB: Range | undefined;
 
-  let lineOffsetA;
-  let lineOffsetB;
+  let a = iterA.next(indexA)!;
+  let b = iterB.next(indexB)!;
 
-  for (let index = indexOfBestResult; index < indexOfBestResult + lcs; index++) {
+  let lineOffsetA = a.lineNumberStart;
+  let lineOffsetB = b.lineNumberStart;
+
+  let index = indexOfBestResult;
+  while (index < indexOfBestResult + lcs) {
     a = iterA.next(indexA)!;
     b = iterB.next(indexB)!;
-
-    if (!lineOffsetA) {
-      lineOffsetA = a!.lineNumberStart;
-    }
-
-    if (!lineOffsetB) {
-      lineOffsetB = b!.lineNumberStart
-    }
 
     const startA = a.lineNumberStart - lineOffsetA
     const startB = b.lineNumberStart - lineOffsetB
@@ -397,6 +390,8 @@ function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB
     if (!equals(a!, b!)) {
       throw new Error(`Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
     }
+
+    index++
 
     indexA++;
     indexB++;
