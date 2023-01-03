@@ -21,9 +21,6 @@ export function getNodesArray(source: string) {
 
     // Only include visible node, nodes that represent some text in the source code.
     if (hasText || isReservedWord || isPunctuation) {
-      const lineNumberStart = getLineNumber(sourceFile, node.pos + node.getLeadingTriviaWidth());
-      const lineNumberEnd = getLineNumber(sourceFile, node.end);
-
       // Each node owns the trivia before until the previous token, for example:
       //
       // age = 24
@@ -32,9 +29,15 @@ export function getNodesArray(source: string) {
       //
       // This is why we add the leading trivia to the `start` of the node, so we get where the actual
       // value of the node starts and not where the trivia starts
-      const start = node.pos + node.getLeadingTriviaWidth();
+      const fullStart = node.pos + node.getLeadingTriviaWidth();
 
-      nodes.push(new Node({ start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd }));
+      // Solely used for code alignment
+      const realLineNumberStart = getLineNumber(sourceFile, node.pos)
+
+      const lineNumberStart = getLineNumber(sourceFile, node.pos + node.getLeadingTriviaWidth());
+      const lineNumberEnd = getLineNumber(sourceFile, node.end);
+
+      nodes.push(new Node({ start: fullStart, end: node.end, kind: node.kind, text: node.getText(), realLineNumberStart, lineNumberStart, lineNumberEnd }));
     }
 
     depth++;

@@ -371,12 +371,20 @@ function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB
   let rangeA: Range | undefined;
   let rangeB: Range | undefined;
 
-  let lineOffsetA = indexA;
-  let lineOffsetB = indexB;
+  let lineOffsetA;
+  let lineOffsetB;
 
   for (let index = indexOfBestResult; index < indexOfBestResult + lcs; index++) {
     a = iterA.next(indexA)!;
     b = iterB.next(indexB)!;
+
+    if (!lineOffsetA) {
+      lineOffsetA = a!.realLineNumberStart;
+    }
+
+    if (!lineOffsetB) {
+      lineOffsetB = b!.realLineNumberStart
+    }
 
     // TODO, include line end
 
