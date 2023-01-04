@@ -357,8 +357,8 @@ function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB
   let a = iterA.next(indexA)!;
   let b = iterB.next(indexB)!;
 
-  let lineOffsetA = a.lineNumberStart;
-  let lineOffsetB = b.lineNumberStart;
+  let rangeA = a.getPosition();
+  let rangeB = b.getPosition()
 
   let index = indexOfBestResult;
   while (index < indexOfBestResult + lcs) {
@@ -404,17 +404,8 @@ function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB
       continue;
     }
 
-    if (!rangeA) {
-      rangeA = a.getPosition();
-    } else {
-      rangeA = mergeRanges(rangeA, a.getPosition());
-    }
-
-    if (!rangeB) {
-      rangeB = b.getPosition();
-    } else {
-      rangeB = mergeRanges(rangeB, b.getPosition());
-    }
+    rangeA = mergeRanges(rangeA, a.getPosition());
+    rangeB = mergeRanges(rangeB, b.getPosition());
   }
 
   // If the nodes are not in the same position then it's a move
