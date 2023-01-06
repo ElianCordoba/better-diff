@@ -11,6 +11,20 @@ export class AlignmentTable {
     }
   }
 
+  getOffset(side: 'a' | 'b', line: number) {
+    const _side = side === 'a' ? this.a : this.b
+
+    let offset = 0;
+    for (const lineWithAlignment of _side) {
+      if (lineWithAlignment <= line) {
+        offset++
+      } else {
+        break
+      }
+    }
+    return offset
+  }
+
   print() {
     console.log('A alignment table');
     console.table(this.a)

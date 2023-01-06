@@ -9,7 +9,11 @@ import { AlignmentTable } from "./alignmentTable";
 
 export function getInitialDiffs(codeA: string, codeB: string): { changes: Change[], alignmentTable: AlignmentTable } {
   const changes: Change[] = [];
-  const alignmentTable = new AlignmentTable()
+
+  let linesA = codeA.replace(/\n$/, "").split("\n");
+  let linesB = codeB.replace(/\n$/, "").split("\n");
+
+  const alignmentTable = new AlignmentTable(linesA, linesB)
 
   const nodesA = getNodesArray(codeA);
   const nodesB = getNodesArray(codeB);
@@ -20,9 +24,16 @@ export function getInitialDiffs(codeA: string, codeB: string): { changes: Change
   let a: Node | undefined;
   let b: Node | undefined;
 
+  iterA.printPositionInfo(); console.log('\n'); iterB.printPositionInfo();
+
   do {
     a = iterA.next();
     b = iterB.next();
+
+    if (!a && !b) {
+      console.log('Missed while')
+      break
+    }
 
     // One of the iterators finished. We will traverse the remaining nodes in the other iterator
     if (!a || !b) {
@@ -150,13 +161,20 @@ function oneSidedIteration(
   typeOfChange: ChangeType.addition | ChangeType.removal,
 ): Change[] {
   const changes: Change[] = [];
-  const side = typeOfChange === ChangeType.addition ? 'a' : 'b'
+  const adjacentSide = typeOfChange === ChangeType.addition ? 'a' : 'b'
+  const sameSide = oppositeSide(adjacentSide)
 
   let value = iter.next();
 
   // TODO: Compact
   while (value) {
-    alignmentTable.add(side, value.lineNumberStart)
+    // When aligning for an addition/deletion we insert alignments in two places, one next to the li
+    // 
+    // el que alinea al costado
+    alignmentTable.add(adjacentSide, value.lineNumberStart)
+
+    // // el de abajo del que fue borrado
+    // alignmentTable.add(sameSide, value.lineNumberStart + 1)
 
     if (typeOfChange === ChangeType.addition) {
       changes.push(getChange(typeOfChange, undefined, value));
@@ -351,9 +369,6 @@ function getLCS(candidates: Candidate[], iterA: Iterator, iterB: Iterator, index
 
 // This function has side effects, mutates data in the iterators
 function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, indexOfBestResult: number, lcs: number): Change | undefined {
-  let rangeA: Range | undefined;
-  let rangeB: Range | undefined;
-
   let a = iterA.next(indexA)!;
   let b = iterB.next(indexB)!;
 
@@ -365,27 +380,36 @@ function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB
     a = iterA.next(indexA)!;
     b = iterB.next(indexB)!;
 
-    const startA = a.lineNumberStart - lineOffsetA
-    const startB = b.lineNumberStart - lineOffsetB
+    // ----- ALIGNMENT -----
 
-    if (startA !== startB) {
-      const linesDiff = Math.abs(startA - startB)
+    // const startA = a.lineNumberStart + alignmentTable.getOffset('a', a.lineNumberStart);
+    // const startB = b.lineNumberStart + alignmentTable.getOffset('b', b.lineNumberStart);
 
-      if (startA < startB) {
-        lineOffsetB += linesDiff
+    const triviaA = a.triviaLinesAbove;
+    const triviaB = b.triviaLinesAbove;
 
-        for (const lineToInsert of range(b.lineNumberStart + linesDiff, b.lineNumberStart)) {
-          alignmentTable.add('a', lineToInsert)
-        }
+    // Trivia mismatch, we need to insert lines _above_ to align
+    if (triviaA !== triviaB) { //startA !== startB && 
+      const linesDiff = Math.abs(triviaA - triviaB)
 
+      let side: 'a' | 'b';
+      let from;
+
+      // We insert the lines on the side that is behind
+      if (triviaA < triviaB) {
+        side = 'a';
+        from = a.lineNumberStart
       } else {
-        lineOffsetA += linesDiff
+        side = 'b';
+        from = b.lineNumberStart
+      }
 
-        for (const lineToInsert of range(a.lineNumberStart + linesDiff, a.lineNumberStart)) {
-          alignmentTable.add('b', lineToInsert)
-        }
+      for (const i of range(from, from + linesDiff)) {
+        alignmentTable.add(side, i)
       }
     }
+
+    // ----- ALIGNMENT -----
 
     if (!equals(a!, b!)) {
       throw new Error(`Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
@@ -505,4 +529,8 @@ function searchCandidatesInList(nodes: Node[], expected: Node): Candidate[] {
   }
 
   return candidates;
+}
+
+function oppositeSide(side: 'a' | 'b'): 'a' | 'b' {
+  return side === 'a' ? 'b' : 'a'
 }
