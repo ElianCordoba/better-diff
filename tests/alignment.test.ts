@@ -237,3 +237,35 @@ test({
     print()
   `,
 });
+
+// TODO Review code with comment "not sure about this"
+// 3
+test({
+  a: `
+    1
+    print(true) {}
+  `,
+  b: `
+    print(
+      true
+    ) {
+
+    }
+  `,
+  expA: `
+    1
+    <<Alignment>>
+    <<Alignment>>
+    <<Alignment>>
+    <<Alignment>>
+    print(true) {}
+  `,
+  expB: `
+    <<Alignment>>
+    print(
+      true
+    ) {
+
+    }
+  `,
+});

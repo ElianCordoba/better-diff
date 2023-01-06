@@ -5,8 +5,14 @@ export class AlignmentTable {
 
   add(side: 'a' | 'b', line: number) {
     if (side === 'a') {
+      if (this.a.has(line)) {
+        line++
+      }
       this.a.add(line)
     } else {
+      if (this.b.has(line)) {
+        line++
+      }
       this.b.add(line)
     }
   }
