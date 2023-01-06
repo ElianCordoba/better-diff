@@ -200,6 +200,27 @@ test({
   `,
 });
 
+// 9
+test({
+  a: `
+    print()
+  `,
+  b: `
+    1
+    2
+
+
+    print()
+  `,
+  expA: `
+    <<Alignment>>
+    <<Alignment>>
+    <<Alignment>>
+    <<Alignment>>
+    print()
+  `,
+});
+
 // Format tests //
 
 i = 0
@@ -412,5 +433,32 @@ test({
     <<Alignment>>
     <<Alignment>>
     console.log()
+  `,
+});
+
+// 9
+test({
+  a: `
+    1
+    console.log()
+    2
+  `,
+  b: `
+    1
+    console
+    .
+    log(
+
+    )
+    2
+  `,
+  expA: `
+    1
+    <<Alignment>>
+    <<Alignment>>
+    <<Alignment>>
+    <<Alignment>>
+    console.log()
+    2
   `,
 });
