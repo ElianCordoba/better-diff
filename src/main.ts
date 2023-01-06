@@ -378,15 +378,16 @@ function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB
 
     // ----- ALIGNMENT -----
 
-    // const startA = a.lineNumberStart + alignmentTable.getOffset('a', a.lineNumberStart);
-    // const startB = b.lineNumberStart + alignmentTable.getOffset('b', b.lineNumberStart);
+    const startA = a.lineNumberStart + alignmentTable.getOffset('a', a.lineNumberStart);
+    const startB = b.lineNumberStart + alignmentTable.getOffset('b', b.lineNumberStart);
 
     const triviaA = a.triviaLinesAbove;
     const triviaB = b.triviaLinesAbove;
 
     // Trivia mismatch, we need to insert lines _above_ to align
     if (triviaA !== triviaB) { //startA !== startB && 
-      const linesDiff = Math.abs(triviaA - triviaB)
+      const linesDiff =
+        Math.abs(triviaA - triviaB)
 
       let side: 'a' | 'b';
       let from;
@@ -394,10 +395,10 @@ function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB
       // We insert the lines on the side that is behind
       if (triviaA < triviaB) {
         side = 'a';
-        from = a.lineNumberStart
+        from = startA
       } else {
         side = 'b';
-        from = b.lineNumberStart
+        from = startB
       }
 
       for (const i of range(from, from + linesDiff)) {

@@ -204,9 +204,7 @@ test({
 
 i = 0
 
-// TODO(Improve)
-
-// 1
+// // 1
 test({
   a: `
     print()
@@ -233,6 +231,7 @@ test({
     )
   `,
   expA: `
+    <<Alignment>>
     <<Alignment>>
     <<Alignment>>
     print()
