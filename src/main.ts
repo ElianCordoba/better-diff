@@ -9,11 +9,7 @@ import { AlignmentTable } from "./alignmentTable";
 
 export function getInitialDiffs(codeA: string, codeB: string): { changes: Change[], alignmentTable: AlignmentTable } {
   const changes: Change[] = [];
-
-  let linesA = codeA.replace(/\n$/, "").split("\n");
-  let linesB = codeB.replace(/\n$/, "").split("\n");
-
-  const alignmentTable = new AlignmentTable(linesA, linesB)
+  const alignmentTable = new AlignmentTable()
 
   const nodesA = getNodesArray(codeA);
   const nodesB = getNodesArray(codeB);
