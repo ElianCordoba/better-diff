@@ -13,7 +13,7 @@ interface NodeArgs {
   text: string;
 
   // Line number where the text is
-  realLineNumberStart: number;
+  triviaLinesAbove: number;
 
   // Line number where the text is _including_ leading trivia. Solely used for code alignment since we may need to add alignment lines if the node owns new line trivia
   lineNumberStart: number;
@@ -31,7 +31,7 @@ export class Node {
   kind: SyntaxKind;
   text: string;
   prettyKind: string;
-  realLineNumberStart: number;
+  triviaLinesAbove: number;
   lineNumberStart: number;
   lineNumberEnd: number;
   index = -1;
@@ -40,9 +40,9 @@ export class Node {
   matchNumber = 0;
   //getSourceFn?: () => string,
   constructor(args: NodeArgs) {
-    const { start, realLineNumberStart, end, kind, lineNumberStart, lineNumberEnd, text } = args;
+    const { start, triviaLinesAbove, end, kind, lineNumberStart, lineNumberEnd, text } = args;
     this.start = start;
-    this.realLineNumberStart = realLineNumberStart;
+    this.triviaLinesAbove = triviaLinesAbove;
     this.end = end;
     this.kind = kind;
     this.prettyKind = formatSyntaxKind(kind, text);

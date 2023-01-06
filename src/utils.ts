@@ -45,7 +45,7 @@ export function mergeRanges(currentRange: Range, newRange: Range) {
   };
 }
 
-export function* range(end: number, start: number = 0) {
+export function* range(start: number, end: number) {
   let i = start - 1;
 
   while (i < end - 1) {

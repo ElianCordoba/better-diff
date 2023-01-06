@@ -42,6 +42,9 @@ function test(testInfo: TestInfo) {
   });
 }
 
+// Trivia tests
+
+// 1
 test({
   a: `
     print()
@@ -56,6 +59,7 @@ test({
   `,
 });
 
+// 2
 test({
   a: `
     print()
@@ -72,6 +76,7 @@ test({
   `,
 });
 
+// 3
 test({
   a: `
 
@@ -89,6 +94,7 @@ test({
   `,
 });
 
+// 4
 test({
   a: `
     1
@@ -101,6 +107,133 @@ test({
   `,
   expA: `
     1
+    <<Alignment>>
+    print()
+  `,
+});
+
+// 5
+test({
+  a: `
+    1
+    print()
+    2
+  `,
+  b: `
+    1
+
+    print()
+    2
+  `,
+  expA: `
+    1
+    <<Alignment>>
+    print()
+    2
+  `,
+});
+
+// 6
+test({
+  a: `
+    1
+    x
+    2
+  `,
+  b: `
+    1
+
+    2
+  `,
+  expA: `
+    1
+    x
+    <<Alignment>>
+    2
+  `,
+  expB: `
+    1
+    <<Alignment>>
+
+    2
+  `,
+});
+
+
+// 7
+test({
+  a: `
+    1
+    print()
+    2
+  `,
+  b: `
+    1
+
+    print()
+    2
+  `,
+  expA: `
+    1
+    <<Alignment>>
+    print()
+    2
+  `,
+});
+
+// 8
+test({
+  a: `
+    1
+    2
+    3
+    print()
+  `,
+  b: `
+    print()
+  `,
+  expB: `
+    <<Alignment>>
+    <<Alignment>>
+    <<Alignment>>
+    print()
+  `,
+});
+
+// Format tests //
+
+i = 0
+
+// TODO(Improve)
+
+// 1
+test({
+  a: `
+    print()
+  `,
+  b: `
+    print
+    ()
+  `,
+  expA: `
+    <<Alignment>>
+    print()
+  `,
+});
+
+// 2
+test({
+  a: `
+    print()
+  `,
+  b: `
+    print
+    (
+
+    )
+  `,
+  expA: `
+    <<Alignment>>
     <<Alignment>>
     print()
   `,
