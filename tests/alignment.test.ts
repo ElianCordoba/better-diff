@@ -269,3 +269,148 @@ test({
     }
   `,
 });
+
+// Move //
+i = 0
+
+// 1
+test({
+  a: `
+    x
+    a
+  `,
+  b: `
+    x
+  `,
+  expB: `
+    x
+    <<Alignment>>
+  `,
+});
+
+// 2
+test({
+  a: `
+    a
+    x
+  `,
+  b: `
+    x
+  `,
+  expB: `
+    <<Alignment>>
+    x
+  `,
+});
+
+// 3
+test({
+  a: `
+    x
+    a
+  `,
+  b: `
+    a
+  `,
+  expB: `
+    <<Alignment>>
+    a
+  `,
+});
+
+// 4
+test({
+  a: `
+    a
+    x
+  `,
+  b: `
+    a
+  `,
+  expB: `
+    a
+    <<Alignment>>
+  `,
+});
+
+// 5
+test({
+  a: `
+    1
+    1
+    x
+    1
+    1
+  `,
+  b: `
+    x
+  `,
+  expB: `
+    <<Alignment>>
+    <<Alignment>>
+    x
+    <<Alignment>>
+    <<Alignment>>
+  `,
+});
+
+// 6
+test({
+  a: `
+    x
+    z
+  `,
+  b: `
+    x
+    1
+    2
+    z
+  `,
+  expA: `
+    x
+    <<Alignment>>
+    <<Alignment>>
+    z
+  `,
+});
+
+// 7
+test({
+  a: `
+    x
+    1
+    2
+  `,
+  b: `
+    x
+    z
+  `,
+  expB: `
+    x
+    z
+    <<Alignment>>
+  `,
+});
+
+// 8
+test({
+  a: `
+    console.log()
+  `,
+  b: `
+    1
+    2
+    3
+    console
+    .
+    log()
+  `,
+  expA: `
+    <<Alignment>>
+    <<Alignment>>
+    <<Alignment>>
+    <<Alignment>>
+    <<Alignment>>
+    console.log()
+  `,
+});
