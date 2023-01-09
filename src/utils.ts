@@ -53,3 +53,10 @@ export function* range(start: number, end: number) {
     yield i;
   }
 }
+
+export function getRanges(range: Range | undefined, useRealStart = false) {
+  return {
+    start: range?.start || 0,
+    end: range?.end || 0,
+  };
+}

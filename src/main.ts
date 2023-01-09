@@ -25,7 +25,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     // One of the iterators finished. We will traverse the remaining nodes in the other iterator
     if (!a || !b) {
       const iterOn = !a ? iterB : iterA;
-      const type = !a ? ChangeType.addition : ChangeType.removal;
+      const type = !a ? ChangeType.addition : ChangeType.deletion;
 
       const remainingChanges = oneSidedIteration(iterOn, type);
       changes.push(...remainingChanges);
@@ -46,7 +46,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     if (candidatesAtoB.length === 0 && candidatesBtoA.length === 0) {
       // TODO: Maybe push change type 'change' ?
       changes.push(getChange(ChangeType.addition, a, b));
-      changes.push(getChange(ChangeType.removal, a, b));
+      changes.push(getChange(ChangeType.deletion, a, b));
 
       iterA.mark(a.index);
       iterB.mark(b.index);
@@ -131,7 +131,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
 
 function oneSidedIteration(
   iter: Iterator,
-  typeOfChange: ChangeType.addition | ChangeType.removal,
+  typeOfChange: ChangeType.addition | ChangeType.deletion,
 ): Change[] {
   const changes: Change[] = [];
 
@@ -229,7 +229,7 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
         continue;
       }
 
-      const readFrom = change!.type === ChangeType.removal ? "rangeA" : "rangeB";
+      const readFrom = change!.type === ChangeType.deletion ? "rangeA" : "rangeB";
 
       const currentRange = change![readFrom]!;
       const nextRange = next[readFrom]!;
@@ -416,7 +416,7 @@ function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodes
       const perspectiveAtoB = iterA.name === "a";
 
       if (perspectiveAtoB) {
-        changes.push(getChange(ChangeType.removal, current, undefined));
+        changes.push(getChange(ChangeType.deletion, current, undefined));
       } else {
         changes.push(getChange(ChangeType.addition, undefined, current));
       }

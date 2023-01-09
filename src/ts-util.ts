@@ -68,3 +68,27 @@ function getLineNumber(sourceFile: ts.SourceFile, start: number) {
   // deno-lint-ignore no-explicit-any
   return (ts as any).getLineAndCharacterOfPosition(sourceFile, start).line + 1;
 }
+
+export function getLines(source: string) {
+  const sourceFile = ts.createSourceFile(
+    "source.ts",
+    source,
+    ts.ScriptTarget.ESNext,
+    true,
+  );
+
+  // deno-lint-ignore no-explicit-any
+  const lineMap: number[] = (ts as any).getLineStarts(sourceFile)
+
+  const lines: string[] = []
+  for (let i = 0; i < lineMap.length; i++) {
+    const lineStart = lineMap[i];
+    const lineEnd = lineMap[i + 1]
+
+    lines.push(source.slice(lineStart, lineEnd))
+  }
+
+  return {
+    lines, lineMap
+  }
+}

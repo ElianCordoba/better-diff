@@ -5,8 +5,7 @@ export interface DiffResult {
 
 export enum ChangeType {
   addition = "addition",
-  removal = "removal",
-  change = "change",
+  deletion = "removal",
   move = "move",
 }
 
@@ -24,4 +23,49 @@ export enum MatchStatus {
 export interface Candidate {
   index: number;
   expressionNumber: number;
+}
+
+export enum RenderInstruction {
+  // No text decoration
+  default,
+
+  // Text with color
+  addition,
+  deletion,
+  format,
+  move,
+}
+
+export interface SourceChunk {
+  text: string;
+  type: RenderInstruction;
+  start: number;
+  end: number;
+  // Used to link moves and formats
+  id?: number
+}
+
+// The results it's an array of arrays, the first level is for each line, the next level is for chunks of each line
+// 
+// - Code: `
+//   console.log(123)
+//   return 1 + 2
+// `
+//
+// - Server response:
+// [
+//   (line 1) 
+//   [
+//     { text: "console.log(123)", type: RenderInstruction.default }
+//   ],
+//
+//   (line 2) 
+//   [
+//     { text: "return", type: RenderInstruction.default },
+//     { text: "1 + 2", type: RenderInstruction.addition }
+//   ],
+// ]
+export interface ServerResponse {
+  linesA: SourceChunk[][]
+  linesB: SourceChunk[][]
 }
