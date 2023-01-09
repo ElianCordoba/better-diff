@@ -1,6 +1,6 @@
 import { getNodesArray } from "./ts-util";
 import { Candidate, ChangeType, Range } from "./types";
-import { equals, mergeRanges } from "./utils";
+import { equals, mergeRanges, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
 import { getOptions } from "./index";
@@ -332,42 +332,36 @@ function getLCS(candidates: Candidate[], iterA: Iterator, iterB: Iterator, index
 
 // This function has side effects, mutates data in the iterators
 function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, indexOfBestResult: number, lcs: number): Change | undefined {
-  let a: Node;
-  let b: Node;
+  let a = iterA.next(indexA)!;
+  let b = iterB.next(indexB)!;
 
-  let rangeA: Range | undefined;
-  let rangeB: Range | undefined;
 
-  for (let index = indexOfBestResult; index < indexOfBestResult + lcs; index++) {
+  let rangeA = a.getPosition();
+  let rangeB = b.getPosition();
+
+  let index = indexOfBestResult;
+  while (index < indexOfBestResult + lcs) {
     a = iterA.next(indexA)!;
     b = iterB.next(indexB)!;
+
+    iterA.mark(a.index);
+    iterB.mark(b.index);
+
+    index++
+    indexA++;
+    indexB++;
 
     if (!equals(a!, b!)) {
       throw new Error(`Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
     }
-
-    indexA++;
-    indexB++;
-
-    iterA.mark(a.index);
-    iterB.mark(b.index);
 
     // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
     if (a?.index === b?.index) {
       continue;
     }
 
-    if (!rangeA) {
-      rangeA = a.getPosition();
-    } else {
-      rangeA = mergeRanges(rangeA, a.getPosition());
-    }
-
-    if (!rangeB) {
-      rangeB = b.getPosition();
-    } else {
-      rangeB = mergeRanges(rangeB, b.getPosition());
-    }
+    rangeA = mergeRanges(rangeA, a.getPosition());
+    rangeB = mergeRanges(rangeB, b.getPosition());
   }
 
   // If the nodes are not in the same position then it's a move
