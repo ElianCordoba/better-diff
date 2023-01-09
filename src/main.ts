@@ -23,14 +23,11 @@ export function getInitialDiffs(
   let a: Node | undefined;
   let b: Node | undefined;
 
-  // iterA.printPositionInfo(); console.log('\n'); iterB.printPositionInfo();
-
   do {
     a = iterA.next();
     b = iterB.next();
 
     if (!a && !b) {
-      console.log("Missed while");
       break;
     }
 
