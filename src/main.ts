@@ -335,7 +335,6 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   let a = iterA.next(indexA)!;
   let b = iterB.next(indexB)!;
 
-
   let rangeA = a.getPosition();
   let rangeB = b.getPosition();
 
@@ -347,7 +346,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     iterA.mark(a.index);
     iterB.mark(b.index);
 
-    index++
+    index++;
     indexA++;
     indexB++;
 
