@@ -40,7 +40,15 @@ export class Node {
   matchNumber = 0;
   //getSourceFn?: () => string,
   constructor(args: NodeArgs) {
-    const { start, triviaLinesAbove, end, kind, lineNumberStart, lineNumberEnd, text } = args;
+    const {
+      start,
+      triviaLinesAbove,
+      end,
+      kind,
+      lineNumberStart,
+      lineNumberEnd,
+      text,
+    } = args;
     this.start = start;
     this.triviaLinesAbove = triviaLinesAbove;
     this.end = end;

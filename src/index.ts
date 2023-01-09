@@ -1,7 +1,11 @@
 import { AlignmentTable } from "./alignmentTable";
 import { Change } from "./change";
 import { getInitialDiffs } from "./main";
-import { applyChangesToSources, asciiRenderFn, DiffRendererFn } from "./reporter";
+import {
+  applyChangesToSources,
+  asciiRenderFn,
+  DiffRendererFn,
+} from "./reporter";
 import { DiffResult } from "./types";
 
 // These options have their own tests under the /tests/options folder

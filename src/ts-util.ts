@@ -37,7 +37,17 @@ export function getNodesArray(source: string) {
       // Solely used for code alignment
       const triviaLinesAbove = lineNumberStart - getLineNumber(sourceFile, node.pos);
 
-      nodes.push(new Node({ start: fullStart, end: node.end, kind: node.kind, text: node.getText(), triviaLinesAbove, lineNumberStart, lineNumberEnd }));
+      nodes.push(
+        new Node({
+          start: fullStart,
+          end: node.end,
+          kind: node.kind,
+          text: node.getText(),
+          triviaLinesAbove,
+          lineNumberStart,
+          lineNumberEnd,
+        }),
+      );
     }
 
     depth++;

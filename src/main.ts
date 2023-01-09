@@ -7,7 +7,10 @@ import { getOptions } from "./index";
 import { Node } from "./node";
 import { AlignmentTable } from "./alignmentTable";
 
-export function getInitialDiffs(codeA: string, codeB: string): { changes: Change[]; alignmentTable: AlignmentTable } {
+export function getInitialDiffs(
+  codeA: string,
+  codeB: string,
+): { changes: Change[]; alignmentTable: AlignmentTable } {
   const changes: Change[] = [];
   const alignmentTable = new AlignmentTable();
 
@@ -101,7 +104,15 @@ export function getInitialDiffs(codeA: string, codeB: string): { changes: Change
     const expressionA = iterA.peek(indexA)?.expressionNumber!;
     const expressionB = iterB.peek(indexB)?.expressionNumber!;
 
-    const change = matchSubsequence(alignmentTable, iterA, iterB, indexA, indexB, bestIndex, bestResult);
+    const change = matchSubsequence(
+      alignmentTable,
+      iterA,
+      iterB,
+      indexA,
+      indexB,
+      bestIndex,
+      bestResult,
+    );
 
     if (change) {
       // Track: Change push
@@ -263,7 +274,9 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
         continue;
       }
 
-      const readFrom = change!.type === ChangeType.removal ? "rangeA" : "rangeB";
+      const readFrom = change!.type === ChangeType.removal
+        ? "rangeA"
+        : "rangeB";
 
       const currentRange = change![readFrom]!;
       const nextRange = next[readFrom]!;
@@ -324,7 +337,12 @@ export function getSequenceLength(
   return sequence;
 }
 
-function getLCS(candidates: Candidate[], iterA: Iterator, iterB: Iterator, indexA: number) {
+function getLCS(
+  candidates: Candidate[],
+  iterA: Iterator,
+  iterB: Iterator,
+  indexA: number,
+) {
   let bestResult = 0;
   let bestIndex = 0;
   let bestExpression = 0;
@@ -365,7 +383,15 @@ function getLCS(candidates: Candidate[], iterA: Iterator, iterB: Iterator, index
 }
 
 // This function has side effects, mutates data in the iterators
-function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, indexOfBestResult: number, lcs: number): Change | undefined {
+function matchSubsequence(
+  alignmentTable: AlignmentTable,
+  iterA: Iterator,
+  iterB: Iterator,
+  indexA: number,
+  indexB: number,
+  indexOfBestResult: number,
+  lcs: number,
+): Change | undefined {
   let a = iterA.next(indexA)!;
   let b = iterB.next(indexB)!;
 
@@ -409,7 +435,9 @@ function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB
     // ----- ALIGNMENT -----
 
     if (!equals(a!, b!)) {
-      throw new Error(`Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
+      throw new Error(
+        `Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`,
+      );
     }
 
     index++;
@@ -464,15 +492,26 @@ function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB
   }
 }
 
-function finishSequenceMatching(alignmentTable: AlignmentTable, iterA: Iterator, iterB: Iterator, remainingNodesA: Node[], remainingNodesB: Node[]): Change[] {
+function finishSequenceMatching(
+  alignmentTable: AlignmentTable,
+  iterA: Iterator,
+  iterB: Iterator,
+  remainingNodesA: Node[],
+  remainingNodesB: Node[],
+): Change[] {
   const changes: Change[] = [];
 
   let i = 0;
   while (i < remainingNodesA.length) {
     const current: Node = remainingNodesA[i];
 
-    const candidatesInRemainingNodes = searchCandidatesInList(remainingNodesB, current);
-    const candidates = candidatesInRemainingNodes.length ? candidatesInRemainingNodes : iterB.getCandidates(current);
+    const candidatesInRemainingNodes = searchCandidatesInList(
+      remainingNodesB,
+      current,
+    );
+    const candidates = candidatesInRemainingNodes.length
+      ? candidatesInRemainingNodes
+      : iterB.getCandidates(current);
 
     // Something added or removed
     if (!candidates.length) {
@@ -491,7 +530,12 @@ function finishSequenceMatching(alignmentTable: AlignmentTable, iterA: Iterator,
       continue;
     }
 
-    const { bestIndex, bestResult } = getLCS(candidates, iterA, iterB, current.index);
+    const { bestIndex, bestResult } = getLCS(
+      candidates,
+      iterA,
+      iterB,
+      current.index,
+    );
 
     if (bestResult === 0) {
       throw new Error("LCS resulted in 0");
@@ -499,7 +543,15 @@ function finishSequenceMatching(alignmentTable: AlignmentTable, iterA: Iterator,
     const indexA = current?.index!;
     const indexB = bestIndex;
 
-    const change = matchSubsequence(alignmentTable, iterA, iterB, indexA, indexB, bestIndex, bestResult);
+    const change = matchSubsequence(
+      alignmentTable,
+      iterA,
+      iterB,
+      indexA,
+      indexB,
+      bestIndex,
+      bestResult,
+    );
 
     if (change) {
       changes.push(change);
@@ -521,7 +573,10 @@ function searchCandidatesInList(nodes: Node[], expected: Node): Candidate[] {
 
   for (const node of nodes) {
     if (equals(node, expected)) {
-      candidates.push({ index: node.index, expressionNumber: node.expressionNumber });
+      candidates.push({
+        index: node.index,
+        expressionNumber: node.expressionNumber,
+      });
     }
   }
 

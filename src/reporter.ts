@@ -160,12 +160,20 @@ function getRanges(range: Range | undefined) {
   };
 }
 
-export function getComplimentArray(length: number, fillInCharacter = ""): string[] {
+export function getComplimentArray(
+  length: number,
+  fillInCharacter = "",
+): string[] {
   return new Array(length).fill(fillInCharacter);
 }
 
 // TODO: Add comments
-export function getAlignedSources(alignmentTable: AlignmentTable, a: string, b: string, alignmentText = "\n") {
+export function getAlignedSources(
+  alignmentTable: AlignmentTable,
+  a: string,
+  b: string,
+  alignmentText = "\n",
+) {
   // console.log(alignmentTable.a)
   // console.log(alignmentTable.b)
 
