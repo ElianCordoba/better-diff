@@ -159,7 +159,6 @@ test({
   `,
 });
 
-
 // 7
 test({
   a: `
@@ -223,7 +222,7 @@ test({
 
 // Format tests //
 
-i = 0
+i = 0;
 
 // // 1
 test({
@@ -292,7 +291,7 @@ test({
 });
 
 // Move //
-i = 0
+i = 0;
 
 // 1
 test({
@@ -460,5 +459,41 @@ test({
     <<Alignment>>
     console.log()
     2
+  `,
+});
+
+// Move //
+
+i = 0;
+
+// 1
+test({
+  a: `
+    1
+    2
+    3
+    x
+  `,
+  b: `
+    x
+    1
+    2
+    3
+  `,
+});
+
+test({
+  a: `
+    console.log()
+    1
+    2
+    3    
+  `,
+  b: `
+    1
+    2
+    3
+    console.
+    log()
   `,
 });

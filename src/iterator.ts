@@ -196,11 +196,11 @@ export class Iterator {
 
       const index = String(node.index).padStart(3).padEnd(6);
 
-      const lineStart = node.lineNumberStart
-      const lineEnd = node.lineNumberEnd
+      const lineStart = node.lineNumberStart;
+      const lineEnd = node.lineNumberEnd;
 
-      const line = `${lineStart}-${lineEnd} `.padStart(5).padEnd(6)
-      const triviaLines = String(node.triviaLinesAbove).padStart(5).padEnd(8)
+      const line = `${lineStart}-${lineEnd} `.padStart(5).padEnd(6);
+      const triviaLines = String(node.triviaLinesAbove).padStart(5).padEnd(8);
 
       const pos = `${node.start}-${node.end}`.padStart(6).padEnd(7);
 
@@ -208,7 +208,7 @@ export class Iterator {
       const _kind = kind.padStart(5).padEnd(25);
       const _text = ` ${text}`;
 
-      const row = `${index}|${triviaLines}|${line}|${pos}|${colorFn(_kind)}|${_text}`
+      const row = `${index}|${triviaLines}|${line}|${pos}|${colorFn(_kind)}|${_text}`;
 
       if (node.index === this.indexOfLastItem) {
         colorFn = k.cyan;

@@ -41,7 +41,7 @@ export function getTextWithDiffs(
   sourceA: string,
   sourceB: string,
   options?: Options,
-): { diffs: DiffResult; changes: Change[], alignmentTable: AlignmentTable } {
+): { diffs: DiffResult; changes: Change[]; alignmentTable: AlignmentTable } {
   _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
 
   const { changes, alignmentTable } = getInitialDiffs(sourceA, sourceB);

@@ -7,9 +7,9 @@ import { getOptions } from "./index";
 import { Node } from "./node";
 import { AlignmentTable } from "./alignmentTable";
 
-export function getInitialDiffs(codeA: string, codeB: string): { changes: Change[], alignmentTable: AlignmentTable } {
+export function getInitialDiffs(codeA: string, codeB: string): { changes: Change[]; alignmentTable: AlignmentTable } {
   const changes: Change[] = [];
-  const alignmentTable = new AlignmentTable()
+  const alignmentTable = new AlignmentTable();
 
   const nodesA = getNodesArray(codeA);
   const nodesB = getNodesArray(codeB);
@@ -20,15 +20,15 @@ export function getInitialDiffs(codeA: string, codeB: string): { changes: Change
   let a: Node | undefined;
   let b: Node | undefined;
 
-  iterA.printPositionInfo(); console.log('\n'); iterB.printPositionInfo();
+  // iterA.printPositionInfo(); console.log('\n'); iterB.printPositionInfo();
 
   do {
     a = iterA.next();
     b = iterB.next();
 
     if (!a && !b) {
-      console.log('Missed while')
-      break
+      console.log("Missed while");
+      break;
     }
 
     // One of the iterators finished. We will traverse the remaining nodes in the other iterator
@@ -65,7 +65,7 @@ export function getInitialDiffs(codeA: string, codeB: string): { changes: Change
       const widthB = Math.abs(b.lineNumberStart - b.lineNumberEnd) + 1;
 
       if (widthA !== widthB) {
-        console.log('TODOOOOO')
+        console.log("TODOOOOO");
       }
 
       continue;
@@ -148,7 +148,7 @@ export function getInitialDiffs(codeA: string, codeB: string): { changes: Change
   return {
     changes: compactChanges(changes),
     alignmentTable,
-  }
+  };
 }
 
 function oneSidedIteration(
@@ -157,17 +157,18 @@ function oneSidedIteration(
   typeOfChange: ChangeType.addition | ChangeType.removal,
 ): Change[] {
   const changes: Change[] = [];
-  const adjacentSide = typeOfChange === ChangeType.addition ? 'a' : 'b'
-  const sameSide = oppositeSide(adjacentSide)
+  const adjacentSide = typeOfChange === ChangeType.addition ? "a" : "b";
+  const sameSide = oppositeSide(adjacentSide);
 
   let value = iter.next();
+
+  let offset = 0;
 
   // TODO: Compact
   while (value) {
     // When aligning for an addition/deletion we insert alignments in two places, one next to the li
-    // 
-    // el que alinea al costado
-    alignmentTable.add(adjacentSide, value.lineNumberStart)
+    // offset = alignmentTable.getOffset(sameSide, value?.lineNumberStart!)
+    alignmentTable.add(adjacentSide, value.lineNumberStart + offset);
 
     // // el de abajo del que fue borrado
     // alignmentTable.add(sameSide, value.lineNumberStart + 1)
@@ -369,7 +370,7 @@ function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB
   let b = iterB.next(indexB)!;
 
   let rangeA = a.getPosition();
-  let rangeB = b.getPosition()
+  let rangeB = b.getPosition();
 
   let index = indexOfBestResult;
   while (index < indexOfBestResult + lcs) {
@@ -378,31 +379,30 @@ function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB
 
     // ----- ALIGNMENT -----
 
-    const startA = a.lineNumberStart + alignmentTable.getOffset('a', a.lineNumberStart);
-    const startB = b.lineNumberStart + alignmentTable.getOffset('b', b.lineNumberStart);
+    const startA = a.lineNumberStart + alignmentTable.getOffset("a", a.lineNumberStart);
+    const startB = b.lineNumberStart + alignmentTable.getOffset("b", b.lineNumberStart);
 
     const triviaA = a.triviaLinesAbove;
     const triviaB = b.triviaLinesAbove;
 
     // Trivia mismatch, we need to insert lines _above_ to align
-    if (triviaA !== triviaB) { //startA !== startB && 
-      const linesDiff =
-        Math.abs(triviaA - triviaB)
+    if (triviaA !== triviaB) { //startA !== startB &&
+      const linesDiff = Math.abs(triviaA - triviaB);
 
-      let side: 'a' | 'b';
+      let side: "a" | "b";
       let from;
 
       // We insert the lines on the side that is behind
       if (triviaA < triviaB) {
-        side = 'a';
-        from = startA
+        side = "a";
+        from = startA;
       } else {
-        side = 'b';
-        from = startB
+        side = "b";
+        from = startB;
       }
 
       for (const i of range(from, from + linesDiff)) {
-        alignmentTable.add(side, i)
+        alignmentTable.add(side, i);
       }
     }
 
@@ -412,7 +412,7 @@ function matchSubsequence(alignmentTable: AlignmentTable, iterA: Iterator, iterB
       throw new Error(`Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
     }
 
-    index++
+    index++;
 
     indexA++;
     indexB++;
@@ -528,6 +528,6 @@ function searchCandidatesInList(nodes: Node[], expected: Node): Candidate[] {
   return candidates;
 }
 
-function oppositeSide(side: 'a' | 'b'): 'a' | 'b' {
-  return side === 'a' ? 'b' : 'a'
+function oppositeSide(side: "a" | "b"): "a" | "b" {
+  return side === "a" ? "b" : "a";
 }

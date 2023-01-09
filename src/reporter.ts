@@ -166,6 +166,9 @@ export function getComplimentArray(length: number, fillInCharacter = ""): string
 
 // TODO: Add comments
 export function getAlignedSources(alignmentTable: AlignmentTable, a: string, b: string, alignmentText = "\n") {
+  // console.log(alignmentTable.a)
+  // console.log(alignmentTable.b)
+
   let linesA = a.replace(/\n$/, "").split("\n");
   let linesB = b.replace(/\n$/, "").split("\n");
 
@@ -182,15 +185,15 @@ export function getAlignedSources(alignmentTable: AlignmentTable, a: string, b: 
 
     const newChars = [...head, ...compliment, ...tail];
 
-    return newChars
+    return newChars;
   }
 
   for (const lineNumber of alignmentTable.a) {
-    linesA = insertNewlines(lineNumber, 'a')
+    linesA = insertNewlines(lineNumber, "a");
   }
 
   for (const lineNumber of alignmentTable.b) {
-    linesB = insertNewlines(lineNumber, 'b')
+    linesB = insertNewlines(lineNumber, "b");
   }
 
   return {

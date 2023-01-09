@@ -31,11 +31,11 @@ export function getNodesArray(source: string) {
       // value of the node starts and not where the trivia starts
       const fullStart = node.pos + node.getLeadingTriviaWidth();
 
-      const lineNumberStart = getLineNumber(sourceFile, fullStart)
-      const lineNumberEnd = getLineNumber(sourceFile, node.end)
+      const lineNumberStart = getLineNumber(sourceFile, fullStart);
+      const lineNumberEnd = getLineNumber(sourceFile, node.end);
 
       // Solely used for code alignment
-      const triviaLinesAbove = lineNumberStart - getLineNumber(sourceFile, node.pos)
+      const triviaLinesAbove = lineNumberStart - getLineNumber(sourceFile, node.pos);
 
       nodes.push(new Node({ start: fullStart, end: node.end, kind: node.kind, text: node.getText(), triviaLinesAbove, lineNumberStart, lineNumberEnd }));
     }
