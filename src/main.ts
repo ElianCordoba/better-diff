@@ -274,9 +274,7 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
         continue;
       }
 
-      const readFrom = change!.type === ChangeType.removal
-        ? "rangeA"
-        : "rangeB";
+      const readFrom = change!.type === ChangeType.removal ? "rangeA" : "rangeB";
 
       const currentRange = change![readFrom]!;
       const nextRange = next[readFrom]!;
@@ -509,9 +507,7 @@ function finishSequenceMatching(
       remainingNodesB,
       current,
     );
-    const candidates = candidatesInRemainingNodes.length
-      ? candidatesInRemainingNodes
-      : iterB.getCandidates(current);
+    const candidates = candidatesInRemainingNodes.length ? candidatesInRemainingNodes : iterB.getCandidates(current);
 
     // Something added or removed
     if (!candidates.length) {

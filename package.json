@@ -3,8 +3,8 @@
     "test": "vitest --dir ./tests",
     "build": "tsc --watch",
     "check": "npm run format && npm run lint",
-    "format": "deno fmt --options-line-width 300",
-    "lint": "deno lint --ignore=node_modules,diff,internal,dist,tests,test.ts",
+    "format": "deno fmt --options-line-width 300 --ignore=./ui",
+    "lint": "deno lint --ignore=node_modules,diff,internal,dist,tests,ui",
     "startServer": "tsx src/server.ts"
   },
   "devDependencies": {

@@ -77,9 +77,7 @@ export class Iterator {
 
       if (foundAhead || foundBack) {
         const index = foundAhead ? startFrom + offset : startFrom - offset;
-        const expressionNumber = foundAhead
-          ? ahead.expressionNumber
-          : back.expressionNumber;
+        const expressionNumber = foundAhead ? ahead.expressionNumber : back.expressionNumber;
 
         candidates.push({ index, expressionNumber });
       }
