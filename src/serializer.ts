@@ -48,6 +48,8 @@ export function serialize(
 
 function insertNewChunks(renderInstruction: RenderInstruction, range: Range, node: Node, allChunks: SourceChunk[][]) {
   const _range = getRanges(range)
+
+  _range.start = node.fullStart
   const targetChunk = getChunk(allChunks, _range, node)
 
   const chunkId = node.matchNumber
@@ -104,15 +106,15 @@ function upsert<T extends any[]>(array: T[], index: number, item: T) {
 }
 
 function divideChunk(chunk: SourceChunk, range: Range, newType: RenderInstruction, id?: number): SourceChunk[] {
-  const from = range.start - chunk.start
+  const from = chunk.start - range.start
   const to = chunk.end - chunk.start
 
   const chars = chunk.text.split('');
 
-  const newChunkText = chars.slice(from, to).join('')
+  const newChunkText = chars.slice(from, to + 1).join('')
 
   const head = chars.slice(0, from).join('')
-  const tail = chars.slice(to, chars.length).join('')
+  const tail = chars.slice(to + 1, chars.length + 1).join('')
 
   const result: SourceChunk[] = []
 
