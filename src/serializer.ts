@@ -49,13 +49,14 @@ export function serialize(
 function insertNewChunks(renderInstruction: RenderInstruction, range: Range, node: Node, allChunks: SourceChunk[][]) {
   const _range = getRanges(range)
 
-  _range.start = node.fullStart
-  const targetChunk = getChunk(allChunks, _range, node)
+  // _range.start = node.fullStart
+  const [targetChunk, indexOfChunk] = getChunk(allChunks, _range, node)
 
   const chunkId = node.matchNumber
+  const indexOfLine = node.lineNumberStart! - 1
 
   const chunks = divideChunk(targetChunk, _range, renderInstruction, chunkId)
-  return upsert(allChunks, node.lineNumberStart! - 1, chunks)
+  return upsert(allChunks, chunks, indexOfLine, indexOfChunk)
 }
 
 function getChunks({ lines, lineMap }: { lines: string[], lineMap: number[] }) {
@@ -80,37 +81,40 @@ function getChunks({ lines, lineMap }: { lines: string[], lineMap: number[] }) {
   return result
 }
 
-function getChunk(chunks: SourceChunk[][], wanted: Range, node: Node): SourceChunk {
+function getChunk(chunks: SourceChunk[][], wanted: Range, node: Node): [SourceChunk, number] {
   // Line number are 1 indexed
   const lineChunks = chunks[node.lineNumberStart - 1]
 
   // Fast-path
   if (lineChunks.length === 1) {
-    return lineChunks[0]
+    return [lineChunks[0], 0]
   }
 
-  const index = lineChunks.findIndex((chunk) => {
-    return wanted.start >= chunk.start && wanted.end <= chunk.end
-  })
+  const index = lineChunks.findIndex(({ start, end }) => wanted.start >= start && wanted.end <= end)
 
   if (index === -1) {
     throw new Error('Chunk not found')
   }
 
-  return lineChunks[index]
+  return [lineChunks[index], index]
 }
 
 // Insert and update
-function upsert<T extends any[]>(array: T[], index: number, item: T) {
+function upsert<T extends any[]>(array: T[], newItems: T, indexOfLine: number, indexOfChunk: number) {
   const copy = [...array]
-  copy.splice(index, 1, item)
+  copy[indexOfLine].splice(indexOfChunk, 1, ...newItems)
 
   return copy
 }
 
-function divideChunk(chunk: SourceChunk, range: Range, newType: RenderInstruction, id?: number): SourceChunk[] {
-  const from = range.start - chunk.offset
-  const to = range.end - chunk.offset
+function divideChunk(
+  chunk: SourceChunk,
+  range: Range, newType: RenderInstruction, id?: number): SourceChunk[] {
+  const ogStart = chunk.start
+  const ogEnd = chunk.end
+
+  const from = range.start - chunk.start
+  const to = range.end - chunk.start
 
   const chars = chunk.text.split('');
 
@@ -120,23 +124,31 @@ function divideChunk(chunk: SourceChunk, range: Range, newType: RenderInstructio
   const tail = chars.slice(to, chars.length).join('')
 
   const result: SourceChunk[] = []
-
+  let hasHead = false
   if (head !== '') {
+    hasHead = true
     result.push({
       type: chunk.type,
       text: head,
+
       start: chunk.start,
-      end: head.length,
+      end: chunk.start + head.length,
+
+
       offset: chunk.offset
     })
   }
 
+  const headOrPrevLength = hasHead ? result[0].end : chunk.end - newChunkText.length
+
   const newChunk: SourceChunk = {
     type: newType,
     text: newChunkText,
-    start: head.length + 1,
-    end: head.length + newChunkText.length,
-    offset: head.length
+
+    // el || es porque puede que no halla head
+    start: headOrPrevLength,
+    end: headOrPrevLength + newChunkText.length,
+    offset: headOrPrevLength
   }
 
   if (id) {
@@ -149,10 +161,19 @@ function divideChunk(chunk: SourceChunk, range: Range, newType: RenderInstructio
     result.push({
       type: chunk.type,
       text: tail,
-      start: newChunkText.length + 1,
-      end: newChunkText.length + tail.length,
-      offset: newChunkText.length
+
+      start: newChunk.end,
+      end: newChunk.end + tail.length,
+      offset: newChunk.end
     })
+  }
+
+  if (result.at(0)?.start !== ogStart) {
+    throw new Error("Start don't match")
+  }
+
+  if (result.at(-1)?.end !== ogEnd) {
+    throw new Error("End don't match")
   }
 
   return result
