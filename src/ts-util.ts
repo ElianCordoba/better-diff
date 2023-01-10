@@ -10,7 +10,6 @@ export function getNodesArray(source: string) {
     ts.ScriptTarget.ESNext,
     true,
   );
-
   const nodes: Node[] = [];
   let depth = 0;
 
@@ -30,7 +29,7 @@ export function getNodesArray(source: string) {
       // This is why we add the leading trivia to the `start` of the node, so we get where the actual
       // value of the node starts and not where the trivia starts
       const start = node.pos + node.getLeadingTriviaWidth();
-      const ftext = node.getFullText()
+
       const lineNumberStart = getLineNumber(sourceFile, start);
       const lineNumberEnd = getLineNumber(sourceFile, node.end);
 
@@ -85,7 +84,14 @@ export function getLines(source: string) {
     const lineStart = lineMap[i];
     const lineEnd = lineMap[i + 1]
 
-    lines.push(source.slice(lineStart, lineEnd))
+    const start = lineStart - 1 < 0 ? 0 : lineStart - 1
+    const end = lineEnd - 1
+    const slice = source.slice(start, end)
+    lines.push(slice)
+  }
+
+  if (lines.length !== lineMap.length) {
+    throw new Error("Assertion failed")
   }
 
   return {
