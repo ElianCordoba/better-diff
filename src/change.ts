@@ -1,6 +1,7 @@
 import { ChangeType, Range } from "./types";
 import { colorFn, getSourceWithChange } from "./reporter";
 import { Node } from "./node";
+import { getContext } from "./index";
 
 export class Change {
   constructor(
@@ -12,9 +13,14 @@ export class Change {
     // For debugging porpoises, maybe remove in the future
     public nodeA: Node | undefined,
     public nodeB: Node | undefined,
-  ) {}
+  ) { }
 
-  draw(charsA: string[], charsB: string[]) {
+  draw() {
+    const { sourceA, sourceB } = getContext()
+
+    const charsA = sourceA.split('')
+    const charsB = sourceB.split('')
+
     if (this.rangeA) {
       console.log("----A----");
       console.log(
