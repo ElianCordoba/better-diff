@@ -94,7 +94,5 @@ export function getLines(source: string) {
     throw new Error("Assertion failed")
   }
 
-  return {
-    lines, lineMap
-  }
+  return lines
 }

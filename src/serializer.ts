@@ -31,7 +31,6 @@ export function serialize(
       case ChangeType.move: {
         chunksA = insertNewChunks(RenderInstruction.move, rangeA!, nodeA!, chunksA)
         chunksB = insertNewChunks(RenderInstruction.move, rangeB!, nodeB!, chunksB)
-
         break;
       }
 
@@ -49,7 +48,6 @@ export function serialize(
 function insertNewChunks(renderInstruction: RenderInstruction, range: Range, node: Node, allChunks: SourceChunk[][]) {
   const _range = getRanges(range)
 
-  // _range.start = node.fullStart
   const [targetChunk, indexOfChunk] = getChunk(allChunks, _range, node)
 
   const chunkId = node.matchNumber
@@ -59,23 +57,16 @@ function insertNewChunks(renderInstruction: RenderInstruction, range: Range, nod
   return upsert(allChunks, chunks, indexOfLine, indexOfChunk)
 }
 
-function getChunks({ lines, lineMap }: { lines: string[], lineMap: number[] }) {
-  const result: SourceChunk[][] = []
-  let offset = 0
-  lines.map((line, i) => {
-    const start = 0
-    const end = line.length
-    offset += lines[i - 1]?.length || 0
-
-    result.push([
+function getChunks(lines: string[]) {
+  const result = lines.map(line => {
+    return [
       {
         text: line,
         type: RenderInstruction.default,
-        start,
-        end,
-        offset
-      } satisfies SourceChunk
-    ])
+        start: 0,
+        end: line.length,
+      } as SourceChunk
+    ]
   })
 
   return result
@@ -110,9 +101,6 @@ function upsert<T extends any[]>(array: T[], newItems: T, indexOfLine: number, i
 function divideChunk(
   chunk: SourceChunk,
   range: Range, newType: RenderInstruction, id?: number): SourceChunk[] {
-  const ogStart = chunk.start
-  const ogEnd = chunk.end
-
   const from = range.start - chunk.start
   const to = range.end - chunk.start
 
@@ -130,25 +118,19 @@ function divideChunk(
     result.push({
       type: chunk.type,
       text: head,
-
       start: chunk.start,
       end: chunk.start + head.length,
-
-
-      offset: chunk.offset
     })
   }
 
-  const headOrPrevLength = hasHead ? result[0].end : chunk.end - newChunkText.length
+  // TODO: This is suspicious
+  const newStart = hasHead ? result[0].end : chunk.end - newChunkText.length
 
   const newChunk: SourceChunk = {
     type: newType,
     text: newChunkText,
-
-    // el || es porque puede que no halla head
-    start: headOrPrevLength,
-    end: headOrPrevLength + newChunkText.length,
-    offset: headOrPrevLength
+    start: newStart,
+    end: newStart + newChunkText.length,
   }
 
   if (id) {
@@ -161,18 +143,16 @@ function divideChunk(
     result.push({
       type: chunk.type,
       text: tail,
-
       start: newChunk.end,
       end: newChunk.end + tail.length,
-      offset: newChunk.end
     })
   }
 
-  if (result.at(0)?.start !== ogStart) {
+  if (result.at(0)?.start !== chunk.start) {
     throw new Error("Start don't match")
   }
 
-  if (result.at(-1)?.end !== ogEnd) {
+  if (result.at(-1)?.end !== chunk.end) {
     throw new Error("End don't match")
   }
 

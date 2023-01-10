@@ -40,7 +40,6 @@ export interface SourceChunk {
   type: RenderInstruction;
   start: number;
   end: number;
-  offset: number
   // Used to link moves and formats
   id?: number
 }
