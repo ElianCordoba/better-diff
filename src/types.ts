@@ -27,13 +27,13 @@ export interface Candidate {
 
 export enum RenderInstruction {
   // No text decoration
-  default,
+  default = "default",
 
   // Text with color
-  addition,
-  deletion,
-  format,
-  move,
+  addition = "addition",
+  deletion = "deletion",
+  format = "format",
+  move = "move",
 }
 
 export interface SourceChunk {
@@ -66,6 +66,6 @@ export interface SourceChunk {
 //   ],
 // ]
 export interface ServerResponse {
-  linesA: SourceChunk[][]
-  linesB: SourceChunk[][]
+  chunksA: SourceChunk[][]
+  chunksB: SourceChunk[][]
 }
