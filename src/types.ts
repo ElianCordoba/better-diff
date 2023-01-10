@@ -32,7 +32,6 @@ export enum RenderInstruction {
   // Text with color
   addition = "addition",
   deletion = "deletion",
-  format = "format",
   move = "move",
 }
 

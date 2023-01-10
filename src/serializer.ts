@@ -13,24 +13,24 @@ export function serialize(
   let linesA = getLines(a)
   let linesB = getLines(b)
 
-  let resultA = getChunks(linesA)
-  let resultB = getChunks(linesB)
+  let chunksA = getChunks(linesA)
+  let chunksB = getChunks(linesB)
 
   for (const { rangeA, rangeB, type, nodeA, nodeB } of changes) {
     switch (type) {
       case ChangeType.deletion: {
-        resultA = insertNewChunks(RenderInstruction.deletion, rangeA!, nodeA!, resultA)
+        chunksA = insertNewChunks(RenderInstruction.deletion, rangeA!, nodeA!, chunksA)
         break;
       }
 
       case ChangeType.addition: {
-        resultB = insertNewChunks(RenderInstruction.addition, rangeB!, nodeB!, resultB)
+        chunksB = insertNewChunks(RenderInstruction.addition, rangeB!, nodeB!, chunksB)
         break;
       }
 
       case ChangeType.move: {
-        resultA = insertNewChunks(RenderInstruction.move, rangeA!, nodeA!, resultA)
-        resultB = insertNewChunks(RenderInstruction.move, rangeB!, nodeB!, resultB)
+        chunksA = insertNewChunks(RenderInstruction.move, rangeA!, nodeA!, chunksA)
+        chunksB = insertNewChunks(RenderInstruction.move, rangeB!, nodeB!, chunksB)
 
         break;
       }
@@ -41,8 +41,8 @@ export function serialize(
   }
 
   return {
-    chunksA: resultA,
-    chunksB: resultB
+    chunksA: chunksA,
+    chunksB: chunksB
   }
 }
 
