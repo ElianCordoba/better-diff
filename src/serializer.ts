@@ -60,16 +60,19 @@ function insertNewChunks(renderInstruction: RenderInstruction, range: Range, nod
 
 function getChunks({ lines, lineMap }: { lines: string[], lineMap: number[] }) {
   const result: SourceChunk[][] = []
-
+  let offset = 0
   lines.map((line, i) => {
-    const start = lineMap[i]
-    const end = lineMap[i + 1] - 1
+    const start = 0
+    const end = line.length
+    offset += lines[i - 1]?.length || 0
+
     result.push([
       {
         text: line,
         type: RenderInstruction.default,
         start,
-        end
+        end,
+        offset
       } satisfies SourceChunk
     ])
   })
@@ -106,15 +109,15 @@ function upsert<T extends any[]>(array: T[], index: number, item: T) {
 }
 
 function divideChunk(chunk: SourceChunk, range: Range, newType: RenderInstruction, id?: number): SourceChunk[] {
-  const from = chunk.start - range.start
-  const to = chunk.end - chunk.start
+  const from = range.start - chunk.offset
+  const to = range.end - chunk.offset
 
   const chars = chunk.text.split('');
 
-  const newChunkText = chars.slice(from, to + 1).join('')
+  const newChunkText = chars.slice(from, to).join('')
 
   const head = chars.slice(0, from).join('')
-  const tail = chars.slice(to + 1, chars.length + 1).join('')
+  const tail = chars.slice(to, chars.length).join('')
 
   const result: SourceChunk[] = []
 
@@ -123,16 +126,18 @@ function divideChunk(chunk: SourceChunk, range: Range, newType: RenderInstructio
       type: chunk.type,
       text: head,
       start: chunk.start,
-      end: head.length
+      end: head.length,
+      offset: chunk.offset
     })
   }
 
-  const newChunk = {
+  const newChunk: SourceChunk = {
     type: newType,
     text: newChunkText,
     start: head.length + 1,
-    end: head.length + newChunkText.length
-  } as SourceChunk
+    end: head.length + newChunkText.length,
+    offset: head.length
+  }
 
   if (id) {
     newChunk.id = id
@@ -145,7 +150,8 @@ function divideChunk(chunk: SourceChunk, range: Range, newType: RenderInstructio
       type: chunk.type,
       text: tail,
       start: newChunkText.length + 1,
-      end: newChunkText.length + tail.length
+      end: newChunkText.length + tail.length,
+      offset: newChunkText.length
     })
   }
 
