@@ -58,15 +58,19 @@ function insertNewChunks(renderInstruction: RenderInstruction, range: Range, nod
 }
 
 function getChunks(lines: string[]) {
-  const result = lines.map(line => {
-    return [
+  const result: SourceChunk[][] = []
+  lines.map((line, i) => {
+    const start = result[i - 1]?.[0]?.end || 0
+    const end = start + line.length
+
+    result.push([
       {
         text: line,
         type: RenderInstruction.default,
-        start: 0,
-        end: line.length,
+        start,
+        end,
       } as SourceChunk
-    ]
+    ])
   })
 
   return result
@@ -123,8 +127,7 @@ function divideChunk(
     })
   }
 
-  // TODO: This is suspicious
-  const newStart = hasHead ? result[0].end : chunk.end - newChunkText.length
+  const newStart = hasHead ? result[0].end : chunk.start
 
   const newChunk: SourceChunk = {
     type: newType,
