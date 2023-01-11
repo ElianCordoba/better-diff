@@ -63,6 +63,7 @@
 		linesA = getLines(a);
 		linesB = getLines(b);
 		linePairs = updateLinesPairs();
+		getDiff()
 	}
 
 	onMount(() => {
