@@ -3,15 +3,15 @@ import { Change } from "./change";
 import { ChangeType, RenderInstruction, Range, SourceChunk, ServerResponse } from "./types";
 import { getRanges } from "./utils";
 import { Node } from './node'
-import { getLines } from "./ts-util";
+import { getArrayOrLines } from "./ts-util";
 
 export function serialize(
   a: string,
   b: string,
   changes: Change[]
 ): ServerResponse {
-  let linesA = getLines(a)
-  let linesB = getLines(b)
+  let linesA = getArrayOrLines(a)
+  let linesB = getArrayOrLines(b)
 
   let chunksA = getChunks(linesA)
   let chunksB = getChunks(linesB)
