@@ -1,9 +1,11 @@
 <script lang="ts">
-	import { SimpleGrid, Button } from '@svelteuidev/core';
 	import { onMount } from 'svelte';
 
+	import { SimpleGrid, Button } from '@svelteuidev/core';
 	import CodeInput from './codeInput.svelte';
-	import Row from './row.svelte';
+	import Diff from '../components/diff.svelte';
+	
+	import type { ServerResponse } from '../../../src/types';
 	import type { LinePair } from './types';
 
 	let a: string = `
@@ -19,6 +21,8 @@
 	let linesA: string[] = [];
 	let linesB: string[] = [];
 
+	let sourceChunks: ServerResponse | undefined;
+	
 	function getLines(text: string) {
 		return text.replace(/\n$/, '').split('\n');
 	}
@@ -28,13 +32,7 @@
 
 		const result = await fetch('http://localhost:3000/', { method: 'post', body });
 
-		const changes = await result.json();
-
-		return {
-			a: getLines(a),
-			b: getLines(b),
-			changes
-		};
+		sourceChunks = await result.json()
 	}
 
 	let linePairs: LinePair[] = [];
@@ -79,8 +77,4 @@
 	<CodeInput bind:code={b} />
 </SimpleGrid>
 
-<SimpleGrid cols={2} spacing="xs" override={{ gap: 0 }}>
-	{#each linePairs as { a, b }, i}
-		<Row {a} {b} lineNumber={i} />
-	{/each}
-</SimpleGrid>
+<Diff {sourceChunks}/>

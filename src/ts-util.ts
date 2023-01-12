@@ -62,35 +62,7 @@ export function getNodesArray(source: string) {
   return nodes;
 }
 
-// Returns an array of lines of code in a TS style, by breaking the line before the new line, this way all the trivia at the start
-// of the line belongs to the first node, for example:
-// 
-// Code: `
-// // New line
-// 123
-// // New line
-// `
-//
-// Escaped code:
-// "\n// New line\n1\n// New line\n"
-//
-// If we cut at the new line location, the result would be:
-// [
-//   "\n",
-//   "// New line\n",
-//   "1\n",
-//   "// New line\n",
-//   "",
-// ]
-//
-// But if we cut at the new line location minus one, then we get the desired result:
-// [
-//   "",
-//   "\n// New line",
-//   "\n1",
-//   "\n// New line",
-//   "\n",
-// ]
+// Returns an array of lines of code
 export function getArrayOrLines(source: string) {
   const sourceFile = ts.createSourceFile(
     "source.ts",
@@ -109,10 +81,6 @@ export function getArrayOrLines(source: string) {
     const lineStart = lineMap[i];
     // Cut ends either where the next line start, non inclusive or, if we are in the last line, we take the end of the string
     const lineEnd = lineMap[i + 1] || source.length + 1
-
-    // const start = lineStart - 1 < 0 ? 0 : lineStart - 1
-    // const end = lineEnd - 1
-    // const slice = source.slice(start, end)
 
     const slice = source.slice(lineStart, lineEnd)
     lines.push(slice)
