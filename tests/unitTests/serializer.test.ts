@@ -71,3 +71,14 @@ validateSerializer({
     z
   `,
 });
+
+validateSerializer({
+  name: "2",
+  a: `
+  while(true) {
+    console.log()
+  }
+  `,
+  b: `
+  console.log()`,
+});

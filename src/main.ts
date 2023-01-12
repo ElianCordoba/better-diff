@@ -1,6 +1,6 @@
 import { getNodesArray } from "./ts-util";
 import { Candidate, ChangeType, Range } from "./types";
-import { equals, mergeRanges, range } from "./utils";
+import { equals, mergeRanges } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
 import { getOptions } from "./index";

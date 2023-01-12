@@ -1,4 +1,4 @@
-import { ChangeType, Range } from "../src/types";
+import { ChangeType } from "../src/types";
 import { Change } from "./change";
 import { getRanges } from "./utils";
 

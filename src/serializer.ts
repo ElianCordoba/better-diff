@@ -9,8 +9,8 @@ export function serialize(
   b: string,
   changes: Change[],
 ): ServerResponse {
-  let linesA = getArrayOrLines(a);
-  let linesB = getArrayOrLines(b);
+  const linesA = getArrayOrLines(a);
+  const linesB = getArrayOrLines(b);
 
   let chunksA = getChunks(linesA);
   let chunksB = getChunks(linesB);
@@ -106,7 +106,7 @@ function getChunk(chunks: SourceChunk[][], wanted: Range, node: Node): [SourceCh
 }
 
 // Insert and update in a given index
-function upsert<T extends any[]>(array: T[], newItems: T, indexOfLine: number, indexOfChunk: number) {
+function upsert<T extends unknown[]>(array: T[], newItems: T, indexOfLine: number, indexOfChunk: number) {
   const copy = [...array];
   copy[indexOfLine].splice(indexOfChunk, 1, ...newItems);
 

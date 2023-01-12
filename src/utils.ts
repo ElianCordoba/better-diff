@@ -54,7 +54,7 @@ export function* range(start: number, end: number) {
   }
 }
 
-export function getRanges(range: Range | undefined, useRealStart = false) {
+export function getRanges(range: Range | undefined) {
   return {
     start: range?.start || 0,
     end: range?.end || 0,

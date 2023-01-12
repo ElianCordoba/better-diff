@@ -5,7 +5,7 @@ import { getTextWithDiffs } from "./index";
 
 const server = fastify({ logger: true });
 
-server.post("/", async ({ body }, reply) => {
+server.post("/", ({ body }, _reply) => {
   const { a, b } = JSON.parse(body as any);
   server.log.info({
     message: "About to process",
