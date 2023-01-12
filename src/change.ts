@@ -13,13 +13,13 @@ export class Change {
     // For debugging porpoises, maybe remove in the future
     public nodeA: Node | undefined,
     public nodeB: Node | undefined,
-  ) { }
+  ) {}
 
   draw() {
-    const { sourceA, sourceB } = getContext()
+    const { sourceA, sourceB } = getContext();
 
-    const charsA = sourceA.split('')
-    const charsB = sourceB.split('')
+    const charsA = sourceA.split("");
+    const charsB = sourceB.split("");
 
     if (this.rangeA) {
       console.log("----A----");

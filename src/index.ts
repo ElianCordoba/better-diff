@@ -43,7 +43,7 @@ export function getTextWithDiffs(
 ): { diffs: DiffResult; changes: Change[] } {
   // Set up globals
   _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
-  _context = { sourceA, sourceB }
+  _context = { sourceA, sourceB };
 
   const changes = getInitialDiffs(sourceA, sourceB);
   const sourcesWithDiff = applyChangesToSources(
@@ -70,10 +70,10 @@ export function getOptions(): Required<Options> {
 
 interface Context {
   sourceA: string;
-  sourceB: string
+  sourceB: string;
 }
 
 let _context: Context;
 export function getContext() {
-  return _context
+  return _context;
 }

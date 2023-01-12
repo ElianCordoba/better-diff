@@ -14,7 +14,7 @@ server.post("/", async ({ body }, reply) => {
   });
 
   const { changes } = getTextWithDiffs(a, b);
-  return serialize(a, b, changes)
+  return serialize(a, b, changes);
 });
 
 async function start() {

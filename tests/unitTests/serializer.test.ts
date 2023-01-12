@@ -5,46 +5,48 @@ import { serialize } from "../../src/serializer";
 
 function validateSerializedResult(a: string, b: string, result: ServerResponse) {
   function validate(chunks: SourceChunk[][], source: string) {
-    let hasError = false
+    let hasError = false;
     loop: for (const line of chunks) {
       for (const { start, end, text } of line) {
-        const expected = source.slice(start, end)
+        const expected = source.slice(start, end);
 
         if (expected !== text) {
-          hasError = true
-          break loop
+          hasError = true;
+          break loop;
         }
       }
     }
 
-    return hasError
+    return hasError;
   }
 
-  const hasErrorOnA = validate(result.chunksA, a)
-  const hasErrorOnB = validate(result.chunksB, b)
+  const hasErrorOnA = validate(result.chunksA, a);
+  const hasErrorOnB = validate(result.chunksB, b);
 
-  expect(hasErrorOnA).toBe(false)
-  expect(hasErrorOnB).toBe(false)
+  expect(hasErrorOnA).toBe(false);
+  expect(hasErrorOnB).toBe(false);
 }
 
 interface SerializeTestInput {
-  name: string, a: string, b: string
+  name: string;
+  a: string;
+  b: string;
 }
 
 function validateSerializer({ name, a, b }: SerializeTestInput) {
   test(name, () => {
     const changes = getTextWithDiffs(a, b).changes;
-    const serializedResult = serialize(a, b, changes)
+    const serializedResult = serialize(a, b, changes);
 
-    validateSerializedResult(a, b, serializedResult)
-  })
+    validateSerializedResult(a, b, serializedResult);
+  });
 
   test(name, () => {
     const changes = getTextWithDiffs(b, a).changes;
-    const serializedResult = serialize(b, a, changes)
+    const serializedResult = serialize(b, a, changes);
 
-    validateSerializedResult(b, a, serializedResult)
-  })
+    validateSerializedResult(b, a, serializedResult);
+  });
 }
 
 validateSerializer({
@@ -54,8 +56,8 @@ validateSerializer({
   `,
   b: `
   fn(console.log())
-  `
-})
+  `,
+});
 
 validateSerializer({
   name: "2",
@@ -67,5 +69,5 @@ validateSerializer({
     console.log(1)
     x
     z
-  `
-})
+  `,
+});

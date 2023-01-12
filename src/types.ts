@@ -41,11 +41,11 @@ export interface SourceChunk {
   start: number;
   end: number;
   // Used to link moves and formats
-  id?: number
+  id?: number;
 }
 
 // The results it's an array of arrays, the first level is for each line, the next level is for chunks of each line
-// 
+//
 // - Code: `
 //   console.log(123)
 //   return 1 + 2
@@ -53,18 +53,18 @@ export interface SourceChunk {
 //
 // - Server response:
 // [
-//   (line 1) 
+//   (line 1)
 //   [
 //     { text: "console.log(123)", type: RenderInstruction.default }
 //   ],
 //
-//   (line 2) 
+//   (line 2)
 //   [
 //     { text: "return", type: RenderInstruction.default },
 //     { text: "1 + 2", type: RenderInstruction.addition }
 //   ],
 // ]
 export interface ServerResponse {
-  chunksA: SourceChunk[][]
-  chunksB: SourceChunk[][]
+  chunksA: SourceChunk[][];
+  chunksB: SourceChunk[][];
 }
