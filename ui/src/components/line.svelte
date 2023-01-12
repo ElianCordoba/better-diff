@@ -1,24 +1,17 @@
 <script lang="ts">
 	import { Group, Button } from '@svelteuidev/core';
 	import { Prism } from '@svelteuidev/prism';
-	import "prismjs/components/prism-typescript"; 
-	
-	import type { RenderInstruction, SourceChunk } from '../../../src/types';
+	import 'prismjs/components/prism-typescript';
+	import { onMount } from 'svelte';
 
-	export let lineNumber: number | undefined = undefined;
+	import { RenderInstruction, type SourceChunk } from '../../../src/types';
+
+	export let lineNumber: number | undefined = 1;
 	export let chunks: SourceChunk[] = [];
 	export let side: 'a' | 'b';
 	export let row: number;
 
-	const HEIGHT = 35;
-
-	const lineNumberClass = {
-		height: HEIGHT,
-		'min-width': '50px',
-		padding: '0px 10px',
-		'justify-content': 'flex-end',
-		borderRadius: 0
-	};
+	const LINE_HEIGHT = '27px';
 
 	const changeStyles: Record<RenderInstruction, any> = {
 		default: {},
@@ -29,51 +22,85 @@
 			backgroundColor: '#ff00007d !important'
 		},
 		move: {
-			backgroundColor: '#3d3dff9e !important'
+			backgroundColor: '#1e40af8c !important'
 		}
 	};
 
 	function getStyles(type: RenderInstruction) {
-		return changeStyles[type];
+		const baseStyles = {
+			height: LINE_HEIGHT,
+			padding: '0px'
+		};
+		
+		return { ...baseStyles, ...changeStyles[type] };
+	}
+
+	function highlightMove(isMove: boolean, id: string, action: 'on' | 'off') {
+		// TODO: Only add event listener to moves
+		if (!isMove) {
+			return;
+		}
+
+		const elements = document.querySelectorAll(`[data-move-id="${id}"]`);
+
+		const fn = action === 'on' ? 'add' : 'remove';
+
+		for (const el of elements) {
+			el.classList[fn]('moveHighlight');
+		}
 	}
 </script>
 
-<div class={side === 'a' ? 'colA' : 'colB'} style={`grid-row: ${row}`}>
-	<Group override={{ borderRadius: 0, width: '100%', gap: 0 }}>
-		<Button color="gray" compact override={lineNumberClass}>
+<div class="line {side === 'a' ? 'colA' : 'colB'}" style={`grid-row: ${row}`}>
+	<div class="flex">
+		<Button color="gray" override={{
+			height: LINE_HEIGHT,
+			'min-width': '50px',
+			borderRadius: 0
+		}}>
 			{lineNumber || ''}
 		</Button>
 
-		{#each chunks as chunk}
+		{#each chunks as chunk, i}
+			{@const isMove = chunk.type === RenderInstruction.move}
+			{@const id = isMove ? String(chunk.id) : ''}
 			<div
-				style={`height: ${HEIGHT}px`}
-				on:mouseover={() => {
-					console.log(chunk.text);
-				}}
-				on:focus={() => {
-					console.log(chunk.text);
-				}}
+				data-move-id={id}
+				on:mouseover={() => highlightMove(isMove, id, 'on')}
+				on:focus={() => highlightMove(isMove, id, 'on')}
+				on:mouseleave={() => highlightMove(isMove, id, 'off')}
+				on:focusout={() => highlightMove(isMove, id, 'off')}
+				class="flex"
 			>
-				<Prism
-					code={chunk.text}
-					language="ts"
-					copy={false}
-					override={{
-						height: HEIGHT,
-						...getStyles(chunk.type)
-					}}
-				/>
+				<Prism code={chunk.text} language="ts" copy={false} override={getStyles(chunk.type)} />
 			</div>
 		{/each}
-	</Group>
+	</div>
 </div>
 
+<!-- This empty element is here so that I can attack the "moveHighlight" class to it, otherwise the compiler won't realize it's been used and it will optimize it away :S -->
+<div class="invisible moveHighlight" />
+
 <style>
+	.line {
+		background-color: #141517;
+	}
+
+	.moveHighlight {
+		background-color: #ffeb3bba !important;
+	}
 	.colA {
 		grid-column: 1;
+		width: 100%;
 	}
 
 	.colB {
 		grid-column: 2;
+		width: 100%;
+	}
+
+	.invisible {
+		height: 0;
+		display: none;
 	}
 </style>

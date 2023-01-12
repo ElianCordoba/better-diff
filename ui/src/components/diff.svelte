@@ -19,5 +19,6 @@
 <style>
 	.grid {
 		display: grid;
+		gap: 0 50px;
 	}
 </style>
