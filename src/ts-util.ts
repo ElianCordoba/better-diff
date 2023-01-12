@@ -1,4 +1,4 @@
-import ts from "typescript";
+import ts, { SourceFile } from "typescript";
 import { Node } from "./node";
 
 type TSNode = ts.Node & { text: string };
@@ -62,13 +62,9 @@ export function getNodesArray(source: string) {
   return nodes;
 }
 
-// This wrapper exists because the underling TS function is marked as internal
-function getLineNumber(sourceFile: ts.SourceFile, start: number) {
-  // deno-lint-ignore no-explicit-any
-  return (ts as any).getLineAndCharacterOfPosition(sourceFile, start).line + 1;
-}
 
-export function getLines(source: string) {
+
+export function getArrayOrLines(source: string) {
   const sourceFile = ts.createSourceFile(
     "source.ts",
     source,
@@ -76,13 +72,12 @@ export function getLines(source: string) {
     true,
   );
 
-  // deno-lint-ignore no-explicit-any
-  const lineMap: number[] = (ts as any).getLineStarts(sourceFile)
+  const lineMap = getLineMap(sourceFile)
 
   const lines: string[] = []
   for (let i = 0; i < lineMap.length; i++) {
     const lineStart = lineMap[i];
-    const lineEnd = lineMap[i + 1]
+    const lineEnd = lineMap[i + 1] || source.length + 1
 
     const start = lineStart - 1 < 0 ? 0 : lineStart - 1
     const end = lineEnd - 1
@@ -95,4 +90,19 @@ export function getLines(source: string) {
   }
 
   return lines
+}
+
+// All the bellow defined functions are wrappers of TS functions. This is because the underling TS is marked as internal thus there is no type information available
+
+// An array of the positions (of characters) at which the lines in the source code start, for example:
+// [0, 1, 5, 10] means that the first line start at 0 and ends at 1 (non inclusive), next one start at 1 and ends at 5 and so on.
+function getLineMap(sourceFile: SourceFile): number[] {
+  // deno-lint-ignore no-explicit-any
+  return (ts as any).getLineStarts(sourceFile)
+}
+
+// Get the line number (1-indexed) of a given character
+function getLineNumber(sourceFile: ts.SourceFile, pos: number) {
+  // deno-lint-ignore no-explicit-any
+  return (ts as any).getLineAndCharacterOfPosition(sourceFile, pos).line + 1;
 }
