@@ -1,8 +1,106 @@
 import { Change } from "./change";
 import { ChangeType, Range, RenderInstruction, ServerResponse, SourceChunk } from "./types";
-import { getRanges } from "./utils";
+import { getRanges, range } from "./utils";
 import { Node } from "./node";
-import { getArrayOrLines } from "./ts-util";
+import { getArrayOrLines, getLineMap } from "./ts-util";
+
+interface Char {
+  type: RenderInstruction;
+  text: string;
+  moveNumber?: number
+}
+
+export function serialize2(
+  a: string,
+  b: string,
+  changes: Change[],
+) {
+  const charsA: Char[] = a.split('').map(char => ({ text: char, type: RenderInstruction.default }))
+  const charsB: Char[] = b.split('').map(char => ({ text: char, type: RenderInstruction.default }))
+
+  function markChars(type: RenderInstruction, _range: Range, chars: Char[], moveNumber?: number) {
+
+    const { start, end } = _range;
+    for (const i of range(start, end)) {
+      // if (type === RenderInstruction.deletion || type === RenderInstruction.move) {
+      //   charsA[i].type = type
+      // }
+
+      // if (type === RenderInstruction.addition || type === RenderInstruction.move) {
+      //   charsB[i].type = type
+      // }
+
+      chars[i].type = type
+    }
+  }
+
+  for (let i = 0; i < changes.length; i++) {
+    const { type, rangeA, rangeB, nodeA, nodeB } = changes[i];
+
+    switch (type) {
+      case ChangeType.deletion: {
+        markChars(RenderInstruction.deletion, rangeA!, charsA)
+        break;
+      }
+
+      case ChangeType.addition: {
+        markChars(RenderInstruction.addition, rangeB!, charsB)
+        break;
+      }
+
+      case ChangeType.move: {
+        const moveNumber = nodeA!.matchNumber
+        markChars(RenderInstruction.deletion, rangeA!, charsA, moveNumber)
+        markChars(RenderInstruction.addition, rangeB!, charsB, moveNumber)
+        break;
+      }
+
+      default:
+        throw new Error(`Unhandled type "${type}"`);
+    }
+  }
+
+  // Compact
+
+  function getLines(source: string, chars: Char[]) {
+    const lineMap = getLineMap(source)
+
+    const lines = [];
+
+    // Buffer to store all the characters of a given line, emptied after the line ends
+    let lineChars: Char[] = []
+    let currentLine = 0;
+    let currentLineEnd = lineMap[currentLine + 1]
+
+    for (let i = 0; i < chars.length + 1; i++) {
+      const char = chars[i];
+
+      // Loop until the current line ends
+      if (i < currentLineEnd) {
+        lineChars.push(char)
+        continue
+      }
+
+      // We completed the line, move into the next one
+
+      lines.push(lineChars)
+      lineChars = []
+
+      currentLine++
+      currentLineEnd = lineMap[currentLine + 1] || chars.length
+
+      lineChars.push(char)
+    }
+
+    return lines
+  }
+
+  console.log(getLines(a, charsA))
+
+  console.log("\n")
+
+  console.log(getLines(b, charsB))
+}
 
 export function serialize(
   a: string,

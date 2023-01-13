@@ -4,12 +4,8 @@ import { Node } from "./node";
 type TSNode = ts.Node & { text: string };
 
 export function getNodesArray(source: string) {
-  const sourceFile = ts.createSourceFile(
-    "source.ts",
-    source,
-    ts.ScriptTarget.ESNext,
-    true,
-  );
+  const sourceFile = getSourceFile(source);
+
   const nodes: Node[] = [];
   let depth = 0;
 
@@ -62,16 +58,18 @@ export function getNodesArray(source: string) {
   return nodes;
 }
 
-// Returns an array of lines of code
-export function getArrayOrLines(source: string) {
-  const sourceFile = ts.createSourceFile(
+function getSourceFile(source: string) {
+  return ts.createSourceFile(
     "source.ts",
     source,
     ts.ScriptTarget.ESNext,
     true,
   );
+}
 
-  const lineMap = getLineMap(sourceFile);
+// Returns an array of lines of code
+export function getArrayOrLines(source: string) {
+  const lineMap = getLineMap(source);
 
   const lines: string[] = [];
 
@@ -97,7 +95,8 @@ export function getArrayOrLines(source: string) {
 
 // An array of the positions (of characters) at which the lines in the source code start, for example:
 // [0, 1, 5, 10] means that the first line start at 0 and ends at 1 (non inclusive), next one start at 1 and ends at 5 and so on.
-function getLineMap(sourceFile: SourceFile): number[] {
+export function getLineMap(source: string): number[] {
+  const sourceFile = getSourceFile(source)
   // deno-lint-ignore no-explicit-any
   return (ts as any).getLineStarts(sourceFile);
 }
