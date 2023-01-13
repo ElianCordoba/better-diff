@@ -8,10 +8,10 @@
 {#if sourceChunks}
 	<div class="grid">
 		{#each sourceChunks.chunksA as lineChunksA, i}
-			<Line side={'a'} row={i + 1} chunks={lineChunksA} />
+			<Line side={'a'} chunks={lineChunksA} {i} />
 		{/each}
 		{#each sourceChunks.chunksB as lineChunksB, i}
-			<Line side={'b'} row={i + 1} chunks={lineChunksB} />
+			<Line side={'b'} chunks={lineChunksB} {i} />
 		{/each}
 	</div>
 {/if}

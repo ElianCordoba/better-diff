@@ -6,10 +6,11 @@
 
 	import { RenderInstruction, type SourceChunk } from '../../../src/types';
 
-	export let lineNumber: number | undefined = 1;
+	export let i: number = 0;
+	let lineNumber = i + 1
+
 	export let chunks: SourceChunk[] = [];
 	export let side: 'a' | 'b';
-	export let row: number;
 
 	const LINE_HEIGHT = '27px';
 
@@ -31,7 +32,7 @@
 			height: LINE_HEIGHT,
 			padding: '0px'
 		};
-		
+
 		return { ...baseStyles, ...changeStyles[type] };
 	}
 
@@ -51,14 +52,14 @@
 	}
 </script>
 
-<div class="line {side === 'a' ? 'colA' : 'colB'}" style={`grid-row: ${row}`}>
+<div class="line {side === 'a' ? 'colA' : 'colB'}" style={`grid-row: ${lineNumber}`}>
 	<div class="flex">
 		<Button color="gray" override={{
 			height: LINE_HEIGHT,
 			'min-width': '50px',
 			borderRadius: 0
 		}}>
-			{lineNumber || ''}
+			{lineNumber}
 		</Button>
 
 		{#each chunks as chunk, i}
