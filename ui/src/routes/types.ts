@@ -1,4 +1,4 @@
 export interface LinePair {
-	a: string | undefined;
-	b: string | undefined;
+  a: string | undefined;
+  b: string | undefined;
 }

@@ -15,7 +15,9 @@ export function serialize(
   let chunksA = getChunks(linesA);
   let chunksB = getChunks(linesB);
 
-  for (const { rangeA, rangeB, type, nodeA, nodeB } of changes) {
+  for (let i = 0; i < changes.length; i++) {
+    const { type, rangeA, rangeB, nodeA, nodeB } = changes[i];
+
     switch (type) {
       case ChangeType.deletion: {
         chunksA = insertNewChunks(RenderInstruction.deletion, rangeA!, nodeA!, chunksA);
