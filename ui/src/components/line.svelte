@@ -64,7 +64,7 @@
 
 		{#each chunks as chunk, i}
 			{@const isMove = chunk.type === RenderInstruction.move}
-			{@const id = isMove ? String(chunk.id) : ''}
+			{@const id = isMove ? chunk.moveNumber : ''}
 			<div
 				data-move-id={id}
 				on:mouseover={() => highlightMove(isMove, id, 'on')}

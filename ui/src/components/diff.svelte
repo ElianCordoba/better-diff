@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { ServerResponse } from '../../../src/types';
+	import type { SerializedResponse } from '../../../src/types';
 	import Line from './line.svelte';
 
-	export let sourceChunks: ServerResponse | undefined;
+	export let sourceChunks: SerializedResponse | undefined;
 </script>
 
 {#if sourceChunks}

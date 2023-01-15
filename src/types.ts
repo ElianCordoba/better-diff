@@ -35,15 +35,6 @@ export enum RenderInstruction {
   move = "move",
 }
 
-export interface SourceChunk {
-  text: string;
-  type: RenderInstruction;
-  start: number;
-  end: number;
-  // Used to link moves and formats
-  id?: number;
-}
-
 // The results it's an array of arrays, the first level is for each line, the next level is for chunks of each line
 //
 // - Code: `
@@ -64,7 +55,13 @@ export interface SourceChunk {
 //     { text: "1 + 2", type: RenderInstruction.addition }
 //   ],
 // ]
-export interface ServerResponse {
+export interface SourceChunk {
+  type: RenderInstruction;
+  text: string;
+  moveNumber: string
+}
+
+export interface SerializedResponse {
   chunksA: SourceChunk[][];
   chunksB: SourceChunk[][];
 }
