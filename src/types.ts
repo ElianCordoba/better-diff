@@ -58,10 +58,16 @@ export enum RenderInstruction {
 export interface SourceChunk {
   type: RenderInstruction;
   text: string;
-  moveNumber: string
+  moveNumber: string;
 }
 
 export interface SerializedResponse {
   chunksA: SourceChunk[][];
   chunksB: SourceChunk[][];
+}
+
+// What the frontend sends
+export interface GetDiffPayload {
+  a: string;
+  b: string;
 }

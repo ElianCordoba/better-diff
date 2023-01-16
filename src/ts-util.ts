@@ -97,7 +97,7 @@ export function getArrayOrLines(source: string) {
 // An array of the positions (of characters) at which the lines in the source code start, for example:
 // [0, 1, 5, 10] means that the first line start at 0 and ends at 1 (non inclusive), next one start at 1 and ends at 5 and so on.
 export function getLineMap(source: string): number[] {
-  const sourceFile = getSourceFile(source)
+  const sourceFile = getSourceFile(source);
   // deno-lint-ignore no-explicit-any
   return (ts as any).getLineStarts(sourceFile);
 }
