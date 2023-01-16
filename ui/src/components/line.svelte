@@ -1,13 +1,12 @@
 <script lang="ts">
-	import { Group, Button } from '@svelteuidev/core';
+	import { Button } from '@svelteuidev/core';
 	import { Prism } from '@svelteuidev/prism';
 	import 'prismjs/components/prism-typescript';
-	import { onMount } from 'svelte';
 
 	import { RenderInstruction, type SourceChunk } from '../../../src/types';
 
 	export let i: number = 0;
-	let lineNumber = i + 1
+	let lineNumber = i + 1;
 
 	export let chunks: SourceChunk[] = [];
 	export let side: 'a' | 'b';
@@ -54,15 +53,18 @@
 
 <div class="line {side === 'a' ? 'colA' : 'colB'}" style={`grid-row: ${lineNumber}`}>
 	<div class="flex">
-		<Button color="gray" override={{
-			height: LINE_HEIGHT,
-			'min-width': '50px',
-			borderRadius: 0
-		}}>
+		<Button
+			color="gray"
+			override={{
+				height: LINE_HEIGHT,
+				'min-width': '50px',
+				borderRadius: 0
+			}}
+		>
 			{lineNumber}
 		</Button>
 
-		{#each chunks as chunk, i}
+		{#each chunks as chunk}
 			{@const isMove = chunk.type === RenderInstruction.move}
 			{@const id = isMove ? chunk.moveNumber : ''}
 			<div

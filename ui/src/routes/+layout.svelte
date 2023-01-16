@@ -8,15 +8,15 @@
 		isDark = !isDark;
 	}
 
-	let _displayErrorAlert = false
+	let _displayErrorAlert = false;
 	let errorMessage = '';
 	function displayErrorAlert(message: string) {
-		_displayErrorAlert = true
-		errorMessage = message
+		_displayErrorAlert = true;
+		errorMessage = message;
 		setTimeout(() => {
-			_displayErrorAlert = false
-			errorMessage = ''
-		}, 3000)
+			_displayErrorAlert = false;
+			errorMessage = '';
+		}, 3000);
 	}
 
 	setContext<Store>(StoreKey, {

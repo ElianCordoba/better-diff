@@ -12,7 +12,7 @@ export function serialize(
   const charsA: SourceChunk[] = a.split("").map((char) => ({ text: char, type: RenderInstruction.default, moveNumber: "" }));
   const charsB: SourceChunk[] = b.split("").map((char) => ({ text: char, type: RenderInstruction.default, moveNumber: "" }));
 
-  function markChars(type: RenderInstruction, _range: Range, chars: SourceChunk[], moveNumber = -1) {
+  function markChars(type: RenderInstruction, _range: Range, chars: SourceChunk[], moveNumber: string | number = "") {
     const { start, end } = _range;
     for (const i of range(start, end)) {
       chars[i].type = type;

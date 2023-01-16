@@ -6,29 +6,21 @@
 	import Diff from '../components/diff.svelte';
 
 	import type { SerializedResponse } from '../../../src/types';
-	import type { LinePair } from './types';
 	import { StoreKey, type Store } from '../stores';
 
-	let a: string = `
+	let a = `
     x
     console.log(0)
   `;
-	let b: string = `
+	let b = `
     console.log(1)
     x
     z
   `;
 
-	let linesA: string[] = [];
-	let linesB: string[] = [];
-
 	let sourceChunks: SerializedResponse | undefined;
 
-	const { displayErrorAlert } = getContext<Store>(StoreKey)
-
-	function getLines(text: string) {
-		return text.replace(/\n$/, '').split('\n');
-	}
+	const { displayErrorAlert } = getContext<Store>(StoreKey);
 
 	async function getDiff() {
 		const body = JSON.stringify({ a, b });
@@ -37,45 +29,19 @@
 
 		try {
 			const res = await fetch('http://localhost:3000/', { method: 'post', body });
-			result = await res.json()
+			result = await res.json();
 			if (!res.ok) {
-				throw result
+				throw result;
 			}
-			
 		} catch (err: any) {
-			displayErrorAlert(err.message)
-			return
-		}		
-
-		sourceChunks = result
-	}
-
-	let linePairs: LinePair[] = [];
-	function updateLinesPairs(): LinePair[] {
-		const lines: LinePair[] = [];
-
-		const max = Math.max(linesA.length, linesB.length);
-
-		for (let i = 0; i < max; i++) {
-			const lineA = linesA[i];
-			const lineB = linesB[i];
-
-			if (!lineA && !lineB) {
-				continue;
-			}
-			lines.push({
-				a: lineA,
-				b: lineB
-			});
+			displayErrorAlert(err.message);
+			return;
 		}
 
-		return lines;
+		sourceChunks = result;
 	}
 
 	function updateDiff() {
-		linesA = getLines(a);
-		linesB = getLines(b);
-		linePairs = updateLinesPairs();
 		getDiff();
 	}
 

@@ -1,5 +1,5 @@
 export interface Store {
-  displayErrorAlert: (message: string) => void;
+	displayErrorAlert: (message: string) => void;
 }
 
-export const StoreKey = Symbol("store");
+export const StoreKey = Symbol('store');
