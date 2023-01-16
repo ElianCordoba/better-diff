@@ -5,6 +5,7 @@ import { Iterator } from "./iterator";
 import { Change } from "./change";
 import { getOptions } from "./index";
 import { Node } from "./node";
+import { DebugFailure } from "./debug";
 
 export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -351,7 +352,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     indexB++;
 
     if (!equals(a!, b!)) {
-      throw new Error(`Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
+      throw new DebugFailure(`Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`)
     }
 
     // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
@@ -428,7 +429,7 @@ function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodes
     const { bestIndex, bestResult } = getLCS(candidates, iterA, iterB, current.index);
 
     if (bestResult === 0) {
-      throw new Error("LCS resulted in 0");
+      throw new DebugFailure("LCS resulted in 0")
     }
     const indexA = current?.index!;
     const indexB = bestIndex;

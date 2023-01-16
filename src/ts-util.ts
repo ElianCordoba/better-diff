@@ -1,5 +1,6 @@
 import ts, { SourceFile } from "typescript";
 import { Node } from "./node";
+import { DebugFailure } from "./debug";
 
 type TSNode = ts.Node & { text: string };
 
@@ -58,7 +59,7 @@ export function getNodesArray(source: string) {
   return nodes;
 }
 
-function getSourceFile(source: string) {
+function getSourceFile(source: string): SourceFile {
   return ts.createSourceFile(
     "source.ts",
     source,
@@ -85,7 +86,7 @@ export function getArrayOrLines(source: string) {
   }
 
   if (lines.length !== lineMap.length) {
-    throw new Error("Assertion failed");
+    throw new DebugFailure("Assertion failed");
   }
 
   return lines;

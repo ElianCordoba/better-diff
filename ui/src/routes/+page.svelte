@@ -1,12 +1,13 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { getContext, onMount } from 'svelte';
 
 	import { SimpleGrid, Button } from '@svelteuidev/core';
 	import CodeInput from './codeInput.svelte';
 	import Diff from '../components/diff.svelte';
 
-	import type { ServerResponse } from '../../../src/types';
+	import type { SerializedResponse } from '../../../src/types';
 	import type { LinePair } from './types';
+	import { StoreKey, type Store } from '../stores';
 
 	let a: string = `
     x
@@ -21,7 +22,9 @@
 	let linesA: string[] = [];
 	let linesB: string[] = [];
 
-	let sourceChunks: ServerResponse | undefined;
+	let sourceChunks: SerializedResponse | undefined;
+
+	const { displayErrorAlert } = getContext<Store>(StoreKey)
 
 	function getLines(text: string) {
 		return text.replace(/\n$/, '').split('\n');
@@ -30,7 +33,19 @@
 	async function getDiff() {
 		const body = JSON.stringify({ a, b });
 
-		const result = await fetch('http://localhost:3000/', { method: 'post', body });
+		let result;
+
+		try {
+			const res = await fetch('http://localhost:3000/', { method: 'post', body });
+			result = await res.json()
+			if (!res.ok) {
+				throw result
+			}
+			
+		} catch (err: any) {
+			displayErrorAlert(err.message)
+			return
+		}		
 
 		sourceChunks = await result.json();
 	}

@@ -1,5 +1,6 @@
 import { ChangeType } from "../src/types";
 import { Change } from "./change";
+import { DebugFailure } from "./debug";
 import { getRanges } from "./utils";
 
 //@ts-ignore TODO: Importing normally doesnt work with vitest
@@ -120,7 +121,7 @@ export function applyChangesToSources(
       }
 
       default:
-        throw new Error(`Unhandled type "${type}"`);
+        throw new DebugFailure(`Unhandled type "${type}"`);
     }
   }
 
@@ -251,7 +252,7 @@ export function getAlignedSources(a: string, b: string, changes: Change[], align
         break;
       }
       default:
-        throw new Error(`Unhandled type "${type}"`);
+        throw new DebugFailure(`Unhandled type "${type}"`);
     }
   }
 
