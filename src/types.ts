@@ -35,7 +35,13 @@ export enum RenderInstruction {
   move = "move",
 }
 
-// The results it's an array of arrays, the first level is for each line, the next level is for chunks of each line
+export interface SourceChunk {
+  type: RenderInstruction;
+  text: string;
+  moveNumber: string;
+}
+
+// The type of each property is an array of arrays of chunks, where the first level represents a line in the source code and it's sub-arrays represent the chunks of code of that line:
 //
 // - Code: `
 //   console.log(123)
@@ -55,12 +61,6 @@ export enum RenderInstruction {
 //     { text: "1 + 2", type: RenderInstruction.addition }
 //   ],
 // ]
-export interface SourceChunk {
-  type: RenderInstruction;
-  text: string;
-  moveNumber: string;
-}
-
 export interface SerializedResponse {
   chunksA: SourceChunk[][];
   chunksB: SourceChunk[][];
