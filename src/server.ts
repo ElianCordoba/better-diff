@@ -1,7 +1,7 @@
 import fastify from "fastify";
 import cors from "@fastify/cors";
 import { serialize } from "./serializer";
-import { getTextWithDiffs } from "./index";
+import { getDiff, getTextWithDiffs } from "./index";
 import { GetDiffPayload } from "./types";
 
 const server = fastify({ logger: true });
@@ -14,12 +14,11 @@ server.post("/", ({ body }, _reply) => {
     b,
   });
 
-  console.time('diff')
-  const { changes } = getTextWithDiffs(a, b);
-  const serializedResult = serialize(a, b, changes);
-  console.timeEnd('diff')
+  console.time("diff");
+  const res = getDiff(a, b);
+  console.timeEnd("diff");
 
-  return serializedResult
+  return res;
 });
 
 async function start() {

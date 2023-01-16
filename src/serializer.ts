@@ -12,24 +12,16 @@ export function serialize(
   const charsA: SourceChunk[] = a.split("").map((char) => ({ text: char, type: RenderInstruction.default, moveNumber: "" }));
   const charsB: SourceChunk[] = b.split("").map((char) => ({ text: char, type: RenderInstruction.default, moveNumber: "" }));
 
-  function markChars(type: RenderInstruction, _range: Range, chars: SourceChunk[], moveNumber: number = -1) {
+  function markChars(type: RenderInstruction, _range: Range, chars: SourceChunk[], moveNumber = -1) {
     const { start, end } = _range;
     for (const i of range(start, end)) {
-      // if (type === RenderInstruction.deletion || type === RenderInstruction.move) {
-      //   charsA[i].type = type
-      // }
-
-      // if (type === RenderInstruction.addition || type === RenderInstruction.move) {
-      //   charsB[i].type = type
-      // }
-
       chars[i].type = type;
       chars[i].moveNumber = moveNumber ? String(moveNumber) : "";
     }
   }
 
   for (let i = 0; i < changes.length; i++) {
-    const { type, rangeA, rangeB, nodeA, nodeB } = changes[i];
+    const { type, rangeA, rangeB, nodeA } = changes[i];
 
     switch (type) {
       case ChangeType.deletion: {
