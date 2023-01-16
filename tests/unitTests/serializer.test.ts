@@ -1,84 +1,335 @@
-// import { expect, test } from "vitest";
-// import { SerializedResponse, SourceChunk2 } from "../../src/types";
-// import { getTextWithDiffs } from "../../src";
-// import { serialize2 } from "../../src/serializer";
+import { expect, test } from "vitest";
+import { getDiff } from "../../src";
 
-// function validateSerializedResult(a: string, b: string, result: SerializedResponse) {
-//   function validate(chunks: SourceChunk2[][], source: string) {
-//     let hasError = false;
-//     loop: for (const line of chunks) {
-//       for (const { start, end, text } of line) {
-//         const expected = source.slice(start, end);
+test('Case 1', () => {
+  const a = `
+    console.log() && 3
+  `
 
-//         if (expected !== text) {
-//           hasError = true;
-//           break loop;
-//         }
-//       }
-//     }
+  const b = `
+    fn(console.log(1))
+  `
 
-//     return hasError;
-//   }
+  const expected = {
+    "chunksA": [
+      [
+        {
+          "text": "\n",
+          "type": "default",
+          "moveNumber": ""
+        }
+      ],
+      [
+        {
+          "text": "    ",
+          "type": "default",
+          "moveNumber": ""
+        },
+        {
+          "text": "console.log(",
+          "type": "move",
+          "moveNumber": "4"
+        },
+        {
+          "text": ")",
+          "type": "move",
+          "moveNumber": "5"
+        },
+        {
+          "text": " ",
+          "type": "default",
+          "moveNumber": ""
+        },
+        {
+          "text": "&&",
+          "type": "deletion",
+          "moveNumber": ""
+        },
+        {
+          "text": " ",
+          "type": "default",
+          "moveNumber": ""
+        },
+        {
+          "text": "3",
+          "type": "deletion",
+          "moveNumber": ""
+        },
+        {
+          "text": "\n",
+          "type": "default",
+          "moveNumber": ""
+        }
+      ],
+      [
+        {
+          "text": "  ",
+          "type": "default",
+          "moveNumber": ""
+        }
+      ]
+    ],
+    "chunksB": [
+      [
+        {
+          "text": "\n",
+          "type": "default",
+          "moveNumber": ""
+        }
+      ],
+      [
+        {
+          "text": "    ",
+          "type": "default",
+          "moveNumber": ""
+        },
+        {
+          "text": "fn(",
+          "type": "addition",
+          "moveNumber": ""
+        },
+        {
+          "text": "console.log(",
+          "type": "move",
+          "moveNumber": "4"
+        },
+        {
+          "text": "1",
+          "type": "addition",
+          "moveNumber": ""
+        },
+        {
+          "text": ")",
+          "type": "move",
+          "moveNumber": "5"
+        },
+        {
+          "text": ")",
+          "type": "addition",
+          "moveNumber": ""
+        },
+        {
+          "text": "\n",
+          "type": "default",
+          "moveNumber": ""
+        }
+      ],
+      [
+        {
+          "text": "  ",
+          "type": "default",
+          "moveNumber": ""
+        }
+      ]
+    ]
+  }
 
-//   const hasErrorOnA = validate(result.chunksA, a);
-//   const hasErrorOnB = validate(result.chunksB, b);
+  const result = getDiff(a, b)
 
-//   expect(hasErrorOnA).toBe(false);
-//   expect(hasErrorOnB).toBe(false);
-// }
+  expect(result).toEqual(expected)
+})
 
-// interface SerializeTestInput {
-//   name: string;
-//   a: string;
-//   b: string;
-// }
+test('Case 2', () => {
+  const a = ` 
+    if (true) {
+      3; print
+    }
+  `
 
-// function validateSerializer({ name, a, b }: SerializeTestInput) {
-//   test(name, () => {
-//     const changes = getTextWithDiffs(a, b).changes;
-//     const serializedResult = serialize2(a, b, changes);
+  const b = `
+    z
+    print; 3
+    x
+  `
 
-//     validateSerializedResult(a, b, serializedResult);
-//   });
+  const expected = {
+    "chunksA": [
+      [
+        {
+          "text": " \n",
+          "type": "default",
+          "moveNumber": ""
+        }
+      ],
+      [
+        {
+          "text": "    ",
+          "type": "default",
+          "moveNumber": ""
+        },
+        {
+          "text": "if",
+          "type": "deletion",
+          "moveNumber": ""
+        },
+        {
+          "text": " ",
+          "type": "default",
+          "moveNumber": ""
+        },
+        {
+          "text": "(true)",
+          "type": "deletion",
+          "moveNumber": ""
+        },
+        {
+          "text": " ",
+          "type": "default",
+          "moveNumber": ""
+        },
+        {
+          "text": "{",
+          "type": "deletion",
+          "moveNumber": ""
+        },
+        {
+          "text": "\n",
+          "type": "default",
+          "moveNumber": ""
+        }
+      ],
+      [
+        {
+          "text": "      ",
+          "type": "default",
+          "moveNumber": ""
+        },
+        {
+          "text": "3",
+          "type": "move",
+          "moveNumber": "4"
+        },
+        {
+          "text": ";",
+          "type": "move",
+          "moveNumber": "3"
+        },
+        {
+          "text": " ",
+          "type": "default",
+          "moveNumber": ""
+        },
+        {
+          "text": "print",
+          "type": "move",
+          "moveNumber": "2"
+        },
+        {
+          "text": "\n",
+          "type": "default",
+          "moveNumber": ""
+        }
+      ],
+      [
+        {
+          "text": "    ",
+          "type": "default",
+          "moveNumber": ""
+        },
+        {
+          "text": "}",
+          "type": "deletion",
+          "moveNumber": ""
+        },
+        {
+          "text": "\n",
+          "type": "default",
+          "moveNumber": ""
+        }
+      ],
+      [
+        {
+          "text": "  ",
+          "type": "default",
+          "moveNumber": ""
+        }
+      ]
+    ],
+    "chunksB": [
+      [
+        {
+          "text": "\n",
+          "type": "default",
+          "moveNumber": ""
+        }
+      ],
+      [
+        {
+          "text": "    ",
+          "type": "default",
+          "moveNumber": ""
+        },
+        {
+          "text": "z",
+          "type": "addition",
+          "moveNumber": ""
+        },
+        {
+          "text": "\n",
+          "type": "default",
+          "moveNumber": ""
+        }
+      ],
+      [
+        {
+          "text": "    ",
+          "type": "default",
+          "moveNumber": ""
+        },
+        {
+          "text": "print",
+          "type": "move",
+          "moveNumber": "2"
+        },
+        {
+          "text": ";",
+          "type": "move",
+          "moveNumber": "3"
+        },
+        {
+          "text": " ",
+          "type": "default",
+          "moveNumber": ""
+        },
+        {
+          "text": "3",
+          "type": "move",
+          "moveNumber": "4"
+        },
+        {
+          "text": "\n",
+          "type": "default",
+          "moveNumber": ""
+        }
+      ],
+      [
+        {
+          "text": "    ",
+          "type": "default",
+          "moveNumber": ""
+        },
+        {
+          "text": "x",
+          "type": "addition",
+          "moveNumber": ""
+        },
+        {
+          "text": "\n",
+          "type": "default",
+          "moveNumber": ""
+        }
+      ],
+      [
+        {
+          "text": "  ",
+          "type": "default",
+          "moveNumber": ""
+        }
+      ]
+    ]
+  }
 
-//   test(name, () => {
-//     const changes = getTextWithDiffs(b, a).changes;
-//     const serializedResult = serialize2(b, a, changes);
+  const result = getDiff(a, b)
 
-//     validateSerializedResult(b, a, serializedResult);
-//   });
-// }
-
-// validateSerializer({
-//   name: "1",
-//   a: `
-//   console.log() && 3
-//   `,
-//   b: `
-//   fn(console.log())
-//   `,
-// });
-
-// validateSerializer({
-//   name: "2",
-//   a: `
-//     x
-//     console.log(0)
-//   `,
-//   b: `
-//     console.log(1)
-//     x
-//     z
-//   `,
-// });
-
-// validateSerializer({
-//   name: "2",
-//   a: `
-//   while(true) {
-//     console.log()
-//   }
-//   `,
-//   b: `
-//   console.log()`,
-// });
+  expect(result).toEqual(expected)
+})
