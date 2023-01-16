@@ -2,6 +2,7 @@ import { SyntaxKind } from "typescript";
 import { formatSyntaxKind } from "./utils";
 
 interface NodeArgs {
+  fullStart: number;
   start: number;
   end: number;
   kind: SyntaxKind;
@@ -12,6 +13,7 @@ interface NodeArgs {
 }
 
 export class Node {
+  fullStart: number;
   start: number;
   end: number;
   kind: SyntaxKind;
@@ -25,7 +27,9 @@ export class Node {
   matchNumber = 0;
   //getSourceFn?: () => string,
   constructor(args: NodeArgs) {
-    const { start, end, kind, lineNumberStart, lineNumberEnd, text } = args;
+    const { fullStart, start, end, kind, lineNumberStart, lineNumberEnd, text } = args;
+
+    this.fullStart = fullStart;
     this.start = start;
     this.end = end;
     this.kind = kind;

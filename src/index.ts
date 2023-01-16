@@ -1,7 +1,8 @@
 import { Change } from "./change";
 import { getInitialDiffs } from "./main";
 import { applyChangesToSources, asciiRenderFn, DiffRendererFn } from "./reporter";
-import { DiffResult } from "./types";
+import { serialize } from "./serializer";
+import { DiffResult, SerializedResponse } from "./types";
 
 // These options have their own tests under the /tests/options folder
 export interface Options {
@@ -41,7 +42,9 @@ export function getTextWithDiffs(
   sourceB: string,
   options?: Options,
 ): { diffs: DiffResult; changes: Change[] } {
+  // Set up globals
   _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
+  _context = { sourceA, sourceB };
 
   const changes = getInitialDiffs(sourceA, sourceB);
   const sourcesWithDiff = applyChangesToSources(
@@ -54,6 +57,14 @@ export function getTextWithDiffs(
   return { diffs: sourcesWithDiff, changes: changes };
 }
 
+export function getDiff(sourceA: string, sourceB: string, options?: Options): SerializedResponse {
+  _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
+  _context = { sourceA, sourceB };
+
+  const changes = getInitialDiffs(sourceA, sourceB);
+  return serialize(sourceA, sourceB, changes);
+}
+
 const defaultOptions: Options = {
   renderFn: asciiRenderFn,
   minimumLinesMoved: 0,
@@ -64,4 +75,14 @@ const defaultOptions: Options = {
 let _options: Required<Options>;
 export function getOptions(): Required<Options> {
   return _options;
+}
+
+interface Context {
+  sourceA: string;
+  sourceB: string;
+}
+
+let _context: Context;
+export function getContext() {
+  return _context;
 }

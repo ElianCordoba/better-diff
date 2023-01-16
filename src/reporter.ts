@@ -1,5 +1,7 @@
-import { ChangeType, Range } from "../src/types";
+import { ChangeType } from "../src/types";
 import { Change } from "./change";
+import { DebugFailure } from "./debug";
+import { getRanges } from "./utils";
 
 //@ts-ignore TODO: Importing normally doesnt work with vitest
 export const k = require("kleur");
@@ -84,7 +86,7 @@ export function applyChangesToSources(
         break;
       }
 
-      case ChangeType.removal: {
+      case ChangeType.deletion: {
         const { start, end } = getRanges(rangeA);
         charsA = getSourceWithChange(
           charsA,
@@ -119,7 +121,7 @@ export function applyChangesToSources(
       }
 
       default:
-        throw new Error(`Unhandled type "${type}"`);
+        throw new DebugFailure(`Unhandled type "${type}"`);
     }
   }
 
@@ -150,13 +152,6 @@ export function getSourceWithChange(
   const compliment = getComplimentArray(charsToAdd);
 
   return [...head, colorFn(text), ...compliment, ...tail];
-}
-
-function getRanges(range: Range | undefined) {
-  return {
-    start: range?.start || 0,
-    end: range?.end || 0,
-  };
 }
 
 export function getComplimentArray(length: number, fillInCharacter = ""): string[] {
@@ -222,7 +217,7 @@ export function getAlignedSources(a: string, b: string, changes: Change[], align
   // In this case the moves don't match so we calculate the difference and then insert the new lines on the side that correspond
   for (const { nodeA, nodeB, type } of changes) {
     switch (type) {
-      case ChangeType.removal: {
+      case ChangeType.deletion: {
         const [newLines, offset] = insertNewlines(nodeA?.lineNumberStart!, nodeA?.lineNumberEnd!, "b");
         linesB = newLines;
         offsetB = offset;
@@ -257,7 +252,7 @@ export function getAlignedSources(a: string, b: string, changes: Change[], align
         break;
       }
       default:
-        throw new Error(`Unhandled type "${type}"`);
+        throw new DebugFailure(`Unhandled type "${type}"`);
     }
   }
 

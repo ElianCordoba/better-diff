@@ -1,10 +1,11 @@
 import { getNodesArray } from "./ts-util";
 import { Candidate, ChangeType, Range } from "./types";
-import { equals, mergeRanges, range } from "./utils";
+import { equals, mergeRanges } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
 import { getOptions } from "./index";
 import { Node } from "./node";
+import { DebugFailure } from "./debug";
 
 export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -25,7 +26,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     // One of the iterators finished. We will traverse the remaining nodes in the other iterator
     if (!a || !b) {
       const iterOn = !a ? iterB : iterA;
-      const type = !a ? ChangeType.addition : ChangeType.removal;
+      const type = !a ? ChangeType.addition : ChangeType.deletion;
 
       const remainingChanges = oneSidedIteration(iterOn, type);
       changes.push(...remainingChanges);
@@ -46,7 +47,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     if (candidatesAtoB.length === 0 && candidatesBtoA.length === 0) {
       // TODO: Maybe push change type 'change' ?
       changes.push(getChange(ChangeType.addition, a, b));
-      changes.push(getChange(ChangeType.removal, a, b));
+      changes.push(getChange(ChangeType.deletion, a, b));
 
       iterA.mark(a.index);
       iterB.mark(b.index);
@@ -131,7 +132,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
 
 function oneSidedIteration(
   iter: Iterator,
-  typeOfChange: ChangeType.addition | ChangeType.removal,
+  typeOfChange: ChangeType.addition | ChangeType.deletion,
 ): Change[] {
   const changes: Change[] = [];
 
@@ -229,7 +230,7 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
         continue;
       }
 
-      const readFrom = change!.type === ChangeType.removal ? "rangeA" : "rangeB";
+      const readFrom = change!.type === ChangeType.deletion ? "rangeA" : "rangeB";
 
       const currentRange = change![readFrom]!;
       const nextRange = next[readFrom]!;
@@ -351,7 +352,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     indexB++;
 
     if (!equals(a!, b!)) {
-      throw new Error(`Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
+      throw new DebugFailure(`Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
     }
 
     // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
@@ -416,7 +417,7 @@ function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodes
       const perspectiveAtoB = iterA.name === "a";
 
       if (perspectiveAtoB) {
-        changes.push(getChange(ChangeType.removal, current, undefined));
+        changes.push(getChange(ChangeType.deletion, current, undefined));
       } else {
         changes.push(getChange(ChangeType.addition, undefined, current));
       }
@@ -428,7 +429,7 @@ function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodes
     const { bestIndex, bestResult } = getLCS(candidates, iterA, iterB, current.index);
 
     if (bestResult === 0) {
-      throw new Error("LCS resulted in 0");
+      throw new DebugFailure("LCS resulted in 0");
     }
     const indexA = current?.index!;
     const indexB = bestIndex;

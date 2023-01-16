@@ -3,9 +3,11 @@
     "test": "vitest --dir ./tests",
     "build": "tsc --watch",
     "check": "npm run format && npm run lint",
-    "format": "deno fmt --options-line-width 300",
-    "lint": "deno lint --ignore=node_modules,diff,internal,dist,tests,test.ts",
-    "startServer": "tsx src/server.ts"
+    "format": "deno fmt --options-line-width 300 --ignore=node_modules,diff,internal,dist,tests,ui,scripts",
+    "lint": "deno lint --ignore=node_modules,diff,internal,dist,tests,ui,scripts",
+    "startServer": "tsx src/server.ts",
+    "start": "node dist/src/server.js",
+    "debug": "node --inspect-brk dist/src/server.js"
   },
   "devDependencies": {
     "vite": "4.0.3",

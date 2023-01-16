@@ -218,6 +218,17 @@ describe("Properly report lines added", () => {
   //   validateDiff(resultA, resultB, sourceA, sourceB);
   // });
 
+
+  // a
+  // if (true) {
+  //   print()
+  // }
+
+  // b
+  // z
+  // print(123)
+  // x
+
   test("Mix of move with deletions and additions", () => {
     const a = `
       console.log() && 3

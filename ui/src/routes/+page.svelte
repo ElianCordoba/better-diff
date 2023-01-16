@@ -1,73 +1,52 @@
 <script lang="ts">
+	import { getContext, onMount } from 'svelte';
+
 	import { SimpleGrid, Button } from '@svelteuidev/core';
-	import { onMount } from 'svelte';
-
 	import CodeInput from './codeInput.svelte';
-	import Row from './row.svelte';
-	import type { LinePair } from './types';
+	import Diff from '../components/diff.svelte';
 
-	let a: string = `
+	import type { SerializedResponse } from '../../../src/types';
+	import { StoreKey, type Store } from '../stores';
+
+	let a = `
     x
     console.log(0)
   `;
-	let b: string = `
+	let b = `
     console.log(1)
     x
     z
   `;
 
-	let linesA: string[] = [];
-	let linesB: string[] = [];
+	let sourceChunks: SerializedResponse | undefined;
 
-	function getLines(text: string) {
-		return text.replace(/\n$/, '').split('\n');
-	}
+	const { displayErrorAlert } = getContext<Store>(StoreKey);
 
 	async function getDiff() {
 		const body = JSON.stringify({ a, b });
 
-		const result = await fetch('http://localhost:3000/', { method: 'post', body });
+		let result;
 
-		const changes = await result.json();
-
-		return {
-			a: getLines(a),
-			b: getLines(b),
-			changes
-		};
-	}
-
-	let linePairs: LinePair[] = [];
-	function updateLinesPairs(): LinePair[] {
-		const lines: LinePair[] = [];
-
-		const max = Math.max(linesA.length, linesB.length);
-
-		for (let i = 0; i < max; i++) {
-			const lineA = linesA[i];
-			const lineB = linesB[i];
-
-			if (!lineA && !lineB) {
-				continue;
+		try {
+			const res = await fetch('http://localhost:3000/', { method: 'post', body });
+			result = await res.json();
+			if (!res.ok) {
+				throw result;
 			}
-			lines.push({
-				a: lineA,
-				b: lineB
-			});
+		} catch (err: any) {
+			displayErrorAlert(err.message);
+			return;
 		}
 
-		return lines;
+		sourceChunks = result;
 	}
 
 	function updateDiff() {
-		linesA = getLines(a);
-		linesB = getLines(b);
-		linePairs = updateLinesPairs();
+		getDiff();
 	}
 
 	onMount(() => {
 		updateDiff();
-
 	});
 </script>
 
@@ -78,8 +57,4 @@
 	<CodeInput bind:code={b} />
 </SimpleGrid>
 
-<SimpleGrid cols={2} spacing="xs" override={{ gap: 0 }}>
-	{#each linePairs as { a, b }, i}
-		<Row {a} {b} lineNumber={i} />
-	{/each}
-</SimpleGrid>
+<Diff {sourceChunks} />
