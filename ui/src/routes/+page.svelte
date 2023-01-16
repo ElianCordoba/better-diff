@@ -47,7 +47,7 @@
 			return
 		}		
 
-		sourceChunks = await result.json();
+		sourceChunks = result
 	}
 
 	let linePairs: LinePair[] = [];
