@@ -19,9 +19,14 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   let a: Node | undefined;
   let b: Node | undefined;
 
-  do {
+  while (true) {
     a = iterA.next();
     b = iterB.next();
+
+    // Loop until both iterators are done
+    if (!a && !b) {
+      break;
+    }
 
     // One of the iterators finished. We will traverse the remaining nodes in the other iterator
     if (!a || !b) {
@@ -125,7 +130,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
 
     // Finally we complete the matching of the B side. This time we call `finishSequenceMatching` with the arguments inverted in order to check the other perspective
     changes.push(...finishSequenceMatching(iterB, iterA, remainingNodesB, remainingNodesA));
-  } while (a || b); // Loop until both iterators are done, at that point they will return undefined and the loop will break
+  }
 
   return compactChanges(changes);
 }
