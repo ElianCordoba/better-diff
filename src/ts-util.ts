@@ -11,12 +11,12 @@ export function getNodesArray(source: string) {
   let depth = 0;
 
   function walk(node: TSNode) {
-    const hasText = typeof node.text !== "undefined" ? node.getText() : undefined;
     const isReservedWord = node.kind >= ts.SyntaxKind.FirstKeyword && node.kind <= ts.SyntaxKind.LastKeyword;
     const isPunctuation = node.kind >= ts.SyntaxKind.FirstPunctuation && node.kind <= ts.SyntaxKind.LastPunctuation;
 
+
     // Only include visible node, nodes that represent some text in the source code.
-    if (hasText || isReservedWord || isPunctuation) {
+    if (node.text || isReservedWord || isPunctuation) {
       // Each node owns the trivia before until the previous token, for example:
       //
       // age = 24
@@ -30,7 +30,7 @@ export function getNodesArray(source: string) {
       const lineNumberStart = getLineNumber(sourceFile, start);
       const lineNumberEnd = getLineNumber(sourceFile, node.end);
 
-      nodes.push(new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: hasText!, lineNumberStart: lineNumberStart, lineNumberEnd }));
+      nodes.push(new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart: lineNumberStart, lineNumberEnd }));
     }
 
     depth++;
