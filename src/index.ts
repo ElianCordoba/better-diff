@@ -1,6 +1,6 @@
 import { Change } from "./change";
 import { getInitialDiffs } from "./main";
-import { applyChangesToSources, asciiRenderFn, DiffRendererFn } from "./reporter";
+import { applyChangesToSources, asciiRenderFn, DiffRendererFn, getAlignedSources } from "./reporter";
 import { serialize } from "./serializer";
 import { DiffResult, SerializedResponse } from "./types";
 
@@ -35,6 +35,8 @@ export interface Options {
   // There are 3 node of distances between the two "x", if "maxMatchingOffset" is set to less than 3 the move won't be found and it will be reported as an addition/removal.
   // This is present so that we have acceptable performance on long files where many nodes are present
   maxMatchingOffset?: number;
+
+  alignmentText?: string
 }
 
 export function getTextWithDiffs(
@@ -44,7 +46,7 @@ export function getTextWithDiffs(
 ): { diffs: DiffResult; changes: Change[] } {
   // Set up globals
   _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
-  _context = { sourceA, sourceB };
+  _context = { sourceA, sourceB, layoutShifts: [] };
 
   const changes = getInitialDiffs(sourceA, sourceB);
   const sourcesWithDiff = applyChangesToSources(
@@ -58,11 +60,24 @@ export function getTextWithDiffs(
 }
 
 export function getDiff(sourceA: string, sourceB: string, options?: Options): SerializedResponse {
+  // Set up globals
   _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
-  _context = { sourceA, sourceB };
+  _context = { sourceA, sourceB, layoutShifts: [] };
 
   const changes = getInitialDiffs(sourceA, sourceB);
   return serialize(sourceA, sourceB, changes);
+}
+
+export function getAlignedDiff(sourceA: string, sourceB: string, options?: Options) {
+  // Set up globals
+  _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
+  _context = { sourceA, sourceB, layoutShifts: [] };
+
+  getInitialDiffs(sourceA, sourceB);
+
+  console.log(_context.layoutShifts)
+
+  return getAlignedSources(_context.layoutShifts, sourceA, sourceB, _options.alignmentText)
 }
 
 const defaultOptions: Options = {
@@ -70,6 +85,7 @@ const defaultOptions: Options = {
   minimumLinesMoved: 0,
   // TODO: Look for a good value
   maxMatchingOffset: 200,
+  alignmentText: "\n"
 };
 
 let _options: Required<Options>;
@@ -77,9 +93,66 @@ export function getOptions(): Required<Options> {
   return _options;
 }
 
+export interface LayoutShift {
+  a: Map<number, number>;
+  b: Map<number, number>;
+  lcs: number;
+}
+
+export class LayoutShiftCandidate {
+  constructor(
+    // Key: Number on lines to insert on each side
+    // Value: Length of the string
+    public a = new Map<number, number>(),
+    public b = new Map<number, number>()
+  ) { }
+
+  add(side: "a" | "b", at: number, length: number) {
+    if (side === 'a') {
+      if (this.a.has(at)) {
+        const currentValue = this.a.get(at)!;
+
+        this.a.set(at, currentValue + length)
+      } else {
+        this.a.set(at, length)
+      }
+    } else {
+      if (this.b.has(at)) {
+        const currentValue = this.b.get(at)!;
+
+        this.b.set(at, currentValue + length)
+      } else {
+        this.b.set(at, length)
+      }
+    }
+  }
+
+  getLcs(side: 'a' | 'b') {
+    const _side = side === 'a' ? this.a : this.b
+
+    let tot = 0
+    _side.forEach(x => tot += x)
+
+    return tot
+  }
+
+  getShift(): LayoutShift {
+    return {
+      a: this.a,
+      b: this.b,
+      lcs: this.getLcs('a') + this.getLcs('b')
+    }
+  }
+
+  isEmpty() {
+    return this.a.size === 0 && this.b.size === 0
+  }
+}
+
 interface Context {
   sourceA: string;
   sourceB: string;
+  layoutShifts: LayoutShift[];
 }
 
 let _context: Context;

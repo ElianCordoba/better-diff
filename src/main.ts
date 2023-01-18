@@ -3,7 +3,7 @@ import { Candidate, ChangeType, Range } from "./types";
 import { equals, mergeRanges } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
-import { getOptions } from "./index";
+import { LayoutShiftCandidate, getContext, getOptions } from "./index";
 import { Node } from "./node";
 import { DebugFailure } from "./debug";
 
@@ -15,6 +15,8 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
 
   const iterA = new Iterator(nodesA, { name: "a", source: codeA });
   const iterB = new Iterator(nodesB, { name: "b", source: codeB });
+
+  iterA.printPositionInfo(); console.log('\n'); iterB.printPositionInfo();
 
   let a: Node | undefined;
   let b: Node | undefined;
@@ -344,6 +346,11 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   let rangeA = a.getPosition();
   let rangeB = b.getPosition();
 
+  let offsetA = a.lineNumberStart
+  let offsetB = b.lineNumberStart
+
+  const layoutShiftCandidates = new LayoutShiftCandidate()
+
   let index = indexOfBestResult;
   while (index < indexOfBestResult + lcs) {
     a = iterA.next(indexA)!;
@@ -360,6 +367,28 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
       throw new DebugFailure(`Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
     }
 
+    /// Alignment: Move ///
+
+    let startA = a.lineNumberStart - offsetA
+    let startB = b.lineNumberStart - offsetB
+
+    const linesDiff = Math.abs(startA - startB);
+
+    if (linesDiff !== 0) {
+      if (a.text.length !== b.text.length) {
+        throw new Error('Ops')
+      }
+
+      const length = a.text.length
+      if (startA < startB) {
+        layoutShiftCandidates.add('a', b.lineNumberStart, length)
+      } else {
+        layoutShiftCandidates.add('b', a.lineNumberStart, length)
+      }
+    }
+
+    /// Alignment end ///
+
     // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
     if (a?.index === b?.index) {
       continue;
@@ -367,6 +396,10 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
     rangeA = mergeRanges(rangeA, a.getPosition());
     rangeB = mergeRanges(rangeB, b.getPosition());
+  }
+
+  if (!layoutShiftCandidates.isEmpty()) {
+    getContext().layoutShifts.push(layoutShiftCandidates.getShift())
   }
 
   // If the nodes are not in the same position then it's a move

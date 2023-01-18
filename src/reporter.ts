@@ -1,3 +1,4 @@
+import { LayoutShift } from ".";
 import { ChangeType } from "../src/types";
 import { Change } from "./change";
 import { DebugFailure } from "./debug";
@@ -173,86 +174,47 @@ export function getComplimentArray(length: number, fillInCharacter = ""): string
 // 1) x
 //
 // There are test covering this behavior in the file "sourceAlignment.test.ts"
-export function getAlignedSources(a: string, b: string, changes: Change[], alignmentText = "\n") {
-  let linesA = a.replace(/\n$/, "").split("\n");
-  let linesB = b.replace(/\n$/, "").split("\n");
+export function getAlignedSources(
+  layoutShifts: LayoutShift[],
+  a: string,
+  b: string,
+  alignmentText = "\n",
+) {
+  let linesA = a.split("\n");
+  let linesB = b.split("\n");
 
-  // An offset is needed to keep track of the added new lines, we need one for each side
-  let offsetA = 0;
-  let offsetB = 0;
-
-  function insertNewlines(lineStart: number, lineEnd: number, side: "a" | "b"): [string[], number] {
-    const offset = side === "a" ? offsetA : offsetB;
+  function insertNewlines(insertAtLine: number, side: "a" | "b"): string[] {
     const chars = side === "a" ? linesA : linesB;
 
     // The -1 is because line number start at 1 but we need 0-indexed number for the array slice
-    const insertAt = (lineStart - 1) - offset;
+    const insertAt = (insertAtLine - 1);
 
     const head = chars.slice(0, insertAt);
     const tail = chars.slice(insertAt, chars.length);
 
-    // TODO: Document the meaning of the +1
-    const linesDiff = Math.abs(lineStart - lineEnd) + 1;
-    const compliment = getComplimentArray(linesDiff, alignmentText);
+    const compliment = getComplimentArray(1, alignmentText);
 
     const newChars = [...head, ...compliment, ...tail];
 
-    return [newChars, offset + linesDiff];
+    return newChars;
   }
 
-  // The logic works as follows:
-  // If we see a removal, means that there was a line (or more) of code that was a the a side but it's not on the b side, so we need to add it there
-  // The opposite happens for additions, we have some new code on the b side and we need to add lines to the a side to align them
-  // When it comes to moves we first check if the lines moved match on both side, for example we moved 3 on one side and it's reflected as 3 on the other side
-  // if this is the case then we don't need to do work. This is not always the case, for example you can have
-  //
-  // if (true)
-  //
-  // ---------
-  //
-  // if (
-  //  true
-  // )
-  //
-  // In this case the moves don't match so we calculate the difference and then insert the new lines on the side that correspond
-  for (const { nodeA, nodeB, type } of changes) {
-    switch (type) {
-      case ChangeType.deletion: {
-        const [newLines, offset] = insertNewlines(nodeA?.lineNumberStart!, nodeA?.lineNumberEnd!, "b");
-        linesB = newLines;
-        offsetB = offset;
-        break;
+  // Sort descending, longest lcs first
+  const _layoutShifts = layoutShifts.sort((a, b) => b.lcs - a.lcs)
+
+  for (const shift of _layoutShifts) {
+    if (shift.a.size) {
+      for (const lineNumber of shift.a.keys()) {
+        // TODO: check if shift still applies
+        linesA = insertNewlines(lineNumber, "a");
       }
+    }
 
-      case ChangeType.addition: {
-        const [newLines, offset] = insertNewlines(nodeB?.lineNumberStart!, nodeB?.lineNumberEnd!, "a");
-        linesA = newLines;
-        offsetA = offset;
-        break;
+    if (shift.b.size) {
+      for (const lineNumber of shift.b.keys()) {
+        // TODO: check if shift still applies
+        linesB = insertNewlines(lineNumber, "b");
       }
-
-      case ChangeType.move: {
-        const linesMovedA = Math.abs(nodeA?.lineNumberStart! - nodeA?.lineNumberEnd!) + 1;
-        const linesMovedB = Math.abs(nodeB?.lineNumberStart! - nodeB?.lineNumberEnd!) + 1;
-
-        if (linesMovedA === linesMovedB) {
-          continue;
-        }
-
-        if (linesMovedA > linesMovedB) {
-          const [newLines, offset] = insertNewlines(nodeA?.lineNumberStart!, nodeA?.lineNumberEnd!, "b");
-          linesB = newLines;
-          offsetB = offset;
-        } else {
-          const [newLines, offset] = insertNewlines(nodeB?.lineNumberStart!, nodeB?.lineNumberEnd!, "a");
-          linesA = newLines;
-          offsetA = offset;
-        }
-
-        break;
-      }
-      default:
-        throw new DebugFailure(`Unhandled type "${type}"`);
     }
   }
 
