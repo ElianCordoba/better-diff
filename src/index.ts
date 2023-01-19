@@ -4,6 +4,7 @@ import { applyChangesToSources, asciiRenderFn, DiffRendererFn, getAlignedSources
 import { serialize } from "./serializer";
 import { ChangeType, DiffResult, SerializedResponse } from "./types";
 import { Node } from './node'
+import { AlignmentTable } from "./alignmentTable";
 
 // These options have their own tests under the /tests/options folder
 export interface Options {
@@ -38,6 +39,7 @@ export interface Options {
   maxMatchingOffset?: number;
 
   alignmentText?: string
+  includeDebugAlignmentInfo?: boolean;
 }
 
 export function getTextWithDiffs(
@@ -47,7 +49,7 @@ export function getTextWithDiffs(
 ): { diffs: DiffResult; changes: Change[] } {
   // Set up globals
   _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
-  _context = { sourceA, sourceB, layoutShifts: [] };
+  _context = { sourceA, sourceB, layoutShifts: [], alignmentTable: new AlignmentTable(), alignmentsOfMoves: [] };
 
   const changes = getInitialDiffs(sourceA, sourceB);
   const sourcesWithDiff = applyChangesToSources(
@@ -63,7 +65,7 @@ export function getTextWithDiffs(
 export function getDiff(sourceA: string, sourceB: string, options?: Options): SerializedResponse {
   // Set up globals
   _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
-  _context = { sourceA, sourceB, layoutShifts: [] };
+  _context = { sourceA, sourceB, layoutShifts: [], alignmentTable: new AlignmentTable(), alignmentsOfMoves: [] };
 
   const changes = getInitialDiffs(sourceA, sourceB);
   return serialize(sourceA, sourceB, changes);
@@ -72,11 +74,9 @@ export function getDiff(sourceA: string, sourceB: string, options?: Options): Se
 export function getAlignedDiff(sourceA: string, sourceB: string, options?: Options) {
   // Set up globals
   _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
-  _context = { sourceA, sourceB, layoutShifts: [] };
+  _context = { sourceA, sourceB, layoutShifts: [], alignmentTable: new AlignmentTable(), alignmentsOfMoves: [] };
 
   getInitialDiffs(sourceA, sourceB);
-
-  console.log(_context.layoutShifts)
 
   return getAlignedSources(_context.layoutShifts, sourceA, sourceB, _options.alignmentText)
 }
@@ -86,7 +86,8 @@ const defaultOptions: Options = {
   minimumLinesMoved: 0,
   // TODO: Look for a good value
   maxMatchingOffset: 200,
-  alignmentText: "\n"
+  alignmentText: "\n",
+  includeDebugAlignmentInfo: false
 };
 
 let _options: Required<Options>;
@@ -155,10 +156,19 @@ export class LayoutShiftCandidate {
   }
 }
 
+export interface MoveAlignmentInfo {
+  startA: number;
+  startB: number;
+  endA: number;
+  endB: number;
+}
+
 interface Context {
   sourceA: string;
   sourceB: string;
   layoutShifts: LayoutShift[];
+  alignmentTable: AlignmentTable;
+  alignmentsOfMoves: MoveAlignmentInfo[]
 }
 
 let _context: Context;

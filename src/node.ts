@@ -7,6 +7,7 @@ interface NodeArgs {
   end: number;
   kind: SyntaxKind;
   text: string;
+  triviaLinesAbove: number;
   lineNumberStart: number;
   lineNumberEnd: number;
   index?: number;
@@ -19,6 +20,7 @@ export class Node {
   kind: SyntaxKind;
   text: string;
   prettyKind: string;
+  triviaLinesAbove: number;
   lineNumberStart: number;
   lineNumberEnd: number;
   index = -1;
@@ -27,7 +29,7 @@ export class Node {
   matchNumber = 0;
   //getSourceFn?: () => string,
   constructor(args: NodeArgs) {
-    const { fullStart, start, end, kind, lineNumberStart, lineNumberEnd, text } = args;
+    const { fullStart, start, end, kind, triviaLinesAbove, lineNumberStart, lineNumberEnd, text } = args;
 
     this.fullStart = fullStart;
     this.start = start;
@@ -36,6 +38,7 @@ export class Node {
     this.prettyKind = formatSyntaxKind(kind, text);
     this.text = text;
 
+    this.triviaLinesAbove = triviaLinesAbove;
     this.lineNumberStart = lineNumberStart;
     this.lineNumberEnd = lineNumberEnd;
   }

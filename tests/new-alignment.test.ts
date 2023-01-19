@@ -56,7 +56,7 @@ test({
 })
 
 test({
-  name: 1,
+  name: 2,
   a: `
     console.log()
   `,
@@ -71,5 +71,84 @@ test({
     <<Alignment>>
     <<Alignment>>
     <<Alignment>>
+  `
+})
+
+test({
+  name: 3,
+  a: `
+    1
+    console.log()
+  `,
+  b: `
+    console.
+    log()
+  `,
+  expA: `
+    1
+    console.log()
+    <<Alignment>>
+  `,
+  expB: `
+    <<Alignment>>
+    console.
+    log()
+  `
+})
+
+test({
+  name: 4,
+  a: `
+    1
+    2
+    3
+    console.log()
+  `,
+  b: `
+    4
+    5
+    console.log()
+  `,
+  expA: `
+    1
+    2
+    3
+    console.log()
+  `,
+  expB: `
+    4
+    5
+    <<Alignment>>
+    console.log()
+  `
+})
+
+test({
+  name: 5,
+  a: `
+    1
+    2
+    3
+    console.log()
+  `,
+  b: `
+    4
+    5
+    console
+    .log()
+  `,
+  expA: `
+    1
+    2
+    3
+    console.log()
+    <<Alignment>>
+  `,
+  expB: `
+    4
+    5
+    <<Alignment>>
+    console
+    .log()
   `
 })

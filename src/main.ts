@@ -3,9 +3,10 @@ import { Candidate, ChangeType, Range } from "./types";
 import { equals, mergeRanges } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
-import { LayoutShiftCandidate, getContext, getOptions } from "./index";
+import { getContext, getOptions } from "./index";
 import { Node } from "./node";
 import { DebugFailure } from "./debug";
+import { AlignmentTable } from "./alignmentTable";
 
 export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -53,6 +54,9 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     // We didn't find any match
     if (candidatesAtoB.length === 0 && candidatesBtoA.length === 0) {
       // TODO: Maybe push change type 'change' ?
+
+      // TODO(Align): If the widths or trivias are different, align
+
       changes.push(getChange(ChangeType.addition, a, b));
       changes.push(getChange(ChangeType.deletion, a, b));
 
@@ -145,16 +149,16 @@ function oneSidedIteration(
 
   let value = iter.next();
 
-  const layoutShiftCandidate = new LayoutShiftCandidate()
+  const { alignmentTable } = getContext()
 
   // TODO: Compact
   while (value) {
     /// Alignment: Addition / Deletion ///
     if (typeOfChange === ChangeType.addition) {
-      layoutShiftCandidate.add('a', value.lineNumberStart, value.text.length)
+      alignmentTable.add('a', value.lineNumberStart, value.text.length)
       changes.push(getChange(typeOfChange, undefined, value));
     } else {
-      layoutShiftCandidate.add('b', value.lineNumberStart, value.text.length)
+      alignmentTable.add('b', value.lineNumberStart, value.text.length)
       changes.push(getChange(typeOfChange, value, undefined));
     }
 
@@ -162,11 +166,6 @@ function oneSidedIteration(
 
     value = iter.next();
   }
-
-  if (!layoutShiftCandidate.isEmpty()) {
-    getContext().layoutShifts.push(layoutShiftCandidate.getShift(typeOfChange, value as any, value as any))
-  }
-
 
   return changes;
 }
@@ -359,7 +358,10 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   let offsetA = a.lineNumberStart
   let offsetB = b.lineNumberStart
 
-  const layoutShiftCandidate = new LayoutShiftCandidate()
+  let startA = a.lineNumberStart// + a.triviaLinesAbove
+  let startB = b.lineNumberStart// + b.triviaLinesAbove
+
+  const localAlignmentTable = new AlignmentTable()
 
   let index = indexOfBestResult;
   while (index < indexOfBestResult + lcs) {
@@ -391,9 +393,9 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
       const length = a.text.length
       if (startA < startB) {
-        layoutShiftCandidate.add('a', b.lineNumberStart, length)
+        localAlignmentTable.add('a', b.lineNumberStart, length)
       } else {
-        layoutShiftCandidate.add('b', a.lineNumberStart, length)
+        localAlignmentTable.add('b', a.lineNumberStart, length)
       }
     }
 
@@ -408,8 +410,16 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     rangeB = mergeRanges(rangeB, b.getPosition());
   }
 
-  if (!layoutShiftCandidate.isEmpty()) {
-    getContext().layoutShifts.push(layoutShiftCandidate.getShift(ChangeType.move, a, b))
+  let endA = a.lineNumberEnd
+  let endB = b.lineNumberEnd
+
+  if (!localAlignmentTable.isEmpty()) {
+    getContext().alignmentsOfMoves.push({
+      startA,
+      startB,
+      endA,
+      endB
+    })
   }
 
   // If the nodes are not in the same position then it's a move

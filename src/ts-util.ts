@@ -29,8 +29,9 @@ export function getNodesArray(source: string) {
 
       const lineNumberStart = getLineNumber(sourceFile, start);
       const lineNumberEnd = getLineNumber(sourceFile, node.end);
+      const triviaLinesAbove = lineNumberStart - getLineNumber(sourceFile, node.pos);
 
-      nodes.push(new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart: lineNumberStart, lineNumberEnd }));
+      nodes.push(new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove }));
     }
 
     depth++;

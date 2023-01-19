@@ -1,8 +1,9 @@
-import { LayoutShift, LayoutShiftCandidate } from ".";
+import { LayoutShift, MoveAlignmentInfo, getContext, getOptions } from ".";
 import { ChangeType } from "../src/types";
+import { AlignmentTable } from "./alignmentTable";
 import { Change } from "./change";
 import { DebugFailure } from "./debug";
-import { getRanges } from "./utils";
+import { getRanges, range } from "./utils";
 
 //@ts-ignore TODO: Importing normally doesnt work with vitest
 export const k = require("kleur");
@@ -183,7 +184,9 @@ export function getAlignedSources(
   let linesA = a.split("\n");
   let linesB = b.split("\n");
 
-  function insertNewlines(insertAtLine: number, side: "a" | "b", type: ChangeType): string[] {
+  const { includeDebugAlignmentInfo } = getOptions()
+
+  function insertNewlines(insertAtLine: number, side: "a" | "b", type: string): string[] {
     const chars = side === "a" ? linesA : linesB;
 
     // The -1 is because line number start at 1 but we need 0-indexed number for the array slice
@@ -192,80 +195,106 @@ export function getAlignedSources(
     const head = chars.slice(0, insertAt);
     const tail = chars.slice(insertAt, chars.length);
 
-    const compliment = getComplimentArray(1, alignmentText + type);
+    const _alignmentText = includeDebugAlignmentInfo ? alignmentText + type : alignmentText
+
+    const compliment = getComplimentArray(1, _alignmentText);
 
     const newChars = [...head, ...compliment, ...tail];
 
     return newChars;
   }
 
-  function canBeFullyAligned(shift: LayoutShift): boolean {
+  function canBeFullyAligned(moveInfo: MoveAlignmentInfo): boolean {
+    return true
+  }
+
+  function needsToBePartiallyAligned(moveInfo: MoveAlignmentInfo): boolean {
     return false
   }
 
-  const alignedALines = new Set<number>()
-  const alignedBLines = new Set<number>()
-
-  function applyShifts(shift: LayoutShift) {
-    if (shift.a.size) {
-      for (const lineNumber of shift.a.keys()) {
-        if (alignedALines.has(lineNumber)) {
-          continue
-        } else {
-          alignedALines.add(lineNumber)
-          linesA = insertNewlines(lineNumber, "a", shift.producedBy);
-        }
-
+  function applyShifts(alignmentTable: AlignmentTable, type: ChangeType) {
+    if (alignmentTable.a.size) {
+      for (const lineNumber of alignmentTable.a.keys()) {
+        linesA = insertNewlines(lineNumber, "a", type);
       }
     }
 
-    if (shift.b.size) {
-      for (const lineNumber of shift.b.keys()) {
-        if (alignedBLines.has(lineNumber)) {
-          continue
-        } else {
-          alignedBLines.add(lineNumber)
-          linesB = insertNewlines(lineNumber, "b", shift.producedBy);
-        }
+    if (alignmentTable.b.size) {
+      for (const lineNumber of alignmentTable.b.keys()) {
+        linesB = insertNewlines(lineNumber, "b", type);
       }
     }
   }
 
+  const { alignmentTable, alignmentsOfMoves } = getContext()
 
+  // Del and adds
+  applyShifts(alignmentTable, ChangeType.deletion)
 
-  // First align del/add/fmt??
+  // TODO: Add draw method to visualize the steps of the alignment
 
-  const addOrDelShifts = layoutShifts.filter(x => x.producedBy === ChangeType.addition || x.producedBy === ChangeType.deletion)
-  // Sort descending, longest lcs first
-  const moveShifts = layoutShifts.filter(x => x.producedBy === ChangeType.move).sort((a, b) => b.lcs - a.lcs)
+  // move aligns
+  for (const move of alignmentsOfMoves) {
+    if (canBeFullyAligned(move)) {
+      const startA = move.startA + alignmentTable.getOffset('a', move.startA)
+      const startB = move.startB + alignmentTable.getOffset('b', move.startB)
 
-  for (const shift of addOrDelShifts) {
-    applyShifts(shift)
-  }
+      const endA = move.endA + alignmentTable.getOffset('a', move.endA)
+      const endB = move.endB + alignmentTable.getOffset('b', move.endB)
 
-  for (const shift of moveShifts) {
-    if (canBeFullyAligned(shift)) {
-      // Full align
+      let alignmentStartsAt;
+      let sideToAlignStart: 'a' | 'b';
 
-      applyShifts(shift)
+      let alignmentEndsAt;
+      let sideToAlignEnd: 'a' | 'b';
+
+      const linesDiffStart = Math.abs(startA - startB)
+      const linesDiffEnd = Math.abs(endA - endB)
+
+      // Empezamos de la mas chica
+      if (startA < startB) {
+        alignmentStartsAt = startA
+
+        sideToAlignStart = 'b'
+      } else {
+        alignmentStartsAt = startB
+        sideToAlignStart = 'a'
+      }
+
+      // Empezamos de la mas chica
+      if (endA > endB) {
+        alignmentEndsAt = endA
+        sideToAlignEnd = 'b'
+      } else {
+        alignmentEndsAt = endB
+        sideToAlignEnd = 'a'
+      }
+
+      for (const i of range(alignmentStartsAt, alignmentStartsAt + linesDiffStart)) {
+        const result = insertNewlines(i, sideToAlignStart, ChangeType.move + ' start');
+
+        if (sideToAlignStart === 'a') {
+          linesA = result
+        } else {
+          linesB = result
+        }
+      }
+
+      for (const i of range(alignmentEndsAt, alignmentEndsAt + linesDiffEnd)) {
+        const result = insertNewlines(i, sideToAlignEnd, ChangeType.move + ' end');
+
+        if (sideToAlignEnd === 'a') {
+          linesA = result
+        } else {
+          linesB = result
+        }
+      }
+
+      // Full alignment
+    } else if (needsToBePartiallyAligned(move)) {
+      // 
     } else {
-      // Partial align
-      const { nodeA, nodeB } = shift
-
-      const startA = nodeA.lineNumberStart
-      const startB = nodeB.lineNumberStart
-
-      // const lowerSide = startA < startB ? 'a' : 'b'
-      // const upperSide = lowerSide === 'a' ? 'b' : 'a'
-
-      const newShift = new LayoutShiftCandidate()
-
-
-
-      newShift.add('a', startB, 0)
-      newShift.add('b', startA, 0)
-
-      applyShifts(newShift.getShift(ChangeType.move, nodeA, nodeB))
+      console.log('move ignored')
     }
   }
 
