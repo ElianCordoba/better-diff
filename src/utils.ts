@@ -8,7 +8,7 @@ export function formatSyntaxKind(kind: ts.SyntaxKind, text?: string) {
   // deno-lint-ignore no-explicit-any
   const formattedKind = (ts as any).Debug.formatSyntaxKind(kind);
 
-  return `${formattedKind.padEnd(25)}${textValue}`.trim();
+  return `${textValue} - ${formattedKind.padEnd(25)}`.trim();
 }
 
 export function getNodeForPrinting(item: Node) {

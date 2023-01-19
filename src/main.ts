@@ -145,11 +145,16 @@ function oneSidedIteration(
 
   let value = iter.next();
 
+  const layoutShiftCandidate = new LayoutShiftCandidate()
+
   // TODO: Compact
   while (value) {
+    /// Alignment: Addition / Deletion ///
     if (typeOfChange === ChangeType.addition) {
+      layoutShiftCandidate.add('a', value.lineNumberStart, value.text.length)
       changes.push(getChange(typeOfChange, undefined, value));
     } else {
+      layoutShiftCandidate.add('b', value.lineNumberStart, value.text.length)
       changes.push(getChange(typeOfChange, value, undefined));
     }
 
@@ -157,6 +162,11 @@ function oneSidedIteration(
 
     value = iter.next();
   }
+
+  if (!layoutShiftCandidate.isEmpty()) {
+    getContext().layoutShifts.push(layoutShiftCandidate.getShift(typeOfChange, value as any, value as any))
+  }
+
 
   return changes;
 }
@@ -349,7 +359,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   let offsetA = a.lineNumberStart
   let offsetB = b.lineNumberStart
 
-  const layoutShiftCandidates = new LayoutShiftCandidate()
+  const layoutShiftCandidate = new LayoutShiftCandidate()
 
   let index = indexOfBestResult;
   while (index < indexOfBestResult + lcs) {
@@ -381,9 +391,9 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
       const length = a.text.length
       if (startA < startB) {
-        layoutShiftCandidates.add('a', b.lineNumberStart, length)
+        layoutShiftCandidate.add('a', b.lineNumberStart, length)
       } else {
-        layoutShiftCandidates.add('b', a.lineNumberStart, length)
+        layoutShiftCandidate.add('b', a.lineNumberStart, length)
       }
     }
 
@@ -398,8 +408,8 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     rangeB = mergeRanges(rangeB, b.getPosition());
   }
 
-  if (!layoutShiftCandidates.isEmpty()) {
-    getContext().layoutShifts.push(layoutShiftCandidates.getShift())
+  if (!layoutShiftCandidate.isEmpty()) {
+    getContext().layoutShifts.push(layoutShiftCandidate.getShift(ChangeType.move, a, b))
   }
 
   // If the nodes are not in the same position then it's a move

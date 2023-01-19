@@ -185,4 +185,37 @@ export class Iterator {
       );
     }
   }
+
+  printPositionInfo() {
+    console.log(`${colorFn.blue("index")} | ${colorFn.green("line")} |  ${colorFn.magenta("pos")}  | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
+
+    const list: string[] = [];
+
+    for (const node of this.nodes) {
+      let colorFn = node.matched ? k.green : k.grey;
+
+      const index = String(node.index).padStart(3).padEnd(6);
+
+      const lineStart = node.lineNumberStart;
+      const lineEnd = node.lineNumberEnd;
+
+      const line = `${lineStart}-${lineEnd} `.padStart(5).padEnd(6);
+
+      const pos = `${node.start}-${node.end}`.padStart(6).padEnd(7);
+
+      const { kind, text } = getNodeForPrinting(node);
+      const _kind = kind.padStart(5).padEnd(25);
+      const _text = ` ${text}`;
+
+      const row = `${index}|${line}|${pos}|${colorFn(_kind)}|${_text}`;
+
+      if (node.index === this.indexOfLastItem) {
+        colorFn = k.cyan;
+      }
+
+      list.push(colorFn(row));
+    }
+
+    console.log(list.join("\n"));
+  }
 }

@@ -2,7 +2,8 @@ import { Change } from "./change";
 import { getInitialDiffs } from "./main";
 import { applyChangesToSources, asciiRenderFn, DiffRendererFn, getAlignedSources } from "./reporter";
 import { serialize } from "./serializer";
-import { DiffResult, SerializedResponse } from "./types";
+import { ChangeType, DiffResult, SerializedResponse } from "./types";
+import { Node } from './node'
 
 // These options have their own tests under the /tests/options folder
 export interface Options {
@@ -94,9 +95,12 @@ export function getOptions(): Required<Options> {
 }
 
 export interface LayoutShift {
+  producedBy: ChangeType;
   a: Map<number, number>;
   b: Map<number, number>;
   lcs: number;
+  nodeA: Node
+  nodeB: Node
 }
 
 export class LayoutShiftCandidate {
@@ -136,11 +140,13 @@ export class LayoutShiftCandidate {
     return tot
   }
 
-  getShift(): LayoutShift {
+  getShift(type: ChangeType, a: Node, b: Node): LayoutShift {
     return {
+      producedBy: type,
       a: this.a,
       b: this.b,
-      lcs: this.getLcs('a') + this.getLcs('b')
+      lcs: this.getLcs('a') + this.getLcs('b'),
+      nodeA: a, nodeB: b
     }
   }
 
