@@ -355,11 +355,8 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   let rangeA = a.getPosition();
   let rangeB = b.getPosition();
 
-  let offsetA = a.lineNumberStart
-  let offsetB = b.lineNumberStart
-
-  let startA = a.lineNumberStart// + a.triviaLinesAbove
-  let startB = b.lineNumberStart// + b.triviaLinesAbove
+  let startA = a.lineNumberStart
+  let startB = b.lineNumberStart
 
   let lengthOfCharactersMoved = 0
 
@@ -385,10 +382,10 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
     lengthOfCharactersMoved += a.text.length + b.text.length
 
-    let startA = a.lineNumberStart - offsetA
-    let startB = b.lineNumberStart - offsetB
+    let _startA = a.lineNumberStart - startA
+    let _startB = b.lineNumberStart - startB
 
-    const linesDiff = Math.abs(startA - startB);
+    const linesDiff = Math.abs(_startA - _startB);
 
     if (linesDiff !== 0) {
       if (a.text.length !== b.text.length) {
@@ -396,7 +393,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
       }
 
       const length = a.text.length
-      if (startA < startB) {
+      if (_startA < _startB) {
         localAlignmentTable.add('a', b.lineNumberStart, length)
       } else {
         localAlignmentTable.add('b', a.lineNumberStart, length)
@@ -417,13 +414,15 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   let endA = a.lineNumberEnd
   let endB = b.lineNumberEnd
 
-  getContext().alignmentsOfMoves.push({
-    startA,
-    startB,
-    endA,
-    endB,
-    textLength: lengthOfCharactersMoved - lcs
-  })
+  if (startA !== startB || endA !== endB) {
+    getContext().alignmentsOfMoves.push({
+      startA,
+      startB,
+      endA,
+      endB,
+      textLength: lengthOfCharactersMoved - lcs
+    })
+  }
 
   // If the nodes are not in the same position then it's a move
   // TODO: Reported in the readme, this is too sensible

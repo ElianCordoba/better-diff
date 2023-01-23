@@ -1,5 +1,5 @@
-import { LayoutShift, MoveAlignmentInfo, getContext, getOptions } from ".";
-import { ChangeType } from "../src/types";
+import { LayoutShift, getContext, getOptions } from ".";
+import { ChangeType, Side } from "../src/types";
 import { AlignmentTable } from "./alignmentTable";
 import { Change } from "./change";
 import { DebugFailure } from "./debug";
@@ -220,10 +220,6 @@ export function getAlignedSources(
     return isValid
   }
 
-  function needsToBePartiallyAligned(moveInfo: MoveAlignmentInfo): boolean {
-    return false
-  }
-
   function applyShifts(alignmentTable: AlignmentTable, type: ChangeType) {
     if (alignmentTable.a.size) {
       for (const lineNumber of alignmentTable.a.keys()) {
@@ -253,23 +249,18 @@ export function getAlignedSources(
     let startA = move.startA + alignmentTable.getOffset('a', move.startA)
     let startB = move.startB + alignmentTable.getOffset('b', move.startB)
 
-
-
-
-
-
     let linesDiffStart = Math.abs(startA - startB)
 
     let alignmentStartsAt: number | undefined = undefined;
-    let sideToAlignStart: 'a' | 'b' | undefined = undefined;
+    let sideToAlignStart: Side | undefined = undefined;
 
     if (startA === startB) {
       // No alignment happens at the start
     } else if (startA < startB) {
-      sideToAlignStart = 'a'
+      sideToAlignStart = Side.a
       alignmentStartsAt = startA
     } else {
-      sideToAlignStart = 'b'
+      sideToAlignStart = Side.b
       alignmentStartsAt = startB
     }
 
@@ -280,7 +271,7 @@ export function getAlignedSources(
 
     let linesDiffEnd = Math.abs(endA - endB)
 
-    let sideToAlignEnd: 'a' | 'b' | undefined;
+    let sideToAlignEnd: Side | undefined;
     let alignmentEndsAt: number | undefined;
 
     if (!sideToAlignStart) {
@@ -288,17 +279,17 @@ export function getAlignedSources(
       if (endA === endB) {
         // TODO
       } else if (endA < endB) {
-        sideToAlignEnd = 'a';
+        sideToAlignEnd = Side.a;
         alignmentEndsAt = endA + 1
       } else {
-        sideToAlignEnd = 'b';
+        sideToAlignEnd = Side.b;
         alignmentEndsAt = endB + 1
       }
-    } else if (sideToAlignStart === 'a') {
-      sideToAlignEnd = 'b';
+    } else if (sideToAlignStart === Side.a) {
+      sideToAlignEnd = Side.b;
       alignmentEndsAt = endB + 1
     } else {
-      sideToAlignEnd = 'a';
+      sideToAlignEnd = Side.a;
       alignmentEndsAt = endA + 1
     }
 
@@ -308,7 +299,7 @@ export function getAlignedSources(
         for (const i of range(alignmentStartsAt!, alignmentStartsAt! + linesDiffStart)) {
           const result = insertNewlines(i, sideToAlignStart!, ChangeType.move + ' start');
 
-          if (sideToAlignStart === 'a') {
+          if (sideToAlignStart === Side.a) {
             linesA = result
           } else {
             linesB = result
@@ -324,7 +315,7 @@ export function getAlignedSources(
         for (const i of range(alignmentEndsAt!, alignmentEndsAt! + linesDiffEnd)) {
           const result = insertNewlines(i, sideToAlignEnd, ChangeType.move + ' end');
 
-          if (sideToAlignEnd === 'a') {
+          if (sideToAlignEnd === Side.a) {
             linesA = result
           } else {
             linesB = result
@@ -335,11 +326,25 @@ export function getAlignedSources(
       }
 
       // Full alignment
-    } else if (needsToBePartiallyAligned(move)) {
-      console.log('move partial skipped')
-      // 
     } else {
-      console.log('move ignored')
+      function needsPartialAlignment(side: Side, at: number) {
+        return !alignmentTable[side].has(at)
+      }
+
+      // Check if we need partial alignment
+
+      const needsAlignOnAStart = needsPartialAlignment(Side.b, startA)
+      const needsAlignOnAEnd = needsPartialAlignment(Side.b, endA)
+
+      const needsAlignOnBStart = needsPartialAlignment(Side.a, startB)
+      const needsAlignOnBEnd = needsPartialAlignment(Side.a, endB)
+
+      if (needsAlignOnAStart || needsAlignOnAEnd || needsAlignOnBStart || needsAlignOnBEnd) {
+        console.log('needs partial alignment')
+        continue
+      } else {
+        console.log('Partial alignment skipped')
+      }
     }
   }
 

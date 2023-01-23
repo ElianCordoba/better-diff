@@ -1,3 +1,8 @@
+export enum Side {
+  a = "a",
+  b = "b"
+}
+
 export interface DiffResult {
   sourceA: string;
   sourceB: string;
