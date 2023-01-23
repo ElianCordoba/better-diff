@@ -204,8 +204,20 @@ export function getAlignedSources(
     return newChars;
   }
 
-  function canBeFullyAligned(moveInfo: MoveAlignmentInfo): boolean {
-    return true
+  function canBeFullyAligned(from: number, to: number): boolean {
+    let isValid = true;
+
+    loop: for (const i of range(from, to + 1)) {
+      const occurrenceInA = alignmentTable.a.has(i)
+      const occurrenceInB = alignmentTable.b.has(i)
+
+      if (occurrenceInA || occurrenceInB) {
+        isValid = false;
+        break loop;
+      }
+    }
+
+    return isValid
   }
 
   function needsToBePartiallyAligned(moveInfo: MoveAlignmentInfo): boolean {
@@ -233,65 +245,98 @@ export function getAlignedSources(
 
   // TODO: Add draw method to visualize the steps of the alignment
 
+  // Sort descending, longest lcs first
+  const sortedMoves = alignmentsOfMoves.sort((a, b) => b.textLength - a.textLength)
+
   // move aligns
-  for (const move of alignmentsOfMoves) {
-    if (canBeFullyAligned(move)) {
-      const startA = move.startA + alignmentTable.getOffset('a', move.startA)
-      const startB = move.startB + alignmentTable.getOffset('b', move.startB)
+  moves: for (const move of sortedMoves) {
+    let startA = move.startA + alignmentTable.getOffset('a', move.startA)
+    let startB = move.startB + alignmentTable.getOffset('b', move.startB)
 
-      const endA = move.endA + alignmentTable.getOffset('a', move.endA)
-      const endB = move.endB + alignmentTable.getOffset('b', move.endB)
 
-      let alignmentStartsAt;
-      let sideToAlignStart: 'a' | 'b';
 
-      let alignmentEndsAt;
-      let sideToAlignEnd: 'a' | 'b';
 
-      const linesDiffStart = Math.abs(startA - startB)
-      const linesDiffEnd = Math.abs(endA - endB)
 
-      // Empezamos de la mas chica
-      if (startA < startB) {
-        alignmentStartsAt = startA
 
-        sideToAlignStart = 'b'
+    let linesDiffStart = Math.abs(startA - startB)
+
+    let alignmentStartsAt: number | undefined = undefined;
+    let sideToAlignStart: 'a' | 'b' | undefined = undefined;
+
+    if (startA === startB) {
+      // No alignment happens at the start
+    } else if (startA < startB) {
+      sideToAlignStart = 'a'
+      alignmentStartsAt = startA
+    } else {
+      sideToAlignStart = 'b'
+      alignmentStartsAt = startB
+    }
+
+    // PONER DEBAJO DEL FOR LOOP PARA QUE RECIBA EL OFFSET ACTUALIZADO
+
+    let endA = move.endA + alignmentTable.getOffset('a', move.endA)
+    let endB = move.endB + alignmentTable.getOffset('b', move.endB)
+
+    let linesDiffEnd = Math.abs(endA - endB)
+
+    let sideToAlignEnd: 'a' | 'b' | undefined;
+    let alignmentEndsAt: number | undefined;
+
+    if (!sideToAlignStart) {
+      // If we didn't align at the start, then the end alignment side is pick base on with is the lower side
+      if (endA === endB) {
+        // TODO
+      } else if (endA < endB) {
+        sideToAlignEnd = 'a';
+        alignmentEndsAt = endA + 1
       } else {
-        alignmentStartsAt = startB
-        sideToAlignStart = 'a'
+        sideToAlignEnd = 'b';
+        alignmentEndsAt = endB + 1
       }
+    } else if (sideToAlignStart === 'a') {
+      sideToAlignEnd = 'b';
+      alignmentEndsAt = endB + 1
+    } else {
+      sideToAlignEnd = 'a';
+      alignmentEndsAt = endA + 1
+    }
 
-      // Empezamos de la mas chica
-      if (endA > endB) {
-        alignmentEndsAt = endA
-        sideToAlignEnd = 'b'
-      } else {
-        alignmentEndsAt = endB
-        sideToAlignEnd = 'a'
-      }
+    if (canBeFullyAligned(alignmentStartsAt!, alignmentEndsAt!)) {
+      if (sideToAlignStart) {
+        // Align start
+        for (const i of range(alignmentStartsAt!, alignmentStartsAt! + linesDiffStart)) {
+          const result = insertNewlines(i, sideToAlignStart!, ChangeType.move + ' start');
 
-      for (const i of range(alignmentStartsAt, alignmentStartsAt + linesDiffStart)) {
-        const result = insertNewlines(i, sideToAlignStart, ChangeType.move + ' start');
+          if (sideToAlignStart === 'a') {
+            linesA = result
+          } else {
+            linesB = result
+          }
 
-        if (sideToAlignStart === 'a') {
-          linesA = result
-        } else {
-          linesB = result
+
+          alignmentTable.add(sideToAlignStart!, i, 1)
         }
       }
 
-      for (const i of range(alignmentEndsAt, alignmentEndsAt + linesDiffEnd)) {
-        const result = insertNewlines(i, sideToAlignEnd, ChangeType.move + ' end');
+      if (sideToAlignEnd) {
+        // Align end
+        for (const i of range(alignmentEndsAt!, alignmentEndsAt! + linesDiffEnd)) {
+          const result = insertNewlines(i, sideToAlignEnd, ChangeType.move + ' end');
 
-        if (sideToAlignEnd === 'a') {
-          linesA = result
-        } else {
-          linesB = result
+          if (sideToAlignEnd === 'a') {
+            linesA = result
+          } else {
+            linesB = result
+          }
+
+          alignmentTable.add(sideToAlignEnd, i, 1)
         }
       }
 
       // Full alignment
     } else if (needsToBePartiallyAligned(move)) {
+      console.log('move partial skipped')
       // 
     } else {
       console.log('move ignored')

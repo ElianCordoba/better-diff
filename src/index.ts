@@ -161,6 +161,7 @@ export interface MoveAlignmentInfo {
   startB: number;
   endA: number;
   endB: number;
+  textLength: number;
 }
 
 interface Context {

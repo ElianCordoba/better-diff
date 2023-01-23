@@ -152,3 +152,39 @@ test({
     .log()
   `
 })
+
+test({
+  name: 6,
+  a: `
+    xx
+    1
+    2
+    3
+    4
+  `,
+  b: `
+    1
+    2
+    xx
+    3
+    4
+  `,
+  expA: `
+    <<Alignment>>
+    <<Alignment>>
+    xx
+    1
+    2
+    3
+    4
+  `,
+  expB: `
+    1
+    2
+    xx
+    <<Alignment>>
+    <<Alignment>>
+    3
+    4
+  `
+})

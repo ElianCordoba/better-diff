@@ -17,7 +17,7 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   const iterA = new Iterator(nodesA, { name: "a", source: codeA });
   const iterB = new Iterator(nodesB, { name: "b", source: codeB });
 
-  iterA.printPositionInfo(); console.log('\n'); iterB.printPositionInfo();
+  // iterA.printPositionInfo(); console.log('\n'); iterB.printPositionInfo();
 
   let a: Node | undefined;
   let b: Node | undefined;
@@ -361,6 +361,8 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   let startA = a.lineNumberStart// + a.triviaLinesAbove
   let startB = b.lineNumberStart// + b.triviaLinesAbove
 
+  let lengthOfCharactersMoved = 0
+
   const localAlignmentTable = new AlignmentTable()
 
   let index = indexOfBestResult;
@@ -380,6 +382,8 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     }
 
     /// Alignment: Move ///
+
+    lengthOfCharactersMoved += a.text.length + b.text.length
 
     let startA = a.lineNumberStart - offsetA
     let startB = b.lineNumberStart - offsetB
@@ -413,14 +417,13 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   let endA = a.lineNumberEnd
   let endB = b.lineNumberEnd
 
-  if (!localAlignmentTable.isEmpty()) {
-    getContext().alignmentsOfMoves.push({
-      startA,
-      startB,
-      endA,
-      endB
-    })
-  }
+  getContext().alignmentsOfMoves.push({
+    startA,
+    startB,
+    endA,
+    endB,
+    textLength: lengthOfCharactersMoved - lcs
+  })
 
   // If the nodes are not in the same position then it's a move
   // TODO: Reported in the readme, this is too sensible
