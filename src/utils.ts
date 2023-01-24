@@ -62,5 +62,5 @@ export function getRanges(range: Range | undefined) {
 }
 
 export function oppositeSide(side: Side): Side {
-  return side === Side.a ? Side.b : Side.a
+  return side === Side.a ? Side.b : Side.a;
 }

@@ -1,4 +1,4 @@
-import { LayoutShift, getContext, getOptions } from ".";
+import { getContext, getOptions, LayoutShift } from ".";
 import { ChangeType, Side } from "../src/types";
 import { AlignmentTable } from "./alignmentTable";
 import { Change } from "./change";
@@ -176,7 +176,6 @@ export function getComplimentArray(length: number, fillInCharacter = ""): string
 //
 // There are test covering this behavior in the file "sourceAlignment.test.ts"
 export function getAlignedSources(
-  layoutShifts: LayoutShift[],
   a: string,
   b: string,
   alignmentText = "\n",
@@ -184,7 +183,7 @@ export function getAlignedSources(
   let linesA = a.split("\n");
   let linesB = b.split("\n");
 
-  const { includeDebugAlignmentInfo } = getOptions()
+  const { includeDebugAlignmentInfo } = getOptions();
 
   function insertNewlines(insertAtLine: number, side: "a" | "b", type?: string): string[] {
     const chars = side === "a" ? linesA : linesB;
@@ -195,7 +194,7 @@ export function getAlignedSources(
     const head = chars.slice(0, insertAt);
     const tail = chars.slice(insertAt, chars.length);
 
-    const _alignmentText = includeDebugAlignmentInfo ? alignmentText + type : alignmentText
+    const _alignmentText = includeDebugAlignmentInfo ? alignmentText + type : alignmentText;
 
     const compliment = getComplimentArray(1, _alignmentText);
 
@@ -218,11 +217,11 @@ export function getAlignedSources(
     }
   }
 
-  const { alignmentTable, alignmentsOfMoves } = getContext()
+  const { alignmentTable, alignmentsOfMoves } = getContext();
 
   // First we apply the "simple" alignments, aka the ones we know are compatible and require no extra verification.
   // These are additions, deletions and formats
-  applySimpleAlignments(alignmentTable)
+  applySimpleAlignments(alignmentTable);
 
   // Then we apply the moves alignments, right now they are also simple one but in the future we want to include "full" alignment and not just partial ones
   // Before applying them we need to make sure they still apply, for example:
@@ -231,16 +230,16 @@ export function getAlignedSources(
   //          ^^^ We want to align here, but's it's already aligned, so we can skip it
   for (const move of alignmentsOfMoves) {
     function needsPartialAlignment(side: Side, at: number) {
-      return !alignmentTable[side].has(at)
+      return !alignmentTable[side].has(at);
     }
 
-    const startA = move.startA + alignmentTable.getOffset('a', move.startA)
-    const startB = move.startB + alignmentTable.getOffset('b', move.startB)
+    const startA = move.startA + alignmentTable.getOffset("a", move.startA);
+    const startB = move.startB + alignmentTable.getOffset("b", move.startB);
 
-    let endA = move.endA + alignmentTable.getOffset('a', move.endA)
-    let endB = move.endB + alignmentTable.getOffset('b', move.endB)
+    let endA = move.endA + alignmentTable.getOffset("a", move.endA);
+    let endB = move.endB + alignmentTable.getOffset("b", move.endB);
 
-    const canBeFullyAligned = endA >= startB && endB >= startA
+    const canBeFullyAligned = endA >= startB && endB >= startA;
 
     if (!canBeFullyAligned) {
       continue;
@@ -249,49 +248,49 @@ export function getAlignedSources(
     if (startA !== startB) {
       // Needs alignment at the start
 
-      const start = startA < startB ? startA : startB
-      const startLinesDiff = Math.abs(startA - startB)
-      const startAlignmentSide = startA < startB ? Side.a : Side.b
+      const start = startA < startB ? startA : startB;
+      const startLinesDiff = Math.abs(startA - startB);
+      const startAlignmentSide = startA < startB ? Side.a : Side.b;
 
       for (const i of range(start, start + startLinesDiff)) {
         if (needsPartialAlignment(startAlignmentSide, i)) {
-          if (startAlignmentSide === 'a') {
+          if (startAlignmentSide === "a") {
             linesA = insertNewlines(i, Side.a, " | Start a");
           } else {
             linesB = insertNewlines(i, Side.b, " | Start b");
           }
 
-          alignmentTable.add(startAlignmentSide, i)
+          alignmentTable.add(startAlignmentSide, i);
         }
       }
     }
 
-    endA = move.endA + alignmentTable.getOffset('a', move.endA)
-    endB = move.endB + alignmentTable.getOffset('b', move.endB)
+    endA = move.endA + alignmentTable.getOffset("a", move.endA);
+    endB = move.endB + alignmentTable.getOffset("b", move.endB);
 
     if (endA !== endB) {
       // Needs alignment at the start
 
       // We add a + 1 so that the alignment is put bellow the desired line
-      const end = (endA < endB ? endA : endB) + 1
-      const endLinesDiff = Math.abs(endA - endB)
-      const endAlignmentSide = endA < endB ? Side.a : Side.b
+      const end = (endA < endB ? endA : endB) + 1;
+      const endLinesDiff = Math.abs(endA - endB);
+      const endAlignmentSide = endA < endB ? Side.a : Side.b;
 
       for (const i of range(end, end + endLinesDiff)) {
         if (needsPartialAlignment(endAlignmentSide, i)) {
-          if (endAlignmentSide === 'a') {
+          if (endAlignmentSide === "a") {
             linesA = insertNewlines(i, Side.a, " | End a");
           } else {
             linesB = insertNewlines(i, Side.b, " | End b");
           }
 
-          alignmentTable.add(endAlignmentSide, i)
+          alignmentTable.add(endAlignmentSide, i);
         }
       }
     }
   }
 
-  const compactedLines = compactAlignments(alignmentTable, linesA, linesB)
+  const compactedLines = compactAlignments(alignmentTable, linesA, linesB);
 
   return {
     a: compactedLines.linesA.join("\n"),
@@ -300,18 +299,18 @@ export function getAlignedSources(
 }
 
 function compactAlignments(alignmentTable: AlignmentTable, _linesA: string[], _linesB: string[]) {
-  const linesA = [..._linesA]
-  const linesB = [..._linesB]
+  const linesA = [..._linesA];
+  const linesB = [..._linesB];
 
   for (const i of alignmentTable.a.keys()) {
     if (alignmentTable.b.has(i)) {
-      linesA.splice(i - 1, 1)
-      linesB.splice(i - 1, 1)
+      linesA.splice(i - 1, 1);
+      linesB.splice(i - 1, 1);
     }
   }
 
   return {
     linesA,
-    linesB
-  }
+    linesB,
+  };
 }

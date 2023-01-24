@@ -1,7 +1,6 @@
 import ts, { SourceFile } from "typescript";
 import { Node } from "./node";
 import { DebugFailure } from "./debug";
-import { formatSyntaxKind } from "./utils";
 
 type TSNode = ts.Node & { text: string };
 
@@ -14,7 +13,6 @@ export function getNodesArray(source: string) {
   function walk(node: TSNode) {
     const isReservedWord = node.kind >= ts.SyntaxKind.FirstKeyword && node.kind <= ts.SyntaxKind.LastKeyword;
     const isPunctuation = node.kind >= ts.SyntaxKind.FirstPunctuation && node.kind <= ts.SyntaxKind.LastPunctuation;
-
 
     // Only include visible node, nodes that represent some text in the source code.
     if (node.text || isReservedWord || isPunctuation) {
@@ -31,8 +29,8 @@ export function getNodesArray(source: string) {
       const lineNumberStart = getLineNumber(sourceFile, start);
       const lineNumberEnd = getLineNumber(sourceFile, node.end);
 
-      const leadingTriviaHasNewLine = node.getFullText().split('\n').length > 1
-      const triviaLinesAbove = leadingTriviaHasNewLine ? getTriviaLinesAbove(source, lineNumberStart) : 0
+      const leadingTriviaHasNewLine = node.getFullText().split("\n").length > 1;
+      const triviaLinesAbove = leadingTriviaHasNewLine ? getTriviaLinesAbove(source, lineNumberStart) : 0;
 
       nodes.push(new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove }));
     }
@@ -77,25 +75,25 @@ function getTriviaLinesAbove(source: string, startAt: number) {
 
   // -1 because line numbers are 1-indexed
   // -1 because we need to start from the previous line
-  let i = startAt - 1 - 1
+  let i = startAt - 1 - 1;
 
   let triviaLines = 0;
 
   // Iterate until there are positions to go back or we exit early
   while (i >= 0) {
-    const prev = lines.at(i)
+    const prev = lines.at(i);
 
-    if (prev?.trim() !== '') {
-      break
+    if (prev?.trim() !== "") {
+      break;
     }
 
-    triviaLines++
+    triviaLines++;
 
     // Go back further to keep checking previous lines
-    i--
+    i--;
   }
 
-  return triviaLines
+  return triviaLines;
 }
 
 // Returns an array of lines of code

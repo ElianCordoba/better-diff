@@ -1,6 +1,6 @@
 export enum Side {
   a = "a",
-  b = "b"
+  b = "b",
 }
 
 export interface DiffResult {

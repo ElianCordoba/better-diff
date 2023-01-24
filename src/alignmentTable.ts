@@ -1,5 +1,3 @@
-import { range } from "./utils";
-
 export class AlignmentTable {
   // On each side independently we store the line number and the length of the text in that line
   a = new Map<number, number>();
@@ -11,10 +9,10 @@ export class AlignmentTable {
   add(side: "a" | "b", line: number, textLength = 1) {
     let currentValue = 0;
     if (this[side].has(line)) {
-      currentValue = this[side].get(line)!
+      currentValue = this[side].get(line)!;
     }
 
-    this[side].set(line, textLength + currentValue!)
+    this[side].set(line, textLength + currentValue!);
   }
 
   // forceAdd(side: "a" | "b", line: number, textLength = 1) {
@@ -54,7 +52,7 @@ export class AlignmentTable {
   }
 
   isEmpty() {
-    return this.a.size === 0 && this.b.size === 0
+    return this.a.size === 0 && this.b.size === 0;
   }
 
   print() {

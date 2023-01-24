@@ -198,7 +198,7 @@ export class Iterator {
 
       const lineStart = node.lineNumberStart;
       const lineEnd = node.lineNumberEnd;
-      const triviaLines = String(node.triviaLinesAbove).padStart(5).padEnd(8)
+      const triviaLines = String(node.triviaLinesAbove).padStart(5).padEnd(8);
 
       const line = `${lineStart}-${lineEnd} `.padStart(5).padEnd(6);
 

@@ -1,7 +1,6 @@
 import fastify from "fastify";
 import cors from "@fastify/cors";
-import { serialize } from "./serializer";
-import { getDiff, getTextWithDiffs } from "./index";
+import { getDiff } from "./index";
 import { GetDiffPayload } from "./types";
 
 const server = fastify({ logger: true });

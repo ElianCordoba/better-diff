@@ -21,7 +21,6 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   // iterA.printPositionInfo(); console.log('\n'); iterB.printPositionInfo();
   // }
 
-
   let a: Node | undefined;
   let b: Node | undefined;
 
@@ -152,16 +151,16 @@ function oneSidedIteration(
 
   let value = iter.next();
 
-  const { alignmentTable } = getContext()
+  const { alignmentTable } = getContext();
 
   // TODO: Compact
   while (value) {
     /// Alignment: Addition / Deletion ///
     if (typeOfChange === ChangeType.addition) {
-      alignmentTable.add('a', value.lineNumberStart, value.text.length)
+      alignmentTable.add("a", value.lineNumberStart, value.text.length);
       changes.push(getChange(typeOfChange, undefined, value));
     } else {
-      alignmentTable.add('b', value.lineNumberStart, value.text.length)
+      alignmentTable.add("b", value.lineNumberStart, value.text.length);
       changes.push(getChange(typeOfChange, value, undefined));
     }
 
@@ -358,13 +357,13 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   let rangeA = a.getPosition();
   let rangeB = b.getPosition();
 
-  let startA = a.lineNumberStart
-  let startB = b.lineNumberStart
+  const startA = a.lineNumberStart;
+  const startB = b.lineNumberStart;
 
-  let textMatched = ''
+  let textMatched = "";
 
-  const { alignmentTable } = getContext()
-  const localAlignmentTable = new AlignmentTable()
+  const { alignmentTable } = getContext();
+  const localAlignmentTable = new AlignmentTable();
 
   let index = indexOfBestResult;
   while (index < indexOfBestResult + lcs) {
@@ -384,10 +383,10 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
     /// Alignment: Move ///
 
-    textMatched += a.text
+    textMatched += a.text;
 
-    let _startA = a.lineNumberStart - startA
-    let _startB = b.lineNumberStart - startB
+    const _startA = a.lineNumberStart - startA;
+    const _startB = b.lineNumberStart - startB;
 
     let alignmentHappened = false;
 
@@ -396,12 +395,12 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
       alignmentHappened = true;
 
       // It's a guarantee that both "a" and "b" text are of the same length here
-      const length = a.text.length
+      const length = a.text.length;
 
       if (_startA < _startB) {
-        localAlignmentTable.add('a', b.lineNumberStart, length)
+        localAlignmentTable.add("a", b.lineNumberStart, length);
       } else {
-        localAlignmentTable.add('b', a.lineNumberStart, length)
+        localAlignmentTable.add("b", a.lineNumberStart, length);
       }
     }
 
@@ -409,11 +408,11 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     if (!alignmentHappened && triviaLinesDiff !== 0) {
       if (a.triviaLinesAbove < b.triviaLinesAbove) {
         for (const i of range(a.lineNumberStart, a.lineNumberStart + triviaLinesDiff)) {
-          alignmentTable.add('a', i)
+          alignmentTable.add("a", i);
         }
       } else {
         for (const i of range(b.lineNumberStart, b.lineNumberStart + triviaLinesDiff)) {
-          alignmentTable.add('b', i)
+          alignmentTable.add("b", i);
         }
       }
     }
@@ -429,8 +428,8 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     rangeB = mergeRanges(rangeB, b.getPosition());
   }
 
-  let endA = a.lineNumberEnd
-  let endB = b.lineNumberEnd
+  const endA = a.lineNumberEnd;
+  const endB = b.lineNumberEnd;
 
   if (startA !== startB || endA !== endB) {
     getContext().alignmentsOfMoves.push({
@@ -438,8 +437,8 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
       startB,
       endA,
       endB,
-      text: textMatched
-    })
+      text: textMatched,
+    });
   }
 
   // If the nodes are not in the same position then it's a move
