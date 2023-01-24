@@ -235,27 +235,37 @@ export function getAlignedSources(
     }
 
     const startA = move.startA + alignmentTable.getOffset('a', move.startA)
-    if (needsPartialAlignment(Side.b, startA)) {
-      linesB = insertNewlines(startA, Side.b, " | Start a");
-      alignmentTable.add(Side.b, startA)
+    const startB = move.startB + alignmentTable.getOffset('b', move.startB)
+
+    if (startA === startB) {
+
+    } else if (startA < startB) {
+      if (needsPartialAlignment(Side.b, startA)) {
+        linesB = insertNewlines(startA, Side.b, " | Start a");
+        alignmentTable.add(Side.b, startA)
+      }
+    } else {
+      if (needsPartialAlignment(Side.a, startB)) {
+        linesA = insertNewlines(startB, Side.a, " | Start b");
+        alignmentTable.add(Side.a, startB)
+      }
     }
 
     const endA = move.endA + alignmentTable.getOffset('a', move.endA)
-    if (needsPartialAlignment(Side.b, endA)) {
-      linesB = insertNewlines(endA, Side.b, " | End a");
-      alignmentTable.add(Side.b, endA)
-    }
-
-    const startB = move.startB + alignmentTable.getOffset('b', move.startB)
-    if (needsPartialAlignment(Side.a, startB)) {
-      linesA = insertNewlines(startB, Side.a, " | Start b");
-      alignmentTable.add(Side.a, startB)
-    }
-
     const endB = move.endB + alignmentTable.getOffset('b', move.endB)
-    if (needsPartialAlignment(Side.a, endB)) {
-      linesA = insertNewlines(endB, Side.a, " | End b");
-      alignmentTable.add(Side.a, endB)
+
+    if (endA === endB) {
+
+    } else if (endA < endB) {
+      if (needsPartialAlignment(Side.a, endB)) {
+        linesA = insertNewlines(endB, Side.a, " | End b");
+        alignmentTable.add(Side.a, endB)
+      }
+    } else {
+      if (needsPartialAlignment(Side.b, endA)) {
+        linesB = insertNewlines(endA, Side.b, " | End a");
+        alignmentTable.add(Side.b, endA)
+      }
     }
   }
 
