@@ -1,3 +1,5 @@
+import { Side } from "./types";
+
 export class AlignmentTable {
   // On each side independently we store the line number and the length of the text in that line
   a = new Map<number, number>();
@@ -6,7 +8,7 @@ export class AlignmentTable {
   // lastLineA = Infinity
   // lastLineB = Infinity
 
-  add(side: "a" | "b", line: number, textLength = 1) {
+  add(side: Side, line: number, textLength = 1) {
     let currentValue = 0;
     if (this[side].has(line)) {
       currentValue = this[side].get(line)!;
@@ -37,8 +39,8 @@ export class AlignmentTable {
   //   return val;
   // }
 
-  getOffset(side: "a" | "b", line: number) {
-    const _side = side === "a" ? this.a : this.b;
+  getOffset(side: Side, line: number) {
+    const _side = side === Side.a ? this.a : this.b;
 
     let offset = 0;
     for (const lineWithAlignment of _side.keys()) {

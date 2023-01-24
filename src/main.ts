@@ -1,5 +1,5 @@
 import { getNodesArray } from "./ts-util";
-import { Candidate, ChangeType, Range } from "./types";
+import { Candidate, ChangeType, Range, Side } from "./types";
 import { equals, mergeRanges, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
@@ -14,8 +14,8 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   const nodesA = getNodesArray(codeA);
   const nodesB = getNodesArray(codeB);
 
-  const iterA = new Iterator(nodesA, { name: "a", source: codeA });
-  const iterB = new Iterator(nodesB, { name: "b", source: codeB });
+  const iterA = new Iterator(nodesA, { name: Side.a, source: codeA });
+  const iterB = new Iterator(nodesB, { name: Side.b, source: codeB });
 
   // if (!import.meta.vitest) {
   // iterA.printPositionInfo(); console.log('\n'); iterB.printPositionInfo();
@@ -157,10 +157,10 @@ function oneSidedIteration(
   while (value) {
     /// Alignment: Addition / Deletion ///
     if (typeOfChange === ChangeType.addition) {
-      alignmentTable.add("a", value.lineNumberStart, value.text.length);
+      alignmentTable.add(Side.a, value.lineNumberStart, value.text.length);
       changes.push(getChange(typeOfChange, undefined, value));
     } else {
-      alignmentTable.add("b", value.lineNumberStart, value.text.length);
+      alignmentTable.add(Side.b, value.lineNumberStart, value.text.length);
       changes.push(getChange(typeOfChange, value, undefined));
     }
 
@@ -398,9 +398,9 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
       const length = a.text.length;
 
       if (_startA < _startB) {
-        localAlignmentTable.add("a", b.lineNumberStart, length);
+        localAlignmentTable.add(Side.a, b.lineNumberStart, length);
       } else {
-        localAlignmentTable.add("b", a.lineNumberStart, length);
+        localAlignmentTable.add(Side.b, a.lineNumberStart, length);
       }
     }
 
@@ -408,11 +408,11 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     if (!alignmentHappened && triviaLinesDiff !== 0) {
       if (a.triviaLinesAbove < b.triviaLinesAbove) {
         for (const i of range(a.lineNumberStart, a.lineNumberStart + triviaLinesDiff)) {
-          alignmentTable.add("a", i);
+          alignmentTable.add(Side.a, i);
         }
       } else {
         for (const i of range(b.lineNumberStart, b.lineNumberStart + triviaLinesDiff)) {
-          alignmentTable.add("b", i);
+          alignmentTable.add(Side.b, i);
         }
       }
     }

@@ -2,7 +2,7 @@ import { Change } from "./change";
 import { getInitialDiffs } from "./main";
 import { applyChangesToSources, asciiRenderFn, DiffRendererFn, getAlignedSources } from "./reporter";
 import { serialize } from "./serializer";
-import { ChangeType, DiffResult, SerializedResponse } from "./types";
+import { ChangeType, DiffResult, SerializedResponse, Side } from "./types";
 import { Node } from "./node";
 import { AlignmentTable } from "./alignmentTable";
 
@@ -110,10 +110,10 @@ export class LayoutShiftCandidate {
     // Value: Length of the string
     public a = new Map<number, number>(),
     public b = new Map<number, number>(),
-  ) { }
+  ) {}
 
-  add(side: "a" | "b", at: number, length: number) {
-    if (side === "a") {
+  add(side: Side, at: number, length: number) {
+    if (side === Side.a) {
       if (this.a.has(at)) {
         const currentValue = this.a.get(at)!;
 
@@ -132,8 +132,8 @@ export class LayoutShiftCandidate {
     }
   }
 
-  getLcs(side: "a" | "b") {
-    const _side = side === "a" ? this.a : this.b;
+  getLcs(side: Side) {
+    const _side = side === Side.a ? this.a : this.b;
 
     let tot = 0;
     _side.forEach((x) => tot += x);
@@ -146,7 +146,7 @@ export class LayoutShiftCandidate {
       producedBy: type,
       a: this.a,
       b: this.b,
-      lcs: this.getLcs("a") + this.getLcs("b"),
+      lcs: this.getLcs(Side.a) + this.getLcs(Side.b),
       nodeA: a,
       nodeB: b,
     };

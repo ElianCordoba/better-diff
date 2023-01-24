@@ -185,8 +185,8 @@ export function getAlignedSources(
 
   const { includeDebugAlignmentInfo } = getOptions();
 
-  function insertNewlines(insertAtLine: number, side: "a" | "b", type?: string): string[] {
-    const chars = side === "a" ? linesA : linesB;
+  function insertNewlines(insertAtLine: number, side: Side.a | Side.b, type?: string): string[] {
+    const chars = side === Side.a ? linesA : linesB;
 
     // The -1 is because line number start at 1 but we need 0-indexed number for the array slice
     const insertAt = (insertAtLine - 1);
@@ -206,13 +206,13 @@ export function getAlignedSources(
   function applySimpleAlignments(alignmentTable: AlignmentTable) {
     if (alignmentTable.a.size) {
       for (const lineNumber of alignmentTable.a.keys()) {
-        linesA = insertNewlines(lineNumber, "a");
+        linesA = insertNewlines(lineNumber, Side.a);
       }
     }
 
     if (alignmentTable.b.size) {
       for (const lineNumber of alignmentTable.b.keys()) {
-        linesB = insertNewlines(lineNumber, "b");
+        linesB = insertNewlines(lineNumber, Side.b);
       }
     }
   }
@@ -233,11 +233,11 @@ export function getAlignedSources(
       return !alignmentTable[side].has(at);
     }
 
-    const startA = move.startA + alignmentTable.getOffset("a", move.startA);
-    const startB = move.startB + alignmentTable.getOffset("b", move.startB);
+    const startA = move.startA + alignmentTable.getOffset(Side.a, move.startA);
+    const startB = move.startB + alignmentTable.getOffset(Side.b, move.startB);
 
-    let endA = move.endA + alignmentTable.getOffset("a", move.endA);
-    let endB = move.endB + alignmentTable.getOffset("b", move.endB);
+    let endA = move.endA + alignmentTable.getOffset(Side.a, move.endA);
+    let endB = move.endB + alignmentTable.getOffset(Side.b, move.endB);
 
     const canBeFullyAligned = endA >= startB && endB >= startA;
 
@@ -254,7 +254,7 @@ export function getAlignedSources(
 
       for (const i of range(start, start + startLinesDiff)) {
         if (needsPartialAlignment(startAlignmentSide, i)) {
-          if (startAlignmentSide === "a") {
+          if (startAlignmentSide === Side.a) {
             linesA = insertNewlines(i, Side.a, " | Start a");
           } else {
             linesB = insertNewlines(i, Side.b, " | Start b");
@@ -265,8 +265,8 @@ export function getAlignedSources(
       }
     }
 
-    endA = move.endA + alignmentTable.getOffset("a", move.endA);
-    endB = move.endB + alignmentTable.getOffset("b", move.endB);
+    endA = move.endA + alignmentTable.getOffset(Side.a, move.endA);
+    endB = move.endB + alignmentTable.getOffset(Side.b, move.endB);
 
     if (endA !== endB) {
       // Needs alignment at the start
@@ -278,7 +278,7 @@ export function getAlignedSources(
 
       for (const i of range(end, end + endLinesDiff)) {
         if (needsPartialAlignment(endAlignmentSide, i)) {
-          if (endAlignmentSide === "a") {
+          if (endAlignmentSide === Side.a) {
             linesA = insertNewlines(i, Side.a, " | End a");
           } else {
             linesB = insertNewlines(i, Side.b, " | End b");
