@@ -325,3 +325,263 @@ test({
     x 
   `
 })
+
+test({
+  name: 14,
+  a: `
+
+    print()
+  `,
+  b: `
+
+
+    print()
+  `,
+  expA: `
+
+    <<Alignment>>
+    print()
+  `,
+});
+
+test({
+  name: 15,
+  a: `
+    1
+    print()
+  `,
+  b: `
+    1
+
+    print()
+  `,
+  expA: `
+    1
+    print()
+    <<Alignment>>
+  `,
+});
+
+test({
+  name: 16,
+  a: `
+    1
+    print()
+  `,
+  b: `
+
+    print()
+  `,
+  expA: `
+    1
+    <<Alignment>>
+    <<Alignment>>
+    print()
+  `,
+  expB: `
+    <<Alignment>>
+
+    print()
+  `
+});
+
+test({
+  name: 17,
+  a: `
+    1
+    x
+    2
+  `,
+  b: `
+    1
+
+    2
+  `,
+  expA: `
+    1
+    x
+    <<Alignment>>
+    2
+  `,
+  expB: `
+    1
+    <<Alignment>>
+
+    2
+  `,
+});
+
+test({
+  name: 18,
+  a: `
+    1
+    print()
+    2
+  `,
+  b: `
+    1
+
+    print()
+    2
+  `,
+  expA: `
+    1
+    print()
+    2
+    <<Alignment>>
+  `,
+});
+
+// TODO(Improve): Expected B should have one more alignment
+test({
+  name: 19,
+  a: `
+    1
+    2
+    3
+    print()
+  `,
+  b: `
+    print()
+  `,
+  expA: `
+    1
+    2
+    3
+    <<Alignment>>
+    print()
+  `,
+  expB: `
+    <<Alignment>>
+    <<Alignment>>
+    <<Alignment>>
+    print()
+  `,
+});
+
+test({
+  name: 20,
+  a: `
+    1x
+  `,
+  b: `
+    x
+  `,
+});
+
+test({
+  name: 21,
+  a: `
+    print()
+  `,
+  b: `
+    print
+    ()
+  `,
+  expA: `
+    print()
+    <<Alignment>>
+  `,
+});
+
+test({
+  name: 22,
+  a: `
+    print()
+  `,
+  b: `
+    print
+    (
+
+    )
+  `,
+  expA: `
+    print()
+    <<Alignment>>
+    <<Alignment>>
+    <<Alignment>>
+  `,
+});
+
+test({
+  name: 23,
+  a: `
+    1
+    print(true) {}
+  `,
+  b: `
+    print(
+      true
+    ) {
+
+    }
+  `,
+  expA: `
+    1
+    print(true) {}
+    <<Alignment>>
+    <<Alignment>>
+    <<Alignment>>
+    <<Alignment>>
+  `,
+  expB: `
+    <<Alignment>>
+    print(
+      true
+    ) {
+
+    }
+  `,
+});
+
+test({
+  name: 24,
+  a: `
+    1
+    1
+    x
+    1
+    1
+  `,
+  b: `
+    x
+  `,
+  expA: `
+    1
+    1
+    <<Alignment>>
+    x
+    1
+    1
+  `,
+  expB: `
+    <<Alignment>>
+    <<Alignment>>
+    x
+    <<Alignment>>
+    <<Alignment>>
+  `,
+});
+
+// TODO(Improve)
+// test({
+//   a: `
+//     console.log()
+//   `,
+//   b: `
+//     1
+//     2
+//     3
+//     console
+//     .
+//     log()
+//   `,
+//   expA: `
+//     <<Alignment>>
+//     <<Alignment>>
+//     <<Alignment>>
+//     <<Alignment>>
+//     <<Alignment>>
+//     console.log()
+//   `,
+// });

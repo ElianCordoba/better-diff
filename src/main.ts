@@ -389,8 +389,24 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     let _startA = a.lineNumberStart - startA
     let _startB = b.lineNumberStart - startB
 
+    let alignmentHappened = false;
+
+    const linesDiff = Math.abs(_startA - _startB);
+    if (linesDiff !== 0) {
+      alignmentHappened = true;
+
+      // It's a guarantee that both "a" and "b" text are of the same length here
+      const length = a.text.length
+
+      if (_startA < _startB) {
+        localAlignmentTable.add('a', b.lineNumberStart, length)
+      } else {
+        localAlignmentTable.add('b', a.lineNumberStart, length)
+      }
+    }
+
     const triviaLinesDiff = Math.abs(a.triviaLinesAbove - b.triviaLinesAbove);
-    if (triviaLinesDiff !== 0) {
+    if (!alignmentHappened && triviaLinesDiff !== 0) {
       if (a.triviaLinesAbove < b.triviaLinesAbove) {
         for (const i of range(a.lineNumberStart, a.lineNumberStart + triviaLinesDiff)) {
           alignmentTable.add('a', i)
@@ -399,18 +415,6 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
         for (const i of range(b.lineNumberStart, b.lineNumberStart + triviaLinesDiff)) {
           alignmentTable.add('b', i)
         }
-      }
-    }
-
-    const linesDiff = Math.abs(_startA - _startB);
-    if (linesDiff !== 0) {
-      // It's a guarantee that both "a" and "b" text are of the same length here
-      const length = a.text.length
-
-      if (_startA < _startB) {
-        localAlignmentTable.add('a', b.lineNumberStart, length)
-      } else {
-        localAlignmentTable.add('b', a.lineNumberStart, length)
       }
     }
 

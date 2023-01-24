@@ -1,7 +1,12 @@
+import { range } from "./utils";
+
 export class AlignmentTable {
   // On each side independently we store the line number and the length of the text in that line
   a = new Map<number, number>();
   b = new Map<number, number>();
+
+  // lastLineA = Infinity
+  // lastLineB = Infinity
 
   add(side: "a" | "b", line: number, textLength = 1) {
     let currentValue = 0;
@@ -11,6 +16,28 @@ export class AlignmentTable {
 
     this[side].set(line, textLength + currentValue!)
   }
+
+  // forceAdd(side: "a" | "b", line: number, textLength = 1) {
+  //   const nextFreeIndex = this.getNextFreeLine(side, line)
+  //   this.add(side, nextFreeIndex, textLength)
+  // }
+
+  // getNextFreeLine(side: "a" | "b", start: number) {
+  //   const _side = side === "a" ? this.a : this.b;
+  //   const max = side === "a" ? this.lastLineA : this.lastLineB;
+
+  //   let val = start;
+  //   for (const i of range(start + 1, max)) {
+  //     if (_side.has(i)) {
+  //       continue;
+  //     }
+
+  //     val = i;
+  //     break;
+  //   }
+
+  //   return val;
+  // }
 
   getOffset(side: "a" | "b", line: number) {
     const _side = side === "a" ? this.a : this.b;
