@@ -1,6 +1,6 @@
 import { getNodesArray } from "./ts-util";
 import { Candidate, ChangeType, Range } from "./types";
-import { equals, mergeRanges } from "./utils";
+import { equals, mergeRanges, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
 import { getContext, getOptions } from "./index";
@@ -17,7 +17,10 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
   const iterA = new Iterator(nodesA, { name: "a", source: codeA });
   const iterB = new Iterator(nodesB, { name: "b", source: codeB });
 
+  // if (!import.meta.vitest) {
   // iterA.printPositionInfo(); console.log('\n'); iterB.printPositionInfo();
+  // }
+
 
   let a: Node | undefined;
   let b: Node | undefined;
@@ -360,6 +363,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
   let textMatched = ''
 
+  const { alignmentTable } = getContext()
   const localAlignmentTable = new AlignmentTable()
 
   let index = indexOfBestResult;
@@ -385,14 +389,24 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     let _startA = a.lineNumberStart - startA
     let _startB = b.lineNumberStart - startB
 
-    const linesDiff = Math.abs(_startA - _startB);
-
-    if (linesDiff !== 0) {
-      if (a.text.length !== b.text.length) {
-        throw new Error('Ops')
+    const triviaLinesDiff = Math.abs(a.triviaLinesAbove - b.triviaLinesAbove);
+    if (triviaLinesDiff !== 0) {
+      if (a.triviaLinesAbove < b.triviaLinesAbove) {
+        for (const i of range(a.lineNumberStart, a.lineNumberStart + triviaLinesDiff)) {
+          alignmentTable.add('a', i)
+        }
+      } else {
+        for (const i of range(b.lineNumberStart, b.lineNumberStart + triviaLinesDiff)) {
+          alignmentTable.add('b', i)
+        }
       }
+    }
 
+    const linesDiff = Math.abs(_startA - _startB);
+    if (linesDiff !== 0) {
+      // It's a guarantee that both "a" and "b" text are of the same length here
       const length = a.text.length
+
       if (_startA < _startB) {
         localAlignmentTable.add('a', b.lineNumberStart, length)
       } else {

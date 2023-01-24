@@ -168,10 +168,18 @@ test({
     3
     4
   `,
-  expB: `
+  expA: `
+    xx
     <<Alignment>>
     1
     2
+    3
+    4
+  `,
+  expB: `
+    1
+    2
+    <<Alignment>>
     xx
     3
     4
@@ -295,7 +303,24 @@ test({
 
     x
   `,
-  expB: `
+  expA: `
+    <<Alignment>>
+    x 
+  `
+})
+
+test({
+  name: 13,
+  a: `
+    x
+  `,
+  b: `
+
+
+    x
+  `,
+  expA: `
+    <<Alignment>>
     <<Alignment>>
     x 
   `

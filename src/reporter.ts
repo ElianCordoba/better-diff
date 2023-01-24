@@ -291,8 +291,27 @@ export function getAlignedSources(
     }
   }
 
+  const compactedLines = compactAlignments(alignmentTable, linesA, linesB)
+
   return {
-    a: linesA.join("\n"),
-    b: linesB.join("\n"),
+    a: compactedLines.linesA.join("\n"),
+    b: compactedLines.linesB.join("\n"),
   };
+}
+
+function compactAlignments(alignmentTable: AlignmentTable, _linesA: string[], _linesB: string[]) {
+  const linesA = [..._linesA]
+  const linesB = [..._linesB]
+
+  for (const i of alignmentTable.a.keys()) {
+    if (alignmentTable.b.has(i)) {
+      linesA.splice(i - 1, 1)
+      linesB.splice(i - 1, 1)
+    }
+  }
+
+  return {
+    linesA,
+    linesB
+  }
 }

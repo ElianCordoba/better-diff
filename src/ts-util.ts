@@ -1,6 +1,7 @@
 import ts, { SourceFile } from "typescript";
 import { Node } from "./node";
 import { DebugFailure } from "./debug";
+import { formatSyntaxKind } from "./utils";
 
 type TSNode = ts.Node & { text: string };
 
@@ -29,7 +30,9 @@ export function getNodesArray(source: string) {
 
       const lineNumberStart = getLineNumber(sourceFile, start);
       const lineNumberEnd = getLineNumber(sourceFile, node.end);
-      const triviaLinesAbove = lineNumberStart - getLineNumber(sourceFile, node.pos);
+
+      const leadingTriviaHasNewLine = node.getFullText().split('\n').length > 1
+      const triviaLinesAbove = leadingTriviaHasNewLine ? getTriviaLinesAbove(source, lineNumberStart) : 0
 
       nodes.push(new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove }));
     }
@@ -67,6 +70,32 @@ function getSourceFile(source: string): SourceFile {
     ts.ScriptTarget.ESNext,
     true,
   );
+}
+
+function getTriviaLinesAbove(source: string, startAt: number) {
+  const lines = getArrayOrLines(source);
+
+  // -1 because line numbers are 1-indexed
+  // -1 because we need to start from the previous line
+  let i = startAt - 1 - 1
+
+  let triviaLines = 0;
+
+  // Iterate until there are positions to go back or we exit early
+  while (i >= 0) {
+    const prev = lines.at(i)
+
+    if (prev?.trim() !== '') {
+      break
+    }
+
+    triviaLines++
+
+    // Go back further to keep checking previous lines
+    i--
+  }
+
+  return triviaLines
 }
 
 // Returns an array of lines of code
