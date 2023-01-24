@@ -186,7 +186,7 @@ export function getAlignedSources(
 
   const { includeDebugAlignmentInfo } = getOptions()
 
-  function insertNewlines(insertAtLine: number, side: "a" | "b", type: string): string[] {
+  function insertNewlines(insertAtLine: number, side: "a" | "b", type?: string): string[] {
     const chars = side === "a" ? linesA : linesB;
 
     // The -1 is because line number start at 1 but we need 0-indexed number for the array slice
@@ -204,147 +204,58 @@ export function getAlignedSources(
     return newChars;
   }
 
-  function canBeFullyAligned(from: number, to: number): boolean {
-    let isValid = true;
-
-    loop: for (const i of range(from, to + 1)) {
-      const occurrenceInA = alignmentTable.a.has(i)
-      const occurrenceInB = alignmentTable.b.has(i)
-
-      if (occurrenceInA || occurrenceInB) {
-        isValid = false;
-        break loop;
-      }
-    }
-
-    return isValid
-  }
-
-  function applyShifts(alignmentTable: AlignmentTable, type: ChangeType) {
+  function applySimpleAlignments(alignmentTable: AlignmentTable) {
     if (alignmentTable.a.size) {
       for (const lineNumber of alignmentTable.a.keys()) {
-        linesA = insertNewlines(lineNumber, "a", type);
+        linesA = insertNewlines(lineNumber, "a");
       }
     }
 
     if (alignmentTable.b.size) {
       for (const lineNumber of alignmentTable.b.keys()) {
-        linesB = insertNewlines(lineNumber, "b", type);
+        linesB = insertNewlines(lineNumber, "b");
       }
     }
   }
 
   const { alignmentTable, alignmentsOfMoves } = getContext()
 
-  // Del and adds
-  applyShifts(alignmentTable, ChangeType.deletion)
+  // First we apply the "simple" alignments, aka the ones we know are compatible and require no extra verification.
+  // These are additions, deletions and formats
+  applySimpleAlignments(alignmentTable)
 
-  // TODO: Add draw method to visualize the steps of the alignment
-
-  // Sort descending, longest lcs first
-  const sortedMoves = alignmentsOfMoves.sort((a, b) => b.textLength - a.textLength)
-
-  // move aligns
-  moves: for (const move of sortedMoves) {
-    let startA = move.startA + alignmentTable.getOffset('a', move.startA)
-    let startB = move.startB + alignmentTable.getOffset('b', move.startB)
-
-    let linesDiffStart = Math.abs(startA - startB)
-
-    let alignmentStartsAt: number | undefined = undefined;
-    let sideToAlignStart: Side | undefined = undefined;
-
-    if (startA === startB) {
-      // No alignment happens at the start
-    } else if (startA < startB) {
-      sideToAlignStart = Side.a
-      alignmentStartsAt = startA
-    } else {
-      sideToAlignStart = Side.b
-      alignmentStartsAt = startB
+  // Then we apply the moves alignments, right now they are also simple one but in the future we want to include "full" alignment and not just partial ones
+  // Before applying them we need to make sure they still apply, for example:
+  //
+  //   1   |   -
+  //          ^^^ We want to align here, but's it's already aligned, so we can skip it
+  for (const move of alignmentsOfMoves) {
+    function needsPartialAlignment(side: Side, at: number) {
+      return !alignmentTable[side].has(at)
     }
 
-    // PONER DEBAJO DEL FOR LOOP PARA QUE RECIBA EL OFFSET ACTUALIZADO
-
-    let endA = move.endA + alignmentTable.getOffset('a', move.endA)
-    let endB = move.endB + alignmentTable.getOffset('b', move.endB)
-
-    let linesDiffEnd = Math.abs(endA - endB)
-
-    let sideToAlignEnd: Side | undefined;
-    let alignmentEndsAt: number | undefined;
-
-    if (!sideToAlignStart) {
-      // If we didn't align at the start, then the end alignment side is pick base on with is the lower side
-      if (endA === endB) {
-        // TODO
-      } else if (endA < endB) {
-        sideToAlignEnd = Side.a;
-        alignmentEndsAt = endA + 1
-      } else {
-        sideToAlignEnd = Side.b;
-        alignmentEndsAt = endB + 1
-      }
-    } else if (sideToAlignStart === Side.a) {
-      sideToAlignEnd = Side.b;
-      alignmentEndsAt = endB + 1
-    } else {
-      sideToAlignEnd = Side.a;
-      alignmentEndsAt = endA + 1
+    const startA = move.startA + alignmentTable.getOffset('a', move.startA)
+    if (needsPartialAlignment(Side.b, startA)) {
+      linesB = insertNewlines(startA, Side.b, " | Start a");
+      alignmentTable.add(Side.b, startA)
     }
 
-    if (canBeFullyAligned(alignmentStartsAt!, alignmentEndsAt!)) {
-      if (sideToAlignStart) {
-        // Align start
-        for (const i of range(alignmentStartsAt!, alignmentStartsAt! + linesDiffStart)) {
-          const result = insertNewlines(i, sideToAlignStart!, ChangeType.move + ' start');
+    const endA = move.endA + alignmentTable.getOffset('a', move.endA)
+    if (needsPartialAlignment(Side.b, endA)) {
+      linesB = insertNewlines(endA, Side.b, " | End a");
+      alignmentTable.add(Side.b, endA)
+    }
 
-          if (sideToAlignStart === Side.a) {
-            linesA = result
-          } else {
-            linesB = result
-          }
+    const startB = move.startB + alignmentTable.getOffset('b', move.startB)
+    if (needsPartialAlignment(Side.a, startB)) {
+      linesA = insertNewlines(startB, Side.a, " | Start b");
+      alignmentTable.add(Side.a, startB)
+    }
 
-
-          alignmentTable.add(sideToAlignStart!, i, 1)
-        }
-      }
-
-      if (sideToAlignEnd) {
-        // Align end
-        for (const i of range(alignmentEndsAt!, alignmentEndsAt! + linesDiffEnd)) {
-          const result = insertNewlines(i, sideToAlignEnd, ChangeType.move + ' end');
-
-          if (sideToAlignEnd === Side.a) {
-            linesA = result
-          } else {
-            linesB = result
-          }
-
-          alignmentTable.add(sideToAlignEnd, i, 1)
-        }
-      }
-
-      // Full alignment
-    } else {
-      function needsPartialAlignment(side: Side, at: number) {
-        return !alignmentTable[side].has(at)
-      }
-
-      // Check if we need partial alignment
-
-      const needsAlignOnAStart = needsPartialAlignment(Side.b, startA)
-      const needsAlignOnAEnd = needsPartialAlignment(Side.b, endA)
-
-      const needsAlignOnBStart = needsPartialAlignment(Side.a, startB)
-      const needsAlignOnBEnd = needsPartialAlignment(Side.a, endB)
-
-      if (needsAlignOnAStart || needsAlignOnAEnd || needsAlignOnBStart || needsAlignOnBEnd) {
-        console.log('needs partial alignment')
-        continue
-      } else {
-        console.log('Partial alignment skipped')
-      }
+    const endB = move.endB + alignmentTable.getOffset('b', move.endB)
+    if (needsPartialAlignment(Side.a, endB)) {
+      linesA = insertNewlines(endB, Side.a, " | End b");
+      alignmentTable.add(Side.a, endB)
     }
   }
 
