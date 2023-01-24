@@ -358,7 +358,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   let startA = a.lineNumberStart
   let startB = b.lineNumberStart
 
-  let lengthOfCharactersMoved = 0
+  let textMatched = ''
 
   const localAlignmentTable = new AlignmentTable()
 
@@ -380,7 +380,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
     /// Alignment: Move ///
 
-    lengthOfCharactersMoved += a.text.length + b.text.length
+    textMatched += a.text
 
     let _startA = a.lineNumberStart - startA
     let _startB = b.lineNumberStart - startB
@@ -420,7 +420,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
       startB,
       endA,
       endB,
-      textLength: lengthOfCharactersMoved - lcs
+      text: textMatched
     })
   }
 

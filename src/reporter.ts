@@ -237,34 +237,56 @@ export function getAlignedSources(
     const startA = move.startA + alignmentTable.getOffset('a', move.startA)
     const startB = move.startB + alignmentTable.getOffset('b', move.startB)
 
-    if (startA === startB) {
+    let endA = move.endA + alignmentTable.getOffset('a', move.endA)
+    let endB = move.endB + alignmentTable.getOffset('b', move.endB)
 
-    } else if (startA < startB) {
-      if (needsPartialAlignment(Side.b, startA)) {
-        linesB = insertNewlines(startA, Side.b, " | Start a");
-        alignmentTable.add(Side.b, startA)
-      }
-    } else {
-      if (needsPartialAlignment(Side.a, startB)) {
-        linesA = insertNewlines(startB, Side.a, " | Start b");
-        alignmentTable.add(Side.a, startB)
+    const canBeFullyAligned = endA >= startB && endB >= startA
+
+    if (!canBeFullyAligned) {
+      continue;
+    }
+
+    if (startA !== startB) {
+      // Needs alignment at the start
+
+      const start = startA < startB ? startA : startB
+      const startLinesDiff = Math.abs(startA - startB)
+      const startAlignmentSide = startA < startB ? Side.a : Side.b
+
+      for (const i of range(start, start + startLinesDiff)) {
+        if (needsPartialAlignment(startAlignmentSide, i)) {
+          if (startAlignmentSide === 'a') {
+            linesA = insertNewlines(i, Side.a, " | Start a");
+          } else {
+            linesB = insertNewlines(i, Side.b, " | Start b");
+          }
+
+          alignmentTable.add(startAlignmentSide, i)
+        }
       }
     }
 
-    const endA = move.endA + alignmentTable.getOffset('a', move.endA)
-    const endB = move.endB + alignmentTable.getOffset('b', move.endB)
+    endA = move.endA + alignmentTable.getOffset('a', move.endA)
+    endB = move.endB + alignmentTable.getOffset('b', move.endB)
 
-    if (endA === endB) {
+    if (endA !== endB) {
+      // Needs alignment at the start
 
-    } else if (endA < endB) {
-      if (needsPartialAlignment(Side.a, endB)) {
-        linesA = insertNewlines(endB, Side.a, " | End b");
-        alignmentTable.add(Side.a, endB)
-      }
-    } else {
-      if (needsPartialAlignment(Side.b, endA)) {
-        linesB = insertNewlines(endA, Side.b, " | End a");
-        alignmentTable.add(Side.b, endA)
+      // We add a + 1 so that the alignment is put bellow the desired line
+      const end = (endA < endB ? endA : endB) + 1
+      const endLinesDiff = Math.abs(endA - endB)
+      const endAlignmentSide = endA < endB ? Side.a : Side.b
+
+      for (const i of range(end, end + endLinesDiff)) {
+        if (needsPartialAlignment(endAlignmentSide, i)) {
+          if (endAlignmentSide === 'a') {
+            linesA = insertNewlines(i, Side.a, " | End a");
+          } else {
+            linesB = insertNewlines(i, Side.b, " | End b");
+          }
+
+          alignmentTable.add(endAlignmentSide, i)
+        }
       }
     }
   }

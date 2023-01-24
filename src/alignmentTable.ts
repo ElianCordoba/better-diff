@@ -3,7 +3,7 @@ export class AlignmentTable {
   a = new Map<number, number>();
   b = new Map<number, number>();
 
-  add(side: "a" | "b", line: number, textLength: number) {
+  add(side: "a" | "b", line: number, textLength = 1) {
     let currentValue = 0;
     if (this[side].has(line)) {
       currentValue = this[side].get(line)!
