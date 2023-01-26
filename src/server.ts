@@ -1,6 +1,6 @@
 import fastify from "fastify";
 import cors from "@fastify/cors";
-import { getDiff } from "./index";
+import { getDiff, OutputType } from "./index";
 import { GetDiffPayload } from "./types";
 
 const server = fastify({ logger: true });
@@ -14,7 +14,7 @@ server.post("/", ({ body }, _reply) => {
   });
 
   console.time("diff");
-  const res = getDiff(a, b);
+  const res = getDiff(a, b, OutputType.serializedAlignedChunks);
   console.timeEnd("diff");
 
   return res;

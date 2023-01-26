@@ -34,6 +34,9 @@ export enum RenderInstruction {
   // No text decoration
   default = "default",
 
+  // Render blank line
+  alignment = "alignment",
+
   // Text with color
   addition = "addition",
   deletion = "deletion",

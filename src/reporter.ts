@@ -62,12 +62,8 @@ export function applyChangesToSources(
   sourceA: string,
   sourceB: string,
   changes: Change[],
-  drawFunctions?: DiffRendererFn,
 ) {
-  const drawingFunctions: DiffRendererFn = {
-    ...prettyRenderFn,
-    ...drawFunctions,
-  };
+  const { renderFn } = getOptions();
 
   let charsA = sourceA.split("");
   let charsB = sourceB.split("");
@@ -83,7 +79,7 @@ export function applyChangesToSources(
           charsB,
           start,
           end,
-          drawingFunctions.addition,
+          renderFn.addition,
         );
         break;
       }
@@ -94,13 +90,13 @@ export function applyChangesToSources(
           charsA,
           start,
           end,
-          drawingFunctions.removal,
+          renderFn.removal,
         );
         break;
       }
 
       case ChangeType.move: {
-        const drawFn = drawingFunctions.move(moveCounter);
+        const drawFn = renderFn.move(moveCounter);
 
         const resultA = getRanges(rangeA);
         charsA = getSourceWithChange(
@@ -178,12 +174,11 @@ export function getComplimentArray(length: number, fillInCharacter = ""): string
 export function getAlignedSources(
   a: string,
   b: string,
-  alignmentText = "\n",
 ) {
   let linesA = a.split("\n");
   let linesB = b.split("\n");
 
-  const { includeDebugAlignmentInfo } = getOptions();
+  const { includeDebugAlignmentInfo, alignmentText } = getOptions();
 
   function insertNewlines(insertAtLine: number, side: Side.a | Side.b, type?: string): string[] {
     const chars = side === Side.a ? linesA : linesB;
@@ -293,8 +288,8 @@ export function getAlignedSources(
   const compactedLines = compactAlignments(alignmentTable, linesA, linesB);
 
   return {
-    a: compactedLines.linesA.join("\n"),
-    b: compactedLines.linesB.join("\n"),
+    sourceA: compactedLines.linesA.join("\n"),
+    sourceB: compactedLines.linesB.join("\n"),
   };
 }
 

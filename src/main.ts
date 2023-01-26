@@ -8,7 +8,7 @@ import { Node } from "./node";
 import { DebugFailure } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
 
-export function getInitialDiffs(codeA: string, codeB: string): Change[] {
+export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
 
   const nodesA = getNodesArray(codeA);

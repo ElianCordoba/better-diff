@@ -1,6 +1,6 @@
 import { test as vTest } from "vitest";
 
-import { getAlignedDiff } from "../src";
+import { OutputType, getDiff } from "../src";
 import { validateDiff } from "./utils";
 
 interface TestInfo {
@@ -15,9 +15,10 @@ function test(testInfo: TestInfo) {
   const { a, b, expA, expB, name } = testInfo;
 
   vTest(`Test ${name}`, () => {
-    const { a: resultA, b: resultB } = getAlignedDiff(
+    const { sourceA: resultA, sourceB: resultB } = getDiff(
       a,
       b,
+      OutputType.alignedText,
       {
         alignmentText: "   <<Alignment>>",
       }
@@ -27,9 +28,10 @@ function test(testInfo: TestInfo) {
   });
 
   vTest(`Test ${name} inverse`, () => {
-    const { a: resultA, b: resultB } = getAlignedDiff(
+    const { sourceA: resultA, sourceB: resultB } = getDiff(
       b,
       a,
+      OutputType.alignedText,
       {
         alignmentText: "   <<Alignment>>",
       }
