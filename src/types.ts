@@ -34,6 +34,8 @@ export enum RenderInstruction {
   // No text decoration
   default = "default",
 
+  // TODO: This is not being used right now, we should send the frontend this information that the rendering is easier
+
   // Render blank line
   alignment = "alignment",
 
