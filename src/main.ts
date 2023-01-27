@@ -1,20 +1,25 @@
 import { getNodesArray } from "./ts-util";
-import { Candidate, ChangeType, Range } from "./types";
-import { equals, mergeRanges } from "./utils";
+import { Candidate, ChangeType, Range, Side } from "./types";
+import { equals, mergeRanges, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
-import { getOptions } from "./index";
+import { getContext, getOptions } from "./index";
 import { Node } from "./node";
 import { DebugFailure } from "./debug";
+import { AlignmentTable } from "./alignmentTable";
 
-export function getInitialDiffs(codeA: string, codeB: string): Change[] {
+export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
 
   const nodesA = getNodesArray(codeA);
   const nodesB = getNodesArray(codeB);
 
-  const iterA = new Iterator(nodesA, { name: "a", source: codeA });
-  const iterB = new Iterator(nodesB, { name: "b", source: codeB });
+  const iterA = new Iterator(nodesA, { name: Side.a, source: codeA });
+  const iterB = new Iterator(nodesB, { name: Side.b, source: codeB });
+
+  // if (!import.meta.vitest) {
+  // iterA.printPositionInfo(); console.log('\n'); iterB.printPositionInfo();
+  // }
 
   let a: Node | undefined;
   let b: Node | undefined;
@@ -51,6 +56,9 @@ export function getInitialDiffs(codeA: string, codeB: string): Change[] {
     // We didn't find any match
     if (candidatesAtoB.length === 0 && candidatesBtoA.length === 0) {
       // TODO: Maybe push change type 'change' ?
+
+      // TODO(Align): If the widths or trivias are different, align
+
       changes.push(getChange(ChangeType.addition, a, b));
       changes.push(getChange(ChangeType.deletion, a, b));
 
@@ -143,11 +151,16 @@ function oneSidedIteration(
 
   let value = iter.next();
 
+  const { alignmentTable } = getContext();
+
   // TODO: Compact
   while (value) {
+    /// Alignment: Addition / Deletion ///
     if (typeOfChange === ChangeType.addition) {
+      alignmentTable.add(Side.a, value.lineNumberStart, value.text.length);
       changes.push(getChange(typeOfChange, undefined, value));
     } else {
+      alignmentTable.add(Side.b, value.lineNumberStart, value.text.length);
       changes.push(getChange(typeOfChange, value, undefined));
     }
 
@@ -344,6 +357,14 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   let rangeA = a.getPosition();
   let rangeB = b.getPosition();
 
+  const startA = a.lineNumberStart;
+  const startB = b.lineNumberStart;
+
+  let textMatched = "";
+
+  const { alignmentTable } = getContext();
+  const localAlignmentTable = new AlignmentTable();
+
   let index = indexOfBestResult;
   while (index < indexOfBestResult + lcs) {
     a = iterA.next(indexA)!;
@@ -360,6 +381,44 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
       throw new DebugFailure(`Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
     }
 
+    /// Alignment: Move ///
+
+    textMatched += a.text;
+
+    const _startA = a.lineNumberStart - startA;
+    const _startB = b.lineNumberStart - startB;
+
+    let alignmentHappened = false;
+
+    const linesDiff = Math.abs(_startA - _startB);
+    if (linesDiff !== 0) {
+      alignmentHappened = true;
+
+      // It's a guarantee that both "a" and "b" text are of the same length here
+      const length = a.text.length;
+
+      if (_startA < _startB) {
+        localAlignmentTable.add(Side.a, b.lineNumberStart, length);
+      } else {
+        localAlignmentTable.add(Side.b, a.lineNumberStart, length);
+      }
+    }
+
+    const triviaLinesDiff = Math.abs(a.triviaLinesAbove - b.triviaLinesAbove);
+    if (!alignmentHappened && triviaLinesDiff !== 0) {
+      if (a.triviaLinesAbove < b.triviaLinesAbove) {
+        for (const i of range(a.lineNumberStart, a.lineNumberStart + triviaLinesDiff)) {
+          alignmentTable.add(Side.a, i);
+        }
+      } else {
+        for (const i of range(b.lineNumberStart, b.lineNumberStart + triviaLinesDiff)) {
+          alignmentTable.add(Side.b, i);
+        }
+      }
+    }
+
+    /// Alignment end ///
+
     // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
     if (a?.index === b?.index) {
       continue;
@@ -367,6 +426,19 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
     rangeA = mergeRanges(rangeA, a.getPosition());
     rangeB = mergeRanges(rangeB, b.getPosition());
+  }
+
+  const endA = a.lineNumberEnd;
+  const endB = b.lineNumberEnd;
+
+  if (startA !== startB || endA !== endB) {
+    getContext().alignmentsOfMoves.push({
+      startA,
+      startB,
+      endA,
+      endB,
+      text: textMatched,
+    });
   }
 
   // If the nodes are not in the same position then it's a move
