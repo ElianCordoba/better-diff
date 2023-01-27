@@ -1,8 +1,10 @@
-import { Change } from "./change";
-import { getInitialDiffs } from "./main";
-import { applyChangesToSources, asciiRenderFn, DiffRendererFn } from "./reporter";
+import { getChanges } from "./main";
+import { applyChangesToSources, asciiRenderFn, DiffRendererFn, getAlignedSources } from "./reporter";
 import { serialize } from "./serializer";
-import { DiffResult, SerializedResponse } from "./types";
+import { ChangeType, DiffResult, SerializedResponse, Side, SourceChunk } from "./types";
+import { Node } from "./node";
+import { AlignmentTable } from "./alignmentTable";
+import { DebugFailure } from "./debug";
 
 // These options have their own tests under the /tests/options folder
 export interface Options {
@@ -35,34 +37,59 @@ export interface Options {
   // There are 3 node of distances between the two "x", if "maxMatchingOffset" is set to less than 3 the move won't be found and it will be reported as an addition/removal.
   // This is present so that we have acceptable performance on long files where many nodes are present
   maxMatchingOffset?: number;
+
+  alignmentText?: string;
+  includeDebugAlignmentInfo?: boolean;
 }
 
-export function getTextWithDiffs(
+export enum OutputType {
+  serializedChunks = "serializedChunks",
+  serializedAlignedChunks = "serializedAlignedChunks",
+  text = "text",
+  alignedText = "alignedText",
+}
+
+interface ResultTypeMapper {
+  [OutputType.serializedChunks]: SerializedResponse;
+  [OutputType.serializedAlignedChunks]: SerializedResponse;
+  [OutputType.text]: { sourceA: string; sourceB: string };
+  [OutputType.alignedText]: { sourceA: string; sourceB: string };
+}
+
+export function getDiff<_OutputType extends OutputType>(
   sourceA: string,
   sourceB: string,
+  outputType: _OutputType,
   options?: Options,
-): { diffs: DiffResult; changes: Change[] } {
+): ResultTypeMapper[_OutputType] {
   // Set up globals
   _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
-  _context = { sourceA, sourceB };
+  _context = { sourceA, sourceB, alignmentTable: new AlignmentTable(), alignmentsOfMoves: [] };
 
-  const changes = getInitialDiffs(sourceA, sourceB);
-  const sourcesWithDiff = applyChangesToSources(
-    sourceA,
-    sourceB,
-    changes,
-    _options.renderFn,
-  );
+  const changes = getChanges(sourceA, sourceB);
 
-  return { diffs: sourcesWithDiff, changes: changes };
-}
+  switch (outputType) {
+    case OutputType.serializedChunks: {
+      return serialize(sourceA, sourceB, changes) as any;
+    }
 
-export function getDiff(sourceA: string, sourceB: string, options?: Options): SerializedResponse {
-  _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
-  _context = { sourceA, sourceB };
+    case OutputType.serializedAlignedChunks: {
+      const alignedSources = getAlignedSources(sourceA, sourceB);
+      return serialize(alignedSources.sourceA, alignedSources.sourceB, changes) as any;
+    }
 
-  const changes = getInitialDiffs(sourceA, sourceB);
-  return serialize(sourceA, sourceB, changes);
+    case OutputType.text: {
+      return applyChangesToSources(sourceA, sourceB, changes) as any;
+    }
+
+    case OutputType.alignedText: {
+      return getAlignedSources(sourceA, sourceB) as any;
+    }
+
+    default: {
+      throw new DebugFailure(`Unknown output type "${outputType}"`);
+    }
+  }
 }
 
 const defaultOptions: Options = {
@@ -70,6 +97,8 @@ const defaultOptions: Options = {
   minimumLinesMoved: 0,
   // TODO: Look for a good value
   maxMatchingOffset: 200,
+  alignmentText: "\n",
+  includeDebugAlignmentInfo: false,
 };
 
 let _options: Required<Options>;
@@ -77,9 +106,81 @@ export function getOptions(): Required<Options> {
   return _options;
 }
 
+export interface LayoutShift {
+  producedBy: ChangeType;
+  a: Map<number, number>;
+  b: Map<number, number>;
+  lcs: number;
+  nodeA: Node;
+  nodeB: Node;
+}
+
+export class LayoutShiftCandidate {
+  constructor(
+    // Key: Number on lines to insert on each side
+    // Value: Length of the string
+    public a = new Map<number, number>(),
+    public b = new Map<number, number>(),
+  ) { }
+
+  add(side: Side, at: number, length: number) {
+    if (side === Side.a) {
+      if (this.a.has(at)) {
+        const currentValue = this.a.get(at)!;
+
+        this.a.set(at, currentValue + length);
+      } else {
+        this.a.set(at, length);
+      }
+    } else {
+      if (this.b.has(at)) {
+        const currentValue = this.b.get(at)!;
+
+        this.b.set(at, currentValue + length);
+      } else {
+        this.b.set(at, length);
+      }
+    }
+  }
+
+  getLcs(side: Side) {
+    const _side = side === Side.a ? this.a : this.b;
+
+    let tot = 0;
+    _side.forEach((x) => tot += x);
+
+    return tot;
+  }
+
+  getShift(type: ChangeType, a: Node, b: Node): LayoutShift {
+    return {
+      producedBy: type,
+      a: this.a,
+      b: this.b,
+      lcs: this.getLcs(Side.a) + this.getLcs(Side.b),
+      nodeA: a,
+      nodeB: b,
+    };
+  }
+
+  isEmpty() {
+    return this.a.size === 0 && this.b.size === 0;
+  }
+}
+
+export interface MoveAlignmentInfo {
+  startA: number;
+  startB: number;
+  endA: number;
+  endB: number;
+  text: string;
+}
+
 interface Context {
   sourceA: string;
   sourceB: string;
+  alignmentTable: AlignmentTable;
+  alignmentsOfMoves: MoveAlignmentInfo[];
 }
 
 let _context: Context;

@@ -1,6 +1,7 @@
 import { describe, test } from "vitest";
-import { getTextWithDiffs } from "../../src";
+import { getDiff } from "../../src";
 import { validateDiff } from "../utils";
+import { OutputType } from "../../src";
 
 describe("Properly report lines moved or added/deleted respecting the option 'maxMatchingOffset'", () => {
   test("Default value, should find the move", () => {
@@ -26,7 +27,7 @@ describe("Properly report lines moved or added/deleted respecting the option 'ma
       1🔀x⏹️
     `;
 
-    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
+    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -54,7 +55,7 @@ describe("Properly report lines moved or added/deleted respecting the option 'ma
       ➕x➕
     `;
 
-    const { sourceA, sourceB } = getTextWithDiffs(a, b, { maxMatchingOffset: 3 }).diffs;
+    const { sourceA, sourceB } = getDiff(a, b, OutputType.text, { maxMatchingOffset: 3 });
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -82,7 +83,7 @@ describe("Properly report lines moved or added/deleted respecting the option 'ma
       ➕x➕
     `;
 
-    const { sourceA, sourceB } = getTextWithDiffs(a, b, { maxMatchingOffset: 3 }).diffs;
+    const { sourceA, sourceB } = getDiff(a, b, OutputType.text, { maxMatchingOffset: 3 });
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
