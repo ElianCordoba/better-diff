@@ -23,9 +23,6 @@
 		},
 		move: {
 			backgroundColor: '#1e40af8c !important'
-		},
-		alignment: {
-			backgroundColor: "#fff"
 		}
 	};
 
@@ -78,13 +75,7 @@
 				on:focusout={() => highlightMove(isMove, id, 'off')}
 				class="flex"
 			>
-				{#if chunks.length === 1 && chunk.text === '\n'}
-					""
-					<div class="alignment"></div>
-				{:else}
-					<Prism code={chunk.text} language="ts" copy={false} override={getStyles(chunk.type)} />
-				{/if}
-				
+				<Prism code={chunk.text} language="ts" copy={false} override={getStyles(chunk.type)} />
 			</div>
 		{/each}
 	</div>
@@ -96,11 +87,6 @@
 <style>
 	.line {
 		background-color: #141517;
-	}
-
-	.alignment {
-		width: 100%;
-		background-color: white;
 	}
 
 	.moveHighlight {

@@ -1,9 +1,7 @@
-import { getContext, getOptions, LayoutShift } from ".";
-import { ChangeType, Side } from "../src/types";
-import { AlignmentTable } from "./alignmentTable";
+import { ChangeType } from "../src/types";
 import { Change } from "./change";
 import { DebugFailure } from "./debug";
-import { getRanges, range } from "./utils";
+import { getRanges } from "./utils";
 
 //@ts-ignore TODO: Importing normally doesnt work with vitest
 export const k = require("kleur");
@@ -62,8 +60,12 @@ export function applyChangesToSources(
   sourceA: string,
   sourceB: string,
   changes: Change[],
+  drawFunctions?: DiffRendererFn,
 ) {
-  const { renderFn } = getOptions();
+  const drawingFunctions: DiffRendererFn = {
+    ...prettyRenderFn,
+    ...drawFunctions,
+  };
 
   let charsA = sourceA.split("");
   let charsB = sourceB.split("");
@@ -79,7 +81,7 @@ export function applyChangesToSources(
           charsB,
           start,
           end,
-          renderFn.addition,
+          drawingFunctions.addition,
         );
         break;
       }
@@ -90,13 +92,13 @@ export function applyChangesToSources(
           charsA,
           start,
           end,
-          renderFn.removal,
+          drawingFunctions.removal,
         );
         break;
       }
 
       case ChangeType.move: {
-        const drawFn = renderFn.move(moveCounter);
+        const drawFn = drawingFunctions.move(moveCounter);
 
         const resultA = getRanges(rangeA);
         charsA = getSourceWithChange(
@@ -171,141 +173,91 @@ export function getComplimentArray(length: number, fillInCharacter = ""): string
 // 1) x
 //
 // There are test covering this behavior in the file "sourceAlignment.test.ts"
-export function getAlignedSources(
-  a: string,
-  b: string,
-) {
-  let linesA = a.split("\n");
-  let linesB = b.split("\n");
+export function getAlignedSources(a: string, b: string, changes: Change[], alignmentText = "\n") {
+  let linesA = a.replace(/\n$/, "").split("\n");
+  let linesB = b.replace(/\n$/, "").split("\n");
 
-  const { includeDebugAlignmentInfo, alignmentText } = getOptions();
+  // An offset is needed to keep track of the added new lines, we need one for each side
+  let offsetA = 0;
+  let offsetB = 0;
 
-  function insertNewlines(insertAtLine: number, side: Side.a | Side.b, type?: string): string[] {
-    const chars = side === Side.a ? linesA : linesB;
+  function insertNewlines(lineStart: number, lineEnd: number, side: "a" | "b"): [string[], number] {
+    const offset = side === "a" ? offsetA : offsetB;
+    const chars = side === "a" ? linesA : linesB;
 
     // The -1 is because line number start at 1 but we need 0-indexed number for the array slice
-    const insertAt = (insertAtLine - 1);
+    const insertAt = (lineStart - 1) - offset;
 
     const head = chars.slice(0, insertAt);
     const tail = chars.slice(insertAt, chars.length);
 
-    const _alignmentText = includeDebugAlignmentInfo ? alignmentText + type : alignmentText;
-
-    const compliment = getComplimentArray(1, _alignmentText);
+    // TODO: Document the meaning of the +1
+    const linesDiff = Math.abs(lineStart - lineEnd) + 1;
+    const compliment = getComplimentArray(linesDiff, alignmentText);
 
     const newChars = [...head, ...compliment, ...tail];
 
-    return newChars;
+    return [newChars, offset + linesDiff];
   }
 
-  function applySimpleAlignments(alignmentTable: AlignmentTable) {
-    if (alignmentTable.a.size) {
-      for (const lineNumber of alignmentTable.a.keys()) {
-        linesA = insertNewlines(lineNumber, Side.a);
-      }
-    }
-
-    if (alignmentTable.b.size) {
-      for (const lineNumber of alignmentTable.b.keys()) {
-        linesB = insertNewlines(lineNumber, Side.b);
-      }
-    }
-  }
-
-  const { alignmentTable, alignmentsOfMoves } = getContext();
-
-  // First we apply the "simple" alignments, aka the ones we know are compatible and require no extra verification.
-  // These are additions, deletions and formats
-  applySimpleAlignments(alignmentTable);
-
-  // Then we apply the moves alignments, right now they are also simple one but in the future we want to include "full" alignment and not just partial ones
-  // Before applying them we need to make sure they still apply, for example:
+  // The logic works as follows:
+  // If we see a removal, means that there was a line (or more) of code that was a the a side but it's not on the b side, so we need to add it there
+  // The opposite happens for additions, we have some new code on the b side and we need to add lines to the a side to align them
+  // When it comes to moves we first check if the lines moved match on both side, for example we moved 3 on one side and it's reflected as 3 on the other side
+  // if this is the case then we don't need to do work. This is not always the case, for example you can have
   //
-  //   1   |   -
-  //          ^^^ We want to align here, but's it's already aligned, so we can skip it
-  for (const move of alignmentsOfMoves) {
-    function needsPartialAlignment(side: Side, at: number) {
-      return !alignmentTable[side].has(at);
-    }
-
-    const startA = move.startA + alignmentTable.getOffset(Side.a, move.startA);
-    const startB = move.startB + alignmentTable.getOffset(Side.b, move.startB);
-
-    let endA = move.endA + alignmentTable.getOffset(Side.a, move.endA);
-    let endB = move.endB + alignmentTable.getOffset(Side.b, move.endB);
-
-    const canBeFullyAligned = endA >= startB && endB >= startA;
-
-    if (!canBeFullyAligned) {
-      continue;
-    }
-
-    if (startA !== startB) {
-      // Needs alignment at the start
-
-      const start = startA < startB ? startA : startB;
-      const startLinesDiff = Math.abs(startA - startB);
-      const startAlignmentSide = startA < startB ? Side.a : Side.b;
-
-      for (const i of range(start, start + startLinesDiff)) {
-        if (needsPartialAlignment(startAlignmentSide, i)) {
-          if (startAlignmentSide === Side.a) {
-            linesA = insertNewlines(i, Side.a, " | Start a");
-          } else {
-            linesB = insertNewlines(i, Side.b, " | Start b");
-          }
-
-          alignmentTable.add(startAlignmentSide, i);
-        }
+  // if (true)
+  //
+  // ---------
+  //
+  // if (
+  //  true
+  // )
+  //
+  // In this case the moves don't match so we calculate the difference and then insert the new lines on the side that correspond
+  for (const { nodeA, nodeB, type } of changes) {
+    switch (type) {
+      case ChangeType.deletion: {
+        const [newLines, offset] = insertNewlines(nodeA?.lineNumberStart!, nodeA?.lineNumberEnd!, "b");
+        linesB = newLines;
+        offsetB = offset;
+        break;
       }
-    }
 
-    endA = move.endA + alignmentTable.getOffset(Side.a, move.endA);
-    endB = move.endB + alignmentTable.getOffset(Side.b, move.endB);
-
-    if (endA !== endB) {
-      // Needs alignment at the start
-
-      // We add a + 1 so that the alignment is put bellow the desired line
-      const end = (endA < endB ? endA : endB) + 1;
-      const endLinesDiff = Math.abs(endA - endB);
-      const endAlignmentSide = endA < endB ? Side.a : Side.b;
-
-      for (const i of range(end, end + endLinesDiff)) {
-        if (needsPartialAlignment(endAlignmentSide, i)) {
-          if (endAlignmentSide === Side.a) {
-            linesA = insertNewlines(i, Side.a, " | End a");
-          } else {
-            linesB = insertNewlines(i, Side.b, " | End b");
-          }
-
-          alignmentTable.add(endAlignmentSide, i);
-        }
+      case ChangeType.addition: {
+        const [newLines, offset] = insertNewlines(nodeB?.lineNumberStart!, nodeB?.lineNumberEnd!, "a");
+        linesA = newLines;
+        offsetA = offset;
+        break;
       }
-    }
-  }
 
-  const compactedLines = compactAlignments(alignmentTable, linesA, linesB);
+      case ChangeType.move: {
+        const linesMovedA = Math.abs(nodeA?.lineNumberStart! - nodeA?.lineNumberEnd!) + 1;
+        const linesMovedB = Math.abs(nodeB?.lineNumberStart! - nodeB?.lineNumberEnd!) + 1;
 
-  return {
-    sourceA: compactedLines.linesA.join("\n"),
-    sourceB: compactedLines.linesB.join("\n"),
-  };
-}
+        if (linesMovedA === linesMovedB) {
+          continue;
+        }
 
-function compactAlignments(alignmentTable: AlignmentTable, _linesA: string[], _linesB: string[]) {
-  const linesA = [..._linesA];
-  const linesB = [..._linesB];
+        if (linesMovedA > linesMovedB) {
+          const [newLines, offset] = insertNewlines(nodeA?.lineNumberStart!, nodeA?.lineNumberEnd!, "b");
+          linesB = newLines;
+          offsetB = offset;
+        } else {
+          const [newLines, offset] = insertNewlines(nodeB?.lineNumberStart!, nodeB?.lineNumberEnd!, "a");
+          linesA = newLines;
+          offsetA = offset;
+        }
 
-  for (const i of alignmentTable.a.keys()) {
-    if (alignmentTable.b.has(i)) {
-      linesA.splice(i - 1, 1);
-      linesB.splice(i - 1, 1);
+        break;
+      }
+      default:
+        throw new DebugFailure(`Unhandled type "${type}"`);
     }
   }
 
   return {
-    linesA,
-    linesB,
+    a: linesA.join("\n"),
+    b: linesB.join("\n"),
   };
 }
