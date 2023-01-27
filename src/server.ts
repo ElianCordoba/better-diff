@@ -1,6 +1,7 @@
 import fastify from "fastify";
 import cors from "@fastify/cors";
-import { getDiff, OutputType } from "./index";
+import { serialize } from "./serializer";
+import { getDiff, getTextWithDiffs } from "./index";
 import { GetDiffPayload } from "./types";
 
 const server = fastify({ logger: true });
@@ -14,8 +15,7 @@ server.post("/", ({ body }, _reply) => {
   });
 
   console.time("diff");
-  // TODO: Enable "serializedAlignedChunks"
-  const res = getDiff(a, b, OutputType.serializedChunks);
+  const res = getDiff(a, b);
   console.timeEnd("diff");
 
   return res;

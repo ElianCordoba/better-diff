@@ -1,5 +1,5 @@
 import { describe, test } from "vitest";
-import { OutputType, getDiff } from "../../src";
+import { getTextWithDiffs } from "../../src";
 import { validateDiff } from "../utils";
 
 describe("Properly report lines moved respecting the option 'minimumLinesMoved'", () => {
@@ -20,7 +20,7 @@ describe("Properly report lines moved respecting the option 'minimumLinesMoved'"
       ➕a➕ 1🔀x⏹️
     `;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -42,7 +42,7 @@ describe("Properly report lines moved respecting the option 'minimumLinesMoved'"
       ➕a➕ x
     `;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text, { minimumLinesMoved: 1 });
+    const { sourceA, sourceB } = getTextWithDiffs(a, b, { minimumLinesMoved: 1 }).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -66,7 +66,7 @@ describe("Properly report lines moved respecting the option 'minimumLinesMoved'"
       1🔀x⏹️
     `;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -90,7 +90,7 @@ describe("Properly report lines moved respecting the option 'minimumLinesMoved'"
       1🔀x⏹️
     `;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text, { minimumLinesMoved: 1 });
+    const { sourceA, sourceB } = getTextWithDiffs(a, b, { minimumLinesMoved: 1 }).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -114,7 +114,7 @@ describe("Properly report lines moved respecting the option 'minimumLinesMoved'"
       x
     `;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text, { minimumLinesMoved: 2 });
+    const { sourceA, sourceB } = getTextWithDiffs(a, b, { minimumLinesMoved: 2 }).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -140,7 +140,7 @@ describe("Properly report lines moved respecting the option 'minimumLinesMoved'"
       ➕a➕
     `;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text, { minimumLinesMoved: 3 });
+    const { sourceA, sourceB } = getTextWithDiffs(a, b, { minimumLinesMoved: 3 }).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });

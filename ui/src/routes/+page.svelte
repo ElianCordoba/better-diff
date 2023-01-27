@@ -38,8 +38,6 @@
 			return;
 		}
 
-		console.log(result)
-
 		sourceChunks = result;
 	}
 

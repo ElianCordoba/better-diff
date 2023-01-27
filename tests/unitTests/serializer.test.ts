@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { OutputType, getDiff } from "../../src";
+import { getDiff } from "../../src";
 
 test('Case 1', () => {
   const a = `
@@ -124,7 +124,7 @@ test('Case 1', () => {
     ]
   }
 
-  const result = getDiff(a, b, OutputType.serializedChunks)
+  const result = getDiff(a, b)
 
   expect(result).toEqual(expected)
 })
@@ -329,7 +329,7 @@ test('Case 2', () => {
     ]
   }
 
-  const result = getDiff(a, b, OutputType.serializedChunks)
+  const result = getDiff(a, b)
 
   expect(result).toEqual(expected)
 })

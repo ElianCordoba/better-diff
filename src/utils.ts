@@ -1,6 +1,6 @@
 import ts from "typescript";
 import { Node } from "./node";
-import { Range, Side } from "./types";
+import { Range } from "./types";
 
 export function formatSyntaxKind(kind: ts.SyntaxKind, text?: string) {
   const textValue = text ? `| "${text}"` : "";
@@ -8,7 +8,7 @@ export function formatSyntaxKind(kind: ts.SyntaxKind, text?: string) {
   // deno-lint-ignore no-explicit-any
   const formattedKind = (ts as any).Debug.formatSyntaxKind(kind);
 
-  return `${textValue} - ${formattedKind.padEnd(25)}`.trim();
+  return `${formattedKind.padEnd(25)}${textValue}`.trim();
 }
 
 export function getNodeForPrinting(item: Node) {
@@ -59,8 +59,4 @@ export function getRanges(range: Range | undefined) {
     start: range?.start || 0,
     end: range?.end || 0,
   };
-}
-
-export function oppositeSide(side: Side): Side {
-  return side === Side.a ? Side.b : Side.a;
 }

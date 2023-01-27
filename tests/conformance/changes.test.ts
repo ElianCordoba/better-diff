@@ -1,5 +1,5 @@
 import { describe, test } from "vitest";
-import { OutputType, getDiff } from "../../src";
+import { getTextWithDiffs } from "../../src";
 import { validateDiff } from "../utils";
 
 describe("Properly report line changes", () => {
@@ -10,7 +10,7 @@ describe("Properly report line changes", () => {
     const resultA = "➖0➖";
     const resultB = "➕1➕";
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -22,7 +22,7 @@ describe("Properly report line changes", () => {
     const resultA = "➖true➖";
     const resultB = "➕false➕";
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -44,7 +44,7 @@ describe("Properly report line changes", () => {
     let ➕firstName➕ = "elian"
     `;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -66,7 +66,7 @@ describe("Properly report line changes", () => {
     let name = ➕"eliam"➕
     `;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -88,7 +88,7 @@ describe("Properly report line changes", () => {
     let ➕firstName➕ = ➕"eliam"➕
     `;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -110,7 +110,7 @@ describe("Properly report line changes", () => {
     console.log(➕1➕)
     `;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
+    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
