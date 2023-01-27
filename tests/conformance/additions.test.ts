@@ -1,5 +1,5 @@
 import { describe, test } from "vitest";
-import { getTextWithDiffs } from "../../src";
+import { OutputType, getDiff } from "../../src";
 import { validateDiff } from "../utils";
 
 describe("Properly report lines added", () => {
@@ -22,7 +22,7 @@ describe("Properly report lines added", () => {
       ➕let➕ ➕age;➕
     `;
 
-    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
+    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -46,7 +46,7 @@ describe("Properly report lines added", () => {
       1🔀let name;⏹️
     `;
 
-    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
+    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -66,7 +66,7 @@ describe("Properly report lines added", () => {
       ➕let➕ ➕b;➕
     `;
 
-    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
+    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -88,7 +88,7 @@ describe("Properly report lines added", () => {
       ➕let➕ ➕c;➕
     `;
 
-    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
+    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -106,7 +106,7 @@ describe("Properly report lines added", () => {
       ➕let➕ ➕b;➕
     `;
 
-    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
+    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -132,7 +132,7 @@ describe("Properly report lines added", () => {
       ➕}➕
     `;
 
-    const { sourceA, sourceB } = getTextWithDiffs(a, b).diffs;
+    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
