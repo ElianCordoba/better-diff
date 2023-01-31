@@ -103,12 +103,9 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       changes.push(change);
     }
 
-    // TODO: The code bellow may be removed / reworked once I implement https://github.com/ElianCordoba/better-diff/issues/18
-    continue;
-
     // We look for remaining nodes at index + bestResult because we don't want to include the already matched ones
-    let remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult);
-    let remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult);
+    let remainingNodesA = iterA.getNodesFromExpressionNEW(iterA.peek(indexA, false)!);
+    let remainingNodesB = iterB.getNodesFromExpressionNEW(iterB.peek(indexB, false)!);
 
     // If we finished matching the LCS and we don't have any remaining nodes in either expression, then we are done with the matching and we can move on
     if (!remainingNodesA.length && !remainingNodesB.length) {
@@ -334,11 +331,9 @@ function getLCS(candidates: Candidate[], iterA: Iterator, iterB: Iterator, index
     // and match it with the opening paren of "fn1". A lower depth means that it will be closer to the expression we are matching
     //
     // The test that covers this logic is the one called "Properly match closing paren"
-
     if (
-      lcs > bestResult
-      // TODO: The code bellow may be removed / reworked once I implement https://github.com/ElianCordoba/better-diff/issues/18
-      // || lcs === bestResult && expressionNumber < bestExpression
+      lcs > bestResult ||
+      lcs === bestResult && expressionNumber < bestExpression
     ) {
       bestResult = lcs;
       bestIndex = index;
@@ -442,8 +437,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   }
 
   // If the nodes are not in the same position then it's a move
-  // TODO: Reported in the readme, this is too sensible
-  const didChange = a!.index !== b!.index;
+  const didChange = a!.index !== b!.index
 
   if (didChange) {
     // Since this function is reversible we need to check the perspective so that we know if the change is an addition or a removal

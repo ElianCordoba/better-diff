@@ -153,6 +153,10 @@ export function getSourceWithChange(
 }
 
 export function getComplimentArray(length: number, fillInCharacter = ""): string[] {
+  if (length < 0) {
+    throw new DebugFailure(`Length of compliment array invalid. Got ${length}`)
+  }
+
   return new Array(length).fill(fillInCharacter);
 }
 

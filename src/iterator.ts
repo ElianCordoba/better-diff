@@ -1,8 +1,9 @@
 import { equals, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
-import { getOptions } from "./index";
 import { Candidate } from "./types";
+import { DebugFailure } from "./debug";
+import { getOptions } from ".";
 
 interface IteratorOptions {
   name?: string;
@@ -16,15 +17,18 @@ export class Iterator {
 
   private indexOfLastItem = 0;
   matchNumber = 0;
-
-  constructor(private nodes: Node[], options?: IteratorOptions) {
+  public textNodes: Node[];
+  public allNodes: Node[];
+  constructor({ nodes, allNodes }: any, options?: IteratorOptions) {
+    this.textNodes = nodes
+    this.allNodes = allNodes
     this.name = options?.name;
     this.chars = options?.source?.split("");
   }
 
   next(startFrom = 0) {
-    for (let i = startFrom; i < this.nodes.length; i++) {
-      const item = this.nodes[i];
+    for (let i = startFrom; i < this.textNodes.length; i++) {
+      const item = this.textNodes[i];
 
       if (item.matched) {
         continue;
@@ -35,10 +39,10 @@ export class Iterator {
     }
   }
 
-  peek(index: number) {
-    const item = this.nodes[index];
+  peek(index: number, skipMatched = true) {
+    const item = this.textNodes[index];
 
-    if (!item || item.matched) {
+    if (!item || (skipMatched && item.matched)) {
       return;
     }
 
@@ -49,8 +53,8 @@ export class Iterator {
     // TODO: Should only apply for moves, otherwise a move, addition and move
     // will display 1 for the first move and 3 for the second
     this.matchNumber++;
-    this.nodes[index].matched = true;
-    this.nodes[index].matchNumber = this.matchNumber;
+    this.textNodes[index].matched = true;
+    this.textNodes[index].matchNumber = this.matchNumber;
   }
 
   getCandidates(
@@ -64,8 +68,8 @@ export class Iterator {
     let offset = 0;
 
     const search = (startFrom: number): void => {
-      const ahead = this.nodes[startFrom + offset];
-      const back = this.nodes[startFrom - offset];
+      const ahead = this.textNodes[startFrom + offset];
+      const back = this.textNodes[startFrom - offset];
 
       // We checked everything and nothing was found, exit early
       if (!ahead && !back) {
@@ -84,7 +88,7 @@ export class Iterator {
 
       offset++;
 
-      if (offset >= getOptions().maxMatchingOffset) {
+      if (offset >= getOptions?.()?.maxMatchingOffset) {
         return;
       }
 
@@ -96,11 +100,59 @@ export class Iterator {
     return candidates;
   }
 
+  getNodesFromExpressionNEW(node: Node): Node[] {
+    if (!node) {
+      throw new DebugFailure('Undefined node')
+    }
+
+    // Using === on two object with only return true if both object are the same, this is perfect because when we created
+    // the node instance the same one was pushed to both arrays
+    const index = this.allNodes.findIndex(x => x === node);
+
+    if (index === -1) {
+      throw new DebugFailure(`Fail to find node ${node.prettyKind}`)
+    }
+
+    let startIndex = index
+    while (true) {
+      const back = this.allNodes[startIndex]
+
+      if (back?.expressionNumber === node.expressionNumber) {
+        startIndex--
+      } else {
+        startIndex++
+        break
+      }
+    }
+
+    const expNodes: Node[] = []
+    let i = startIndex
+    while (true) {
+      const next = this.allNodes[i];
+
+      if (!next) {
+        break
+      }
+
+      if (next.expressionNumber > node.expressionNumber) {
+        break
+      }
+
+      if (!next.matched && next.isTextNode) {
+        expNodes.push(next)
+      }
+
+      i++
+    }
+
+    return expNodes
+  }
+
   getNodesFromExpression(expression: number, startIndex: number) {
     const remainingNodes: Node[] = [];
     let i = startIndex;
     while (true) {
-      const next = this.nodes[i];
+      const next = this.textNodes[i];
 
       if (!next || next.expressionNumber === expression) {
         break;
@@ -118,18 +170,19 @@ export class Iterator {
     return remainingNodes;
   }
 
-  printList() {
+  printList(nodesToPrint: 'text' | 'all' = 'text') {
     console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("exp n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
     const list: string[] = [];
 
-    for (const node of this.nodes) {
+    const _nodes = nodesToPrint === 'text' ? this.textNodes : this.allNodes
+    for (const node of _nodes) {
       let colorFn = node.matched ? k.green : k.grey;
 
       const index = String(node.index).padStart(3).padEnd(6);
 
       const matchNumber = String(node.matchNumber).padStart(5).padEnd(10);
-      const expressionNumber = String(node.expressionNumber || "-").padStart(5).padEnd(8);
+      const expressionNumber = String(node.expressionNumber ?? "-").padStart(5).padEnd(8);
 
       const { kind, text } = getNodeForPrinting(node);
       const _kind = kind.padStart(5).padEnd(25);
@@ -177,7 +230,7 @@ export class Iterator {
   }
 
   printDepth() {
-    for (const node of this.nodes) {
+    for (const node of this.textNodes) {
       console.log(
         `(${node.expressionNumber + 1})`,
         new Array(node.expressionNumber + 1).join("-"),
@@ -191,7 +244,7 @@ export class Iterator {
 
     const list: string[] = [];
 
-    for (const node of this.nodes) {
+    for (const node of this.textNodes) {
       let colorFn = node.matched ? k.green : k.grey;
 
       const index = String(node.index).padStart(3).padEnd(6);
