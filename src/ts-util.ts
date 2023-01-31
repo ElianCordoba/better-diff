@@ -7,6 +7,13 @@ type TSNode = ts.Node & { text: string };
 export function getNodesArray(source: string) {
   const sourceFile = getSourceFile(source);
 
+  if ((sourceFile as any).parseDiagnostics.length > 0) {
+    console.log(`
+      ${k.red("Aborting because parse error where found in the following code:")}
+      "${source}"
+    `)
+    process.exit()
+  }
   const nodes: Node[] = [];
   let depth = 0;
 
