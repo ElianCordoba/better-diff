@@ -9,10 +9,9 @@ export function getNodesArray(source: string) {
 
   if ((sourceFile as any).parseDiagnostics.length > 0) {
     console.log(`
-      ${k.red("Aborting because parse error where found in the following code:")}
+      ${k.yellow("Parse error found in the following code:")}
       "${source}"
     `)
-    process.exit()
   }
   const nodes: Node[] = [];
   let depth = 0;
