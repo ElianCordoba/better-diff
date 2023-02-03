@@ -1,5 +1,5 @@
 import { describe, test } from "vitest";
-import { OutputType, getDiff } from "../../src";
+import { getDiff } from "../../src";
 import { validateDiff } from "../utils";
 
 // TODO: Remove this
@@ -21,7 +21,7 @@ describe.skip("Properly report lines moved respecting the option 'minimumLinesMo
       ➕a➕ 🔀x⏹️
     `;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
+    const { sourceA, sourceB } = getDiff(a, b);
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -43,7 +43,7 @@ describe.skip("Properly report lines moved respecting the option 'minimumLinesMo
       ➕a➕ x
     `;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text, { minimumLinesMoved: 1 });
+    const { sourceA, sourceB } = getDiff(a, b, { minimumLinesMoved: 1 });
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -67,7 +67,7 @@ describe.skip("Properly report lines moved respecting the option 'minimumLinesMo
       🔀x⏹️
     `;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
+    const { sourceA, sourceB } = getDiff(a, b);
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -91,7 +91,7 @@ describe.skip("Properly report lines moved respecting the option 'minimumLinesMo
       🔀x⏹️
     `;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text, { minimumLinesMoved: 1 });
+    const { sourceA, sourceB } = getDiff(a, b, { minimumLinesMoved: 1 });
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -115,7 +115,7 @@ describe.skip("Properly report lines moved respecting the option 'minimumLinesMo
       x
     `;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text, { minimumLinesMoved: 2 });
+    const { sourceA, sourceB } = getDiff(a, b, { minimumLinesMoved: 2 });
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -141,7 +141,7 @@ describe.skip("Properly report lines moved respecting the option 'minimumLinesMo
       ➕a➕
     `;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text, { minimumLinesMoved: 3 });
+    const { sourceA, sourceB } = getDiff(a, b, { minimumLinesMoved: 3 });
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });

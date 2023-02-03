@@ -124,7 +124,7 @@ test('Case 1', () => {
     ]
   }
 
-  const result = getDiff(a, b, OutputType.serializedChunks)
+  const result = getDiff(a, b, { outputType: OutputType.serializedChunks })
 
   expect(result).toEqual(expected)
 })
@@ -329,7 +329,7 @@ test('Case 2', () => {
     ]
   }
 
-  const result = getDiff(a, b, OutputType.serializedChunks)
+  const result = getDiff(a, b, { outputType: OutputType.serializedChunks })
 
   expect(result).toEqual(expected)
 })

@@ -1,5 +1,5 @@
 import { describe, test } from "vitest";
-import { OutputType, getDiff } from "../../src";
+import { getDiff } from "../../src";
 import { validateDiff } from "../utils";
 
 describe("Ignore trivia", () => {
@@ -13,7 +13,7 @@ describe("Ignore trivia", () => {
     const resultA = a;
     const resultB = b;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
+    const { sourceA, sourceB } = getDiff(a, b);
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -28,7 +28,7 @@ describe("Ignore trivia", () => {
     const resultA = a;
     const resultB = b;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
+    const { sourceA, sourceB } = getDiff(a, b);
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });
@@ -45,7 +45,7 @@ describe("Ignore trivia", () => {
     const resultA = a;
     const resultB = b;
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
+    const { sourceA, sourceB } = getDiff(a, b);
 
     validateDiff(resultA, resultB, sourceA, sourceB);
   });

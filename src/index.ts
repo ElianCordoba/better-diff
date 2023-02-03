@@ -8,6 +8,8 @@ import { DebugFailure } from "./debug";
 
 // These options have their own tests under the /tests/options folder
 export interface Options {
+  outputType?: OutputType;
+
   renderFn?: DiffRendererFn;
 
   // Number of lines that code needs to move (either above or bellow) from original location in order to consider the change a move, otherwise it will be ignored.
@@ -56,10 +58,9 @@ interface ResultTypeMapper {
   [OutputType.alignedText]: { sourceA: string; sourceB: string };
 }
 
-export function getDiff<_OutputType extends OutputType>(
+export function getDiff<_OutputType extends OutputType = OutputType.text>(
   sourceA: string,
   sourceB: string,
-  outputType: _OutputType,
   options?: Options,
 ): ResultTypeMapper[_OutputType] {
   // Set up globals
@@ -68,7 +69,7 @@ export function getDiff<_OutputType extends OutputType>(
 
   const changes = getChanges(sourceA, sourceB);
 
-  switch (outputType) {
+  switch (_options.outputType) {
     case OutputType.serializedChunks: {
       return serialize(sourceA, sourceB, changes) as any;
     }
@@ -87,12 +88,13 @@ export function getDiff<_OutputType extends OutputType>(
     }
 
     default: {
-      throw new DebugFailure(`Unknown output type "${outputType}"`);
+      throw new DebugFailure(`Unknown output type "${_options.outputType}"`);
     }
   }
 }
 
 const defaultOptions: Options = {
+  outputType: OutputType.text,
   renderFn: asciiRenderFn,
   minimumLinesMoved: 0,
   // TODO: Look for a good value
