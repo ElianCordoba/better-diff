@@ -2,13 +2,16 @@ import ts, { SourceFile } from "typescript";
 import { Node } from "./node";
 import { DebugFailure } from "./debug";
 import { k } from "./reporter";
+import { getOptions } from ".";
 
 type TSNode = ts.Node & { text: string };
 
 export function getNodesArray(source: string) {
   const sourceFile = getSourceFile(source);
 
-  if ((sourceFile as any).parseDiagnostics.length > 0) {
+  const { ignoreErrorsOnCodeWarning } = getOptions()
+
+  if ((sourceFile as any).parseDiagnostics.length > 0 && !ignoreErrorsOnCodeWarning) {
     console.log(`
       ${k.yellow("Parse error found in the following code:")}
       "${source}"

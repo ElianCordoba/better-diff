@@ -10,6 +10,8 @@ import { DebugFailure } from "./debug";
 export interface Options {
   outputType?: OutputType;
 
+  ignoreErrorsOnCodeWarning?: boolean;
+
   renderFn?: DiffRendererFn;
 
   // Number of lines that code needs to move (either above or bellow) from original location in order to consider the change a move, otherwise it will be ignored.
@@ -95,6 +97,7 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
 
 const defaultOptions: Options = {
   outputType: OutputType.text,
+  ignoreErrorsOnCodeWarning: true,
   renderFn: asciiRenderFn,
   minimumLinesMoved: 0,
   // TODO: Look for a good value
