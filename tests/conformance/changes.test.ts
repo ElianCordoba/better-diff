@@ -1,117 +1,100 @@
-import { describe, test } from "vitest";
-import { OutputType, getDiff } from "../../src";
-import { validateDiff } from "../utils";
+import { describe } from "vitest";
+import { test } from "../utils";
 
-describe("Properly report line changes", () => {
-  test("Single line change 1", () => {
-    const a = "0";
-    const b = "1";
+describe("Properly report line changed", () => {
+  test({
+    name: "Single line change 1",
+    a: `
+      0
+    `,
+    b: `
+      1
+    `,
+    expA: `
+      ➖0➖
+    `,
+    expB: `
+      ➕1➕
+    `
+  })
 
-    const resultA = "➖0➖";
-    const resultB = "➕1➕";
+  test({
+    name: "Single line change 2",
+    a: `
+      true
+    `,
+    b: `
+      false
+    `,
+    expA: `
+      ➖true➖
+    `,
+    expB: `
+      ➕false➕
+    `
+  })
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
+  test({
+    name: "Single line change 3",
+    a: `
+      let name = "elian"
+    `,
+    b: `
+      let firstName = "elian"
+    `,
+    expA: `
+      let ➖name➖ = "elian"
+    `,
+    expB: `
+      let ➕firstName➕ = "elian"
+    `
+  })
 
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
+  test({
+    name: "Single line change 4",
+    a: `
+      let name = "elian"
+    `,
+    b: `
+      let name = "eliam"
+    `,
+    expA: `
+      let name = ➖"elian"➖
+    `,
+    expB: `
+      let name = ➕"eliam"➕
+    `
+  })
 
-  test("Single line change 2", () => {
-    const a = "true";
-    const b = "false";
+  test({
+    name: "Single line change 5",
+    a: `
+      console.log(0)
+    `,
+    b: `
+      console.log(1)
+    `,
+    expA: `
+      console.log(➖0➖)
+    `,
+    expB: `
+      console.log(➕1➕)
+    `
+  })
 
-    const resultA = "➖true➖";
-    const resultB = "➕false➕";
-
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  test("Single line change 3", () => {
-    const a = `
-    let name = "elian"
-    `;
-
-    const b = `
-    let firstName = "elian"
-    `;
-
-    const resultA = `
-    let ➖name➖ = "elian"
-    `;
-
-    const resultB = `
-    let ➕firstName➕ = "elian"
-    `;
-
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  test("Single line change 4", () => {
-    const a = `
-    let name = "elian"
-    `;
-
-    const b = `
-    let name = "eliam"
-    `;
-
-    const resultA = `
-    let name = ➖"elian"➖
-    `;
-
-    const resultB = `
-    let name = ➕"eliam"➕
-    `;
-
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  test("Single line change 5", () => {
-    const a = `
-    let name = "elian"
-    `;
-
-    const b = `
-    let firstName = "eliam"
-    `;
-
-    const resultA = `
-    let ➖name➖ = ➖"elian"➖
-    `;
-
-    const resultB = `
-    let ➕firstName➕ = ➕"eliam"➕
-    `;
-
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  test("Single line change 6", () => {
-    const a = `
-    console.log(0)
-    `;
-
-    const b = `
-    console.log(1)
-    `;
-
-    const resultA = `
-    console.log(➖0➖)
-    `;
-
-    const resultB = `
-    console.log(➕1➕)
-    `;
-
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
+  test({
+    name: "Multi line change",
+    a: `
+      let name = "elian"
+    `,
+    b: `
+      let firstName = "eliam"
+    `,
+    expA: `
+      let ➖name➖ = ➖"elian"➖
+    `,
+    expB: `
+      let ➕firstName➕ = ➕"eliam"➕
+    `
+  })
 });
