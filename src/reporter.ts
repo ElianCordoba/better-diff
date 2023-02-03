@@ -14,7 +14,7 @@ export interface DiffRendererFn {
   addition: RenderFn;
   removal: RenderFn;
   change: RenderFn;
-  move: (matchNumber: number) => RenderFn;
+  move: RenderFn
 }
 
 type Colors =
@@ -47,7 +47,7 @@ export const prettyRenderFn: DiffRendererFn = {
   addition: colorFn.green,
   removal: colorFn.red,
   change: colorFn.yellow,
-  move: (_) => (text) => k.blue().underline(text),
+  move: (text) => k.blue().underline(text),
 };
 
 // Testing friendly
@@ -55,7 +55,7 @@ export const asciiRenderFn: DiffRendererFn = {
   addition: (text) => `➕${text}➕`,
   removal: (text) => `➖${text}➖`,
   change: (text) => `✏️${text}✏️`,
-  move: (matchNumber) => (text) => `${matchNumber}🔀${text}⏹️`,
+  move: (text) => `🔀${text}⏹️`,
 };
 
 export function applyChangesToSources(
@@ -96,14 +96,12 @@ export function applyChangesToSources(
       }
 
       case ChangeType.move: {
-        const drawFn = renderFn.move(moveCounter);
-
         const resultA = getRanges(rangeA);
         charsA = getSourceWithChange(
           charsA,
           resultA.start,
           resultA.end,
-          drawFn,
+          renderFn.move,
         );
 
         const resultB = getRanges(rangeB);
@@ -111,7 +109,7 @@ export function applyChangesToSources(
           charsB,
           resultB.start,
           resultB.end,
-          drawFn,
+          renderFn.move,
         );
 
         moveCounter++;
