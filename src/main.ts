@@ -96,7 +96,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       changes.push(change);
     }
 
-    const exps = getCommonAncestor(iterA, iterB, indexA, indexB)
+    const exps = getCommonAncestor(iterA, iterB, indexA, indexB);
 
     // We look for remaining nodes at index + bestResult because we don't want to include the already matched ones
     let remainingNodesA = iterA.getNodesFromExpression(iterA.peek(indexA, false)!, exps.expA);
@@ -432,7 +432,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   }
 
   // If the nodes are not in the same position then it's a move
-  const didChange = a!.index !== b!.index
+  const didChange = a!.index !== b!.index;
 
   if (didChange) {
     // Since this function is reversible we need to check the perspective so that we know if the change is an addition or a removal
@@ -532,42 +532,42 @@ function searchCandidatesInList(nodes: Node[], expected: Node): Candidate[] {
 // Go back as far as possible over every node (non text node included) to find the oldest common ancestor.
 // This is so that we can match every remaining node in the expression
 function getCommonAncestor(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number) {
-  const a = iterA.peek(indexA, false)
-  const b = iterB.peek(indexB, false)
+  const a = iterA.peek(indexA, false);
+  const b = iterB.peek(indexB, false);
 
-  const realANodeIndex = iterA.allNodes.findIndex(x => x === a)
-  const realBNodeIndex = iterB.allNodes.findIndex(x => x === b)
+  const realANodeIndex = iterA.allNodes.findIndex((x) => x === a);
+  const realBNodeIndex = iterB.allNodes.findIndex((x) => x === b);
 
   let offset = 0;
 
-  let expA = a?.expressionNumber ?? -1
-  let expB = b?.expressionNumber ?? -1
+  let expA = a?.expressionNumber ?? -1;
+  let expB = b?.expressionNumber ?? -1;
 
   while (true) {
-    offset++
+    offset++;
 
-    const prevA = iterA.allNodes.at(realANodeIndex - offset)
-    const prevB = iterB.allNodes.at(realBNodeIndex - offset)
+    const prevA = iterA.allNodes.at(realANodeIndex - offset);
+    const prevB = iterB.allNodes.at(realBNodeIndex - offset);
 
     // No more nodes on one or the sides, exit
     if (!prevA || !prevB) {
-      break
+      break;
     }
 
     // No longer sharing common ancestor, exit
     if (prevA.kind !== prevB.kind) {
-      break
+      break;
     }
 
-    expA = prevA.expressionNumber
-    expB = prevB.expressionNumber
+    expA = prevA.expressionNumber;
+    expB = prevB.expressionNumber;
 
-    offset++
+    offset++;
   }
 
   if (expA === -1 || expB === -1) {
-    throw new DebugFailure('Expression not found when trying to get common ancestor')
+    throw new DebugFailure("Expression not found when trying to get common ancestor");
   }
 
-  return { expA, expB }
+  return { expA, expB };
 }

@@ -27,7 +27,7 @@ export class Node {
   expressionNumber = -1;
   matched = false;
   matchNumber = 0;
-  isTextNode = false
+  isTextNode = false;
   //getSourceFn?: () => string,
   constructor(args: NodeArgs) {
     const { fullStart, start, end, kind, triviaLinesAbove, lineNumberStart, lineNumberEnd, text } = args;

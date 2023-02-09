@@ -9,16 +9,17 @@ type TSNode = ts.Node & { text: string };
 export function getNodesArray(source: string) {
   const sourceFile = getSourceFile(source);
 
-  const { ignoreErrorsOnCodeWarning } = getOptions()
+  const { ignoreErrorsOnCodeWarning } = getOptions();
 
+  // deno-lint-ignore no-explicit-any
   if ((sourceFile as any).parseDiagnostics.length > 0 && !ignoreErrorsOnCodeWarning) {
     console.log(`
       ${k.yellow("Parse error found in the following code:")}
       "${source}"
-    `)
+    `);
   }
 
-  const nodes: Node[] = [];
+  const textNodes: Node[] = [];
   const allNodes: Node[] = [];
   let depth = 0;
 
@@ -42,14 +43,14 @@ export function getNodesArray(source: string) {
     const leadingTriviaHasNewLine = node.getFullText().split("\n").length > 1;
     const triviaLinesAbove = leadingTriviaHasNewLine ? getTriviaLinesAbove(source, lineNumberStart) : 0;
 
-    const newNode = new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove })
-    newNode.expressionNumber = depth
+    const newNode = new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove });
+    newNode.expressionNumber = depth;
 
-    allNodes.push(newNode)
+    allNodes.push(newNode);
     // Only include visible node, nodes that represent some text in the source code.
     if (node.text || isReservedWord || isPunctuation) {
       newNode.isTextNode = true;
-      nodes.push(newNode);
+      textNodes.push(newNode);
     }
 
     depth++;
@@ -62,13 +63,13 @@ export function getNodesArray(source: string) {
   // TODO(Perf): Maybe do this inside the walk.
   // Before returning the result we need process the data one last time.
   let i = 0;
-  for (const node of nodes) {
+  for (const node of textNodes) {
     node.index = i;
 
     i++;
   }
 
-  return { nodes, allNodes };
+  return { textNodes, allNodes };
 }
 
 function getSourceFile(source: string): SourceFile {

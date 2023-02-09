@@ -1,7 +1,7 @@
 import { getChanges } from "./main";
 import { applyChangesToSources, asciiRenderFn, DiffRendererFn, getAlignedSources } from "./reporter";
 import { serialize } from "./serializer";
-import { ChangeType, DiffResult, SerializedResponse, Side, SourceChunk } from "./types";
+import { ChangeType, SerializedResponse, Side } from "./types";
 import { Node } from "./node";
 import { AlignmentTable } from "./alignmentTable";
 import { DebugFailure } from "./debug";
@@ -73,19 +73,23 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
 
   switch (_options.outputType) {
     case OutputType.serializedChunks: {
+      // deno-lint-ignore no-explicit-any
       return serialize(sourceA, sourceB, changes) as any;
     }
 
     case OutputType.serializedAlignedChunks: {
       const alignedSources = getAlignedSources(sourceA, sourceB);
+      // deno-lint-ignore no-explicit-any
       return serialize(alignedSources.sourceA, alignedSources.sourceB, changes) as any;
     }
 
     case OutputType.text: {
+      // deno-lint-ignore no-explicit-any
       return applyChangesToSources(sourceA, sourceB, changes) as any;
     }
 
     case OutputType.alignedText: {
+      // deno-lint-ignore no-explicit-any
       return getAlignedSources(sourceA, sourceB) as any;
     }
 
@@ -126,7 +130,7 @@ export class LayoutShiftCandidate {
     // Value: Length of the string
     public a = new Map<number, number>(),
     public b = new Map<number, number>(),
-  ) { }
+  ) {}
 
   add(side: Side, at: number, length: number) {
     if (side === Side.a) {

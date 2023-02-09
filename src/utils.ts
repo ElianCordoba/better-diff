@@ -6,12 +6,12 @@ export function formatSyntaxKind(kind: ts.SyntaxKind, text?: string) {
   let textValue = text ? `| "${text}"` : "";
   // The cast is because the underling function is marked as internal and we don't get typings
   // deno-lint-ignore no-explicit-any
-  const formattedKind = (ts as any).Debug.formatSyntaxKind(kind)
+  const formattedKind = (ts as any).Debug.formatSyntaxKind(kind);
 
-  textValue = textValue.replaceAll('\n', '')
+  textValue = textValue.replaceAll("\n", "");
 
   if (textValue.length > 50) {
-    textValue = textValue.slice(0, 50) + '...'
+    textValue = textValue.slice(0, 50) + "...";
   }
 
   return `${formattedKind.padEnd(25)} ${textValue}`.trim();

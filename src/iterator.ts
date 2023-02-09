@@ -5,6 +5,10 @@ import { Candidate } from "./types";
 import { DebugFailure } from "./debug";
 import { getOptions } from ".";
 
+interface InputNodes {
+  textNodes: Node[];
+  allNodes: Node[];
+}
 interface IteratorOptions {
   name?: string;
   source?: string;
@@ -19,9 +23,9 @@ export class Iterator {
   matchNumber = 0;
   public textNodes: Node[];
   public allNodes: Node[];
-  constructor({ nodes, allNodes }: any, options?: IteratorOptions) {
-    this.textNodes = nodes
-    this.allNodes = allNodes
+  constructor({ textNodes, allNodes }: InputNodes, options?: IteratorOptions) {
+    this.textNodes = textNodes;
+    this.allNodes = allNodes;
     this.name = options?.name;
     this.chars = options?.source?.split("");
   }
@@ -102,18 +106,18 @@ export class Iterator {
 
   getNodesFromExpression(node: Node, expressionNumber: number): Node[] {
     if (!node) {
-      throw new DebugFailure('Undefined node')
+      throw new DebugFailure("Undefined node");
     }
 
     // Using === on two object with only return true if both object are the same, this is perfect because when we created
     // the node instance the same one was pushed to both arrays
-    const index = this.allNodes.findIndex(x => x === node);
+    const index = this.allNodes.findIndex((x) => x === node);
 
     if (index === -1) {
-      throw new DebugFailure(`Fail to find node ${node.prettyKind}`)
+      throw new DebugFailure(`Fail to find node ${node.prettyKind}`);
     }
 
-    let startIndex = index - 1
+    const startIndex = index - 1;
     // TODO: Is this needed? Going back to the start of the expression, for example
     // 1 2 3
     // Given that all 3 numbers share the same parent expression, and we are located in number 2, we should include 1
@@ -129,40 +133,35 @@ export class Iterator {
     //   startIndex++
     // }
 
-    const expNodes: Node[] = []
-    let i = startIndex
+    const expNodes: Node[] = [];
+    let i = startIndex;
     while (true) {
       const next = this.allNodes[i];
 
       if (!next) {
-        break
+        break;
       }
 
       if (next.expressionNumber < expressionNumber) {
-        break
+        break;
       }
 
       if (!next.matched && next.isTextNode) {
-        expNodes.push(next)
+        expNodes.push(next);
       }
 
-      i++
+      i++;
     }
 
-    return expNodes
+    return expNodes;
   }
 
-  printList(nodesToPrint: 'text' | 'all' | Node[] = 'text') {
+  printList(nodesToPrint: "text" | "all" | Node[] = "text") {
     console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("exp n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
     const list: string[] = [];
 
-    const _nodes =
-      Array.isArray(nodesToPrint)
-        ? nodesToPrint
-        : nodesToPrint === 'text'
-          ? this.textNodes
-          : this.allNodes
+    const _nodes = Array.isArray(nodesToPrint) ? nodesToPrint : nodesToPrint === "text" ? this.textNodes : this.allNodes;
 
     for (const node of _nodes) {
       let colorFn = node.matched ? k.green : k.grey;
@@ -217,24 +216,20 @@ export class Iterator {
     console.log(result.join(""));
   }
 
-  printDepth(nodesToPrint: 'text' | 'all' | Node[] = 'text') {
-    const _nodes = Array.isArray(nodesToPrint)
-      ? nodesToPrint
-      : nodesToPrint === 'text'
-        ? this.textNodes
-        : this.allNodes
+  printDepth(nodesToPrint: "text" | "all" | Node[] = "text") {
+    const _nodes = Array.isArray(nodesToPrint) ? nodesToPrint : nodesToPrint === "text" ? this.textNodes : this.allNodes;
 
-    let res = ''
+    let res = "";
     for (const node of _nodes) {
-      const shouldColorTextNode = nodesToPrint === 'all' && node.isTextNode;
+      const shouldColorTextNode = nodesToPrint === "all" && node.isTextNode;
 
-      const _colorFn = shouldColorTextNode ? colorFn.green : colorFn.grey
+      const _colorFn = shouldColorTextNode ? colorFn.green : colorFn.grey;
 
       res += `
       (${node.expressionNumber + 1})${new Array(node.expressionNumber + 1).join("-")}${_colorFn(node.prettyKind)}`;
     }
 
-    return res
+    return res;
   }
 
   printPositionInfo() {

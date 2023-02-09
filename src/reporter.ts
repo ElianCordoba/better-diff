@@ -1,11 +1,11 @@
-import { getContext, getOptions, LayoutShift } from ".";
+import { getContext, getOptions } from ".";
 import { ChangeType, Side } from "../src/types";
 import { AlignmentTable } from "./alignmentTable";
 import { Change } from "./change";
 import { DebugFailure } from "./debug";
 import { getRanges, range } from "./utils";
 
-//@ts-ignore TODO: Importing normally doesnt work with vitest
+//@ts-ignore TODO: Importing normally doesn't work with vitest
 export const k = require("kleur");
 
 type RenderFn = (text: string) => string;
@@ -14,7 +14,7 @@ export interface DiffRendererFn {
   addition: RenderFn;
   removal: RenderFn;
   change: RenderFn;
-  move: RenderFn
+  move: RenderFn;
 }
 
 type Colors =
@@ -152,7 +152,7 @@ export function getSourceWithChange(
 
 export function getComplimentArray(length: number, fillInCharacter = ""): string[] {
   if (length < 0) {
-    throw new DebugFailure(`Length of compliment array invalid. Got ${length}`)
+    throw new DebugFailure(`Length of compliment array invalid. Got ${length}`);
   }
 
   return new Array(length).fill(fillInCharacter);
@@ -186,7 +186,7 @@ export function getAlignedSources(
     const chars = side === Side.a ? linesA : linesB;
 
     // The -1 is because line number start at 1 but we need 0-indexed number for the array slice
-    const insertAt = (insertAtLine - 1);
+    const insertAt = insertAtLine - 1;
 
     const head = chars.slice(0, insertAt);
     const tail = chars.slice(insertAt, chars.length);
@@ -214,6 +214,10 @@ export function getAlignedSources(
     }
   }
 
+  function needsPartialAlignment(side: Side, at: number) {
+    return !alignmentTable[side].has(at);
+  }
+
   const { alignmentTable, alignmentsOfMoves } = getContext();
 
   // First we apply the "simple" alignments, aka the ones we know are compatible and require no extra verification.
@@ -226,10 +230,6 @@ export function getAlignedSources(
   //   1   |   -
   //          ^^^ We want to align here, but's it's already aligned, so we can skip it
   for (const move of alignmentsOfMoves) {
-    function needsPartialAlignment(side: Side, at: number) {
-      return !alignmentTable[side].has(at);
-    }
-
     const startA = move.startA + alignmentTable.getOffset(Side.a, move.startA);
     const startB = move.startB + alignmentTable.getOffset(Side.b, move.startB);
 
