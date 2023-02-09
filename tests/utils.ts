@@ -16,8 +16,6 @@ interface TestInfo {
   expB?: string;
 }
 
-const vTestOnly = vTest.only
-
 export function getTestFn(testFn: TestFn, testOptions: Options = { outputType: OutputType.text }) {
   return function test(testInfo: TestInfo) {
     const { a = '', b = '', expA, expB, name = "anonymous" } = testInfo;
@@ -26,24 +24,28 @@ export function getTestFn(testFn: TestFn, testOptions: Options = { outputType: O
       throw new Error('Invalid test, input and output are the same')
     }
 
-    const _test = testInfo.only === 'standard' ? vTestOnly : vTest
+    const skipStandardTest = testInfo.only === 'inversed';
 
-    _test(`Test ${name}`, () => {
-      const { sourceA: resultA, sourceB: resultB } = testFn(a, b, { outputType: testOptions.outputType } as Options)
+    if (!skipStandardTest) {
+      vTest(`Test ${name}`, () => {
+        const { sourceA: resultA, sourceB: resultB } = testFn(a, b, { outputType: testOptions.outputType } as Options)
 
-      validateDiff(expA || a, expB || b, resultA, resultB);
-    });
+        validateDiff(expA || a, expB || b, resultA, resultB);
+      });
+    }
 
-    const _testInversed = testInfo.only === 'inversed' ? vTestOnly : vTest
+    const skipInversedTest = testInfo.only === 'standard';
 
-    _testInversed(`Test ${name} inverse`, () => {
-      const { sourceA: resultA, sourceB: resultB } = testFn(b, a, { outputType: testOptions.outputType } as Options)
+    if (!skipInversedTest) {
+      vTest(`Test ${name} inverse`, () => {
+        const { sourceA: resultA, sourceB: resultB } = testFn(b, a, { outputType: testOptions.outputType } as Options)
 
-      const inversedExpectedA = getInversedExpectedResult(expB || b);
-      const inversedExpectedB = getInversedExpectedResult(expA || a)
+        const inversedExpectedA = getInversedExpectedResult(expB || b);
+        const inversedExpectedB = getInversedExpectedResult(expA || a)
 
-      validateDiff(inversedExpectedA, inversedExpectedB, resultA, resultB);
-    });
+        validateDiff(inversedExpectedA, inversedExpectedB, resultA, resultB);
+      });
+    }
   }
 }
 
