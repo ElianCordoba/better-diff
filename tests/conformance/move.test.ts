@@ -176,22 +176,21 @@ describe("Properly report lines added", () => {
     `
   })
 
-  // test({
-  //   only: 'inversed',
-  //   name: "Properly match closing paren",
-  //   a: `
-  //     console.log()
-  //   `,
-  //   b: `
-  //     console.log(fn())
-  //   `,
-  //   expA: `
-  //     console.log(🔀)⏹️
-  //   `,
-  //   expB: `
-  //     console.log(➕fn()➕🔀)⏹️
-  //   `
-  // })
+  test({
+    name: "Properly match closing paren",
+    a: `
+      console.log()
+    `,
+    b: `
+      console.log(fn())
+    `,
+    expA: `
+      console.log(🔀)⏹️
+    `,
+    expB: `
+      console.log(➕fn()➕🔀)⏹️
+    `
+  })
 
   test({
     name: "Properly match closing paren 2",
