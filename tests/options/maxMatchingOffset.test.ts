@@ -16,14 +16,14 @@ describe("Properly report lines moved or added/deleted respecting the option 'ma
     `;
 
     const resultA = `
-      1🔀x⏹️
+      🔀x⏹️
     `;
 
     const resultB = `
       ➕1➕
       ➕2➕
       ➕3➕
-      1🔀x⏹️
+      🔀x⏹️
     `;
 
     const { sourceA, sourceB } = getDiff(a, b);
