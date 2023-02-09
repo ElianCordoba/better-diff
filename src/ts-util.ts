@@ -9,10 +9,10 @@ type TSNode = ts.Node & { text: string };
 export function getNodesArray(source: string) {
   const sourceFile = getSourceFile(source);
 
-  const { ignoreErrorsOnCodeWarning } = getOptions();
+  const { warnOnInvalidCode } = getOptions();
 
   // deno-lint-ignore no-explicit-any
-  if ((sourceFile as any).parseDiagnostics.length > 0 && !ignoreErrorsOnCodeWarning) {
+  if (warnOnInvalidCode && (sourceFile as any).parseDiagnostics.length > 0) {
     console.log(`
       ${k.yellow("Parse error found in the following code:")}
       "${source}"

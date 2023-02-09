@@ -10,7 +10,7 @@ import { DebugFailure } from "./debug";
 export interface Options {
   outputType?: OutputType;
 
-  ignoreErrorsOnCodeWarning?: boolean;
+  warnOnInvalidCode?: boolean;
 
   renderFn?: DiffRendererFn;
 
@@ -101,7 +101,7 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
 
 const defaultOptions: Options = {
   outputType: OutputType.text,
-  ignoreErrorsOnCodeWarning: true,
+  warnOnInvalidCode: false,
   renderFn: asciiRenderFn,
   minimumLinesMoved: 0,
   // TODO: Look for a good value
@@ -130,7 +130,7 @@ export class LayoutShiftCandidate {
     // Value: Length of the string
     public a = new Map<number, number>(),
     public b = new Map<number, number>(),
-  ) {}
+  ) { }
 
   add(side: Side, at: number, length: number) {
     if (side === Side.a) {
