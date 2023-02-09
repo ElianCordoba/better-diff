@@ -3,7 +3,7 @@ import { Candidate, ChangeType, Range, Side } from "./types";
 import { equals, mergeRanges, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
-import { getContext, getOptions } from "./index";
+import { getContext } from "./index";
 import { Node } from "./node";
 import { DebugFailure } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
