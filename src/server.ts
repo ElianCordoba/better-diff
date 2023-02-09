@@ -13,10 +13,10 @@ server.post("/", ({ body }, _reply) => {
     b,
   });
 
-  console.time("diff");
+  console.time("diff took");
   // TODO: Enable "serializedAlignedChunks"
-  const res = getDiff(a, b, OutputType.serializedChunks);
-  console.timeEnd("diff");
+  const res = getDiff(a, b, { outputType: OutputType.serializedChunks, maxMatchingOffset: Infinity });
+  console.timeEnd("diff took");
 
   return res;
 });

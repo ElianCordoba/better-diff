@@ -1,9 +1,14 @@
 import { equals, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
-import { getOptions } from "./index";
 import { Candidate } from "./types";
+import { DebugFailure } from "./debug";
+import { getOptions } from ".";
 
+interface InputNodes {
+  textNodes: Node[];
+  allNodes: Node[];
+}
 interface IteratorOptions {
   name?: string;
   source?: string;
@@ -16,15 +21,18 @@ export class Iterator {
 
   private indexOfLastItem = 0;
   matchNumber = 0;
-
-  constructor(private nodes: Node[], options?: IteratorOptions) {
+  public textNodes: Node[];
+  public allNodes: Node[];
+  constructor({ textNodes, allNodes }: InputNodes, options?: IteratorOptions) {
+    this.textNodes = textNodes;
+    this.allNodes = allNodes;
     this.name = options?.name;
     this.chars = options?.source?.split("");
   }
 
   next(startFrom = 0) {
-    for (let i = startFrom; i < this.nodes.length; i++) {
-      const item = this.nodes[i];
+    for (let i = startFrom; i < this.textNodes.length; i++) {
+      const item = this.textNodes[i];
 
       if (item.matched) {
         continue;
@@ -35,10 +43,10 @@ export class Iterator {
     }
   }
 
-  peek(index: number) {
-    const item = this.nodes[index];
+  peek(index: number, skipMatched = true) {
+    const item = this.textNodes[index];
 
-    if (!item || item.matched) {
+    if (!item || (skipMatched && item.matched)) {
       return;
     }
 
@@ -49,8 +57,8 @@ export class Iterator {
     // TODO: Should only apply for moves, otherwise a move, addition and move
     // will display 1 for the first move and 3 for the second
     this.matchNumber++;
-    this.nodes[index].matched = true;
-    this.nodes[index].matchNumber = this.matchNumber;
+    this.textNodes[index].matched = true;
+    this.textNodes[index].matchNumber = this.matchNumber;
   }
 
   getCandidates(
@@ -64,8 +72,8 @@ export class Iterator {
     let offset = 0;
 
     const search = (startFrom: number): void => {
-      const ahead = this.nodes[startFrom + offset];
-      const back = this.nodes[startFrom - offset];
+      const ahead = this.textNodes[startFrom + offset];
+      const back = this.textNodes[startFrom - offset];
 
       // We checked everything and nothing was found, exit early
       if (!ahead && !back) {
@@ -84,7 +92,7 @@ export class Iterator {
 
       offset++;
 
-      if (offset >= getOptions().maxMatchingOffset) {
+      if (offset >= getOptions?.()?.maxMatchingOffset) {
         return;
       }
 
@@ -96,40 +104,79 @@ export class Iterator {
     return candidates;
   }
 
-  getNodesFromExpression(expression: number, startIndex: number) {
-    const remainingNodes: Node[] = [];
-    let i = startIndex;
-    while (true) {
-      const next = this.nodes[i];
+  getNodesFromExpression(node: Node, expressionNumber: number): Node[] {
+    if (!node) {
+      throw new DebugFailure("Undefined node");
+    }
 
-      if (!next || next.expressionNumber === expression) {
+    // Using === on two object with only return true if both object are the same, this is perfect because when we created
+    // the node instance the same one was pushed to both arrays
+    const index = this.allNodes.findIndex((x) => x === node);
+
+    if (index === -1) {
+      throw new DebugFailure(`Fail to find node ${node.prettyKind}`);
+    }
+
+    // const startIndex = index - 1;
+    // TODO: Is this needed? Going back to the start of the expression, for example
+    // 1 2 3
+    // Given that all 3 numbers share the same parent expression, and we are located in number 2, we should include 1
+    // The thing is that I'm pretty sure by the time we reach 2, 1 is already matched, this may change with the min LCS algo though
+
+    // while (true) {
+    //   const back = this.allNodes[startIndex]
+
+    //   if (back?.expressionNumber !== expressionNumber) {
+    //     break
+    //   }
+
+    //   startIndex++
+    // }
+
+    const expNodes: Node[] = [];
+    let i = index // startIndex;
+    while (true) {
+      const next = this.allNodes[i];
+
+      // This means that we finished all nodes, exit
+      if (!next) {
         break;
       }
 
-      if (next.matched) {
-        i++;
-        continue;
+      // The rule for including nodes is the following, an expression of depth X will include:
+      // - Sibling nodes, of depth X
+      // - Child and child of siblings of depth X + N
+
+      // This means that going up (as of going up the tree), in this case having a smaller expression number, will be out exit condition
+      if (next.expressionNumber < expressionNumber) {
+        break;
       }
 
-      remainingNodes.push(next);
+      // Only include text node that we haven't proceeded yet
+      if (!next.matched && next.isTextNode) {
+        expNodes.push(next);
+      }
+
       i++;
     }
 
-    return remainingNodes;
+    return expNodes;
   }
 
-  printList() {
+  printList(nodesToPrint: "text" | "all" | Node[] = "text") {
     console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("exp n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
     const list: string[] = [];
 
-    for (const node of this.nodes) {
+    const _nodes = Array.isArray(nodesToPrint) ? nodesToPrint : nodesToPrint === "text" ? this.textNodes : this.allNodes;
+
+    for (const node of _nodes) {
       let colorFn = node.matched ? k.green : k.grey;
 
       const index = String(node.index).padStart(3).padEnd(6);
 
       const matchNumber = String(node.matchNumber).padStart(5).padEnd(10);
-      const expressionNumber = String(node.expressionNumber || "-").padStart(5).padEnd(8);
+      const expressionNumber = String(node.expressionNumber ?? "-").padStart(5).padEnd(8);
 
       const { kind, text } = getNodeForPrinting(node);
       const _kind = kind.padStart(5).padEnd(25);
@@ -176,14 +223,20 @@ export class Iterator {
     console.log(result.join(""));
   }
 
-  printDepth() {
-    for (const node of this.nodes) {
-      console.log(
-        `(${node.expressionNumber + 1})`,
-        new Array(node.expressionNumber + 1).join("-"),
-        colorFn.cyan(node.prettyKind),
-      );
+  printDepth(nodesToPrint: "text" | "all" | Node[] = "text") {
+    const _nodes = Array.isArray(nodesToPrint) ? nodesToPrint : nodesToPrint === "text" ? this.textNodes : this.allNodes;
+
+    let res = "";
+    for (const node of _nodes) {
+      const shouldColorTextNode = nodesToPrint === "all" && node.isTextNode;
+
+      const _colorFn = shouldColorTextNode ? colorFn.green : colorFn.grey;
+
+      res += `
+      (${node.expressionNumber + 1})${new Array(node.expressionNumber + 1).join("-")}${_colorFn(node.prettyKind)}`;
     }
+
+    return res;
   }
 
   printPositionInfo() {
@@ -191,7 +244,7 @@ export class Iterator {
 
     const list: string[] = [];
 
-    for (const node of this.nodes) {
+    for (const node of this.textNodes) {
       let colorFn = node.matched ? k.green : k.grey;
 
       const index = String(node.index).padStart(3).padEnd(6);

@@ -3,7 +3,7 @@ import { Candidate, ChangeType, Range, Side } from "./types";
 import { equals, mergeRanges, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
-import { getContext, getOptions } from "./index";
+import { getContext } from "./index";
 import { Node } from "./node";
 import { DebugFailure } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
@@ -16,10 +16,6 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 
   const iterA = new Iterator(nodesA, { name: Side.a, source: codeA });
   const iterB = new Iterator(nodesB, { name: Side.b, source: codeB });
-
-  // if (!import.meta.vitest) {
-  // iterA.printPositionInfo(); console.log('\n'); iterB.printPositionInfo();
-  // }
 
   let a: Node | undefined;
   let b: Node | undefined;
@@ -64,6 +60,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 
       iterA.mark(a.index);
       iterB.mark(b.index);
+
+      // TODO: Maybe finish subsequence here too?
       continue;
     }
 
@@ -92,23 +90,17 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       indexB = b.index;
     }
 
-    // This are the expressions we are matching. We store the them so that at the end of the LCS matching we can finish
-    // matching these before moving on another expression
-    const expressionA = iterA.peek(indexA)?.expressionNumber!;
-    const expressionB = iterB.peek(indexB)?.expressionNumber!;
-
     const change = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult);
 
     if (change) {
       changes.push(change);
     }
 
-    // TODO: The code bellow may be removed / reworked once I implement https://github.com/ElianCordoba/better-diff/issues/18
-    continue;
+    const exps = getCommonAncestor(iterA, iterB, indexA, indexB);
 
     // We look for remaining nodes at index + bestResult because we don't want to include the already matched ones
-    let remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult);
-    let remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult);
+    let remainingNodesA = iterA.getNodesFromExpression(iterA.peek(indexA, false)!, exps.expA);
+    let remainingNodesB = iterB.getNodesFromExpression(iterB.peek(indexB, false)!, exps.expB);
 
     // If we finished matching the LCS and we don't have any remaining nodes in either expression, then we are done with the matching and we can move on
     if (!remainingNodesA.length && !remainingNodesB.length) {
@@ -118,7 +110,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
     // If we still have nodes remaining, means that after the LCS the expression had more nodes that we need to match before moving on, for example
     //
     //
-    // console.log(0)
+    // console.log()
     //
     // --------------
     //
@@ -133,8 +125,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
     // TODO: Maybe an optimization, could run faster if we call "finishSequenceMatching" on the one it has the most / least nodes to recalculate
 
     // After calling `finishSequenceMatching` we need to recalculate the remaining nodes since previously unmatched ones could have been matched now
-    remainingNodesA = iterA.getNodesFromExpression(expressionA, indexA + bestResult);
-    remainingNodesB = iterB.getNodesFromExpression(expressionB, indexB + bestResult);
+    remainingNodesA = iterA.getNodesFromExpression(iterA.peek(indexA, false)!, exps.expA);
+    remainingNodesB = iterB.getNodesFromExpression(iterB.peek(indexB, false)!, exps.expB);
 
     // Finally we complete the matching of the B side. This time we call `finishSequenceMatching` with the arguments inverted in order to check the other perspective
     changes.push(...finishSequenceMatching(iterB, iterA, remainingNodesB, remainingNodesA));
@@ -334,11 +326,9 @@ function getLCS(candidates: Candidate[], iterA: Iterator, iterB: Iterator, index
     // and match it with the opening paren of "fn1". A lower depth means that it will be closer to the expression we are matching
     //
     // The test that covers this logic is the one called "Properly match closing paren"
-
     if (
-      lcs > bestResult
-      // TODO: The code bellow may be removed / reworked once I implement https://github.com/ElianCordoba/better-diff/issues/18
-      // || lcs === bestResult && expressionNumber < bestExpression
+      lcs > bestResult ||
+      lcs === bestResult && expressionNumber < bestExpression
     ) {
       bestResult = lcs;
       bestIndex = index;
@@ -442,7 +432,6 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   }
 
   // If the nodes are not in the same position then it's a move
-  // TODO: Reported in the readme, this is too sensible
   const didChange = a!.index !== b!.index;
 
   if (didChange) {
@@ -450,13 +439,6 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     const perspectiveAtoB = iterA.name === "a";
 
     if (perspectiveAtoB) {
-      const linesMoved = Math.abs(a!.lineNumberStart - b!.lineNumberStart);
-
-      // Ignoring move if the code hasn't move far enough
-      if (linesMoved < getOptions().minimumLinesMoved) {
-        return;
-      }
-
       return getChange(
         ChangeType.move,
         a!,
@@ -538,4 +520,47 @@ function searchCandidatesInList(nodes: Node[], expected: Node): Candidate[] {
   }
 
   return candidates;
+}
+
+// Go back as far as possible over every node (non text node included) to find the oldest common ancestor.
+// This is so that we can match every remaining node in the expression
+function getCommonAncestor(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number) {
+  const a = iterA.peek(indexA, false);
+  const b = iterB.peek(indexB, false);
+
+  const realANodeIndex = iterA.allNodes.findIndex((x) => x === a);
+  const realBNodeIndex = iterB.allNodes.findIndex((x) => x === b);
+
+  let offset = 0;
+
+  let expA = a?.expressionNumber ?? -1;
+  let expB = b?.expressionNumber ?? -1;
+
+  while (true) {
+    offset++;
+
+    const prevA = iterA.allNodes.at(realANodeIndex - offset);
+    const prevB = iterB.allNodes.at(realBNodeIndex - offset);
+
+    // No more nodes on one or the sides, exit
+    if (!prevA || !prevB) {
+      break;
+    }
+
+    // No longer sharing common ancestor, exit
+    if (prevA.kind !== prevB.kind) {
+      break;
+    }
+
+    expA = prevA.expressionNumber;
+    expB = prevB.expressionNumber;
+
+    offset++;
+  }
+
+  if (expA === -1 || expB === -1) {
+    throw new DebugFailure("Expression not found when trying to get common ancestor");
+  }
+
+  return { expA, expB };
 }

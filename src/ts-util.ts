@@ -1,38 +1,56 @@
 import ts, { SourceFile } from "typescript";
 import { Node } from "./node";
 import { DebugFailure } from "./debug";
+import { k } from "./reporter";
+import { getOptions } from ".";
 
 type TSNode = ts.Node & { text: string };
 
 export function getNodesArray(source: string) {
   const sourceFile = getSourceFile(source);
 
-  const nodes: Node[] = [];
+  const { warnOnInvalidCode } = getOptions();
+
+  // deno-lint-ignore no-explicit-any
+  if (warnOnInvalidCode && (sourceFile as any).parseDiagnostics.length > 0) {
+    console.log(`
+      ${k.yellow("Parse error found in the following code:")}
+      "${source}"
+    `);
+  }
+
+  const textNodes: Node[] = [];
+  const allNodes: Node[] = [];
   let depth = 0;
 
   function walk(node: TSNode) {
     const isReservedWord = node.kind >= ts.SyntaxKind.FirstKeyword && node.kind <= ts.SyntaxKind.LastKeyword;
     const isPunctuation = node.kind >= ts.SyntaxKind.FirstPunctuation && node.kind <= ts.SyntaxKind.LastPunctuation;
 
+    // Each node owns the trivia before until the previous token, for example:
+    //
+    // age = 24
+    //      ^
+    //      Trivia for the number literal starts here, but you don't want to start the diff here
+    //
+    // This is why we add the leading trivia to the `start` of the node, so we get where the actual
+    // value of the node starts and not where the trivia starts
+    const start = node.pos + node.getLeadingTriviaWidth();
+
+    const lineNumberStart = getLineNumber(sourceFile, start);
+    const lineNumberEnd = getLineNumber(sourceFile, node.end);
+
+    const leadingTriviaHasNewLine = node.getFullText().split("\n").length > 1;
+    const triviaLinesAbove = leadingTriviaHasNewLine ? getTriviaLinesAbove(source, lineNumberStart) : 0;
+
+    const newNode = new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove });
+    newNode.expressionNumber = depth;
+
+    allNodes.push(newNode);
     // Only include visible node, nodes that represent some text in the source code.
     if (node.text || isReservedWord || isPunctuation) {
-      // Each node owns the trivia before until the previous token, for example:
-      //
-      // age = 24
-      //      ^
-      //      Trivia for the number literal starts here, but you don't want to start the diff here
-      //
-      // This is why we add the leading trivia to the `start` of the node, so we get where the actual
-      // value of the node starts and not where the trivia starts
-      const start = node.pos + node.getLeadingTriviaWidth();
-
-      const lineNumberStart = getLineNumber(sourceFile, start);
-      const lineNumberEnd = getLineNumber(sourceFile, node.end);
-
-      const leadingTriviaHasNewLine = node.getFullText().split("\n").length > 1;
-      const triviaLinesAbove = leadingTriviaHasNewLine ? getTriviaLinesAbove(source, lineNumberStart) : 0;
-
-      nodes.push(new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove }));
+      newNode.isTextNode = true;
+      textNodes.push(newNode);
     }
 
     depth++;
@@ -45,20 +63,13 @@ export function getNodesArray(source: string) {
   // TODO(Perf): Maybe do this inside the walk.
   // Before returning the result we need process the data one last time.
   let i = 0;
-  let currentDepth = 0;
-
-  for (const node of nodes) {
-    if (node.expressionNumber > currentDepth + 1) {
-      node.expressionNumber = currentDepth + 1;
-    }
-    currentDepth = node.expressionNumber;
-
+  for (const node of textNodes) {
     node.index = i;
 
     i++;
   }
 
-  return nodes;
+  return { textNodes, allNodes };
 }
 
 function getSourceFile(source: string): SourceFile {

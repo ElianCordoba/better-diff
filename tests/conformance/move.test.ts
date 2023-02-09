@@ -1,253 +1,262 @@
-import { describe, test } from "vitest";
-import { OutputType, getDiff } from "../../src";
-import { validateDiff } from "../utils";
+import { describe } from "vitest";
+import { test } from "../utils";
 
 describe("Properly report lines added", () => {
-  test("Simple move", () => {
-    const a = `
+  test({
+    name: "Simple move",
+    a: `
       a
       b
-    `;
-
-    const b = `
+    `,
+    b: `
       b
       a
-    `;
+    `,
+    expA: `
+      🔀a⏹️
+      🔀b⏹️
+    `,
+    expB: `
+      🔀b⏹️
+      🔀a⏹️
+    `
+  })
 
-    const resultA = `
-      1🔀a⏹️
-      2🔀b⏹️
-    `;
-
-    const resultB = `
-      2🔀b⏹️
-      1🔀a⏹️
-    `;
-
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  test("Multi characters move", () => {
-    const a = `
+  test({
+    name: "Multi characters move",
+    a: `
       aa
       bb
-    `;
-
-    const b = `
+    `,
+    b: `
       bb
       aa
-    `;
+    `,
+    expA: `
+      🔀aa⏹️
+      🔀bb⏹️
+    `,
+    expB: `
+      🔀bb⏹️
+      🔀aa⏹️
+    `
+  })
 
-    const resultA = `
-      1🔀aa⏹️
-      2🔀bb⏹️
-    `;
-
-    const resultB = `
-      2🔀bb⏹️
-      1🔀aa⏹️
-    `;
-
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  test("Multi characters move 2", () => {
-    const a = `
+  test({
+    name: "Multi characters move 2",
+    a: `
       console.log()
       let name = 'Elian'
       let age;
-    `;
-
-    const b = `
+    `,
+    b: `
       let age;
       console.log()
       let name = 'Elian'
-    `;
-
-    const resultA = `
-      1🔀console.log()
+    `,
+    expA: `
+      🔀console.log()
       let name = 'Elian'⏹️
-      2🔀let age;⏹️
-    `;
-
-    const resultB = `
-      2🔀let age;⏹️
-      1🔀console.log()
+      🔀let age;⏹️
+    `,
+    expB: `
+      🔀let age;⏹️
+      🔀console.log()
       let name = 'Elian'⏹️
-    `;
+    `
+  })
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  test("LCS case", () => {
-    const a = `
+  test({
+    name: "LCS case 1",
+    a: `
       1
       2
       3
-    `;
-
-    const b = `
+    `,
+    b: `
       1
       2
       'x'
       1
       2
       3
-    `;
-
-    const resultA = `
-      1🔀1
+    `,
+    expA: `
+      🔀1
       2
       3⏹️
-    `;
-
-    const resultB = `
+    `,
+    expB: `
       ➕1➕
       ➕2➕
       ➕'x'➕
-      1🔀1
+      🔀1
       2
       3⏹️
-    `;
+    `
+  })
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  test("LCS case 2", () => {
-    const a = `
-      1
-      2
+  test({
+    name: "LCS case 2",
+    a: `
       'x'
       1
       2
       3
-    `;
-
-    const b = `
-      1
-      2
-      3
-    `;
-
-    const resultA = `
-      ➖1➖
-      ➖2➖
-      ➖'x'➖
-      1🔀1
-      2
-      3⏹️
-    `;
-
-    const resultB = `
-      1🔀1
-      2
-      3⏹️
-    `;
-
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  test("LCS case 3", () => {
-    const a = `
-      'x'
-      1
-      2
-      3
-    `;
-
-    const b = `
+    `,
+    b: `
       'x'
       1
       2
       1
       2
       3
-    `;
-
-    const resultA = `
+    `,
+    expA: `
       'x'
       1
       2
-      1🔀3⏹️
-    `;
-
-    const resultB = `
+      🔀3⏹️
+    `,
+    expB: `
       'x'
       1
       2
       ➕1➕
       ➕2➕
-      1🔀3⏹️
-    `;
+      🔀3⏹️
+    `
+  })
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  // TOD: Disabled until I implement this https://github.com/ElianCordoba/better-diff/issues/18
-  // test("Properly match closing paren", () => {
-  //   const a = `
-  //     console.log()
-  //   `;
-
-  //   const b = `
-  //     console.log(fn())
-  //   `;
-
-  //   const resultA = `
-  //     console.log(1🔀)⏹️
-  //   `;
-
-  //   const resultB = `
-  //     console.log(➕fn()➕1🔀)⏹️
-  //   `;
-
-  //   const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-  //   validateDiff(resultA, resultB, sourceA, sourceB);
-  // });
-
-
-  // a
-  // if (true) {
-  //   print()
-  // }
-
-  // b
-  // z
-  // print(123)
-  // x
-
-  test("Mix of move with deletions and additions", () => {
-    const a = `
+  test({
+    name: "Mix of move with deletions and additions",
+    a: `
       console.log() && 3
-    `;
+    `,
+    b: `
+      fn(console.log(2))
+    `,
+    expA: `
+      🔀console.log(⏹️🔀)⏹️ ➖&&➖ ➖3➖
+    `,
+    expB: `
+      ➕fn(➕🔀console.log(⏹️➕2➕🔀)⏹️➕)➕
+    `
+  })
 
-    const b = `
-      fn(console.log())
-    `;
+  test({
+    name: "Mix of move with deletions and additions 2",
+    a: `
+      fn(x)
+    `,
+    b: `
+      console.log(fn(1))
+    `,
+    expA: `
+      🔀fn(⏹️➖x➖🔀)⏹️
+    `,
+    expB: `
+      ➕console.log(➕🔀fn(⏹️➕1➕🔀)⏹️➕)➕
+    `
+  })
 
-    const resultA = `
-      1🔀console.log()⏹️ ➖&&➖ ➖3➖
-    `;
+  test({
+    name: "Mix of move with deletions and additions",
+    a: `
+      console.log() && 3
+    `,
+    b: `
+      fn(console.log(2))
+    `,
+    expA: `
+      🔀console.log(⏹️🔀)⏹️ ➖&&➖ ➖3➖
+    `,
+    expB: `
+      ➕fn(➕🔀console.log(⏹️➕2➕🔀)⏹️➕)➕
+    `
+  })
 
-    const resultB = `
-      ➕fn(➕1🔀console.log()⏹️➕)➕
-    `;
+  // TODO: Unhandled case here
+  test({
+    only: 'standard',
+    name: "Properly match closing paren",
+    a: `
+      console.log()
+    `,
+    b: `
+      console.log(fn())
+    `,
+    expA: `
+      console.log(🔀)⏹️
+    `,
+    expB: `
+      console.log(➕fn()➕🔀)⏹️
+    `
+  })
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
+  test({
+    name: "Properly match closing paren 2",
+    a: `
+      if (true) {
+        print()
+      }  
+    `,
+    b: `
+      z
+      print(123)
+      x
+    `,
+    expA: `
+      ➖if➖ ➖(true)➖ ➖{➖
+        🔀print(⏹️🔀)⏹️
+      ➖}➖
+    `,
+    expB: `
+      ➕z➕
+      🔀print(⏹️➕123➕🔀)⏹️
+      ➕x➕
+    `
+  })
 
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
+  test({
+    name: "Properly match closing paren 3",
+    a: `
+      console.log() && 3
+    `,
+    b: `
+      function asd () {
+        console.log("hi")
+      }
+    `,
+    expA: `
+      🔀console.log(⏹️🔀)⏹️ ➖&&➖ ➖3➖
+    `,
+    expB: `
+      ➕function➕ ➕asd➕ ➕()➕ ➕{➕
+        🔀console.log(⏹️➕"hi"➕🔀)⏹️
+      ➕}➕
+    `
+  })
+
+  test({
+    name: "Properly match closing paren 3",
+    a: `
+      321
+      if (true) {
+        print()
+      }
+    `,
+    b: `
+      print(123)
+    `,
+    expA: `
+      ➖321➖
+      ➖if➖ ➖(true)➖ ➖{➖
+        🔀print(⏹️🔀)⏹️
+      ➖}➖
+    `,
+    expB: `
+      🔀print(⏹️➕123➕🔀)⏹️
+    `
+  })
 });

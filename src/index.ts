@@ -1,26 +1,18 @@
 import { getChanges } from "./main";
 import { applyChangesToSources, asciiRenderFn, DiffRendererFn, getAlignedSources } from "./reporter";
 import { serialize } from "./serializer";
-import { ChangeType, DiffResult, SerializedResponse, Side, SourceChunk } from "./types";
+import { ChangeType, SerializedResponse, Side } from "./types";
 import { Node } from "./node";
 import { AlignmentTable } from "./alignmentTable";
 import { DebugFailure } from "./debug";
 
 // These options have their own tests under the /tests/options folder
 export interface Options {
-  renderFn?: DiffRendererFn;
+  outputType?: OutputType;
 
-  // Number of lines that code needs to move (either above or bellow) from original location in order to consider the change a move, otherwise it will be ignored.
-  // This is used so that a single character move won't trigger a move, for example:
-  //
-  // console.log(0)
-  //
-  // -----------------
-  //
-  // ; console.log(0)
-  //
-  // In this case the whole "console.log(0)" would be consider a move because the exact positions don't match
-  minimumLinesMoved?: number;
+  warnOnInvalidCode?: boolean;
+
+  renderFn?: DiffRendererFn;
 
   // Indicates how many nodes are we going to check while trying to find a match. Note that this is number is doubled since we look both backwards and forwards
   // For example:
@@ -56,10 +48,9 @@ interface ResultTypeMapper {
   [OutputType.alignedText]: { sourceA: string; sourceB: string };
 }
 
-export function getDiff<_OutputType extends OutputType>(
+export function getDiff<_OutputType extends OutputType = OutputType.text>(
   sourceA: string,
   sourceB: string,
-  outputType: _OutputType,
   options?: Options,
 ): ResultTypeMapper[_OutputType] {
   // Set up globals
@@ -68,33 +59,38 @@ export function getDiff<_OutputType extends OutputType>(
 
   const changes = getChanges(sourceA, sourceB);
 
-  switch (outputType) {
+  switch (_options.outputType) {
     case OutputType.serializedChunks: {
+      // deno-lint-ignore no-explicit-any
       return serialize(sourceA, sourceB, changes) as any;
     }
 
     case OutputType.serializedAlignedChunks: {
       const alignedSources = getAlignedSources(sourceA, sourceB);
+      // deno-lint-ignore no-explicit-any
       return serialize(alignedSources.sourceA, alignedSources.sourceB, changes) as any;
     }
 
     case OutputType.text: {
+      // deno-lint-ignore no-explicit-any
       return applyChangesToSources(sourceA, sourceB, changes) as any;
     }
 
     case OutputType.alignedText: {
+      // deno-lint-ignore no-explicit-any
       return getAlignedSources(sourceA, sourceB) as any;
     }
 
     default: {
-      throw new DebugFailure(`Unknown output type "${outputType}"`);
+      throw new DebugFailure(`Unknown output type "${_options.outputType}"`);
     }
   }
 }
 
 const defaultOptions: Options = {
+  outputType: OutputType.text,
+  warnOnInvalidCode: false,
   renderFn: asciiRenderFn,
-  minimumLinesMoved: 0,
   // TODO: Look for a good value
   maxMatchingOffset: 200,
   alignmentText: "\n",
@@ -121,7 +117,7 @@ export class LayoutShiftCandidate {
     // Value: Length of the string
     public a = new Map<number, number>(),
     public b = new Map<number, number>(),
-  ) { }
+  ) {}
 
   add(side: Side, at: number, length: number) {
     if (side === Side.a) {

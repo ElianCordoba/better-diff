@@ -1,5 +1,5 @@
 import { Change } from "./change";
-import { ChangeType, Range, RenderInstruction, SerializedResponse, Side, SourceChunk } from "./types";
+import { ChangeType, Range, RenderInstruction, SerializedResponse, SourceChunk } from "./types";
 import { range } from "./utils";
 import { getLineMap } from "./ts-util";
 import { DebugFailure } from "./debug";
@@ -9,8 +9,8 @@ export function serialize(
   b: string,
   changes: Change[],
 ): SerializedResponse {
-  const charsA = getChars(a)
-  const charsB = getChars(b)
+  const charsA = getChars(a);
+  const charsB = getChars(b);
 
   // We first need to "mark" the characters that were affected by a change, for example:
   //
@@ -130,7 +130,7 @@ function compactLines(rawLines: SourceChunk[][]): SourceChunk[][] {
 }
 
 function getChars(str: string): SourceChunk[] {
-  return str.split("").map(text => ({ text, type: RenderInstruction.default, moveNumber: "" }));
+  return str.split("").map((text) => ({ text, type: RenderInstruction.default, moveNumber: "" }));
 }
 
 // Check if chunks are compatible

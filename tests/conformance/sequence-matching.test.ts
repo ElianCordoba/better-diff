@@ -1,251 +1,139 @@
-import { describe, test } from "vitest";
+import { describe } from "vitest";
 import { OutputType, getDiff } from "../../src";
-import { validateDiff } from "../utils";
+import { validateDiff, test } from "../utils";
+
+test({
+  name: "Simple move",
+  a: `
+    a
+    b
+  `,
+  b: `
+    b
+    a
+  `,
+  expA: `
+  🔀a⏹️
+  🔀b⏹️
+  `,
+  expB: `
+  🔀b⏹️
+  🔀a⏹️
+  `
+})
 
 describe("Properly report moves in a same sequence", () => {
-  test("One line splitted into two. Case 1", () => {
-    let a = `
+  test({
+    name: "Case 1",
+    a: `
       let age = 24 && print('elian')
-    `;
-
-    let b = `
+    `,
+    b: `
       print('elian')
       let age = 24
-    `;
+    `,
+    expA: `
+      🔀let age = 24⏹️ ➖&&➖ 🔀print('elian')⏹️
+    `,
+    expB: `
+      🔀print('elian')⏹️
+      🔀let age = 24⏹️
+    `
+  })
 
-    const resultA = `
-      1🔀let age = 24⏹️ ➖&&➖ 2🔀print('elian')⏹️
-    `;
-
-    const resultB = `
-      2🔀print('elian')⏹️
-      1🔀let age = 24⏹️
-    `;
-
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  test("One line splitted into two. Case 2", () => {
-    let a = `
+  test({
+    name: "Case 2",
+    a: `
       let age = 24 && print('elian')
-    `;
-
-    let b = `
+    `,
+    b: `
       let age = 24
       print('elian')
-    `;
-
-    const resultA = `
-      let age = 24 ➖&&➖ 1🔀print('elian')⏹️
-    `;
-
-    const resultB = `
+    `,
+    expA: `
+      let age = 24 ➖&&➖ 🔀print('elian')⏹️
+    `,
+    expB: `
       let age = 24
-      1🔀print('elian')⏹️
-    `;
+      🔀print('elian')⏹️
+    `
+  })
 
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  test("One line splitted into two. Case 3", () => {
-    let a = `
+  test({
+    name: "Case 3",
+    a: `
       let age = print('elian') && 24
-    `;
-
-    let b = `
-      print('elian')
+    `,
+    b: `
       let age = 24
-    `;
+      print('elian')
+    `,
+    expA: `
+      let age = 🔀print('elian')⏹️ ➖&&➖ 🔀24⏹️
+    `,
+    expB: `
+      let age = 🔀24⏹️
+      🔀print('elian')⏹️
+    `
+  })
 
-    const resultA = `
-      2🔀let age =⏹️ 1🔀print('elian')⏹️ ➖&&➖ 3🔀24⏹️
-    `;
-
-    const resultB = `
-      1🔀print('elian')⏹️
-      2🔀let age =⏹️ 3🔀24⏹️
-    `;
-
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  test("One line splitted into two. Case 4", () => {
-    let a = `
+  test({
+    name: "Case 4",
+    a: `
       let age = print('elian') && 24
-    `;
-
-    let b = `
-      let age = 24
-      print('elian')
-    `;
-
-    const resultA = `
-      let age = 1🔀print('elian')⏹️ ➖&&➖ 2🔀24⏹️
-    `;
-
-    const resultB = `
-      let age = 2🔀24⏹️
-      1🔀print('elian')⏹️
-    `;
-
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  test("Two lines merged into one. Case 1", () => {
-    let a = `
-      let age = 24
-      print('elian')
-    `;
-
-    let b = `
-      let age = 24 && print('elian')
-    `;
-
-    const resultA = `
-      let age = 24
-      1🔀print('elian')⏹️
-    `;
-
-    const resultB = `
-      let age = 24 ➕&&➕ 1🔀print('elian')⏹️
-    `;
-
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  test("Two lines merged into one. Case 2", () => {
-    let a = `
+    `,
+    b: `
       print('elian')
       let age = 24
-    `;
+    `,
+    expA: `
+    🔀let age =⏹️ 🔀print('elian')⏹️ ➖&&➖ 🔀24⏹️
+    `,
+    expB: `
+      🔀print('elian')⏹️
+      🔀let age =⏹️ 🔀24⏹️
+    `
+  })
 
-    let b = `
-      let age = 24 && print('elian')
-    `;
-
-    const resultA = `
-      1🔀print('elian')⏹️
-      2🔀let age = 24⏹️
-    `;
-
-    const resultB = `
-      2🔀let age = 24⏹️ ➕&&➕ 1🔀print('elian')⏹️
-    `;
-
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  test("Two lines merged into one. Case 3", () => {
-    let a = `
-      let age = 24
-      print('elian')
-    `;
-
-    let b = `
-      let age = print('elian') && 24
-    `;
-
-    const resultA = `
-      let age = 2🔀24⏹️
-      1🔀print('elian')⏹️
-    `;
-
-    const resultB = `
-      let age = 1🔀print('elian')⏹️ ➕&&➕ 2🔀24⏹️
-    `;
-
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  test("Two lines merged into one. Case 4", () => {
-    let a = `
-      print('elian')
-      let age = 24
-    `;
-
-    let b = `
-      let age = print('elian') && 24
-    `;
-
-    const resultA = `
-      1🔀print('elian')⏹️
-      2🔀let age =⏹️ 3🔀24⏹️
-    `;
-
-    const resultB = `
-      2🔀let age =⏹️ 1🔀print('elian')⏹️ ➕&&➕ 3🔀24⏹️
-    `;
-
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  test("Back and forth example", () => {
-    let a = `
+  test({
+    name: "Back and forth",
+    a: `
       let age = 24 && print('elian')
       fn()
       1
-    `;
-
-    let b = `
+    `,
+    b: `
       let age = 24 || fn()
       print('elian')
-    `;
-
-    const resultA = `
-      let age = 24 ➖&&➖ 1🔀print('elian')⏹️
-      2🔀fn()⏹️
+    `,
+    expA: `
+      let age = 24 ➖&&➖ 🔀print('elian')⏹️
+      🔀fn()⏹️
       ➖1➖
-    `;
+    `,
+    expB: `
+      let age = 24 ➕||➕ 🔀fn()⏹️
+      🔀print('elian')⏹️
+    `
+  })
 
-    const resultB = `
-      let age = 24 ➕||➕ 2🔀fn()⏹️
-      1🔀print('elian')⏹️
-    `;
-
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
-
-  test("Mid sequence", () => {
-    const a = `
+  test({
+    name: "Mid sequence",
+    a: `
       let up;
       let middle;
-    `;
-
-    const b = `
+    `,
+    b: `
       let middle;
       let down;
-    `;
-
-    const resultA = `
-      2🔀let⏹️ ➖up➖3🔀;⏹️
-      1🔀let middle;⏹️
-    `;
-
-    const resultB = `
-      1🔀let middle;⏹️
-      2🔀let⏹️ ➕down➕3🔀;⏹️
-    `;
-
-    const { sourceA, sourceB } = getDiff(a, b, OutputType.text);
-
-    validateDiff(resultA, resultB, sourceA, sourceB);
-  });
+    `,
+    expA: `
+      🔀let⏹️ ➖up➖🔀;⏹️
+      🔀let middle;⏹️
+    `,
+    expB: `
+      🔀let middle;⏹️
+      🔀let⏹️ ➕down➕🔀;⏹️
+    `
+  })
 });
