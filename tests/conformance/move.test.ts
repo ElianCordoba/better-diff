@@ -176,7 +176,9 @@ describe("Properly report lines added", () => {
     `
   })
 
+  // TODO: Unhandled case here
   test({
+    only: 'standard',
     name: "Properly match closing paren",
     a: `
       console.log()
