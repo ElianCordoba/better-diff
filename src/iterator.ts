@@ -117,7 +117,7 @@ export class Iterator {
       throw new DebugFailure(`Fail to find node ${node.prettyKind}`);
     }
 
-    const startIndex = index - 1;
+    // const startIndex = index - 1;
     // TODO: Is this needed? Going back to the start of the expression, for example
     // 1 2 3
     // Given that all 3 numbers share the same parent expression, and we are located in number 2, we should include 1
@@ -134,18 +134,25 @@ export class Iterator {
     // }
 
     const expNodes: Node[] = [];
-    let i = startIndex;
+    let i = index // startIndex;
     while (true) {
       const next = this.allNodes[i];
 
+      // This means that we finished all nodes, exit
       if (!next) {
         break;
       }
 
+      // The rule for including nodes is the following, an expression of depth X will include:
+      // - Sibling nodes, of depth X
+      // - Child and child of siblings of depth X + N
+
+      // This means that going up (as of going up the tree), in this case having a smaller expression number, will be out exit condition
       if (next.expressionNumber < expressionNumber) {
         break;
       }
 
+      // Only include text node that we haven't proceeded yet
       if (!next.matched && next.isTextNode) {
         expNodes.push(next);
       }
