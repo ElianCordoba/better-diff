@@ -439,13 +439,6 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     const perspectiveAtoB = iterA.name === "a";
 
     if (perspectiveAtoB) {
-      const linesMoved = Math.abs(a!.lineNumberStart - b!.lineNumberStart);
-
-      // Ignoring move if the code hasn't move far enough
-      if (linesMoved < getOptions().minimumLinesMoved) {
-        return;
-      }
-
       return getChange(
         ChangeType.move,
         a!,
