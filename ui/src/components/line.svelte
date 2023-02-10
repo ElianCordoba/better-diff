@@ -79,7 +79,6 @@
 				class="flex"
 			>
 				{#if chunks.length === 1 && chunk.text === '\n'}
-					""
 					<div class="alignment"></div>
 				{:else}
 					<Prism code={chunk.text} language="ts" copy={false} override={getStyles(chunk.type)} />
