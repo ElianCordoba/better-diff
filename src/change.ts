@@ -13,7 +13,7 @@ export class Change {
     // For debugging porpoises, maybe remove in the future
     public nodeA: Node | undefined,
     public nodeB: Node | undefined,
-  ) {}
+  ) { }
 
   draw() {
     const { sourceA, sourceB } = getContext();
@@ -21,20 +21,20 @@ export class Change {
     const charsA = sourceA.split("");
     const charsB = sourceB.split("");
 
-    if (this.rangeA) {
+    if (this.rangeA && this.type !== ChangeType.deletion) {
       console.log("----A----");
       console.log(
         getSourceWithChange(
           charsA,
-          this.rangeA.start,
-          this.rangeA.end,
+          this.rangeA!.start,
+          this.rangeA!.end,
           colorFn.green,
         ).join(""),
       );
       console.log("\n");
     }
 
-    if (this.rangeB) {
+    if (this.rangeB && this.type !== ChangeType.addition) {
       console.log("----B----");
       console.log(
         getSourceWithChange(
