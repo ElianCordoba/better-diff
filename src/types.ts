@@ -3,6 +3,11 @@ export enum Side {
   b = "b",
 }
 
+export enum IterMode {
+  full = "full",
+  inner = "inner"
+}
+
 export interface DiffResult {
   sourceA: string;
   sourceB: string;

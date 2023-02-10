@@ -1,7 +1,7 @@
 import { equals, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
-import { Candidate } from "./types";
+import { Candidate, IterMode } from "./types";
 import { DebugFailure } from "./debug";
 import { getOptions } from ".";
 
@@ -14,15 +14,25 @@ interface IteratorOptions {
   source?: string;
 }
 
+export enum NextType {
+  Found = 'Found',
+  Maybe = 'Maybe',
+  NotFound = "NotFound"
+}
+
 export class Iterator {
   name?: string;
   // TODO: Maybe optimize? May consume a lot of memory
   chars?: string[];
 
+  private iterMode: IterMode = IterMode.full;
+  private nextNodes: number[] = [];
+
   private indexOfLastItem = 0;
   matchNumber = 0;
   public textNodes: Node[];
   public allNodes: Node[];
+
   constructor({ textNodes, allNodes }: InputNodes, options?: IteratorOptions) {
     this.textNodes = textNodes;
     this.allNodes = allNodes;
@@ -30,17 +40,43 @@ export class Iterator {
     this.chars = options?.source?.split("");
   }
 
-  next(startFrom = 0) {
-    for (let i = startFrom; i < this.textNodes.length; i++) {
-      const item = this.textNodes[i];
+  next(startFrom = 0): { response: NextType, value: Node | undefined } {
+    let _nodes: Node[];
+
+    if (this.iterMode === IterMode.full) {
+      _nodes = this.textNodes
+    } else {
+      _nodes = this.nextNodes.map(x => this.textNodes[x])
+    }
+
+    for (let i = startFrom; i < _nodes.length; i++) {
+      const item = _nodes[i];
 
       if (item.matched) {
         continue;
       }
 
       this.indexOfLastItem = i;
-      return item;
+      return {
+        value: item,
+        response: NextType.Found
+      }
     }
+
+    return {
+      value: undefined,
+      response: this.iterMode === IterMode.full ? NextType.NotFound : NextType.Maybe
+    }
+  }
+
+  switchToInnerMode(indexesOfNextNodes: number[]) {
+    this.iterMode = IterMode.inner
+    this.nextNodes = indexesOfNextNodes;
+  }
+
+  switchToFullMode() {
+    this.iterMode = IterMode.full
+    this.nextNodes = []
   }
 
   peek(index: number, skipMatched = true) {
@@ -59,6 +95,17 @@ export class Iterator {
     this.matchNumber++;
     this.textNodes[index].matched = true;
     this.textNodes[index].matchNumber = this.matchNumber;
+
+    // In inner iter mode we need to remove nodes from the array when they are matched
+    // if (this.iterMode === IterMode.inner) {
+    //   const indexOfBufferedNode = this.nextNodes.findIndex(x => x === index);
+
+    //   if (indexOfBufferedNode === -1) {
+    //     throw new DebugFailure('Could not find buffered node when trying to remove it')
+    //   }
+
+    //   this.nextNodes.splice(indexOfBufferedNode, 1)
+    // }
   }
 
   getCandidates(
