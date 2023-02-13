@@ -51,13 +51,19 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 
     // TODO(Align): If the widths or trivias are different, align
 
-    // We didn't find any match
-    if (candidatesAtoB.length === 0) {
+    let lcsAtoB: LCSResult = { bestResult: 0, bestIndex: 0 };
+    let lcsBtoA: LCSResult = { bestResult: 0, bestIndex: 0 };
+
+    if (candidatesAtoB.length) {
+      lcsAtoB = getLCS(candidatesAtoB, iterA, iterB, a.index);
+    } else {
       changes.push(getChange(ChangeType.deletion, a, b));
       iterA.mark(a.index);
     }
 
-    if (candidatesBtoA.length === 0) {
+    if (candidatesBtoA.length) {
+      lcsBtoA = getLCS(candidatesBtoA, iterB, iterA, b.index);
+    } else {
       changes.push(getChange(ChangeType.addition, a, b));
       iterB.mark(b.index);
     }
@@ -67,9 +73,6 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       // TODO: Maybe push change type 'change' ?
       continue;
     }
-
-    const lcsAtoB = getLCS(candidatesAtoB, iterA, iterB, a.index);
-    const lcsBtoA = getLCS(candidatesBtoA, iterB, iterA, b.index);
 
     let bestIndex: number;
     let bestResult: number;
@@ -91,6 +94,10 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       // This is the opposite of the above branch, since the best LCS was on the A side, there is were we need to reposition the cursor
       indexA = bestIndex;
       indexB = b.index;
+    }
+
+    if (bestResult === 0) {
+      throw new DebugFailure("LCS resulted in 0");
     }
 
     const change = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult);
@@ -309,14 +316,12 @@ export function getSequenceLength(
   return sequence;
 }
 
-function getLCS(candidates: Candidate[], iterA: Iterator, iterB: Iterator, indexA: number) {
+interface LCSResult { bestIndex: number; bestResult: number; }
+
+function getLCS(candidates: Candidate[], iterA: Iterator, iterB: Iterator, indexA: number): LCSResult {
   let bestResult = 0;
   let bestIndex = 0;
   let bestExpression = 0;
-
-  if (candidates.length === 0) {
-    return { bestIndex, bestResult };
-  }
 
   for (const { index, expressionNumber } of candidates) {
     const lcs = getSequenceLength(iterA, iterB, indexA, index);
