@@ -1,6 +1,6 @@
 import { equals, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
-import { Node } from "./node";
+import { Node, Status } from "./node";
 import { Candidate } from "./types";
 import { DebugFailure } from "./debug";
 import { getOptions } from ".";
@@ -34,7 +34,7 @@ export class Iterator {
     for (let i = startFrom; i < this.textNodes.length; i++) {
       const item = this.textNodes[i];
 
-      if (item.matched) {
+      if (item.status !== Status.unmatched) {
         continue;
       }
 
@@ -46,19 +46,39 @@ export class Iterator {
   peek(index: number, skipMatched = true) {
     const item = this.textNodes[index];
 
-    if (!item || (skipMatched && item.matched)) {
+    if (!item || (skipMatched && item.status === Status.matched)) {
       return;
     }
 
     return item;
   }
 
-  mark(index: number) {
+  /**
+   * Set all the `skipped` nodes to `unmatched` so that the next lap of the loop will include them
+   */
+  reset() {
+    for (const node of this.textNodes) {
+      if (node.status === Status.skipped) {
+        node.status = Status.unmatched
+      }
+    }
+  }
+
+  mark(index: number, markAs: Status = Status.matched) {
     // TODO: Should only apply for moves, otherwise a move, addition and move
     // will display 1 for the first move and 3 for the second
     this.matchNumber++;
-    this.textNodes[index].matched = true;
+    this.textNodes[index].status = markAs
     this.textNodes[index].matchNumber = this.matchNumber;
+  }
+
+  markMultiple(startIndex: number, numberOfNodes: number, markAs: Status) {
+    let i = startIndex
+    while (i < startIndex + numberOfNodes) {
+      console.log(this.peek(i)?.prettyKind)
+      this.mark(i, markAs)
+      i++
+    }
   }
 
   getCandidates(
@@ -80,8 +100,8 @@ export class Iterator {
         return;
       }
 
-      const foundAhead = ahead && !ahead.matched && equals(expected, ahead);
-      const foundBack = back && !back.matched && equals(expected, back);
+      const foundAhead = ahead && ahead.status === Status.unmatched && equals(expected, ahead);
+      const foundBack = back && back.status === Status.unmatched && equals(expected, back);
 
       if (foundAhead || foundBack) {
         const index = foundAhead ? startFrom + offset : startFrom - offset;
@@ -153,7 +173,7 @@ export class Iterator {
       }
 
       // Only include text node that we haven't proceeded yet
-      if (!next.matched && next.isTextNode) {
+      if (next.status === Status.unmatched && next.isTextNode) {
         expNodes.push(next);
       }
 
@@ -171,7 +191,7 @@ export class Iterator {
     const _nodes = Array.isArray(nodesToPrint) ? nodesToPrint : nodesToPrint === "text" ? this.textNodes : this.allNodes;
 
     for (const node of _nodes) {
-      let colorFn = node.matched ? k.green : k.grey;
+      let colorFn = node.status === Status.matched ? k.green : k.grey;
 
       const index = String(node.index).padStart(3).padEnd(6);
 
@@ -245,7 +265,7 @@ export class Iterator {
     const list: string[] = [];
 
     for (const node of this.textNodes) {
-      let colorFn = node.matched ? k.green : k.grey;
+      let colorFn = node.status === Status.matched ? k.green : k.grey;
 
       const index = String(node.index).padStart(3).padEnd(6);
 

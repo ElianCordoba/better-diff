@@ -10,7 +10,14 @@ interface NodeArgs {
   triviaLinesAbove: number;
   lineNumberStart: number;
   lineNumberEnd: number;
+  minLCS: number;
   index?: number;
+}
+
+export enum Status {
+  unmatched = "unmatched",
+  skipped = "skipped",
+  matched = "matched"
 }
 
 export class Node {
@@ -23,14 +30,14 @@ export class Node {
   triviaLinesAbove: number;
   lineNumberStart: number;
   lineNumberEnd: number;
+  minLCS: number;
   index = -1;
   expressionNumber = -1;
-  matched = false;
   matchNumber = 0;
   isTextNode = false;
-  //getSourceFn?: () => string,
+  status: Status = Status.unmatched
   constructor(args: NodeArgs) {
-    const { fullStart, start, end, kind, triviaLinesAbove, lineNumberStart, lineNumberEnd, text } = args;
+    const { fullStart, start, end, kind, triviaLinesAbove, lineNumberStart, lineNumberEnd, text, minLCS } = args;
 
     this.fullStart = fullStart;
     this.start = start;
@@ -38,6 +45,7 @@ export class Node {
     this.kind = kind;
     this.prettyKind = formatSyntaxKind(kind, text);
     this.text = text;
+    this.minLCS = minLCS
 
     this.triviaLinesAbove = triviaLinesAbove;
     this.lineNumberStart = lineNumberStart;

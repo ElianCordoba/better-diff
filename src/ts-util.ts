@@ -1,4 +1,4 @@
-import ts, { SourceFile } from "typescript";
+import ts, { SourceFile, SyntaxKind } from "typescript";
 import { Node } from "./node";
 import { DebugFailure } from "./debug";
 import { k } from "./reporter";
@@ -43,7 +43,10 @@ export function getNodesArray(source: string) {
     const leadingTriviaHasNewLine = node.getFullText().split("\n").length > 1;
     const triviaLinesAbove = leadingTriviaHasNewLine ? getTriviaLinesAbove(source, lineNumberStart) : 0;
 
-    const newNode = new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove });
+    // TODO: Unused for now
+    const minLCS = getMinLCS(node.kind)
+
+    const newNode = new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove, minLCS });
     newNode.expressionNumber = depth;
 
     allNodes.push(newNode);
@@ -79,6 +82,19 @@ function getSourceFile(source: string): SourceFile {
     ts.ScriptTarget.ESNext,
     true,
   );
+}
+
+function getMinLCS(kind: SyntaxKind) {
+  const isLiteral = kind >= ts.SyntaxKind.FirstLiteralToken && kind <= ts.SyntaxKind.LastLiteralToken;
+  const isIdentifier = kind === ts.SyntaxKind.Identifier || kind === ts.SyntaxKind.PrivateIdentifier
+  const isTemplate = kind === ts.SyntaxKind.FirstTemplateToken || kind === ts.SyntaxKind.LastTemplateToken
+  const other = kind === ts.SyntaxKind.DebuggerKeyword
+
+  if (isLiteral || isIdentifier || isTemplate || other) {
+    return 1;
+  } else {
+    return getOptions().defaultMinLCS
+  }
 }
 
 function getTriviaLinesAbove(source: string, startAt: number) {
