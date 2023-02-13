@@ -135,6 +135,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
     changes.push(...finishSequenceMatching(iterB, iterA, remainingNodesB, remainingNodesA));
   }
 
+  // TODO: Once we improve compaction to be on-demand, we will be able to remove this
   const deletions = changes.filter(x => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start! - b.rangeA?.start!)
   const additions = changes.filter(x => x.type === ChangeType.addition).sort((a, b) => a.rangeB?.start! - b.rangeB?.start!)
   const moves = changes.filter(x => x.type === ChangeType.move)
