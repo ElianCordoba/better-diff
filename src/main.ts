@@ -49,19 +49,22 @@ export function getChanges(codeA: string, codeB: string): Change[] {
     const candidatesAtoB = iterB.getCandidates(a);
     const candidatesBtoA = iterA.getCandidates(b);
 
+    // TODO(Align): If the widths or trivias are different, align
+
     // We didn't find any match
+    if (candidatesAtoB.length === 0) {
+      changes.push(getChange(ChangeType.deletion, a, b));
+      iterA.mark(a.index);
+    }
+
+    if (candidatesBtoA.length === 0) {
+      changes.push(getChange(ChangeType.addition, a, b));
+      iterB.mark(b.index);
+    }
+
+    // TODO: Maybe finish subsequence here too?
     if (candidatesAtoB.length === 0 && candidatesBtoA.length === 0) {
       // TODO: Maybe push change type 'change' ?
-
-      // TODO(Align): If the widths or trivias are different, align
-
-      changes.push(getChange(ChangeType.addition, a, b));
-      changes.push(getChange(ChangeType.deletion, a, b));
-
-      iterA.mark(a.index);
-      iterB.mark(b.index);
-
-      // TODO: Maybe finish subsequence here too?
       continue;
     }
 
@@ -132,7 +135,11 @@ export function getChanges(codeA: string, codeB: string): Change[] {
     changes.push(...finishSequenceMatching(iterB, iterA, remainingNodesB, remainingNodesA));
   }
 
-  return compactChanges(changes);
+  const deletions = changes.filter(x => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start! - b.rangeA?.start!)
+  const additions = changes.filter(x => x.type === ChangeType.addition).sort((a, b) => a.rangeB?.start! - b.rangeB?.start!)
+  const moves = changes.filter(x => x.type === ChangeType.move)
+
+  return compactChanges([...additions, ...deletions, ...moves]);
 }
 
 function oneSidedIteration(
