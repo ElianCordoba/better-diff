@@ -1,7 +1,7 @@
 import { equals, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
-import { Candidate } from "./types";
+import { Candidate, ChangeType } from "./types";
 import { DebugFailure } from "./debug";
 import { getOptions } from ".";
 
@@ -23,6 +23,10 @@ export class Iterator {
   matchNumber = 0;
   public textNodes: Node[];
   public allNodes: Node[];
+
+  mode: 'full' | 'inner' = 'full'
+  bufferedNodesIndexes: number[] = [];
+
   constructor({ textNodes, allNodes }: InputNodes, options?: IteratorOptions) {
     this.textNodes = textNodes;
     this.allNodes = allNodes;
@@ -30,8 +34,25 @@ export class Iterator {
     this.chars = options?.source?.split("");
   }
 
-  next(startFrom = 0) {
-    for (let i = startFrom; i < this.textNodes.length; i++) {
+  next(startFrom?: number) {
+    let res;
+    if (startFrom === undefined && this.bufferedNodesIndexes.length) {
+      bufferNodesLoop: for (const bufferedNodeIndex of this.bufferedNodesIndexes) {
+        const bufferedNode = this.textNodes[bufferedNodeIndex]
+
+        if (!bufferedNode.matched) {
+          res = bufferedNode
+          break bufferNodesLoop
+        }
+      }
+    }
+
+    // Return buffered node if found
+    if (res) {
+      return res
+    }
+
+    for (let i = startFrom ?? 0; i < this.textNodes.length; i++) {
       const item = this.textNodes[i];
 
       if (item.matched) {
@@ -41,6 +62,22 @@ export class Iterator {
       this.indexOfLastItem = i;
       return item;
     }
+
+  }
+
+  setInnerMode(indexesOfNodesToBuffer: number[]) {
+    this.mode = 'inner'
+
+    if (this.bufferedNodesIndexes.length) {
+      throw new DebugFailure('Buffered nodes was not empty when trying to buffer new nodes')
+    }
+
+    this.bufferedNodesIndexes = indexesOfNodesToBuffer;
+  }
+
+  setFullMode() {
+    this.mode = 'full'
+    this.bufferedNodesIndexes = []
   }
 
   peek(index: number, skipMatched = true) {
@@ -53,12 +90,40 @@ export class Iterator {
     return item;
   }
 
-  mark(index: number) {
+  mark(index: number, markedAs: ChangeType) {
     // TODO: Should only apply for moves, otherwise a move, addition and move
     // will display 1 for the first move and 3 for the second
     this.matchNumber++;
     this.textNodes[index].matched = true;
     this.textNodes[index].matchNumber = this.matchNumber;
+    this.textNodes[index].markedAs = markedAs
+
+    // TODO: IDK if I should keep this
+    if (this.bufferedNodesIndexes.length) {
+      const _index = this.bufferedNodesIndexes.findIndex(x => x === index);
+
+      if (_index !== -1) {
+        this.bufferedNodesIndexes.splice(_index, 1)
+      }
+    }
+  }
+
+  bufferNodes(indexesOfNodesToBuffer: number[]) {
+    if (this.bufferedNodesIndexes.length) {
+      throw new DebugFailure('Buffered nodes was not empty when trying to buffer new nodes')
+    }
+
+    this.bufferedNodesIndexes = indexesOfNodesToBuffer;
+  }
+
+  hasBufferedNodes() {
+    const hasBufferedNodes = this.bufferedNodesIndexes.some(x => !this.textNodes[x].matched)
+
+    if (!hasBufferedNodes && this.bufferedNodesIndexes.length) {
+      this.bufferedNodesIndexes = []
+    }
+
+    return hasBufferedNodes
   }
 
   getCandidates(
@@ -171,7 +236,24 @@ export class Iterator {
     const _nodes = Array.isArray(nodesToPrint) ? nodesToPrint : nodesToPrint === "text" ? this.textNodes : this.allNodes;
 
     for (const node of _nodes) {
-      let colorFn = node.matched ? k.green : k.grey;
+      let colorFn
+      switch (node.markedAs) {
+        case ChangeType.addition: {
+          colorFn = k.green
+          break
+        }
+        case ChangeType.deletion: {
+          colorFn = k.red
+          break
+        }
+        case ChangeType.move: {
+          colorFn = k.blue
+          break
+        }
+        default: {
+          colorFn = k.grey;
+        }
+      }
 
       const index = String(node.index).padStart(3).padEnd(6);
 
@@ -185,7 +267,7 @@ export class Iterator {
       const row = `${index}|${matchNumber}|${expressionNumber}|${colorFn(_kind)}|${_text}`;
 
       if (node.index === this.indexOfLastItem) {
-        colorFn = k.cyan;
+        colorFn = k.yellow;
       }
 
       list.push(colorFn(row));

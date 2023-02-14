@@ -20,127 +20,116 @@ export function getChanges(codeA: string, codeB: string): Change[] {
   let a: Node | undefined;
   let b: Node | undefined;
 
-  while (true) {
-    a = iterA.next();
-    b = iterB.next();
+  function loop() {
+    while (true) {
+      a = iterA.next();
+      b = iterB.next();
 
-    // Loop until both iterators are done
-    if (!a && !b) {
-      break;
+      // Loop until both iterators are done
+      if (!a && !b) {
+        break;
+      }
+
+      // One of the iterators finished. We will traverse the remaining nodes in the other iterator
+      if (!a || !b) {
+        const iterOn = !a ? iterB : iterA;
+        const type = !a ? ChangeType.addition : ChangeType.deletion;
+
+        const remainingChanges = oneSidedIteration(iterOn, type);
+        changes.push(...remainingChanges);
+        break;
+      }
+
+      // We will try to match the code, comparing a node to another one on the other iterator
+      // For a node X in the iterator A, we could get multiple possible matches on iterator B
+      // But, we also check from the perspective of the iterator B, this is because of the following example
+      // A: 1 2 x 1 2 3
+      // B: 1 2 3
+      // From the perspective of A, the LCS is [1, 2], but from the other perspective it's the real maxima [1, 2, 3]
+      // More about this in the move tests
+      const candidatesAtoB = iterB.getCandidates(a);
+      const candidatesBtoA = iterA.getCandidates(b);
+
+      // TODO(Align): If the widths or trivias are different, align
+
+      let lcsAtoB: LCSResult = { bestResult: 0, bestIndex: 0 };
+      let lcsBtoA: LCSResult = { bestResult: 0, bestIndex: 0 };
+
+      if (candidatesAtoB.length) {
+        lcsAtoB = getLCS(candidatesAtoB, iterA, iterB, a.index);
+      } else {
+        changes.push(getChange(ChangeType.deletion, a, b));
+        iterA.mark(a.index, ChangeType.deletion);
+      }
+
+      if (candidatesBtoA.length) {
+        lcsBtoA = getLCS(candidatesBtoA, iterB, iterA, b.index);
+      } else {
+        changes.push(getChange(ChangeType.addition, a, b));
+        iterB.mark(b.index, ChangeType.addition);
+      }
+
+      // TODO: Maybe finish subsequence here too?
+      if (candidatesAtoB.length === 0 && candidatesBtoA.length === 0) {
+        // TODO: Maybe push change type 'change' ?
+        continue;
+      }
+
+      let bestIndex: number;
+      let bestResult: number;
+      let indexA: number;
+      let indexB: number;
+
+      // For simplicity the A to B perspective has preference
+      if (lcsAtoB.bestResult >= lcsBtoA.bestResult) {
+        bestIndex = lcsAtoB.bestIndex;
+        bestResult = lcsAtoB.bestResult;
+
+        // If the best LCS is found on the A to B perspective, indexA is the current position since we moved on the b side
+        indexA = a.index;
+        indexB = bestIndex;
+      } else {
+        bestIndex = lcsBtoA.bestIndex;
+        bestResult = lcsBtoA.bestResult;
+
+        // This is the opposite of the above branch, since the best LCS was on the A side, there is were we need to reposition the cursor
+        indexA = bestIndex;
+        indexB = b.index;
+      }
+
+      if (bestResult === 0) {
+        throw new DebugFailure("LCS resulted in 0");
+      }
+
+      const change = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult);
+
+      if (change) {
+        changes.push(change);
+      }
+
+      const exps = getCommonAncestor(iterA, iterB, indexA, indexB);
+
+      if (!iterA.hasBufferedNodes()) {
+        let remainingNodesA = iterA.getNodesFromExpression(iterA.peek(indexA, false)!, exps.expA);
+
+        if (remainingNodesA.length) {
+          iterA.bufferNodes(remainingNodesA.map(x => x.index))
+        }
+      }
+
+      if (!iterB.hasBufferedNodes()) {
+        let remainingNodesB = iterB.getNodesFromExpression(iterB.peek(indexB, false)!, exps.expB);
+
+        if (remainingNodesB.length) {
+          iterB.bufferNodes(remainingNodesB.map(x => x.index))
+        }
+      }
+
+      console.log()
     }
-
-    // One of the iterators finished. We will traverse the remaining nodes in the other iterator
-    if (!a || !b) {
-      const iterOn = !a ? iterB : iterA;
-      const type = !a ? ChangeType.addition : ChangeType.deletion;
-
-      const remainingChanges = oneSidedIteration(iterOn, type);
-      changes.push(...remainingChanges);
-      break;
-    }
-
-    // We will try to match the code, comparing a node to another one on the other iterator
-    // For a node X in the iterator A, we could get multiple possible matches on iterator B
-    // But, we also check from the perspective of the iterator B, this is because of the following example
-    // A: 1 2 x 1 2 3
-    // B: 1 2 3
-    // From the perspective of A, the LCS is [1, 2], but from the other perspective it's the real maxima [1, 2, 3]
-    // More about this in the move tests
-    const candidatesAtoB = iterB.getCandidates(a);
-    const candidatesBtoA = iterA.getCandidates(b);
-
-    // TODO(Align): If the widths or trivias are different, align
-
-    let lcsAtoB: LCSResult = { bestResult: 0, bestIndex: 0 };
-    let lcsBtoA: LCSResult = { bestResult: 0, bestIndex: 0 };
-
-    if (candidatesAtoB.length) {
-      lcsAtoB = getLCS(candidatesAtoB, iterA, iterB, a.index);
-    } else {
-      changes.push(getChange(ChangeType.deletion, a, b));
-      iterA.mark(a.index);
-    }
-
-    if (candidatesBtoA.length) {
-      lcsBtoA = getLCS(candidatesBtoA, iterB, iterA, b.index);
-    } else {
-      changes.push(getChange(ChangeType.addition, a, b));
-      iterB.mark(b.index);
-    }
-
-    // TODO: Maybe finish subsequence here too?
-    if (candidatesAtoB.length === 0 && candidatesBtoA.length === 0) {
-      // TODO: Maybe push change type 'change' ?
-      continue;
-    }
-
-    let bestIndex: number;
-    let bestResult: number;
-    let indexA: number;
-    let indexB: number;
-
-    // For simplicity the A to B perspective has preference
-    if (lcsAtoB.bestResult >= lcsBtoA.bestResult) {
-      bestIndex = lcsAtoB.bestIndex;
-      bestResult = lcsAtoB.bestResult;
-
-      // If the best LCS is found on the A to B perspective, indexA is the current position since we moved on the b side
-      indexA = a.index;
-      indexB = bestIndex;
-    } else {
-      bestIndex = lcsBtoA.bestIndex;
-      bestResult = lcsBtoA.bestResult;
-
-      // This is the opposite of the above branch, since the best LCS was on the A side, there is were we need to reposition the cursor
-      indexA = bestIndex;
-      indexB = b.index;
-    }
-
-    if (bestResult === 0) {
-      throw new DebugFailure("LCS resulted in 0");
-    }
-
-    const change = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult);
-
-    if (change) {
-      changes.push(change);
-    }
-
-    const exps = getCommonAncestor(iterA, iterB, indexA, indexB);
-
-    // We look for remaining nodes at index + bestResult because we don't want to include the already matched ones
-    let remainingNodesA = iterA.getNodesFromExpression(iterA.peek(indexA, false)!, exps.expA);
-    let remainingNodesB = iterB.getNodesFromExpression(iterB.peek(indexB, false)!, exps.expB);
-
-    // If we finished matching the LCS and we don't have any remaining nodes in either expression, then we are done with the matching and we can move on
-    if (!remainingNodesA.length && !remainingNodesB.length) {
-      continue;
-    }
-
-    // If we still have nodes remaining, means that after the LCS the expression had more nodes that we need to match before moving on, for example
-    //
-    //
-    // console.log()
-    //
-    // --------------
-    //
-    // console.log(1)
-    //
-    //
-    // The LCS will only match the `console.log(` part, but before moving into another expression we need to match the remaining of the expression
-
-    // First we complete the A side, if applicable
-    changes.push(...finishSequenceMatching(iterA, iterB, remainingNodesA, remainingNodesB));
-
-    // TODO: Maybe an optimization, could run faster if we call "finishSequenceMatching" on the one it has the most / least nodes to recalculate
-
-    // After calling `finishSequenceMatching` we need to recalculate the remaining nodes since previously unmatched ones could have been matched now
-    remainingNodesA = iterA.getNodesFromExpression(iterA.peek(indexA, false)!, exps.expA);
-    remainingNodesB = iterB.getNodesFromExpression(iterB.peek(indexB, false)!, exps.expB);
-
-    // Finally we complete the matching of the B side. This time we call `finishSequenceMatching` with the arguments inverted in order to check the other perspective
-    changes.push(...finishSequenceMatching(iterB, iterA, remainingNodesB, remainingNodesA));
   }
+
+  loop();
 
   // TODO: Once we improve compaction to be on-demand, we will be able to remove this
   const deletions = changes.filter(x => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start! - b.rangeA?.start!)
@@ -171,7 +160,7 @@ function oneSidedIteration(
       changes.push(getChange(typeOfChange, value, undefined));
     }
 
-    iter.mark(value.index);
+    iter.mark(value.index, typeOfChange);
 
     value = iter.next();
   }
@@ -322,9 +311,14 @@ function getLCS(candidates: Candidate[], iterA: Iterator, iterB: Iterator, index
   let bestResult = 0;
   let bestIndex = 0;
   let bestExpression = 0;
+  let bestScore = 0
+
+  const targetExp = iterA.peek(indexA)?.expressionNumber!
 
   for (const { index, expressionNumber } of candidates) {
     const lcs = getSequenceLength(iterA, iterB, indexA, index);
+
+    const score = getScore(targetExp, expressionNumber)
 
     // There are 2 conditions to set the new best candidate
     // 1) The new result is simply better that the previous one.
@@ -341,15 +335,24 @@ function getLCS(candidates: Candidate[], iterA: Iterator, iterB: Iterator, index
     // The test that covers this logic is the one called "Properly match closing paren"
     if (
       lcs > bestResult ||
-      lcs === bestResult && expressionNumber < bestExpression
+      lcs === bestResult && score > bestScore
     ) {
       bestResult = lcs;
       bestIndex = index;
       bestExpression = expressionNumber;
+      bestScore = score
     }
   }
 
   return { bestIndex, bestResult };
+}
+
+function getScore(target: number, candidate: number) {
+  const maxScore = target;
+
+  const offBy = maxScore - (+candidate)
+
+  return maxScore - offBy
 }
 
 // This function has side effects, mutates data in the iterators
@@ -373,8 +376,8 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     a = iterA.next(indexA)!;
     b = iterB.next(indexB)!;
 
-    iterA.mark(a.index);
-    iterB.mark(b.index);
+    iterA.mark(a.index, ChangeType.move);
+    iterB.mark(b.index, ChangeType.move);
 
     index++;
     indexA++;
@@ -483,10 +486,10 @@ function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodes
 
     // Something added or removed
     if (!candidates.length) {
-      iterA.mark(current.index);
-
       // Since this function is reversible we need to check the perspective so that we know if the change is an addition or a removal
       const perspectiveAtoB = iterA.name === "a";
+
+      iterA.mark(current.index, perspectiveAtoB ? ChangeType.deletion : ChangeType.addition);
 
       if (perspectiveAtoB) {
         changes.push(getChange(ChangeType.deletion, current, undefined));
