@@ -56,14 +56,14 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       let lcsBtoA: LCSResult = { bestResult: 0, bestIndex: 0 };
 
       if (candidatesAtoB.length) {
-        lcsAtoB = getLCS(candidatesAtoB, iterA, iterB, a.index);
+        lcsAtoB = getLCS(a, candidatesAtoB, iterA, iterB);
       } else {
         changes.push(getChange(ChangeType.deletion, a, b));
         iterA.mark(a.index, ChangeType.deletion);
       }
 
       if (candidatesBtoA.length) {
-        lcsBtoA = getLCS(candidatesBtoA, iterB, iterA, b.index);
+        lcsBtoA = getLCS(b, candidatesBtoA, iterB, iterA);
       } else {
         changes.push(getChange(ChangeType.addition, a, b));
         iterB.mark(b.index, ChangeType.addition);
@@ -307,16 +307,16 @@ export function getSequenceLength(
 
 interface LCSResult { bestIndex: number; bestResult: number; }
 
-function getLCS(candidates: Candidate[], iterA: Iterator, iterB: Iterator, indexA: number): LCSResult {
+function getLCS(wanted: Node, candidates: Candidate[], iterA: Iterator, iterB: Iterator): LCSResult {
   let bestResult = 0;
   let bestIndex = 0;
   let bestExpression = 0;
   let bestScore = 0
 
-  const targetExp = iterA.peek(indexA)?.expressionNumber!
+  const targetExp = iterA.peek(wanted.index)?.expressionNumber!
 
   for (const { index, expressionNumber } of candidates) {
-    const lcs = getSequenceLength(iterA, iterB, indexA, index);
+    const lcs = getSequenceLength(iterA, iterB, wanted.index, index);
 
     const score = getScore(targetExp, expressionNumber)
 
