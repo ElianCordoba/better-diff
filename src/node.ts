@@ -30,6 +30,9 @@ export class Node {
   matchNumber = 0;
   isTextNode = false;
 
+  isOpeningNode = false
+  isClosingNode = false
+
   // For printing proposes
   markedAs?: ChangeType
   constructor(args: NodeArgs) {

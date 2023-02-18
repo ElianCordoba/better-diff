@@ -1,12 +1,13 @@
 import { getNodesArray } from "./ts-util";
 import { Candidate, ChangeType, Range, Side } from "./types";
-import { equals, mergeRanges, range } from "./utils";
+import { ClosingNodeGroup, equals, getClosingNodeGroup, mergeRanges, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
 import { getContext } from "./index";
 import { Node } from "./node";
 import { DebugFailure } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
+import { Stack } from "./sequence";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -101,10 +102,10 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         throw new DebugFailure("LCS resulted in 0");
       }
 
-      const change = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult);
+      const moveChanges = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult);
 
-      if (change) {
-        changes.push(change);
+      if (moveChanges.length) {
+        changes.push(...moveChanges);
       }
 
       const exps = getCommonAncestor(iterA, iterB, indexA, indexB);
@@ -318,8 +319,6 @@ function getLCS(wanted: Node, candidates: Candidate[], iterA: Iterator, iterB: I
   for (const { index, expressionNumber } of candidates) {
     const lcs = getSequenceLength(iterA, iterB, wanted.index, index);
 
-    const score = getScore(targetExp, expressionNumber)
-
     // There are 2 conditions to set the new best candidate
     // 1) The new result is simply better that the previous one.
     // 2) There is a tie but the new candidate is less deep
@@ -334,13 +333,11 @@ function getLCS(wanted: Node, candidates: Candidate[], iterA: Iterator, iterB: I
     //
     // The test that covers this logic is the one called "Properly match closing paren"
     if (
-      lcs > bestResult ||
-      lcs === bestResult && score > bestScore
+      lcs > bestResult
     ) {
       bestResult = lcs;
       bestIndex = index;
       bestExpression = expressionNumber;
-      bestScore = score
     }
   }
 
@@ -356,7 +353,9 @@ function getScore(target: number, candidate: number) {
 }
 
 // This function has side effects, mutates data in the iterators
-function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, indexOfBestResult: number, lcs: number): Change | undefined {
+function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, indexOfBestResult: number, lcs: number): Change[] {
+  const changes: Change[] = []
+
   let a = iterA.next(indexA)!;
   let b = iterB.next(indexB)!;
 
@@ -370,6 +369,8 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
   const { alignmentTable } = getContext();
   const localAlignmentTable = new AlignmentTable();
+
+  const nodesWithClosingVerifier: Map<ClosingNodeGroup, Stack> = new Map();
 
   let index = indexOfBestResult;
   while (index < indexOfBestResult + lcs) {
@@ -386,6 +387,19 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     if (!equals(a!, b!)) {
       throw new DebugFailure(`Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
     }
+
+    /// Closing node
+
+    if (a.isOpeningNode || a.isClosingNode) {
+      const nodeGroup = getClosingNodeGroup(a)
+      if (nodesWithClosingVerifier.has(nodeGroup)) {
+        nodesWithClosingVerifier.get(nodeGroup)!.add(a)
+      } else {
+        nodesWithClosingVerifier.set(nodeGroup, new Stack(a))
+      }
+    }
+
+    ///
 
     /// Alignment: Move ///
 
@@ -434,6 +448,42 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     rangeB = mergeRanges(rangeB, b.getPosition());
   }
 
+  for (let stack of nodesWithClosingVerifier.values()) {
+    if (!stack.isEmpty()) {
+      for (const unmatchedOpeningNode of stack.values) {
+
+
+        const closingNodeForA = iterA.findClosingNode(unmatchedOpeningNode, indexA)
+        const closingNodeForB = iterB.findClosingNode(unmatchedOpeningNode, indexB)
+
+        if (!closingNodeForA) {
+          throw new DebugFailure(`Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on A side`)
+        }
+
+        if (!closingNodeForB) {
+          throw new DebugFailure(`Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on B side`)
+        }
+
+        iterA.mark(closingNodeForA.index, ChangeType.move)
+        iterB.mark(closingNodeForB.index, ChangeType.move)
+
+        changes.push(
+          getChange(
+            ChangeType.move,
+            unmatchedOpeningNode,
+            closingNodeForB,
+          ),
+          getChange(
+            ChangeType.move,
+            closingNodeForA,
+            unmatchedOpeningNode,
+          )
+        )
+
+      }
+    }
+  }
+
   const endA = a.lineNumberEnd;
   const endB = b.lineNumberEnd;
 
@@ -454,8 +504,9 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     // Since this function is reversible we need to check the perspective so that we know if the change is an addition or a removal
     const perspectiveAtoB = iterA.name === "a";
 
+    let change: Change;
     if (perspectiveAtoB) {
-      return getChange(
+      change = getChange(
         ChangeType.move,
         a!,
         b!,
@@ -463,7 +514,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
         rangeB,
       );
     } else {
-      return getChange(
+      change = getChange(
         ChangeType.move,
         b!,
         a!,
@@ -471,71 +522,11 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
         rangeA,
       );
     }
-  }
-}
 
-function finishSequenceMatching(iterA: Iterator, iterB: Iterator, remainingNodesA: Node[], remainingNodesB: Node[]): Change[] {
-  const changes: Change[] = [];
-
-  let i = 0;
-  while (i < remainingNodesA.length) {
-    const current: Node = remainingNodesA[i];
-
-    const candidatesInRemainingNodes = searchCandidatesInList(remainingNodesB, current);
-    const candidates = candidatesInRemainingNodes.length ? candidatesInRemainingNodes : iterB.getCandidates(current);
-
-    // Something added or removed
-    if (!candidates.length) {
-      // Since this function is reversible we need to check the perspective so that we know if the change is an addition or a removal
-      const perspectiveAtoB = iterA.name === "a";
-
-      iterA.mark(current.index, perspectiveAtoB ? ChangeType.deletion : ChangeType.addition);
-
-      if (perspectiveAtoB) {
-        changes.push(getChange(ChangeType.deletion, current, undefined));
-      } else {
-        changes.push(getChange(ChangeType.addition, undefined, current));
-      }
-
-      i++;
-      continue;
-    }
-
-    const { bestIndex, bestResult } = getLCS(candidates, iterA, iterB, current.index);
-
-    if (bestResult === 0) {
-      throw new DebugFailure("LCS resulted in 0");
-    }
-    const indexA = current?.index!;
-    const indexB = bestIndex;
-
-    const change = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult);
-
-    if (change) {
-      changes.push(change);
-    }
-
-    i += bestResult;
+    changes.push(change)
   }
 
-  // TODO: This should be enabled but, since the code that assigns the expression number doesn't work properly, it breaks if I enable this.
-  // if (i != remainingNodesA.length) {
-  //   throw new Error(`After finishing the whole sequence matching the length didn't match, expected ${remainingNodesA.length} but got ${i}`)
-  // }
-
-  return changes;
-}
-
-function searchCandidatesInList(nodes: Node[], expected: Node): Candidate[] {
-  const candidates: Candidate[] = [];
-
-  for (const node of nodes) {
-    if (equals(node, expected)) {
-      candidates.push({ index: node.index, expressionNumber: node.expressionNumber });
-    }
-  }
-
-  return candidates;
+  return changes
 }
 
 // Go back as far as possible over every node (non text node included) to find the oldest common ancestor.

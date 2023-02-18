@@ -1,9 +1,10 @@
-import { equals, getNodeForPrinting } from "./utils";
+import { equals, getClosingNode, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
 import { Candidate, ChangeType } from "./types";
 import { DebugFailure } from "./debug";
 import { getOptions } from ".";
+import { Stack } from "./sequence";
 
 interface InputNodes {
   textNodes: Node[];
@@ -63,6 +64,36 @@ export class Iterator {
       return item;
     }
 
+  }
+
+  // Find the first node that matches the wanted kind
+  findClosingNode(unmatchedOpenNode: Node, startFrom = 0): Node | undefined {
+    const closingNodeKind = getClosingNode(unmatchedOpenNode)
+    const stack = new Stack(unmatchedOpenNode)
+
+
+    let i = startFrom;
+
+    while (true) {
+      const next = this.peek(i);
+      i++
+
+      if (!next) {
+        return undefined
+      }
+
+      // Not a node we are interested in, skipping
+      if (next.kind !== closingNodeKind && next.kind !== unmatchedOpenNode.kind) {
+        continue;
+      }
+
+      stack.add(next)
+
+
+      if (stack.isEmpty()) {
+        return next
+      }
+    }
   }
 
   setInnerMode(indexesOfNodesToBuffer: number[]) {

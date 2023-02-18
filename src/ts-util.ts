@@ -46,6 +46,24 @@ export function getNodesArray(source: string) {
     const newNode = new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove });
     newNode.expressionNumber = depth;
 
+    const isClosingNode =
+      node.kind === ts.SyntaxKind.CloseBraceToken ||
+      node.kind === ts.SyntaxKind.CloseBracketToken ||
+      node.kind === ts.SyntaxKind.CloseParenToken
+
+    if (isClosingNode) {
+      newNode.isClosingNode = true
+    }
+
+    const isOpeningNode =
+      node.kind === ts.SyntaxKind.OpenBraceToken ||
+      node.kind === ts.SyntaxKind.OpenBracketToken ||
+      node.kind === ts.SyntaxKind.OpenParenToken
+
+    if (isOpeningNode) {
+      newNode.isOpeningNode = true
+    }
+
     allNodes.push(newNode);
     // Only include visible node, nodes that represent some text in the source code.
     if (node.text || isReservedWord || isPunctuation) {

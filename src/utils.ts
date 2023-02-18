@@ -1,6 +1,7 @@
 import ts from "typescript";
 import { Node } from "./node";
 import { Range, Side } from "./types";
+import { DebugFailure } from "./debug";
 
 export function formatSyntaxKind(kind: ts.SyntaxKind, text?: string) {
   let textValue = text ? `| "${text}"` : "";
@@ -69,4 +70,41 @@ export function getRanges(range: Range | undefined) {
 
 export function oppositeSide(side: Side): Side {
   return side === Side.a ? Side.b : Side.a;
+}
+
+export enum ClosingNodeGroup {
+  Paren = 'Paren',
+  Brace = 'Brace',
+  Bracket = 'Bracket'
+}
+
+export function getClosingNodeGroup(node: Node): ClosingNodeGroup {
+  switch (node.kind) {
+    case ts.SyntaxKind.OpenParenToken:
+    case ts.SyntaxKind.CloseParenToken:
+      return ClosingNodeGroup.Paren;
+
+    case ts.SyntaxKind.OpenBraceToken:
+    case ts.SyntaxKind.OpenBraceToken:
+      return ClosingNodeGroup.Brace
+
+    case ts.SyntaxKind.OpenBracketToken:
+    case ts.SyntaxKind.CloseBracketToken:
+      return ClosingNodeGroup.Bracket;
+
+    default:
+      throw new DebugFailure(`Unknown node kind ${node.prettyKind}`)
+  }
+}
+
+// Given an opening node, you get back the closing one
+export function getClosingNode({ kind, prettyKind }: Node): ts.SyntaxKind {
+  switch (kind) {
+    case ts.SyntaxKind.OpenBraceToken: return ts.SyntaxKind.CloseBraceToken;
+    case ts.SyntaxKind.OpenBracketToken: return ts.SyntaxKind.CloseBracketToken;
+    case ts.SyntaxKind.OpenParenToken: return ts.SyntaxKind.CloseParenToken;
+    default: {
+      throw new DebugFailure(`Unknown kind ${prettyKind}`)
+    }
+  }
 }
