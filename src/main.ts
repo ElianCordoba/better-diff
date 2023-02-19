@@ -169,6 +169,7 @@ function oneSidedIteration(
   return changes;
 }
 
+// Remove and move inside class constructor
 function getChange(
   type: ChangeType,
   a: Node | undefined,
@@ -448,42 +449,6 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     rangeB = mergeRanges(rangeB, b.getPosition());
   }
 
-  for (let stack of nodesWithClosingVerifier.values()) {
-    if (!stack.isEmpty()) {
-      for (const unmatchedOpeningNode of stack.values) {
-
-
-        const closingNodeForA = iterA.findClosingNode(unmatchedOpeningNode, indexA)
-        const closingNodeForB = iterB.findClosingNode(unmatchedOpeningNode, indexB)
-
-        if (!closingNodeForA) {
-          throw new DebugFailure(`Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on A side`)
-        }
-
-        if (!closingNodeForB) {
-          throw new DebugFailure(`Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on B side`)
-        }
-
-        iterA.mark(closingNodeForA.index, ChangeType.move)
-        iterB.mark(closingNodeForB.index, ChangeType.move)
-
-        changes.push(
-          getChange(
-            ChangeType.move,
-            unmatchedOpeningNode,
-            closingNodeForB,
-          ),
-          getChange(
-            ChangeType.move,
-            closingNodeForA,
-            unmatchedOpeningNode,
-          )
-        )
-
-      }
-    }
-  }
-
   const endA = a.lineNumberEnd;
   const endB = b.lineNumberEnd;
 
@@ -524,6 +489,36 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     }
 
     changes.push(change)
+  }
+
+  for (let stack of nodesWithClosingVerifier.values()) {
+    if (!stack.isEmpty()) {
+      for (const unmatchedOpeningNode of stack.values) {
+        const closingNodeForA = iterA.findClosingNode(unmatchedOpeningNode, indexA)
+        const closingNodeForB = iterB.findClosingNode(unmatchedOpeningNode, indexB)
+
+        if (!closingNodeForA) {
+          throw new DebugFailure(`Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on A side`)
+        }
+
+        if (!closingNodeForB) {
+          throw new DebugFailure(`Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on B side`)
+        }
+
+        iterA.mark(closingNodeForA.index, ChangeType.move)
+        iterB.mark(closingNodeForB.index, ChangeType.move)
+
+        if (didChange) {
+          changes.push(
+            getChange(
+              ChangeType.move,
+              closingNodeForA,
+              closingNodeForB,
+            ),
+          )
+        }
+      }
+    }
   }
 
   return changes
