@@ -85,7 +85,7 @@ export function getClosingNodeGroup(node: Node): ClosingNodeGroup {
       return ClosingNodeGroup.Paren;
 
     case ts.SyntaxKind.OpenBraceToken:
-    case ts.SyntaxKind.OpenBraceToken:
+    case ts.SyntaxKind.CloseBraceToken:
       return ClosingNodeGroup.Brace
 
     case ts.SyntaxKind.OpenBracketToken:
