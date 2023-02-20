@@ -2,7 +2,7 @@ import { getContext, getOptions } from ".";
 import { ChangeType, Side } from "../src/types";
 import { AlignmentTable } from "./alignmentTable";
 import { Change } from "./change";
-import { assert, DebugFailure } from "./debug";
+import { assert, fail } from "./debug";
 import { getRanges, range } from "./utils";
 
 //@ts-ignore TODO: Importing normally doesn't work with vitest
@@ -117,7 +117,7 @@ export function applyChangesToSources(
       }
 
       default:
-        throw new DebugFailure(`Unhandled type "${type}"`);
+        fail(`Unhandled type "${type}"`);
     }
   }
 

@@ -1,7 +1,7 @@
 import ts from "typescript";
 import { Node } from "./node";
 import { Range, Side } from "./types";
-import { DebugFailure } from "./debug";
+import { fail } from "./debug";
 
 export function formatSyntaxKind(kind: ts.SyntaxKind, text?: string) {
   let textValue = text ? `| "${text}"` : "";
@@ -95,7 +95,7 @@ export function getClosingNodeGroup(node: Node): ClosingNodeGroup {
       return ClosingNodeGroup.Bracket;
 
     default:
-      throw new DebugFailure(`Unknown node kind ${node.prettyKind}`);
+      fail(`Unknown node kind ${node.prettyKind}`);
   }
 }
 
@@ -109,7 +109,7 @@ export function getClosingNode({ kind, prettyKind }: Node): ts.SyntaxKind {
     case ts.SyntaxKind.OpenParenToken:
       return ts.SyntaxKind.CloseParenToken;
     default: {
-      throw new DebugFailure(`Unknown kind ${prettyKind}`);
+      fail(`Unknown kind ${prettyKind}`);
     }
   }
 }

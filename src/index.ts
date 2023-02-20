@@ -4,7 +4,7 @@ import { serialize } from "./serializer";
 import { ChangeType, SerializedResponse, Side } from "./types";
 import { Node } from "./node";
 import { AlignmentTable } from "./alignmentTable";
-import { DebugFailure } from "./debug";
+import { fail } from "./debug";
 
 // These options have their own tests under the /tests/options folder
 export interface Options {
@@ -82,7 +82,7 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
     }
 
     default: {
-      throw new DebugFailure(`Unknown output type "${_options.outputType}"`);
+      fail(`Unknown output type "${_options.outputType}"`);
     }
   }
 }
@@ -117,7 +117,7 @@ export class LayoutShiftCandidate {
     // Value: Length of the string
     public a = new Map<number, number>(),
     public b = new Map<number, number>(),
-  ) {}
+  ) { }
 
   add(side: Side, at: number, length: number) {
     if (side === Side.a) {
