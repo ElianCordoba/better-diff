@@ -34,25 +34,22 @@ export class Iterator {
     this.chars = options?.source?.split("");
   }
 
+  // Get the next unmatched node in the iterator, optionally after a given index
+  // This may include buffered nodes, which are nodes that remained from a previous match and node they have
+  // priority so that we can match those before moving onto other ones
   next(startFrom?: number) {
-    let res;
+    // Preferences to buffered nodes, which they are never requested with the `startFrom` argument
     if (startFrom === undefined && this.bufferedNodesIndexes.length) {
-      bufferNodesLoop:
       for (const bufferedNodeIndex of this.bufferedNodesIndexes) {
         const bufferedNode = this.textNodes[bufferedNodeIndex];
 
         if (!bufferedNode.matched) {
-          res = bufferedNode;
-          break bufferNodesLoop;
+          return bufferedNode;
         }
       }
     }
 
-    // Return buffered node if found
-    if (res) {
-      return res;
-    }
-
+    // If no buffered where present get the next node the standard way
     for (let i = startFrom ?? 0; i < this.textNodes.length; i++) {
       const item = this.textNodes[i];
 
