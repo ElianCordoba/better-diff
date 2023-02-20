@@ -25,7 +25,7 @@ export class Iterator {
   public textNodes: Node[];
   public allNodes: Node[];
 
-  mode: 'full' | 'inner' = 'full'
+  mode: "full" | "inner" = "full";
   bufferedNodesIndexes: number[] = [];
 
   constructor({ textNodes, allNodes }: InputNodes, options?: IteratorOptions) {
@@ -38,19 +38,20 @@ export class Iterator {
   next(startFrom?: number) {
     let res;
     if (startFrom === undefined && this.bufferedNodesIndexes.length) {
-      bufferNodesLoop: for (const bufferedNodeIndex of this.bufferedNodesIndexes) {
-        const bufferedNode = this.textNodes[bufferedNodeIndex]
+      bufferNodesLoop:
+      for (const bufferedNodeIndex of this.bufferedNodesIndexes) {
+        const bufferedNode = this.textNodes[bufferedNodeIndex];
 
         if (!bufferedNode.matched) {
-          res = bufferedNode
-          break bufferNodesLoop
+          res = bufferedNode;
+          break bufferNodesLoop;
         }
       }
     }
 
     // Return buffered node if found
     if (res) {
-      return res
+      return res;
     }
 
     for (let i = startFrom ?? 0; i < this.textNodes.length; i++) {
@@ -63,23 +64,21 @@ export class Iterator {
       this.indexOfLastItem = i;
       return item;
     }
-
   }
 
   // Find the first node that matches the wanted kind
   findClosingNode(unmatchedOpenNode: Node, startFrom = 0): Node | undefined {
-    const closingNodeKind = getClosingNode(unmatchedOpenNode)
-    const stack = new Stack(unmatchedOpenNode)
-
+    const closingNodeKind = getClosingNode(unmatchedOpenNode);
+    const stack = new Stack(unmatchedOpenNode);
 
     let i = startFrom;
 
     while (true) {
       const next = this.peek(i);
-      i++
+      i++;
 
       if (!next) {
-        return undefined
+        return undefined;
       }
 
       // Not a node we are interested in, skipping
@@ -87,28 +86,27 @@ export class Iterator {
         continue;
       }
 
-      stack.add(next)
-
+      stack.add(next);
 
       if (stack.isEmpty()) {
-        return next
+        return next;
       }
     }
   }
 
   setInnerMode(indexesOfNodesToBuffer: number[]) {
-    this.mode = 'inner'
+    this.mode = "inner";
 
     if (this.bufferedNodesIndexes.length) {
-      throw new DebugFailure('Buffered nodes was not empty when trying to buffer new nodes')
+      throw new DebugFailure("Buffered nodes was not empty when trying to buffer new nodes");
     }
 
     this.bufferedNodesIndexes = indexesOfNodesToBuffer;
   }
 
   setFullMode() {
-    this.mode = 'full'
-    this.bufferedNodesIndexes = []
+    this.mode = "full";
+    this.bufferedNodesIndexes = [];
   }
 
   peek(index: number, skipMatched = true) {
@@ -127,42 +125,42 @@ export class Iterator {
     this.matchNumber++;
     this.textNodes[index].matched = true;
     this.textNodes[index].matchNumber = this.matchNumber;
-    this.textNodes[index].markedAs = markedAs
+    this.textNodes[index].markedAs = markedAs;
 
     // TODO: IDK if I should keep this
     if (this.bufferedNodesIndexes.length) {
-      const _index = this.bufferedNodesIndexes.findIndex(x => x === index);
+      const _index = this.bufferedNodesIndexes.findIndex((x) => x === index);
 
       if (_index !== -1) {
-        this.bufferedNodesIndexes.splice(_index, 1)
+        this.bufferedNodesIndexes.splice(_index, 1);
       }
     }
   }
 
   bufferNodes(indexesOfNodesToBuffer: number[]) {
     if (this.bufferedNodesIndexes.length) {
-      throw new DebugFailure('Buffered nodes was not empty when trying to buffer new nodes')
+      throw new DebugFailure("Buffered nodes was not empty when trying to buffer new nodes");
     }
 
     this.bufferedNodesIndexes = indexesOfNodesToBuffer;
   }
 
   hasBufferedNodes() {
-    const hasBufferedNodes = this.bufferedNodesIndexes.some(x => !this.textNodes[x].matched)
+    const hasBufferedNodes = this.bufferedNodesIndexes.some((x) => !this.textNodes[x].matched);
 
     if (!hasBufferedNodes && this.bufferedNodesIndexes.length) {
-      this.bufferedNodesIndexes = []
+      this.bufferedNodesIndexes = [];
     }
 
-    return hasBufferedNodes
+    return hasBufferedNodes;
   }
 
   getCandidates(
     expected: Node,
-  ): Candidate[] {
+  ): number[] {
     // This variable will hold the indexes of known nodes that match the node we are looking for.
     // We returns more than once in order to calculate the LCS from a multiple places and then take the best result
-    const candidates: Candidate[] = [];
+    const candidates: number[] = [];
 
     // Start from the next node
     let offset = 0;
@@ -181,9 +179,8 @@ export class Iterator {
 
       if (foundAhead || foundBack) {
         const index = foundAhead ? startFrom + offset : startFrom - offset;
-        const expressionNumber = foundAhead ? ahead.expressionNumber : back.expressionNumber;
 
-        candidates.push({ index, expressionNumber });
+        candidates.push(index);
       }
 
       offset++;
@@ -230,7 +227,7 @@ export class Iterator {
     // }
 
     const expNodes: Node[] = [];
-    let i = index // startIndex;
+    let i = index; // startIndex;
     while (true) {
       const next = this.allNodes[i];
 
@@ -267,19 +264,19 @@ export class Iterator {
     const _nodes = Array.isArray(nodesToPrint) ? nodesToPrint : nodesToPrint === "text" ? this.textNodes : this.allNodes;
 
     for (const node of _nodes) {
-      let colorFn
+      let colorFn;
       switch (node.markedAs) {
         case ChangeType.addition: {
-          colorFn = k.green
-          break
+          colorFn = k.green;
+          break;
         }
         case ChangeType.deletion: {
-          colorFn = k.red
-          break
+          colorFn = k.red;
+          break;
         }
         case ChangeType.move: {
-          colorFn = k.blue
-          break
+          colorFn = k.blue;
+          break;
         }
         default: {
           colorFn = k.grey;

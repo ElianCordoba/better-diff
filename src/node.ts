@@ -30,11 +30,11 @@ export class Node {
   matchNumber = 0;
   isTextNode = false;
 
-  isOpeningNode = false
-  isClosingNode = false
+  isOpeningNode = false;
+  isClosingNode = false;
 
   // For printing proposes
-  markedAs?: ChangeType
+  markedAs?: ChangeType;
   constructor(args: NodeArgs) {
     const { fullStart, start, end, kind, triviaLinesAbove, lineNumberStart, lineNumberEnd, text } = args;
 

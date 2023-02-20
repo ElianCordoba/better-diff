@@ -73,9 +73,9 @@ export function oppositeSide(side: Side): Side {
 }
 
 export enum ClosingNodeGroup {
-  Paren = 'Paren',
-  Brace = 'Brace',
-  Bracket = 'Bracket'
+  Paren = "Paren",
+  Brace = "Brace",
+  Bracket = "Bracket",
 }
 
 export function getClosingNodeGroup(node: Node): ClosingNodeGroup {
@@ -86,25 +86,28 @@ export function getClosingNodeGroup(node: Node): ClosingNodeGroup {
 
     case ts.SyntaxKind.OpenBraceToken:
     case ts.SyntaxKind.CloseBraceToken:
-      return ClosingNodeGroup.Brace
+      return ClosingNodeGroup.Brace;
 
     case ts.SyntaxKind.OpenBracketToken:
     case ts.SyntaxKind.CloseBracketToken:
       return ClosingNodeGroup.Bracket;
 
     default:
-      throw new DebugFailure(`Unknown node kind ${node.prettyKind}`)
+      throw new DebugFailure(`Unknown node kind ${node.prettyKind}`);
   }
 }
 
 // Given an opening node, you get back the closing one
 export function getClosingNode({ kind, prettyKind }: Node): ts.SyntaxKind {
   switch (kind) {
-    case ts.SyntaxKind.OpenBraceToken: return ts.SyntaxKind.CloseBraceToken;
-    case ts.SyntaxKind.OpenBracketToken: return ts.SyntaxKind.CloseBracketToken;
-    case ts.SyntaxKind.OpenParenToken: return ts.SyntaxKind.CloseParenToken;
+    case ts.SyntaxKind.OpenBraceToken:
+      return ts.SyntaxKind.CloseBraceToken;
+    case ts.SyntaxKind.OpenBracketToken:
+      return ts.SyntaxKind.CloseBracketToken;
+    case ts.SyntaxKind.OpenParenToken:
+      return ts.SyntaxKind.CloseParenToken;
     default: {
-      throw new DebugFailure(`Unknown kind ${prettyKind}`)
+      throw new DebugFailure(`Unknown kind ${prettyKind}`);
     }
   }
 }

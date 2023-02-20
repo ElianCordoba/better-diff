@@ -114,7 +114,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         let remainingNodesA = iterA.getNodesFromExpression(iterA.peek(indexA, false)!, exps.expA);
 
         if (remainingNodesA.length) {
-          iterA.bufferNodes(remainingNodesA.map(x => x.index))
+          iterA.bufferNodes(remainingNodesA.map((x) => x.index));
         }
       }
 
@@ -122,20 +122,20 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         let remainingNodesB = iterB.getNodesFromExpression(iterB.peek(indexB, false)!, exps.expB);
 
         if (remainingNodesB.length) {
-          iterB.bufferNodes(remainingNodesB.map(x => x.index))
+          iterB.bufferNodes(remainingNodesB.map((x) => x.index));
         }
       }
 
-      console.log()
+      console.log();
     }
   }
 
   loop();
 
   // TODO: Once we improve compaction to be on-demand, we will be able to remove this
-  const deletions = changes.filter(x => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start! - b.rangeA?.start!)
-  const additions = changes.filter(x => x.type === ChangeType.addition).sort((a, b) => a.rangeB?.start! - b.rangeB?.start!)
-  const moves = changes.filter(x => x.type === ChangeType.move)
+  const deletions = changes.filter((x) => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start! - b.rangeA?.start!);
+  const additions = changes.filter((x) => x.type === ChangeType.addition).sort((a, b) => a.rangeB?.start! - b.rangeB?.start!);
+  const moves = changes.filter((x) => x.type === ChangeType.move);
 
   return compactChanges([...additions, ...deletions, ...moves]);
 }
@@ -307,38 +307,24 @@ export function getSequenceLength(
   return sequence;
 }
 
-interface LCSResult { bestIndex: number; bestResult: number; }
+interface LCSResult {
+  bestIndex: number;
+  bestResult: number;
+}
 
-function getLCS(wanted: Node, candidates: Candidate[], iterA: Iterator, iterB: Iterator): LCSResult {
+function getLCS(wanted: Node, candidates: number[], iterA: Iterator, iterB: Iterator): LCSResult {
   let bestResult = 0;
   let bestIndex = 0;
-  let bestExpression = 0;
-  let bestScore = 0
 
-  const targetExp = iterA.peek(wanted.index)?.expressionNumber!
-
-  for (const { index, expressionNumber } of candidates) {
+  for (const index of candidates) {
     const lcs = getSequenceLength(iterA, iterB, wanted.index, index);
 
-    // There are 2 conditions to set the new best candidate
-    // 1) The new result is simply better that the previous one.
-    // 2) There is a tie but the new candidate is less deep
-    //
-    // Why do we favour the candidate with less depth? Because of the following example:
-    //
-    // fn1(fn2(1))
-    //
-    // Under the correct circumstances, we could find ourself with the above code example, with the "fn1(fn2(" part already matched, missing the rest
-    // If we assume that "1" is an addition, next on the matching list is the first ")", without the depth check, we would take the closing parenthesis after the "1"
-    // and match it with the opening paren of "fn1". A lower depth means that it will be closer to the expression we are matching
-    //
-    // The test that covers this logic is the one called "Properly match closing paren"
+    // Store the new result if it's better that the previous one based on the length of the sequence
     if (
       lcs > bestResult
     ) {
       bestResult = lcs;
       bestIndex = index;
-      bestExpression = expressionNumber;
     }
   }
 
@@ -348,14 +334,14 @@ function getLCS(wanted: Node, candidates: Candidate[], iterA: Iterator, iterB: I
 function getScore(target: number, candidate: number) {
   const maxScore = target;
 
-  const offBy = maxScore - (+candidate)
+  const offBy = maxScore - (+candidate);
 
-  return maxScore - offBy
+  return maxScore - offBy;
 }
 
 // This function has side effects, mutates data in the iterators
 function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, indexOfBestResult: number, lcs: number): Change[] {
-  const changes: Change[] = []
+  const changes: Change[] = [];
 
   let a = iterA.next(indexA)!;
   let b = iterB.next(indexB)!;
@@ -392,11 +378,11 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     /// Closing node
 
     if (a.isOpeningNode || a.isClosingNode) {
-      const nodeGroup = getClosingNodeGroup(a)
+      const nodeGroup = getClosingNodeGroup(a);
       if (nodesWithClosingVerifier.has(nodeGroup)) {
-        nodesWithClosingVerifier.get(nodeGroup)!.add(a)
+        nodesWithClosingVerifier.get(nodeGroup)!.add(a);
       } else {
-        nodesWithClosingVerifier.set(nodeGroup, new Stack(a))
+        nodesWithClosingVerifier.set(nodeGroup, new Stack(a));
       }
     }
 
@@ -488,25 +474,25 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
       );
     }
 
-    changes.push(change)
+    changes.push(change);
   }
 
   for (let stack of nodesWithClosingVerifier.values()) {
     if (!stack.isEmpty()) {
       for (const unmatchedOpeningNode of stack.values) {
-        const closingNodeForA = iterA.findClosingNode(unmatchedOpeningNode, indexA)
-        const closingNodeForB = iterB.findClosingNode(unmatchedOpeningNode, indexB)
+        const closingNodeForA = iterA.findClosingNode(unmatchedOpeningNode, indexA);
+        const closingNodeForB = iterB.findClosingNode(unmatchedOpeningNode, indexB);
 
         if (!closingNodeForA) {
-          throw new DebugFailure(`Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on A side`)
+          throw new DebugFailure(`Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on A side`);
         }
 
         if (!closingNodeForB) {
-          throw new DebugFailure(`Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on B side`)
+          throw new DebugFailure(`Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on B side`);
         }
 
-        iterA.mark(closingNodeForA.index, ChangeType.move)
-        iterB.mark(closingNodeForB.index, ChangeType.move)
+        iterA.mark(closingNodeForA.index, ChangeType.move);
+        iterB.mark(closingNodeForB.index, ChangeType.move);
 
         if (didChange) {
           changes.push(
@@ -515,13 +501,13 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
               closingNodeForA,
               closingNodeForB,
             ),
-          )
+          );
         }
       }
     }
   }
 
-  return changes
+  return changes;
 }
 
 // Go back as far as possible over every node (non text node included) to find the oldest common ancestor.
