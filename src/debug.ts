@@ -5,7 +5,7 @@ enum ErrorType {
 }
 
 class BaseError {
-  constructor(public type: ErrorType, public message: string, public serializedError?: string, public extra?: unknown) { }
+  constructor(public type: ErrorType, public message: string, public serializedError?: string, public extra?: unknown) {}
 }
 
 class DebugFailure extends BaseError {
@@ -20,6 +20,6 @@ export function fail(errorMessage?: string): never {
 
 export function assert<T>(condition: T, errorMessage?: string): asserts condition is NonNullable<T> {
   if (!condition) {
-    fail(errorMessage)
+    fail(errorMessage);
   }
 }
