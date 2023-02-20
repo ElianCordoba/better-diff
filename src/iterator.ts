@@ -1,7 +1,7 @@
 import { equals, getClosingNode, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
-import { Candidate, ChangeType } from "./types";
+import { ChangeType } from "./types";
 import { DebugFailure } from "./debug";
 import { getOptions } from ".";
 import { Stack } from "./sequence";

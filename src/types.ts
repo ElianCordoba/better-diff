@@ -25,11 +25,6 @@ export enum MatchStatus {
   Matched, // estaba y lo encontramos
 }
 
-export interface Candidate {
-  index: number;
-  expressionNumber: number;
-}
-
 export enum RenderInstruction {
   // No text decoration
   default = "default",

@@ -1,5 +1,5 @@
 import { getNodesArray } from "./ts-util";
-import { Candidate, ChangeType, Range, Side } from "./types";
+import { ChangeType, Range, Side } from "./types";
 import { ClosingNodeGroup, equals, getClosingNodeGroup, mergeRanges, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
@@ -111,7 +111,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       const exps = getCommonAncestor(iterA, iterB, indexA, indexB);
 
       if (!iterA.hasBufferedNodes()) {
-        let remainingNodesA = iterA.getNodesFromExpression(iterA.peek(indexA, false)!, exps.expA);
+        const remainingNodesA = iterA.getNodesFromExpression(iterA.peek(indexA, false)!, exps.expA);
 
         if (remainingNodesA.length) {
           iterA.bufferNodes(remainingNodesA.map((x) => x.index));
@@ -119,14 +119,12 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       }
 
       if (!iterB.hasBufferedNodes()) {
-        let remainingNodesB = iterB.getNodesFromExpression(iterB.peek(indexB, false)!, exps.expB);
+        const remainingNodesB = iterB.getNodesFromExpression(iterB.peek(indexB, false)!, exps.expB);
 
         if (remainingNodesB.length) {
           iterB.bufferNodes(remainingNodesB.map((x) => x.index));
         }
       }
-
-      console.log();
     }
   }
 
@@ -331,14 +329,6 @@ function getLCS(wanted: Node, candidates: number[], iterA: Iterator, iterB: Iter
   return { bestIndex, bestResult };
 }
 
-function getScore(target: number, candidate: number) {
-  const maxScore = target;
-
-  const offBy = maxScore - (+candidate);
-
-  return maxScore - offBy;
-}
-
 // This function has side effects, mutates data in the iterators
 function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, indexOfBestResult: number, lcs: number): Change[] {
   const changes: Change[] = [];
@@ -477,7 +467,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     changes.push(change);
   }
 
-  for (let stack of nodesWithClosingVerifier.values()) {
+  for (const stack of nodesWithClosingVerifier.values()) {
     if (!stack.isEmpty()) {
       for (const unmatchedOpeningNode of stack.values) {
         const closingNodeForA = iterA.findClosingNode(unmatchedOpeningNode, indexA);
