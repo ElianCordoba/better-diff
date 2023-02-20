@@ -187,10 +187,10 @@ describe("Properly report lines added", () => {
       console.log(fn())
     `,
     expA: `
-      console.log(🔀)⏹️
+      console.log()
     `,
     expB: `
-      console.log(➕fn()➕🔀)⏹️
+      console.log(➕fn()➕)
     `
   })
 

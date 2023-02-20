@@ -7,6 +7,9 @@ export class Stack {
   values: Node[] = []
 
   constructor(openNode: Node) {
+    if (!openNode.isOpeningNode) {
+      throw new DebugFailure(`Expected a opening node when initializing a matching node stack but found a ${openNode.prettyKind}`)
+    }
     const closeNodeKind = getClosingNode(openNode)
     this.allowedKind = [openNode.kind, closeNodeKind]
     this.values = [openNode]
