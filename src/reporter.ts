@@ -2,7 +2,7 @@ import { getContext, getOptions } from ".";
 import { ChangeType, Side } from "../src/types";
 import { AlignmentTable } from "./alignmentTable";
 import { Change } from "./change";
-import { DebugFailure } from "./debug";
+import { assert, DebugFailure } from "./debug";
 import { getRanges, range } from "./utils";
 
 //@ts-ignore TODO: Importing normally doesn't work with vitest
@@ -151,9 +151,7 @@ export function getSourceWithChange(
 }
 
 export function getComplimentArray(length: number, fillInCharacter = ""): string[] {
-  if (length < 0) {
-    throw new DebugFailure(`Length of compliment array invalid. Got ${length}`);
-  }
+  assert(length >= 0, `Length of compliment array invalid. Got ${length}`);
 
   return new Array(length).fill(fillInCharacter);
 }

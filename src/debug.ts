@@ -13,3 +13,9 @@ export class DebugFailure extends BaseError {
     super(ErrorType.DebugFailure, message, error ? JSON.stringify(error) : undefined, extra);
   }
 }
+
+export function assert<T>(condition: T, errorMessage?: string): asserts condition is NonNullable<T> {
+  if (!condition) {
+    throw new DebugFailure(errorMessage || "Assertion failed");
+  }
+}

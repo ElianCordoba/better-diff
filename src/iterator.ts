@@ -2,7 +2,7 @@ import { equals, getClosingNode, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
 import { ChangeType } from "./types";
-import { DebugFailure } from "./debug";
+import { assert } from "./debug";
 import { getOptions } from ".";
 import { NodeMatchingStack } from "./sequence";
 
@@ -25,7 +25,6 @@ export class Iterator {
   public textNodes: Node[];
   public allNodes: Node[];
 
-  mode: "full" | "inner" = "full";
   bufferedNodesIndexes: number[] = [];
 
   constructor({ textNodes, allNodes }: InputNodes, options?: IteratorOptions) {
@@ -94,21 +93,6 @@ export class Iterator {
     }
   }
 
-  setInnerMode(indexesOfNodesToBuffer: number[]) {
-    this.mode = "inner";
-
-    if (this.bufferedNodesIndexes.length) {
-      throw new DebugFailure("Buffered nodes was not empty when trying to buffer new nodes");
-    }
-
-    this.bufferedNodesIndexes = indexesOfNodesToBuffer;
-  }
-
-  setFullMode() {
-    this.mode = "full";
-    this.bufferedNodesIndexes = [];
-  }
-
   peek(index: number, skipMatched = true) {
     const item = this.textNodes[index];
 
@@ -138,9 +122,7 @@ export class Iterator {
   }
 
   bufferNodes(indexesOfNodesToBuffer: number[]) {
-    if (this.bufferedNodesIndexes.length) {
-      throw new DebugFailure("Buffered nodes was not empty when trying to buffer new nodes");
-    }
+    assert(this.bufferedNodesIndexes.length === 0, "Buffered nodes was not empty when trying to buffer new nodes");
 
     this.bufferedNodesIndexes = indexesOfNodesToBuffer;
   }
@@ -198,17 +180,13 @@ export class Iterator {
   }
 
   getNodesFromExpression(node: Node, expressionNumber: number): Node[] {
-    if (!node) {
-      throw new DebugFailure("Undefined node");
-    }
+    assert(node, "Undefined node when getting nodes from a given expression");
 
     // Using === on two object with only return true if both object are the same, this is perfect because when we created
     // the node instance the same one was pushed to both arrays
     const index = this.allNodes.findIndex((x) => x === node);
 
-    if (index === -1) {
-      throw new DebugFailure(`Fail to find node ${node.prettyKind}`);
-    }
+    assert(index !== -1, `Fail to find node ${node.prettyKind}`);
 
     // const startIndex = index - 1;
     // TODO: Is this needed? Going back to the start of the expression, for example

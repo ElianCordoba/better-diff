@@ -1,6 +1,6 @@
 import ts, { SourceFile } from "typescript";
 import { Node } from "./node";
-import { DebugFailure } from "./debug";
+import { assert } from "./debug";
 import { k } from "./reporter";
 import { getOptions } from ".";
 
@@ -140,9 +140,7 @@ export function getArrayOrLines(source: string) {
     lines.push(slice);
   }
 
-  if (lines.length !== lineMap.length) {
-    throw new DebugFailure("Assertion failed");
-  }
+  assert(lines.length === lineMap.length, "Line number and line map length didn't match");
 
   return lines;
 }

@@ -11,14 +11,13 @@ export class Change {
     public type: ChangeType,
     public nodeA: Node | undefined,
     public nodeB: Node | undefined,
-
     // Changes on source
     rangeA?: Range,
     // Changes on revision
     rangeB?: Range,
   ) {
-    this.rangeA = rangeA ?? nodeA?.getPosition()
-    this.rangeB = rangeB ?? nodeB?.getPosition()
+    this.rangeA = rangeA ?? nodeA?.getPosition();
+    this.rangeB = rangeB ?? nodeB?.getPosition();
   }
 
   draw() {

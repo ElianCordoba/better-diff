@@ -5,7 +5,7 @@ import { Iterator } from "./iterator";
 import { Change } from "./change";
 import { getContext } from "./index";
 import { Node } from "./node";
-import { DebugFailure } from "./debug";
+import { assert } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
 import { NodeMatchingStack } from "./sequence";
 
@@ -98,9 +98,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         indexB = b.index;
       }
 
-      if (bestResult === 0) {
-        throw new DebugFailure("LCS resulted in 0");
-      }
+      assert(bestResult !== 0, "LCS resulted in 0");
 
       const moveChanges = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult);
 
@@ -342,9 +340,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     indexA++;
     indexB++;
 
-    if (!equals(a!, b!)) {
-      throw new DebugFailure(`Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
-    }
+    assert(equals(a!, b!), `Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
 
     /// Closing node
 
@@ -454,13 +450,8 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
         const closingNodeForA = iterA.findClosingNode(unmatchedOpeningNode, indexA);
         const closingNodeForB = iterB.findClosingNode(unmatchedOpeningNode, indexB);
 
-        if (!closingNodeForA) {
-          throw new DebugFailure(`Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on A side`);
-        }
-
-        if (!closingNodeForB) {
-          throw new DebugFailure(`Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on B side`);
-        }
+        assert(closingNodeForA, `Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on A side`);
+        assert(closingNodeForB, `Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on B side`);
 
         iterA.mark(closingNodeForA.index, ChangeType.move);
         iterB.mark(closingNodeForB.index, ChangeType.move);
@@ -517,9 +508,7 @@ function getCommonAncestor(iterA: Iterator, iterB: Iterator, indexA: number, ind
     offset++;
   }
 
-  if (expA === -1 || expB === -1) {
-    throw new DebugFailure("Expression not found when trying to get common ancestor");
-  }
+  assert(expA !== -1 && expB !== -1, "Expression not found when trying to get common ancestor");
 
   return { expA, expB };
 }
