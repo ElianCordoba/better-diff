@@ -7,7 +7,7 @@ import { getContext } from "./index";
 import { Node } from "./node";
 import { DebugFailure } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
-import { Stack } from "./sequence";
+import { NodeMatchingStack } from "./sequence";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -59,14 +59,14 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       if (candidatesAtoB.length) {
         lcsAtoB = getLCS(a, candidatesAtoB, iterA, iterB);
       } else {
-        changes.push(getChange(ChangeType.deletion, a, b));
+        changes.push(new Change(ChangeType.deletion, a, b));
         iterA.mark(a.index, ChangeType.deletion);
       }
 
       if (candidatesBtoA.length) {
         lcsBtoA = getLCS(b, candidatesBtoA, iterB, iterA);
       } else {
-        changes.push(getChange(ChangeType.addition, a, b));
+        changes.push(new Change(ChangeType.addition, a, b));
         iterB.mark(b.index, ChangeType.addition);
       }
 
@@ -153,10 +153,10 @@ function oneSidedIteration(
     /// Alignment: Addition / Deletion ///
     if (typeOfChange === ChangeType.addition) {
       alignmentTable.add(Side.a, value.lineNumberStart, value.text.length);
-      changes.push(getChange(typeOfChange, undefined, value));
+      changes.push(new Change(typeOfChange, undefined, value));
     } else {
       alignmentTable.add(Side.b, value.lineNumberStart, value.text.length);
-      changes.push(getChange(typeOfChange, value, undefined));
+      changes.push(new Change(typeOfChange, value, undefined));
     }
 
     iter.mark(value.index, typeOfChange);
@@ -165,25 +165,6 @@ function oneSidedIteration(
   }
 
   return changes;
-}
-
-// Remove and move inside class constructor
-function getChange(
-  type: ChangeType,
-  a: Node | undefined,
-  b: Node | undefined,
-  rangeA?: Range,
-  rangeB?: Range,
-): Change {
-  if (!rangeA) {
-    rangeA = a?.getPosition();
-  }
-
-  if (!rangeB) {
-    rangeB = b?.getPosition();
-  }
-
-  return new Change(type, rangeA, rangeB, a, b);
 }
 
 export function tryMergeRanges(
@@ -347,7 +328,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   const { alignmentTable } = getContext();
   const localAlignmentTable = new AlignmentTable();
 
-  const nodesWithClosingVerifier: Map<ClosingNodeGroup, Stack> = new Map();
+  const nodesWithClosingVerifier: Map<ClosingNodeGroup, NodeMatchingStack> = new Map();
 
   let index = indexOfBestResult;
   while (index < indexOfBestResult + lcs) {
@@ -372,7 +353,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
       if (nodesWithClosingVerifier.has(nodeGroup)) {
         nodesWithClosingVerifier.get(nodeGroup)!.add(a);
       } else {
-        nodesWithClosingVerifier.set(nodeGroup, new Stack(a));
+        nodesWithClosingVerifier.set(nodeGroup, new NodeMatchingStack(a));
       }
     }
 
@@ -447,7 +428,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
     let change: Change;
     if (perspectiveAtoB) {
-      change = getChange(
+      change = new Change(
         ChangeType.move,
         a!,
         b!,
@@ -455,7 +436,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
         rangeB,
       );
     } else {
-      change = getChange(
+      change = new Change(
         ChangeType.move,
         b!,
         a!,
@@ -486,7 +467,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
         if (didChange) {
           changes.push(
-            getChange(
+            new Change(
               ChangeType.move,
               closingNodeForA,
               closingNodeForB,

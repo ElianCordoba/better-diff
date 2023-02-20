@@ -1,14 +1,14 @@
 import { DebugFailure } from "./debug";
 import { Node } from "./node";
-import { getClosingNode } from "./utils";
+import { getClosingNode, getPrettyKind } from "./utils";
 
-export class Stack {
+export class NodeMatchingStack {
   allowedKind: number[];
   values: Node[] = [];
 
   constructor(openNode: Node) {
     if (!openNode.isOpeningNode) {
-      throw new DebugFailure(`Expected a opening node when initializing a matching node stack but found a ${openNode.prettyKind}`);
+      throw new DebugFailure(`Expected a opening node when initializing a node-matching stack but found a ${openNode.prettyKind}`);
     }
     const closeNodeKind = getClosingNode(openNode);
     this.allowedKind = [openNode.kind, closeNodeKind];
@@ -17,8 +17,7 @@ export class Stack {
 
   add(node: Node) {
     if (!this.allowedKind.includes(node.kind)) {
-      // TODO use pretty kind
-      throw new DebugFailure("Invalid kind provided");
+      throw new DebugFailure(`Invalid kind provided to node-matching stack, expected either ${getPrettyKind(this.allowedKind[0])} or ${getPrettyKind(this.allowedKind[1])} but found ${node.prettyKind}`);
     }
 
     if (node.isOpeningNode) {

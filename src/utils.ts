@@ -5,9 +5,7 @@ import { DebugFailure } from "./debug";
 
 export function formatSyntaxKind(kind: ts.SyntaxKind, text?: string) {
   let textValue = text ? `| "${text}"` : "";
-  // The cast is because the underling function is marked as internal and we don't get typings
-  // deno-lint-ignore no-explicit-any
-  const formattedKind = (ts as any).Debug.formatSyntaxKind(kind);
+  const formattedKind = getPrettyKind(kind);
 
   textValue = textValue.replaceAll("\n", "");
 
@@ -16,6 +14,11 @@ export function formatSyntaxKind(kind: ts.SyntaxKind, text?: string) {
   }
 
   return `${formattedKind.padEnd(25)} ${textValue}`.trim();
+}
+
+export function getPrettyKind(kind: number) {
+  // deno-lint-ignore no-explicit-any
+  return (ts as any).Debug.formatSyntaxKind(kind);
 }
 
 export function getNodeForPrinting(item: Node) {
@@ -31,8 +34,7 @@ export function getNodeForPrinting(item: Node) {
   }
 
   return {
-    // deno-lint-ignore no-explicit-any
-    kind: (ts as any).Debug.formatSyntaxKind(item.kind),
+    kind: getPrettyKind(item.kind),
     text,
   };
 }

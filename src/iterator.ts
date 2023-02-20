@@ -4,7 +4,7 @@ import { Node } from "./node";
 import { ChangeType } from "./types";
 import { DebugFailure } from "./debug";
 import { getOptions } from ".";
-import { Stack } from "./sequence";
+import { NodeMatchingStack } from "./sequence";
 
 interface InputNodes {
   textNodes: Node[];
@@ -69,7 +69,7 @@ export class Iterator {
   // Find the first node that matches the wanted kind
   findClosingNode(unmatchedOpenNode: Node, startFrom = 0): Node | undefined {
     const closingNodeKind = getClosingNode(unmatchedOpenNode);
-    const stack = new Stack(unmatchedOpenNode);
+    const stack = new NodeMatchingStack(unmatchedOpenNode);
 
     let i = startFrom;
 
