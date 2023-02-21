@@ -1,9 +1,10 @@
-import { equals, getNodeForPrinting } from "./utils";
+import { equals, getClosingNode, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
-import { Candidate } from "./types";
-import { DebugFailure } from "./debug";
+import { ChangeType } from "./types";
+import { assert } from "./debug";
 import { getOptions } from ".";
+import { NodeMatchingStack } from "./sequence";
 
 interface InputNodes {
   textNodes: Node[];
@@ -23,6 +24,9 @@ export class Iterator {
   matchNumber = 0;
   public textNodes: Node[];
   public allNodes: Node[];
+
+  bufferedNodesIndexes: number[] = [];
+
   constructor({ textNodes, allNodes }: InputNodes, options?: IteratorOptions) {
     this.textNodes = textNodes;
     this.allNodes = allNodes;
@@ -30,8 +34,23 @@ export class Iterator {
     this.chars = options?.source?.split("");
   }
 
-  next(startFrom = 0) {
-    for (let i = startFrom; i < this.textNodes.length; i++) {
+  // Get the next unmatched node in the iterator, optionally after a given index
+  // This may include buffered nodes, which are nodes that remained from a previous match and node they have
+  // priority so that we can match those before moving onto other ones
+  next(startFrom?: number) {
+    // Preferences to buffered nodes, which they are never requested with the `startFrom` argument
+    if (startFrom === undefined && this.bufferedNodesIndexes.length) {
+      for (const bufferedNodeIndex of this.bufferedNodesIndexes) {
+        const bufferedNode = this.textNodes[bufferedNodeIndex];
+
+        if (!bufferedNode.matched) {
+          return bufferedNode;
+        }
+      }
+    }
+
+    // If no buffered where present get the next node the standard way
+    for (let i = startFrom ?? 0; i < this.textNodes.length; i++) {
       const item = this.textNodes[i];
 
       if (item.matched) {
@@ -40,6 +59,35 @@ export class Iterator {
 
       this.indexOfLastItem = i;
       return item;
+    }
+  }
+
+  // Find the first closing node that matches the wanted kind
+  findClosingNode(openNode: Node, startFrom = 0): Node | undefined {
+    const closingNodeKind = getClosingNode(openNode);
+    const stack = new NodeMatchingStack(openNode);
+
+    let i = startFrom;
+
+    while (true) {
+      const next = this.peek(i);
+      i++;
+
+      if (!next) {
+        return undefined;
+      }
+
+      // Not a node we are interested in, skipping
+      if (next.kind !== closingNodeKind && next.kind !== openNode.kind) {
+        continue;
+      }
+
+      stack.add(next);
+
+      // If the stack is empty means that all previous nodes are matched, this last node is the one that closes the all the nodes, the one we are looking for
+      if (stack.isEmpty()) {
+        return next;
+      }
     }
   }
 
@@ -53,20 +101,32 @@ export class Iterator {
     return item;
   }
 
-  mark(index: number) {
+  mark(index: number, markedAs: ChangeType) {
     // TODO: Should only apply for moves, otherwise a move, addition and move
     // will display 1 for the first move and 3 for the second
     this.matchNumber++;
     this.textNodes[index].matched = true;
     this.textNodes[index].matchNumber = this.matchNumber;
+    this.textNodes[index].markedAs = markedAs;
+  }
+
+  bufferNodes(indexesOfNodesToBuffer: number[]) {
+    assert(this.bufferedNodesIndexes.length === 0, "Buffered nodes was not empty when trying to buffer new nodes");
+
+    this.bufferedNodesIndexes = indexesOfNodesToBuffer;
+  }
+
+  hasBufferedNodes() {
+    const hasBufferedNodes = this.bufferedNodesIndexes.some((x) => !this.textNodes[x].matched);
+    return hasBufferedNodes;
   }
 
   getCandidates(
     expected: Node,
-  ): Candidate[] {
+  ): number[] {
     // This variable will hold the indexes of known nodes that match the node we are looking for.
     // We returns more than once in order to calculate the LCS from a multiple places and then take the best result
-    const candidates: Candidate[] = [];
+    const candidates: number[] = [];
 
     // Start from the next node
     let offset = 0;
@@ -85,9 +145,8 @@ export class Iterator {
 
       if (foundAhead || foundBack) {
         const index = foundAhead ? startFrom + offset : startFrom - offset;
-        const expressionNumber = foundAhead ? ahead.expressionNumber : back.expressionNumber;
 
-        candidates.push({ index, expressionNumber });
+        candidates.push(index);
       }
 
       offset++;
@@ -105,17 +164,13 @@ export class Iterator {
   }
 
   getNodesFromExpression(node: Node, expressionNumber: number): Node[] {
-    if (!node) {
-      throw new DebugFailure("Undefined node");
-    }
+    assert(node, "Undefined node when getting nodes from a given expression");
 
     // Using === on two object with only return true if both object are the same, this is perfect because when we created
     // the node instance the same one was pushed to both arrays
     const index = this.allNodes.findIndex((x) => x === node);
 
-    if (index === -1) {
-      throw new DebugFailure(`Fail to find node ${node.prettyKind}`);
-    }
+    assert(index !== -1, `Fail to find node ${node.prettyKind}`);
 
     // const startIndex = index - 1;
     // TODO: Is this needed? Going back to the start of the expression, for example
@@ -134,7 +189,7 @@ export class Iterator {
     // }
 
     const expNodes: Node[] = [];
-    let i = index // startIndex;
+    let i = index; // startIndex;
     while (true) {
       const next = this.allNodes[i];
 
@@ -171,7 +226,24 @@ export class Iterator {
     const _nodes = Array.isArray(nodesToPrint) ? nodesToPrint : nodesToPrint === "text" ? this.textNodes : this.allNodes;
 
     for (const node of _nodes) {
-      let colorFn = node.matched ? k.green : k.grey;
+      let colorFn;
+      switch (node.markedAs) {
+        case ChangeType.addition: {
+          colorFn = k.green;
+          break;
+        }
+        case ChangeType.deletion: {
+          colorFn = k.red;
+          break;
+        }
+        case ChangeType.move: {
+          colorFn = k.blue;
+          break;
+        }
+        default: {
+          colorFn = k.grey;
+        }
+      }
 
       const index = String(node.index).padStart(3).padEnd(6);
 
@@ -185,7 +257,7 @@ export class Iterator {
       const row = `${index}|${matchNumber}|${expressionNumber}|${colorFn(_kind)}|${_text}`;
 
       if (node.index === this.indexOfLastItem) {
-        colorFn = k.cyan;
+        colorFn = k.yellow;
       }
 
       list.push(colorFn(row));

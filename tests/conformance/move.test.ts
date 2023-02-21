@@ -161,7 +161,7 @@ describe("Properly report lines added", () => {
   })
 
   test({
-    name: "Mix of move with deletions and additions",
+    name: "Mix of move with deletions and additions 3",
     a: `
       console.log() && 3
     `,
@@ -187,10 +187,10 @@ describe("Properly report lines added", () => {
       console.log(fn())
     `,
     expA: `
-      console.log(🔀)⏹️
+      console.log()
     `,
     expB: `
-      console.log(➕fn()➕🔀)⏹️
+      console.log(➕fn()➕)
     `
   })
 

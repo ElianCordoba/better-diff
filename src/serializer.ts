@@ -2,7 +2,7 @@ import { Change } from "./change";
 import { ChangeType, Range, RenderInstruction, SerializedResponse, SourceChunk } from "./types";
 import { range } from "./utils";
 import { getLineMap } from "./ts-util";
-import { DebugFailure } from "./debug";
+import { fail } from "./debug";
 
 export function serialize(
   a: string,
@@ -41,7 +41,7 @@ export function serialize(
       }
 
       default:
-        throw new DebugFailure(`Unhandled type "${type}"`);
+        fail(`Unhandled type "${type}"`);
     }
   }
 

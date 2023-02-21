@@ -1,5 +1,6 @@
 import { SyntaxKind } from "typescript";
 import { formatSyntaxKind } from "./utils";
+import { ChangeType } from "./types";
 
 interface NodeArgs {
   fullStart: number;
@@ -28,7 +29,12 @@ export class Node {
   matched = false;
   matchNumber = 0;
   isTextNode = false;
-  //getSourceFn?: () => string,
+
+  isOpeningNode = false;
+  isClosingNode = false;
+
+  // For printing proposes
+  markedAs?: ChangeType;
   constructor(args: NodeArgs) {
     const { fullStart, start, end, kind, triviaLinesAbove, lineNumberStart, lineNumberEnd, text } = args;
 

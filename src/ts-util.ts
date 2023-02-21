@@ -1,6 +1,6 @@
 import ts, { SourceFile } from "typescript";
 import { Node } from "./node";
-import { DebugFailure } from "./debug";
+import { assert } from "./debug";
 import { k } from "./reporter";
 import { getOptions } from ".";
 
@@ -45,6 +45,22 @@ export function getNodesArray(source: string) {
 
     const newNode = new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove });
     newNode.expressionNumber = depth;
+
+    const isClosingNode = node.kind === ts.SyntaxKind.CloseBraceToken ||
+      node.kind === ts.SyntaxKind.CloseBracketToken ||
+      node.kind === ts.SyntaxKind.CloseParenToken;
+
+    if (isClosingNode) {
+      newNode.isClosingNode = true;
+    }
+
+    const isOpeningNode = node.kind === ts.SyntaxKind.OpenBraceToken ||
+      node.kind === ts.SyntaxKind.OpenBracketToken ||
+      node.kind === ts.SyntaxKind.OpenParenToken;
+
+    if (isOpeningNode) {
+      newNode.isOpeningNode = true;
+    }
 
     allNodes.push(newNode);
     // Only include visible node, nodes that represent some text in the source code.
@@ -124,9 +140,7 @@ export function getArrayOrLines(source: string) {
     lines.push(slice);
   }
 
-  if (lines.length !== lineMap.length) {
-    throw new DebugFailure("Assertion failed");
-  }
+  assert(lines.length === lineMap.length, "Line number and line map length didn't match");
 
   return lines;
 }

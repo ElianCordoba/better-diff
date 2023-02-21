@@ -4,7 +4,7 @@ import { serialize } from "./serializer";
 import { ChangeType, SerializedResponse, Side } from "./types";
 import { Node } from "./node";
 import { AlignmentTable } from "./alignmentTable";
-import { DebugFailure } from "./debug";
+import { fail } from "./debug";
 
 // These options have their own tests under the /tests/options folder
 export interface Options {
@@ -82,7 +82,7 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
     }
 
     default: {
-      throw new DebugFailure(`Unknown output type "${_options.outputType}"`);
+      fail(`Unknown output type "${_options.outputType}"`);
     }
   }
 }
