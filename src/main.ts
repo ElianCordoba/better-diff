@@ -1,5 +1,4 @@
-import { getNodesArray } from "./ts-util";
-import { ChangeType, Range, Side } from "./types";
+import { ChangeType, Side } from "./types";
 import { ClosingNodeGroup, equals, getClosingNodeGroup, mergeRanges, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change, compactChanges } from "./change";
@@ -12,11 +11,8 @@ import { LCSResult, NodeMatchingStack, getLCS } from "./sequence";
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
 
-  const nodesA = getNodesArray(codeA);
-  const nodesB = getNodesArray(codeB);
-
-  const iterA = new Iterator(nodesA, { name: Side.a, source: codeA });
-  const iterB = new Iterator(nodesB, { name: Side.b, source: codeB });
+  const iterA = new Iterator({ source: codeA, name: Side.a });
+  const iterB = new Iterator({ source: codeB, name: Side.b });
 
   let a: Node | undefined;
   let b: Node | undefined;

@@ -4,14 +4,15 @@ import { Node } from "./node";
 import { ChangeType } from "./types";
 import { getOptions } from ".";
 import { NodeMatchingStack } from "./sequence";
+import { getNodesArray } from "./ts-util";
 
 interface IteratorOptions {
-  name?: string;
-  source?: string;
+  name: string;
+  source: string;
 }
 
 export class Iterator {
-  name?: string;
+  name: string;
   // TODO: Maybe optimize? May consume a lot of memory
   chars?: string[];
 
@@ -19,10 +20,10 @@ export class Iterator {
   matchNumber = 0;
   public textNodes: Node[];
 
-  constructor(textNodes: Node[], options?: IteratorOptions) {
-    this.textNodes = textNodes;
-    this.name = options?.name;
-    this.chars = options?.source?.split("");
+  constructor({ source, name }: IteratorOptions) {
+    this.textNodes = getNodesArray(source);
+    this.name = name;
+    this.chars = source?.split("");
   }
 
   // Get the next unmatched node in the iterator, optionally after a given index
