@@ -105,24 +105,6 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       if (moveChanges.length) {
         changes.push(...moveChanges);
       }
-
-      const exps = getCommonAncestor(iterA, iterB, indexA, indexB);
-
-      if (!iterA.hasBufferedNodes()) {
-        const remainingNodesA = iterA.getNodesFromExpression(iterA.peek(indexA, false)!, exps.expA);
-
-        if (remainingNodesA.length) {
-          iterA.bufferNodes(remainingNodesA.map((x) => x.index));
-        }
-      }
-
-      if (!iterB.hasBufferedNodes()) {
-        const remainingNodesB = iterB.getNodesFromExpression(iterB.peek(indexB, false)!, exps.expB);
-
-        if (remainingNodesB.length) {
-          iterB.bufferNodes(remainingNodesB.map((x) => x.index));
-        }
-      }
     }
   }
 
@@ -472,45 +454,4 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   }
 
   return changes;
-}
-
-// Go back as far as possible over every node (non text node included) to find the oldest common ancestor.
-// This is so that we can match every remaining node in the expression
-function getCommonAncestor(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number) {
-  const a = iterA.peek(indexA, false);
-  const b = iterB.peek(indexB, false);
-
-  const realANodeIndex = iterA.allNodes.findIndex((x) => x === a);
-  const realBNodeIndex = iterB.allNodes.findIndex((x) => x === b);
-
-  let offset = 0;
-
-  let expA = a?.expressionNumber ?? -1;
-  let expB = b?.expressionNumber ?? -1;
-
-  while (true) {
-    offset++;
-
-    const prevA = iterA.allNodes.at(realANodeIndex - offset);
-    const prevB = iterB.allNodes.at(realBNodeIndex - offset);
-
-    // No more nodes on one or the sides, exit
-    if (!prevA || !prevB) {
-      break;
-    }
-
-    // No longer sharing common ancestor, exit
-    if (prevA.kind !== prevB.kind) {
-      break;
-    }
-
-    expA = prevA.expressionNumber;
-    expB = prevB.expressionNumber;
-
-    offset++;
-  }
-
-  assert(expA !== -1 && expB !== -1, "Expression not found when trying to get common ancestor");
-
-  return { expA, expB };
 }
