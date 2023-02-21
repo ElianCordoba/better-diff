@@ -100,7 +100,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       //
       // The problem here is that "const" and "let" will be left unmatched and will be matched randomly, to avoid this we leave single nodes to the end and 
       // report them as additions or removal 
-      if (lcs < minLCS) {
+      if (lcs < minLCS && !a.canBeMatchedAlone) {
         iterA.markMultiple(indexA, lcs, Status.skipped)
         iterB.markMultiple(indexB, lcs, Status.skipped)
         continue

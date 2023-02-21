@@ -105,7 +105,7 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
 }
 
 const defaultOptions: Options = {
-  defaultMinLCS: 5,
+  defaultMinLCS: 10,
   lcsReductionStep: 2,
   outputType: OutputType.text,
   warnOnInvalidCode: false,

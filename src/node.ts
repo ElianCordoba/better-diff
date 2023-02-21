@@ -33,6 +33,7 @@ export class Node {
   index = -1;
   expressionNumber = -1;
   status: Status = Status.unmatched;
+  canBeMatchedAlone = false;
   matchNumber = 0;
   isTextNode = false;
 
