@@ -1,8 +1,8 @@
 import { equals, getClosingNode, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
-import { ChangeType } from "./types";
-import { getOptions } from ".";
+import { ChangeType, Side } from "./types";
+import { getContext, getOptions } from ".";
 import { NodeMatchingStack } from "./sequence";
 import { getNodesArray } from "./ts-util";
 
@@ -13,8 +13,6 @@ interface IteratorOptions {
 
 export class Iterator {
   name: string;
-  // TODO: Maybe optimize? May consume a lot of memory
-  chars?: string[];
 
   private indexOfLastItem = 0;
   matchNumber = 0;
@@ -23,7 +21,6 @@ export class Iterator {
   constructor({ source, name }: IteratorOptions) {
     this.textNodes = getNodesArray(source);
     this.name = name;
-    this.chars = source?.split("");
   }
 
   // Get the next unmatched node in the iterator, optionally after a given index
@@ -179,10 +176,8 @@ export class Iterator {
   }
 
   printRange(node: Node | undefined) {
-    if (!this.chars) {
-      console.warn("Tried to draw a range but there was no source");
-      return;
-    }
+    const source = this.name === Side.a ? getContext().sourceA : getContext().sourceB
+    const chars = source.split('')
 
     let nodeToDraw: Node | undefined;
 
@@ -202,7 +197,7 @@ export class Iterator {
     }
 
     const { start, end } = nodeToDraw.getPosition();
-    const result = getSourceWithChange(this.chars, start, end, colorFn.magenta);
+    const result = getSourceWithChange(chars, start, end, colorFn.magenta);
 
     console.log(result.join(""));
   }
