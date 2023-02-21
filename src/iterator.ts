@@ -62,10 +62,10 @@ export class Iterator {
     }
   }
 
-  // Find the first node that matches the wanted kind
-  findClosingNode(unmatchedOpenNode: Node, startFrom = 0): Node | undefined {
-    const closingNodeKind = getClosingNode(unmatchedOpenNode);
-    const stack = new NodeMatchingStack(unmatchedOpenNode);
+  // Find the first closing node that matches the wanted kind
+  findClosingNode(openNode: Node, startFrom = 0): Node | undefined {
+    const closingNodeKind = getClosingNode(openNode);
+    const stack = new NodeMatchingStack(openNode);
 
     let i = startFrom;
 
@@ -78,12 +78,13 @@ export class Iterator {
       }
 
       // Not a node we are interested in, skipping
-      if (next.kind !== closingNodeKind && next.kind !== unmatchedOpenNode.kind) {
+      if (next.kind !== closingNodeKind && next.kind !== openNode.kind) {
         continue;
       }
 
       stack.add(next);
 
+      // If the stack is empty means that all previous nodes are matched, this last node is the one that closes the all the nodes, the one we are looking for
       if (stack.isEmpty()) {
         return next;
       }
@@ -107,15 +108,6 @@ export class Iterator {
     this.textNodes[index].matched = true;
     this.textNodes[index].matchNumber = this.matchNumber;
     this.textNodes[index].markedAs = markedAs;
-
-    // TODO: IDK if I should keep this
-    if (this.bufferedNodesIndexes.length) {
-      const _index = this.bufferedNodesIndexes.findIndex((x) => x === index);
-
-      if (_index !== -1) {
-        this.bufferedNodesIndexes.splice(_index, 1);
-      }
-    }
   }
 
   bufferNodes(indexesOfNodesToBuffer: number[]) {
@@ -126,11 +118,6 @@ export class Iterator {
 
   hasBufferedNodes() {
     const hasBufferedNodes = this.bufferedNodesIndexes.some((x) => !this.textNodes[x].matched);
-
-    if (!hasBufferedNodes && this.bufferedNodesIndexes.length) {
-      this.bufferedNodesIndexes = [];
-    }
-
     return hasBufferedNodes;
   }
 
