@@ -14,6 +14,12 @@ interface NodeArgs {
   index?: number;
 }
 
+export enum Status {
+  unmatched = "unmatched",
+  skipped = "skipped",
+  matched = "matched"
+}
+
 export class Node {
   fullStart: number;
   start: number;
@@ -26,7 +32,7 @@ export class Node {
   lineNumberEnd: number;
   index = -1;
   expressionNumber = -1;
-  matched = false;
+  status: Status = Status.unmatched;
   matchNumber = 0;
   isTextNode = false;
 

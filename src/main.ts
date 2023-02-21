@@ -3,8 +3,8 @@ import { ChangeType, Range, Side } from "./types";
 import { ClosingNodeGroup, equals, getClosingNodeGroup, mergeRanges, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change } from "./change";
-import { getContext } from "./index";
-import { Node } from "./node";
+import { getContext, getOptions } from "./index";
+import { Node, Status } from "./node";
 import { assert } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
 import { NodeMatchingStack } from "./sequence";
@@ -21,23 +21,13 @@ export function getChanges(codeA: string, codeB: string): Change[] {
   let a: Node | undefined;
   let b: Node | undefined;
 
-  function loop() {
+  function loop(minLCS: number) {
     while (true) {
       a = iterA.next();
       b = iterB.next();
 
       // Loop until both iterators are done
-      if (!a && !b) {
-        break;
-      }
-
-      // One of the iterators finished. We will traverse the remaining nodes in the other iterator
       if (!a || !b) {
-        const iterOn = !a ? iterB : iterA;
-        const type = !a ? ChangeType.addition : ChangeType.deletion;
-
-        const remainingChanges = oneSidedIteration(iterOn, type);
-        changes.push(...remainingChanges);
         break;
       }
 
@@ -76,31 +66,47 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         continue;
       }
 
-      let bestIndex: number;
-      let bestResult: number;
+      let indexOfBestResult: number;
+      let lcs: number;
       let indexA: number;
       let indexB: number;
 
       // For simplicity the A to B perspective has preference
       if (lcsAtoB.bestResult >= lcsBtoA.bestResult) {
-        bestIndex = lcsAtoB.bestIndex;
-        bestResult = lcsAtoB.bestResult;
+        indexOfBestResult = lcsAtoB.bestIndex;
+        lcs = lcsAtoB.bestResult;
 
         // If the best LCS is found on the A to B perspective, indexA is the current position since we moved on the b side
         indexA = a.index;
-        indexB = bestIndex;
+        indexB = indexOfBestResult;
       } else {
-        bestIndex = lcsBtoA.bestIndex;
-        bestResult = lcsBtoA.bestResult;
+        indexOfBestResult = lcsBtoA.bestIndex;
+        lcs = lcsBtoA.bestResult;
 
         // This is the opposite of the above branch, since the best LCS was on the A side, there is were we need to reposition the cursor
-        indexA = bestIndex;
+        indexA = indexOfBestResult;
         indexB = b.index;
       }
 
-      assert(bestResult !== 0, "LCS resulted in 0");
+      assert(lcs !== 0, "LCS resulted in 0");
 
-      const moveChanges = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult);
+      // Only match sequences that are longer that the minimum, this is to prefer longer matches and avoid single nodes matching, for example
+      //
+      // let name = "elian"
+      //
+      // ------------------
+      //
+      // const name = "elian"
+      //
+      // The problem here is that "const" and "let" will be left unmatched and will be matched randomly, to avoid this we leave single nodes to the end and 
+      // report them as additions or removal 
+      if (lcs < minLCS) {
+        iterA.markMultiple(indexA, lcs, Status.skipped)
+        iterB.markMultiple(indexB, lcs, Status.skipped)
+        continue
+      }
+
+      const moveChanges = matchSubsequence(iterA, iterB, indexA, indexB, indexOfBestResult, lcs);
 
       if (moveChanges.length) {
         changes.push(...moveChanges);
@@ -126,7 +132,29 @@ export function getChanges(codeA: string, codeB: string): Change[] {
     }
   }
 
-  loop();
+  const { defaultMinLCS, lcsReductionStep } = getOptions()
+
+  let currentMinLCS = defaultMinLCS
+  let LCSstep = lcsReductionStep
+
+  mainLoop: while (true) {
+    // Loop one time with the given min LCS
+    loop(currentMinLCS)
+
+    // Mark all skipped nodes as unmatched so we can retry matching them again with a lower min lcs
+    iterA.reset()
+    iterB.reset()
+
+    currentMinLCS -= LCSstep
+
+    // If we are in the last lap and there are unmatched nodes, mark them as additions or removals, 
+    // it's quite likely that we will cause a mismatch if we try to create a move
+    if (currentMinLCS <= 1) {
+      changes.push(...oneSidedIteration(iterA, ChangeType.deletion))
+      changes.push(...oneSidedIteration(iterB, ChangeType.addition))
+      break mainLoop;
+    }
+  }
 
   // TODO: Once we improve compaction to be on-demand, we will be able to remove this
   const deletions = changes.filter((x) => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start! - b.rangeA?.start!);
@@ -343,14 +371,15 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     assert(equals(a!, b!), `Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
 
     // If the node is either opening or closing, we need to track it to see if it has all opening nodes are closed
-    if (a.isOpeningNode || a.isClosingNode) {
-      const nodeGroup = getClosingNodeGroup(a);
-      if (nodesWithClosingVerifier.has(nodeGroup)) {
-        nodesWithClosingVerifier.get(nodeGroup)!.add(a);
-      } else {
-        nodesWithClosingVerifier.set(nodeGroup, new NodeMatchingStack(a));
-      }
-    }
+    // TODO MIN
+    // if (a.isOpeningNode || a.isClosingNode) {
+    //   const nodeGroup = getClosingNodeGroup(a);
+    //   if (nodesWithClosingVerifier.has(nodeGroup)) {
+    //     nodesWithClosingVerifier.get(nodeGroup)!.add(a);
+    //   } else {
+    //     nodesWithClosingVerifier.set(nodeGroup, new NodeMatchingStack(a));
+    //   }
+    // }
 
     /// Alignment: Move ///
 
@@ -442,34 +471,35 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   }
 
   // After matching the sequence we need to verify all the kind of nodes that required matching are matched
-  for (const stack of nodesWithClosingVerifier.values()) {
-    // An empty stack means that that all open node got their respective closing node
-    if (!stack.isEmpty()) {
-      // For each kind, for example paren, brace, etc
-      for (const unmatchedOpeningNode of stack.values) {
-        const closingNodeForA = iterA.findClosingNode(unmatchedOpeningNode, indexA);
-        assert(closingNodeForA, `Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on A side`);
+  // TODO MIN
+  // for (const stack of nodesWithClosingVerifier.values()) {
+  //   // An empty stack means that that all open node got their respective closing node
+  //   if (!stack.isEmpty()) {
+  //     // For each kind, for example paren, brace, etc
+  //     for (const unmatchedOpeningNode of stack.values) {
+  //       const closingNodeForA = iterA.findClosingNode(unmatchedOpeningNode, indexA);
+  //       assert(closingNodeForA, `Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on A side`);
 
-        const closingNodeForB = iterB.findClosingNode(unmatchedOpeningNode, indexB);
-        assert(closingNodeForB, `Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on B side`);
+  //       const closingNodeForB = iterB.findClosingNode(unmatchedOpeningNode, indexB);
+  //       assert(closingNodeForB, `Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on B side`);
 
-        // We know for sure that the closing nodes move, otherwise we would have seen them in the LCS matching
-        iterA.mark(closingNodeForA.index, ChangeType.move);
-        iterB.mark(closingNodeForB.index, ChangeType.move);
+  //       // We know for sure that the closing nodes move, otherwise we would have seen them in the LCS matching
+  //       iterA.mark(closingNodeForA.index, ChangeType.move);
+  //       iterB.mark(closingNodeForB.index, ChangeType.move);
 
-        // Similar to the LCS matching, only report moves if the nodes did in fact move
-        if (didChange) {
-          changes.push(
-            new Change(
-              ChangeType.move,
-              closingNodeForA,
-              closingNodeForB,
-            ),
-          );
-        }
-      }
-    }
-  }
+  //       // Similar to the LCS matching, only report moves if the nodes did in fact move
+  //       if (didChange) {
+  //         changes.push(
+  //           new Change(
+  //             ChangeType.move,
+  //             closingNodeForA,
+  //             closingNodeForB,
+  //           ),
+  //         );
+  //       }
+  //     }
+  //   }
+  // }
 
   return changes;
 }

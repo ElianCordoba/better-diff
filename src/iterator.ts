@@ -1,6 +1,6 @@
 import { equals, getClosingNode, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
-import { Node } from "./node";
+import { Node, Status } from "./node";
 import { ChangeType } from "./types";
 import { assert } from "./debug";
 import { getOptions } from ".";
@@ -43,7 +43,7 @@ export class Iterator {
       for (const bufferedNodeIndex of this.bufferedNodesIndexes) {
         const bufferedNode = this.textNodes[bufferedNodeIndex];
 
-        if (!bufferedNode.matched) {
+        if (bufferedNode.status === Status.unmatched) {
           return bufferedNode;
         }
       }
@@ -53,7 +53,7 @@ export class Iterator {
     for (let i = startFrom ?? 0; i < this.textNodes.length; i++) {
       const item = this.textNodes[i];
 
-      if (item.matched) {
+      if (item.status === Status.matched) {
         continue;
       }
 
@@ -70,7 +70,7 @@ export class Iterator {
     let i = startFrom;
 
     while (true) {
-      const next = this.peek(i);
+      const next = this.peek(i, false);
       i++;
 
       if (!next) {
@@ -94,20 +94,40 @@ export class Iterator {
   peek(index: number, skipMatched = true) {
     const item = this.textNodes[index];
 
-    if (!item || (skipMatched && item.matched)) {
+    if (!item || (skipMatched && item.status === Status.matched)) {
       return;
     }
 
     return item;
   }
 
-  mark(index: number, markedAs: ChangeType) {
+  /**
+   * Set all the `skipped` nodes to `unmatched` so that the next lap of the loop will include them
+   */
+  reset() {
+    for (const node of this.textNodes) {
+      if (node.status === Status.skipped) {
+        node.status = Status.unmatched
+      }
+    }
+  }
+
+  mark(index: number, markedAs: ChangeType, status: Status = Status.matched) {
     // TODO: Should only apply for moves, otherwise a move, addition and move
     // will display 1 for the first move and 3 for the second
     this.matchNumber++;
-    this.textNodes[index].matched = true;
+    this.textNodes[index].status = status;
     this.textNodes[index].matchNumber = this.matchNumber;
     this.textNodes[index].markedAs = markedAs;
+  }
+
+  markMultiple(startIndex: number, numberOfNodes: number, status: Status) {
+    let i = startIndex
+    while (i < startIndex + numberOfNodes) {
+      //TODO MIN
+      this.mark(i, ChangeType.move, status)
+      i++
+    }
   }
 
   bufferNodes(indexesOfNodesToBuffer: number[]) {
@@ -117,7 +137,7 @@ export class Iterator {
   }
 
   hasBufferedNodes() {
-    const hasBufferedNodes = this.bufferedNodesIndexes.some((x) => !this.textNodes[x].matched);
+    const hasBufferedNodes = this.bufferedNodesIndexes.some((x) => this.textNodes[x].status === Status.unmatched);
     return hasBufferedNodes;
   }
 
@@ -140,8 +160,8 @@ export class Iterator {
         return;
       }
 
-      const foundAhead = ahead && !ahead.matched && equals(expected, ahead);
-      const foundBack = back && !back.matched && equals(expected, back);
+      const foundAhead = ahead && ahead.status === Status.unmatched && equals(expected, ahead);
+      const foundBack = back && back.status === Status.unmatched && equals(expected, back);
 
       if (foundAhead || foundBack) {
         const index = foundAhead ? startFrom + offset : startFrom - offset;
@@ -208,7 +228,7 @@ export class Iterator {
       }
 
       // Only include text node that we haven't proceeded yet
-      if (!next.matched && next.isTextNode) {
+      if (next.status === Status.unmatched && next.isTextNode) {
         expNodes.push(next);
       }
 
@@ -227,17 +247,17 @@ export class Iterator {
 
     for (const node of _nodes) {
       let colorFn;
-      switch (node.markedAs) {
-        case ChangeType.addition: {
+      switch (node.status) {
+        case Status.matched: {
           colorFn = k.green;
           break;
         }
-        case ChangeType.deletion: {
-          colorFn = k.red;
+        case Status.unmatched: {
+          colorFn = k.grey;
           break;
         }
-        case ChangeType.move: {
-          colorFn = k.blue;
+        case Status.skipped: {
+          colorFn = k.white;
           break;
         }
         default: {
@@ -317,7 +337,8 @@ export class Iterator {
     const list: string[] = [];
 
     for (const node of this.textNodes) {
-      let colorFn = node.matched ? k.green : k.grey;
+      // TODO Copy above code
+      let colorFn = k.grey//node.matched ? k.green : k.grey;
 
       const index = String(node.index).padStart(3).padEnd(6);
 

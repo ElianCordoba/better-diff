@@ -8,6 +8,23 @@ import { fail } from "./debug";
 
 // These options have their own tests under the /tests/options folder
 export interface Options {
+  // Minimum number of nodes that needs to be in a sequence in order to be matched, for example
+  //
+  // `let name = "elian"`
+  //
+  // That line contains 4 nodes, under a 5 min nodes context it wouldn't be matched, until some future loop lap
+  defaultMinLCS?: number;
+
+  // Number in which the min LCS (defined initially by the `defaultMinLCS` option) will be decreased, for example
+  //
+  // Min LCS = 5
+  // LCS step: 2
+  //
+  // Lap 1: min LCS 5
+  // Lap 2: min LCS 3
+  // Lap 3: min LCS 1
+  lcsReductionStep?: number
+
   outputType?: OutputType;
 
   warnOnInvalidCode?: boolean;
@@ -88,6 +105,8 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
 }
 
 const defaultOptions: Options = {
+  defaultMinLCS: 5,
+  lcsReductionStep: 2,
   outputType: OutputType.text,
   warnOnInvalidCode: false,
   renderFn: asciiRenderFn,
@@ -117,7 +136,7 @@ export class LayoutShiftCandidate {
     // Value: Length of the string
     public a = new Map<number, number>(),
     public b = new Map<number, number>(),
-  ) {}
+  ) { }
 
   add(side: Side, at: number, length: number) {
     if (side === Side.a) {
