@@ -26,7 +26,7 @@ export class Change {
     const charsA = sourceA.split("");
     const charsB = sourceB.split("");
 
-    if (this.rangeA) {
+    if (this.rangeA && this.type !== ChangeType.deletion) {
       console.log("----A----");
       console.log(
         getSourceWithChange(
@@ -39,7 +39,7 @@ export class Change {
       console.log("\n");
     }
 
-    if (this.rangeB) {
+    if (this.rangeB && this.type !== ChangeType.addition) {
       console.log("----B----");
       console.log(
         getSourceWithChange(
