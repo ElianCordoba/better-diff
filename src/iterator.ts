@@ -161,7 +161,7 @@ export class Iterator {
       const matchNumber = String(node.matchNumber).padStart(5).padEnd(10);
       const expressionNumber = String(node.expressionNumber ?? "-").padStart(5).padEnd(8);
 
-      const { kind, text } = getNodeForPrinting(node);
+      const { kind, text } = getNodeForPrinting(node.kind, node.text);
       const _kind = kind.padStart(5).padEnd(25);
       const _text = ` ${text}`;
 
@@ -236,7 +236,7 @@ export class Iterator {
 
       const pos = `${node.start}-${node.end}`.padStart(6).padEnd(7);
 
-      const { kind, text } = getNodeForPrinting(node);
+      const { kind, text } = getNodeForPrinting(node.kind, node.text);
       const _kind = kind.padStart(5).padEnd(25);
       const _text = ` ${text}`;
 

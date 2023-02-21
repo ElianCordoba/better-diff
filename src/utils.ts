@@ -3,48 +3,32 @@ import { Node } from "./node";
 import { Range, Side } from "./types";
 import { fail } from "./debug";
 
-export function formatSyntaxKind(kind: ts.SyntaxKind, text?: string) {
-  let textValue = text ? `| "${text}"` : "";
-  const formattedKind = getPrettyKind(kind);
-
-  textValue = textValue.replaceAll("\n", "");
-
-  if (textValue.length > 50) {
-    textValue = textValue.slice(0, 50) + "...";
-  }
-
-  return `${formattedKind.padEnd(25)} ${textValue}`.trim();
-}
-
-export function getPrettyKind(kind: number) {
+export function getPrettyKind(kind: number): string {
   // deno-lint-ignore no-explicit-any
   return (ts as any).Debug.formatSyntaxKind(kind);
 }
 
-export function getNodeForPrinting(item: Node) {
-  const hasText = item.text || "";
-  const isString = item.kind === ts.SyntaxKind.StringLiteral;
+export function getNodeForPrinting(kind: number, text: string | undefined) {
+  const isString = kind === ts.SyntaxKind.StringLiteral;
 
-  let text;
+  let _text = "";
 
-  if (isString) {
-    text = `"${hasText}"`;
-  } else {
-    text = hasText;
+  if (text) {
+    if (isString) {
+      _text = `"${text}"`;
+    } else {
+      _text = text;
+    }
   }
 
   return {
-    kind: getPrettyKind(item.kind),
-    text,
+    kind: getPrettyKind(kind),
+    text: _text,
   };
 }
 
 export function equals(nodeA: Node, nodeB: Node) {
   return nodeA?.kind === nodeB?.kind && nodeA?.text === nodeB?.text;
-}
-
-export function listEnded(node: Node): boolean {
-  return node.kind === ts.SyntaxKind.EndOfFileToken;
 }
 
 export function mergeRanges(currentRange: Range, newRange: Range) {
