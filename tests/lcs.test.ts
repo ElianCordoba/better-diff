@@ -1,8 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
-import { getSequenceLength } from "../src/main";
+import { getSequenceLength } from "../src/sequence";
 
 class MockIterator {
-  constructor(public items: any[]) {}
+  constructor(public items: any[]) { }
 
   peek(index: number) {
     return this.items[index];
