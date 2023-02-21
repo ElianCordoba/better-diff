@@ -20,7 +20,6 @@ export function getNodesArray(source: string) {
   }
 
   const textNodes: Node[] = [];
-  const allNodes: Node[] = [];
   let depth = 0;
 
   function walk(node: TSNode) {
@@ -62,10 +61,8 @@ export function getNodesArray(source: string) {
       newNode.isOpeningNode = true;
     }
 
-    allNodes.push(newNode);
     // Only include visible node, nodes that represent some text in the source code.
     if (node.text || isReservedWord || isPunctuation) {
-      newNode.isTextNode = true;
       textNodes.push(newNode);
     }
 
@@ -85,7 +82,7 @@ export function getNodesArray(source: string) {
     i++;
   }
 
-  return { textNodes, allNodes };
+  return textNodes;
 }
 
 function getSourceFile(source: string): SourceFile {

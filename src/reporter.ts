@@ -3,7 +3,7 @@ import { ChangeType, Side } from "../src/types";
 import { AlignmentTable } from "./alignmentTable";
 import { Change } from "./change";
 import { assert, fail } from "./debug";
-import { getRanges, range } from "./utils";
+import { range } from "./utils";
 
 //@ts-ignore TODO: Importing normally doesn't work with vitest
 export const k = require("kleur");
@@ -74,7 +74,7 @@ export function applyChangesToSources(
   for (const { rangeA, rangeB, type } of changes) {
     switch (type) {
       case ChangeType.addition: {
-        const { start, end } = getRanges(rangeB);
+        const { start, end } = rangeB;
         charsB = getSourceWithChange(
           charsB,
           start,
@@ -85,7 +85,7 @@ export function applyChangesToSources(
       }
 
       case ChangeType.deletion: {
-        const { start, end } = getRanges(rangeA);
+        const { start, end } = rangeA;
         charsA = getSourceWithChange(
           charsA,
           start,
@@ -96,7 +96,7 @@ export function applyChangesToSources(
       }
 
       case ChangeType.move: {
-        const resultA = getRanges(rangeA);
+        const resultA = rangeA;
         charsA = getSourceWithChange(
           charsA,
           resultA.start,
@@ -104,7 +104,7 @@ export function applyChangesToSources(
           renderFn.move,
         );
 
-        const resultB = getRanges(rangeB);
+        const resultB = rangeB;
         charsB = getSourceWithChange(
           charsB,
           resultB.start,

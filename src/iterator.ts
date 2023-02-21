@@ -2,14 +2,9 @@ import { equals, getClosingNode, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
 import { ChangeType } from "./types";
-import { assert } from "./debug";
 import { getOptions } from ".";
 import { NodeMatchingStack } from "./sequence";
 
-interface InputNodes {
-  textNodes: Node[];
-  allNodes: Node[];
-}
 interface IteratorOptions {
   name?: string;
   source?: string;
@@ -23,33 +18,15 @@ export class Iterator {
   private indexOfLastItem = 0;
   matchNumber = 0;
   public textNodes: Node[];
-  public allNodes: Node[];
 
-  bufferedNodesIndexes: number[] = [];
-
-  constructor({ textNodes, allNodes }: InputNodes, options?: IteratorOptions) {
+  constructor(textNodes: Node[], options?: IteratorOptions) {
     this.textNodes = textNodes;
-    this.allNodes = allNodes;
     this.name = options?.name;
     this.chars = options?.source?.split("");
   }
 
   // Get the next unmatched node in the iterator, optionally after a given index
-  // This may include buffered nodes, which are nodes that remained from a previous match and node they have
-  // priority so that we can match those before moving onto other ones
   next(startFrom?: number) {
-    // Preferences to buffered nodes, which they are never requested with the `startFrom` argument
-    if (startFrom === undefined && this.bufferedNodesIndexes.length) {
-      for (const bufferedNodeIndex of this.bufferedNodesIndexes) {
-        const bufferedNode = this.textNodes[bufferedNodeIndex];
-
-        if (!bufferedNode.matched) {
-          return bufferedNode;
-        }
-      }
-    }
-
-    // If no buffered where present get the next node the standard way
     for (let i = startFrom ?? 0; i < this.textNodes.length; i++) {
       const item = this.textNodes[i];
 
@@ -110,17 +87,6 @@ export class Iterator {
     this.textNodes[index].markedAs = markedAs;
   }
 
-  bufferNodes(indexesOfNodesToBuffer: number[]) {
-    assert(this.bufferedNodesIndexes.length === 0, "Buffered nodes was not empty when trying to buffer new nodes");
-
-    this.bufferedNodesIndexes = indexesOfNodesToBuffer;
-  }
-
-  hasBufferedNodes() {
-    const hasBufferedNodes = this.bufferedNodesIndexes.some((x) => !this.textNodes[x].matched);
-    return hasBufferedNodes;
-  }
-
   getCandidates(
     expected: Node,
   ): number[] {
@@ -163,67 +129,12 @@ export class Iterator {
     return candidates;
   }
 
-  getNodesFromExpression(node: Node, expressionNumber: number): Node[] {
-    assert(node, "Undefined node when getting nodes from a given expression");
-
-    // Using === on two object with only return true if both object are the same, this is perfect because when we created
-    // the node instance the same one was pushed to both arrays
-    const index = this.allNodes.findIndex((x) => x === node);
-
-    assert(index !== -1, `Fail to find node ${node.prettyKind}`);
-
-    // const startIndex = index - 1;
-    // TODO: Is this needed? Going back to the start of the expression, for example
-    // 1 2 3
-    // Given that all 3 numbers share the same parent expression, and we are located in number 2, we should include 1
-    // The thing is that I'm pretty sure by the time we reach 2, 1 is already matched, this may change with the min LCS algo though
-
-    // while (true) {
-    //   const back = this.allNodes[startIndex]
-
-    //   if (back?.expressionNumber !== expressionNumber) {
-    //     break
-    //   }
-
-    //   startIndex++
-    // }
-
-    const expNodes: Node[] = [];
-    let i = index; // startIndex;
-    while (true) {
-      const next = this.allNodes[i];
-
-      // This means that we finished all nodes, exit
-      if (!next) {
-        break;
-      }
-
-      // The rule for including nodes is the following, an expression of depth X will include:
-      // - Sibling nodes, of depth X
-      // - Child and child of siblings of depth X + N
-
-      // This means that going up (as of going up the tree), in this case having a smaller expression number, will be out exit condition
-      if (next.expressionNumber < expressionNumber) {
-        break;
-      }
-
-      // Only include text node that we haven't proceeded yet
-      if (!next.matched && next.isTextNode) {
-        expNodes.push(next);
-      }
-
-      i++;
-    }
-
-    return expNodes;
-  }
-
-  printList(nodesToPrint: "text" | "all" | Node[] = "text") {
+  printList(nodesToPrint?: Node[]) {
     console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("exp n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
     const list: string[] = [];
 
-    const _nodes = Array.isArray(nodesToPrint) ? nodesToPrint : nodesToPrint === "text" ? this.textNodes : this.allNodes;
+    const _nodes = Array.isArray(nodesToPrint) ? nodesToPrint : this.textNodes;
 
     for (const node of _nodes) {
       let colorFn;
@@ -250,7 +161,7 @@ export class Iterator {
       const matchNumber = String(node.matchNumber).padStart(5).padEnd(10);
       const expressionNumber = String(node.expressionNumber ?? "-").padStart(5).padEnd(8);
 
-      const { kind, text } = getNodeForPrinting(node);
+      const { kind, text } = getNodeForPrinting(node.kind, node.text);
       const _kind = kind.padStart(5).padEnd(25);
       const _text = ` ${text}`;
 
@@ -295,14 +206,10 @@ export class Iterator {
     console.log(result.join(""));
   }
 
-  printDepth(nodesToPrint: "text" | "all" | Node[] = "text") {
-    const _nodes = Array.isArray(nodesToPrint) ? nodesToPrint : nodesToPrint === "text" ? this.textNodes : this.allNodes;
-
+  printDepth() {
     let res = "";
-    for (const node of _nodes) {
-      const shouldColorTextNode = nodesToPrint === "all" && node.isTextNode;
-
-      const _colorFn = shouldColorTextNode ? colorFn.green : colorFn.grey;
+    for (const node of this.textNodes) {
+      const _colorFn = colorFn.grey;
 
       res += `
       (${node.expressionNumber + 1})${new Array(node.expressionNumber + 1).join("-")}${_colorFn(node.prettyKind)}`;
@@ -329,7 +236,7 @@ export class Iterator {
 
       const pos = `${node.start}-${node.end}`.padStart(6).padEnd(7);
 
-      const { kind, text } = getNodeForPrinting(node);
+      const { kind, text } = getNodeForPrinting(node.kind, node.text);
       const _kind = kind.padStart(5).padEnd(25);
       const _text = ` ${text}`;
 

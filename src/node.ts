@@ -1,5 +1,5 @@
 import { SyntaxKind } from "typescript";
-import { formatSyntaxKind } from "./utils";
+import { getNodeForPrinting } from "./utils";
 import { ChangeType } from "./types";
 
 interface NodeArgs {
@@ -28,7 +28,6 @@ export class Node {
   expressionNumber = -1;
   matched = false;
   matchNumber = 0;
-  isTextNode = false;
 
   isOpeningNode = false;
   isClosingNode = false;
@@ -42,7 +41,8 @@ export class Node {
     this.start = start;
     this.end = end;
     this.kind = kind;
-    this.prettyKind = formatSyntaxKind(kind, text);
+    const prettyKind = getNodeForPrinting(kind, text).kind;
+    this.prettyKind = prettyKind;
     this.text = text;
 
     this.triviaLinesAbove = triviaLinesAbove;

@@ -4,8 +4,8 @@ import { Node } from "./node";
 import { getContext } from "./index";
 
 export class Change {
-  rangeA: Range | undefined;
-  rangeB: Range | undefined;
+  rangeA: Range;
+  rangeB: Range;
 
   constructor(
     public type: ChangeType,
@@ -16,8 +16,8 @@ export class Change {
     // Changes on revision
     rangeB?: Range,
   ) {
-    this.rangeA = rangeA ?? nodeA?.getPosition();
-    this.rangeB = rangeB ?? nodeB?.getPosition();
+    this.rangeA = rangeA ?? nodeA?.getPosition()!;
+    this.rangeB = rangeB ?? nodeB?.getPosition()!;
   }
 
   draw() {
