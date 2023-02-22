@@ -1,22 +1,18 @@
-import { getNodesArray } from "./ts-util";
-import { ChangeType, Range, Side } from "./types";
+import { ChangeType, Side } from "./types";
 import { ClosingNodeGroup, equals, getClosingNodeGroup, mergeRanges, range } from "./utils";
 import { Iterator } from "./iterator";
-import { Change } from "./change";
+import { Change, compactChanges } from "./change";
 import { getContext } from "./index";
 import { Node } from "./node";
 import { assert } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
-import { NodeMatchingStack } from "./sequence";
+import { getLCS, NodeMatchingStack } from "./sequence";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
 
-  const nodesA = getNodesArray(codeA);
-  const nodesB = getNodesArray(codeB);
-
-  const iterA = new Iterator(nodesA, { name: Side.a, source: codeA });
-  const iterB = new Iterator(nodesB, { name: Side.b, source: codeB });
+  const iterA = new Iterator({ source: codeA, name: Side.a });
+  const iterB = new Iterator({ source: codeB, name: Side.b });
 
   let a: Node | undefined;
   let b: Node | undefined;
@@ -51,56 +47,23 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       const candidatesAtoB = iterB.getCandidates(a);
       const candidatesBtoA = iterA.getCandidates(b);
 
-      // TODO(Align): If the widths or trivias are different, align
-
-      let lcsAtoB: LCSResult = { bestResult: 0, bestIndex: 0 };
-      let lcsBtoA: LCSResult = { bestResult: 0, bestIndex: 0 };
-
-      if (candidatesAtoB.length) {
-        lcsAtoB = getLCS(a, candidatesAtoB, iterA, iterB);
-      } else {
+      if (candidatesAtoB.length === 0) {
         changes.push(new Change(ChangeType.deletion, a, b));
         iterA.mark(a.index, ChangeType.deletion);
       }
 
-      if (candidatesBtoA.length) {
-        lcsBtoA = getLCS(b, candidatesBtoA, iterB, iterA);
-      } else {
+      if (candidatesBtoA.length === 0) {
         changes.push(new Change(ChangeType.addition, a, b));
         iterB.mark(b.index, ChangeType.addition);
       }
 
-      // TODO: Maybe finish subsequence here too?
       if (candidatesAtoB.length === 0 && candidatesBtoA.length === 0) {
-        // TODO: Maybe push change type 'change' ?
         continue;
       }
 
-      let bestIndex: number;
-      let bestResult: number;
-      let indexA: number;
-      let indexB: number;
+      const { lcs, indexA, indexB } = getLCS({ a, b, iterA, iterB, candidatesAtoB, candidatesBtoA });
 
-      // For simplicity the A to B perspective has preference
-      if (lcsAtoB.bestResult >= lcsBtoA.bestResult) {
-        bestIndex = lcsAtoB.bestIndex;
-        bestResult = lcsAtoB.bestResult;
-
-        // If the best LCS is found on the A to B perspective, indexA is the current position since we moved on the b side
-        indexA = a.index;
-        indexB = bestIndex;
-      } else {
-        bestIndex = lcsBtoA.bestIndex;
-        bestResult = lcsBtoA.bestResult;
-
-        // This is the opposite of the above branch, since the best LCS was on the A side, there is were we need to reposition the cursor
-        indexA = bestIndex;
-        indexB = b.index;
-      }
-
-      assert(bestResult !== 0, "LCS resulted in 0");
-
-      const moveChanges = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult);
+      const moveChanges = matchSubsequence(iterA, iterB, indexA, indexB, lcs);
 
       if (moveChanges.length) {
         changes.push(...moveChanges);
@@ -147,151 +110,8 @@ function oneSidedIteration(
   return changes;
 }
 
-export function tryMergeRanges(
-  rangeA: Range,
-  rangeB: Range,
-): Range | undefined {
-  if (rangeA.start === rangeB.start && rangeA.end === rangeB.end) {
-    return rangeA;
-  }
-
-  let newStart: number;
-  let newEnd: number;
-
-  if (rangeA.end >= rangeB.start && rangeB.end >= rangeA.start) {
-    newStart = Math.min(rangeA.start, rangeB.start);
-    newEnd = Math.max(rangeA.end, rangeB.end);
-
-    return {
-      start: newStart,
-      end: newEnd,
-    };
-  }
-}
-
-// TODO: Compact at the moment when we push new changes to the array. Mainly to save memory since we will avoid having a big array before the moment of compaction
-export function compactChanges(changes: (Change & { seen?: boolean })[]) {
-  const newChanges: Change[] = [];
-
-  let currentChangeIndex = -1;
-  for (const change of changes) {
-    const candidate = change;
-
-    currentChangeIndex++;
-
-    if (change.seen) {
-      continue;
-    }
-
-    if (change.type === ChangeType.move) {
-      newChanges.push(change);
-      continue;
-    }
-
-    // We start from the current position since we known that above changes wont be compatible
-    let nextIndex = currentChangeIndex + 1;
-
-    innerLoop:
-    while (nextIndex < changes.length) {
-      const next = changes[nextIndex];
-
-      if (next.seen) {
-        nextIndex++;
-        continue;
-      }
-
-      if (change.type !== next.type) {
-        nextIndex++;
-        continue;
-      }
-
-      const readFrom = change!.type === ChangeType.deletion ? "rangeA" : "rangeB";
-
-      const currentRange = change![readFrom]!;
-      const nextRange = next[readFrom]!;
-
-      const compatible = tryMergeRanges(currentRange, nextRange);
-
-      if (!compatible) {
-        nextIndex++;
-        // No compatibility at i means that we can break early, there will be no compatibility at i + n because ranges keep moving on
-        break innerLoop;
-      }
-
-      changes[nextIndex].seen = true;
-
-      candidate[readFrom] = compatible;
-
-      nextIndex++;
-      continue;
-    }
-
-    newChanges.push(candidate);
-  }
-
-  return newChanges;
-}
-
-export function getSequenceLength(
-  iterA: Iterator,
-  iterB: Iterator,
-  indexA: number,
-  indexB: number,
-): number {
-  // Represents how long is the sequence
-  let sequence = 0;
-
-  while (true) {
-    const nextA = iterA.peek(indexA);
-
-    if (!nextA) {
-      break;
-    }
-
-    const nextB = iterB.peek(indexB);
-
-    if (!nextB) {
-      break;
-    }
-
-    if (!equals(nextA, nextB)) {
-      break;
-    }
-
-    indexA++;
-    indexB++;
-    sequence++;
-  }
-
-  return sequence;
-}
-
-interface LCSResult {
-  bestIndex: number;
-  bestResult: number;
-}
-
-function getLCS(wanted: Node, candidates: number[], iterA: Iterator, iterB: Iterator): LCSResult {
-  let bestResult = 0;
-  let bestIndex = 0;
-
-  for (const index of candidates) {
-    const lcs = getSequenceLength(iterA, iterB, wanted.index, index);
-
-    // Store the new result if it's better that the previous one based on the length of the sequence
-    if (
-      lcs > bestResult
-    ) {
-      bestResult = lcs;
-      bestIndex = index;
-    }
-  }
-
-  return { bestIndex, bestResult };
-}
-
 // This function has side effects, mutates data in the iterators
-function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, indexOfBestResult: number, lcs: number): Change[] {
+function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, lcs: number): Change[] {
   const changes: Change[] = [];
 
   let a = iterA.next(indexA)!;
@@ -310,15 +130,15 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
   const nodesWithClosingVerifier: Map<ClosingNodeGroup, NodeMatchingStack> = new Map();
 
-  let index = indexOfBestResult;
-  while (index < indexOfBestResult + lcs) {
+  let i = 0;
+  while (i < lcs) {
     a = iterA.next(indexA)!;
     b = iterB.next(indexB)!;
 
     iterA.mark(a.index, ChangeType.move);
     iterB.mark(b.index, ChangeType.move);
 
-    index++;
+    i++;
     indexA++;
     indexB++;
 
