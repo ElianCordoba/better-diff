@@ -176,8 +176,8 @@ export class Iterator {
   }
 
   printRange(node: Node | undefined) {
-    const source = this.name === Side.a ? getContext().sourceA : getContext().sourceB
-    const chars = source.split('')
+    const source = this.name === Side.a ? getContext().sourceA : getContext().sourceB;
+    const chars = source.split("");
 
     let nodeToDraw: Node | undefined;
 

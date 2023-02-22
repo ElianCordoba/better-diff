@@ -6,7 +6,7 @@ import { getContext } from "./index";
 import { Node } from "./node";
 import { assert } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
-import { NodeMatchingStack, getLCS } from "./sequence";
+import { getLCS, NodeMatchingStack } from "./sequence";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -61,7 +61,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         continue;
       }
 
-      const { lcs, indexA, indexB } = getLCS({ a, b, iterA, iterB, candidatesAtoB, candidatesBtoA })
+      const { lcs, indexA, indexB } = getLCS({ a, b, iterA, iterB, candidatesAtoB, candidatesBtoA });
 
       const moveChanges = matchSubsequence(iterA, iterB, indexA, indexB, lcs);
 
@@ -130,7 +130,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
   const nodesWithClosingVerifier: Map<ClosingNodeGroup, NodeMatchingStack> = new Map();
 
-  let i = 0
+  let i = 0;
   while (i < lcs) {
     a = iterA.next(indexA)!;
     b = iterB.next(indexB)!;

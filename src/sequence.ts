@@ -2,8 +2,6 @@ import { assert } from "./debug";
 import { Node } from "./node";
 import { equals, getClosingNode, getPrettyKind } from "./utils";
 import { Iterator } from "./iterator";
-import { Change } from "./change";
-import { ChangeType } from "./types";
 
 export class NodeMatchingStack {
   allowedKind: number[];
@@ -38,7 +36,7 @@ interface GetLCS {
   candidatesAtoB: number[];
   candidatesBtoA: number[];
   iterA: Iterator;
-  iterB: Iterator
+  iterB: Iterator;
 }
 
 export function getLCS({ a, b, candidatesAtoB, candidatesBtoA, iterA, iterB }: GetLCS) {
@@ -72,8 +70,8 @@ export function getLCS({ a, b, candidatesAtoB, candidatesBtoA, iterA, iterB }: G
   return {
     lcs,
     indexA,
-    indexB
-  }
+    indexB,
+  };
 }
 
 export function getSequenceLength(
