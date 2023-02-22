@@ -32,7 +32,7 @@ export class NodeMatchingStack {
   }
 }
 
-interface TryGetLCSArgs {
+interface GetLCS {
   a: Node;
   b: Node;
   candidatesAtoB: number[];
@@ -41,12 +41,10 @@ interface TryGetLCSArgs {
   iterB: Iterator
 }
 
-export function tryGetLCS({ a, b, candidatesAtoB, candidatesBtoA, iterA, iterB }: TryGetLCSArgs) {
-  const lcsAtoB = candidatesAtoB.length ? getLCS(a, candidatesAtoB, iterA, iterB) : { bestResult: 0, bestIndex: 0 };
-  const lcsBtoA = candidatesBtoA.length ? getLCS(b, candidatesBtoA, iterB, iterA) : { bestResult: 0, bestIndex: 0 };
+export function getLCS({ a, b, candidatesAtoB, candidatesBtoA, iterA, iterB }: GetLCS) {
+  const aSideLCS = candidatesAtoB.length ? pickLCSFromCandidates(a.index, candidatesAtoB, iterA, iterB) : { bestSequence: 0, startOfSequence: 0 };
+  const bSideLCS = candidatesBtoA.length ? pickLCSFromCandidates(b.index, candidatesBtoA, iterB, iterA) : { bestSequence: 0, startOfSequence: 0 };
 
-  // In which index does the sequence start
-  let startSequenceIndex: number;
   // Length of the best sequence
   let lcs: number;
 
@@ -55,19 +53,17 @@ export function tryGetLCS({ a, b, candidatesAtoB, candidatesBtoA, iterA, iterB }
   let indexB: number;
 
   // For simplicity the A to B perspective has preference
-  if (lcsAtoB.bestResult >= lcsBtoA.bestResult) {
-    startSequenceIndex = lcsAtoB.bestIndex;
-    lcs = lcsAtoB.bestResult;
+  if (aSideLCS.bestSequence >= bSideLCS.bestSequence) {
+    lcs = aSideLCS.bestSequence;
 
     // If the best LCS is found on the A to B perspective, indexA is the current position since we moved on the b side
     indexA = a.index;
-    indexB = startSequenceIndex;
+    indexB = aSideLCS.startOfSequence;
   } else {
-    startSequenceIndex = lcsBtoA.bestIndex;
-    lcs = lcsBtoA.bestResult;
+    lcs = bSideLCS.bestSequence;
 
     // This is the opposite of the above branch, since the best LCS was on the A side, there is were we need to reposition the cursor
-    indexA = startSequenceIndex;
+    indexA = bSideLCS.startOfSequence;
     indexB = b.index;
   }
 
@@ -75,7 +71,6 @@ export function tryGetLCS({ a, b, candidatesAtoB, candidatesBtoA, iterA, iterB }
 
   return {
     lcs,
-    startSequenceIndex,
     indexA,
     indexB
   }
@@ -116,25 +111,26 @@ export function getSequenceLength(
 }
 
 export interface LCSResult {
-  bestIndex: number;
-  bestResult: number;
+  bestSequence: number;
+  startOfSequence: number;
 }
 
-export function getLCS(wanted: Node, candidates: number[], iterA: Iterator, iterB: Iterator): LCSResult {
-  let bestResult = 0;
-  let bestIndex = 0;
+// Given a node (based on it's index) and one or more candidates nodes on the opposite side, evaluate all the possibilities and return the best result and index of it
+export function pickLCSFromCandidates(indexOfWanted: number, candidates: number[], iterA: Iterator, iterB: Iterator): LCSResult {
+  let bestSequence = 0;
+  let startOfSequence = 0;
 
-  for (const index of candidates) {
-    const lcs = getSequenceLength(iterA, iterB, wanted.index, index);
+  for (const candidateNodeIndex of candidates) {
+    const newLCS = getSequenceLength(iterA, iterB, indexOfWanted, candidateNodeIndex);
 
     // Store the new result if it's better that the previous one based on the length of the sequence
     if (
-      lcs > bestResult
+      newLCS > bestSequence
     ) {
-      bestResult = lcs;
-      bestIndex = index;
+      bestSequence = newLCS;
+      startOfSequence = candidateNodeIndex;
     }
   }
 
-  return { bestIndex, bestResult };
+  return { startOfSequence, bestSequence };
 }

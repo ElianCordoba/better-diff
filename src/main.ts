@@ -6,7 +6,7 @@ import { getContext } from "./index";
 import { Node } from "./node";
 import { assert } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
-import { LCSResult, NodeMatchingStack, getLCS, tryGetLCS } from "./sequence";
+import { NodeMatchingStack, getLCS } from "./sequence";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -61,9 +61,9 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         continue;
       }
 
-      const { lcs, startSequenceIndex, indexA, indexB } = tryGetLCS({ a, b, iterA, iterB, candidatesAtoB, candidatesBtoA })
+      const { lcs, indexA, indexB } = getLCS({ a, b, iterA, iterB, candidatesAtoB, candidatesBtoA })
 
-      const moveChanges = matchSubsequence(iterA, iterB, indexA, indexB, startSequenceIndex, lcs);
+      const moveChanges = matchSubsequence(iterA, iterB, indexA, indexB, lcs);
 
       if (moveChanges.length) {
         changes.push(...moveChanges);
@@ -111,7 +111,7 @@ function oneSidedIteration(
 }
 
 // This function has side effects, mutates data in the iterators
-function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, indexOfBestResult: number, lcs: number): Change[] {
+function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, lcs: number): Change[] {
   const changes: Change[] = [];
 
   let a = iterA.next(indexA)!;
@@ -130,15 +130,15 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
   const nodesWithClosingVerifier: Map<ClosingNodeGroup, NodeMatchingStack> = new Map();
 
-  let index = indexOfBestResult;
-  while (index < indexOfBestResult + lcs) {
+  let i = 0
+  while (i < lcs) {
     a = iterA.next(indexA)!;
     b = iterB.next(indexB)!;
 
     iterA.mark(a.index, ChangeType.move);
     iterB.mark(b.index, ChangeType.move);
 
-    index++;
+    i++;
     indexA++;
     indexB++;
 
