@@ -6,7 +6,7 @@ import { getContext } from "./index";
 import { Node } from "./node";
 import { assert } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
-import { LCSResult, NodeMatchingStack, getLCS } from "./sequence";
+import { LCSResult, NodeMatchingStack, getLCS, tryGetLCS } from "./sequence";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -47,56 +47,23 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       const candidatesAtoB = iterB.getCandidates(a);
       const candidatesBtoA = iterA.getCandidates(b);
 
-      // TODO(Align): If the widths or trivias are different, align
-
-      let lcsAtoB: LCSResult = { bestResult: 0, bestIndex: 0 };
-      let lcsBtoA: LCSResult = { bestResult: 0, bestIndex: 0 };
-
-      if (candidatesAtoB.length) {
-        lcsAtoB = getLCS(a, candidatesAtoB, iterA, iterB);
-      } else {
+      if (candidatesAtoB.length === 0) {
         changes.push(new Change(ChangeType.deletion, a, b));
         iterA.mark(a.index, ChangeType.deletion);
       }
 
-      if (candidatesBtoA.length) {
-        lcsBtoA = getLCS(b, candidatesBtoA, iterB, iterA);
-      } else {
+      if (candidatesBtoA.length === 0) {
         changes.push(new Change(ChangeType.addition, a, b));
         iterB.mark(b.index, ChangeType.addition);
       }
 
-      // TODO: Maybe finish subsequence here too?
       if (candidatesAtoB.length === 0 && candidatesBtoA.length === 0) {
-        // TODO: Maybe push change type 'change' ?
         continue;
       }
 
-      let bestIndex: number;
-      let bestResult: number;
-      let indexA: number;
-      let indexB: number;
+      const { lcs, startSequenceIndex, indexA, indexB } = tryGetLCS({ a, b, iterA, iterB, candidatesAtoB, candidatesBtoA })
 
-      // For simplicity the A to B perspective has preference
-      if (lcsAtoB.bestResult >= lcsBtoA.bestResult) {
-        bestIndex = lcsAtoB.bestIndex;
-        bestResult = lcsAtoB.bestResult;
-
-        // If the best LCS is found on the A to B perspective, indexA is the current position since we moved on the b side
-        indexA = a.index;
-        indexB = bestIndex;
-      } else {
-        bestIndex = lcsBtoA.bestIndex;
-        bestResult = lcsBtoA.bestResult;
-
-        // This is the opposite of the above branch, since the best LCS was on the A side, there is were we need to reposition the cursor
-        indexA = bestIndex;
-        indexB = b.index;
-      }
-
-      assert(bestResult !== 0, "LCS resulted in 0");
-
-      const moveChanges = matchSubsequence(iterA, iterB, indexA, indexB, bestIndex, bestResult);
+      const moveChanges = matchSubsequence(iterA, iterB, indexA, indexB, startSequenceIndex, lcs);
 
       if (moveChanges.length) {
         changes.push(...moveChanges);
