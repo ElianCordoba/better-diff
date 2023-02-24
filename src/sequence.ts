@@ -2,6 +2,7 @@ import { assert } from "./debug";
 import { Node } from "./node";
 import { equals, getClosingNode, getPrettyKind } from "./utils";
 import { Iterator } from "./iterator";
+import { Side } from "./types";
 
 export class NodeMatchingStack {
   allowedKind: number[];
@@ -45,6 +46,7 @@ export function getLCS({ a, b, candidatesAtoB, candidatesBtoA, iterA, iterB }: G
 
   // Length of the best sequence
   let lcs: number;
+  let side: Side;
 
   // Start indexes for both iterators
   let indexA: number;
@@ -52,12 +54,14 @@ export function getLCS({ a, b, candidatesAtoB, candidatesBtoA, iterA, iterB }: G
 
   // For simplicity the A to B perspective has preference
   if (aSideLCS.bestSequence >= bSideLCS.bestSequence) {
+    side = Side.a;
     lcs = aSideLCS.bestSequence;
 
     // If the best LCS is found on the A to B perspective, indexA is the current position since we moved on the b side
     indexA = a.index;
     indexB = aSideLCS.startOfSequence;
   } else {
+    side = Side.b
     lcs = bSideLCS.bestSequence;
 
     // This is the opposite of the above branch, since the best LCS was on the A side, there is were we need to reposition the cursor
@@ -68,6 +72,7 @@ export function getLCS({ a, b, candidatesAtoB, candidatesBtoA, iterA, iterB }: G
   assert(lcs !== 0, "LCS resulted in 0");
 
   return {
+    side,
     lcs,
     indexA,
     indexB,

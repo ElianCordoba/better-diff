@@ -61,7 +61,30 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         continue;
       }
 
-      const { lcs, indexA, indexB } = getLCS({ a, b, iterA, iterB, candidatesAtoB, candidatesBtoA });
+      const { lcs, indexA, indexB, side } = getLCS({ a, b, iterA, iterB, candidatesAtoB, candidatesBtoA });
+
+      // We may get an sequence of length 1, in that case will only create a move if that single node can be matched alone (more about this in the node creation)
+      // Notice that we pick either `a` or `b` depending on the side of the lcs, this is because a match will happen with one of those in the their current index
+      // and a node in the opposite side that may be in another index
+      //
+      // A side:
+      // 1 2 3
+      // ^ cursor here
+      // 
+      // B side:
+      // 3 2 1
+      //     ^ matching with this one
+      const canNodeBeMatchedAlone = side === Side.a ? a.canBeMatchedAlone : b.canBeMatchedAlone
+
+      // TODO: Add lcs 1 move fast path
+
+      if (lcs === 1 && !canNodeBeMatchedAlone) {
+        changes.push(new Change(ChangeType.deletion, a, b));
+        iterA.mark(a.index, ChangeType.deletion);
+        changes.push(new Change(ChangeType.addition, a, b));
+        iterB.mark(b.index, ChangeType.addition);
+        continue
+      }
 
       const moveChanges = matchSubsequence(iterA, iterB, indexA, indexB, lcs);
 

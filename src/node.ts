@@ -28,6 +28,7 @@ export class Node {
   expressionNumber = -1;
   matched = false;
   matchNumber = 0;
+  canBeMatchedAlone = false;
 
   isOpeningNode = false;
   isClosingNode = false;
