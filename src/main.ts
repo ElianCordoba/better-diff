@@ -6,7 +6,7 @@ import { getContext } from "./index";
 import { Node } from "./node";
 import { assert } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
-import { getLCS, NodeMatchingStack } from "./sequence";
+import { getLCS, NodeMatchingStack, pickLCSFromCandidates } from "./sequence";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -44,24 +44,54 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       // B: 1 2 3
       // From the perspective of A, the LCS is [1, 2], but from the other perspective it's the real maxima [1, 2, 3]
       // More about this in the move tests
-      const candidatesAtoB = iterB.getCandidates(a);
-      const candidatesBtoA = iterA.getCandidates(b);
+      // const candidatesAtoB = iterB.getCandidates(a);
+      // const candidatesBtoA = iterA.getCandidates(b);
 
-      if (candidatesAtoB.length === 0) {
-        changes.push(new Change(ChangeType.deletion, a, b));
-        iterA.mark(a.index, ChangeType.deletion);
+      function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBestSequence: Node[]): number[] {
+        const node = currentBestSequence[0]
+
+        // const candidates = iterTwo.getCandidates(node);
+
+        // if (candidates.length === 0) {
+        //   const perspective = iterOne.name === Side.a ? Side.a : Side.b
+
+        //   if (perspective === Side.a) {
+        //     changes.push(new Change(ChangeType.deletion, a, b));
+        //     iterA.mark(node.index, ChangeType.deletion);
+        //   } else {
+        //     changes.push(new Change(ChangeType.addition, a, b));
+        //     iterB.mark(node.index, ChangeType.addition);
+        //   }
+        // }
+
+        // const { bestSequence, startOfSequence } = pickLCSFromCandidates(node.index, candidates, iterOne, iterTwo)
+
+        // const bestCandidate = iterTwo.peek(startOfSequence)!
+
+        const seq = iterTwo.textNodes.slice(startOfSequence, startOfSequence + bestSequence)
+        const candidateOppositeSide = iterOne.findSequence(seq)
+
+        if (candidateOppositeSide.length === 1) {
+          return seq.map(x => x.index)
+        } else {
+          return recursivelyGetBestMatch(iterTwo, iterOne, seq)
+        }
       }
 
-      if (candidatesBtoA.length === 0) {
-        changes.push(new Change(ChangeType.addition, a, b));
-        iterB.mark(b.index, ChangeType.addition);
-      }
+      let bestASequence: number[] = [];
+      let bestBSequence: number[] = [];
 
-      if (candidatesAtoB.length === 0 && candidatesBtoA.length === 0) {
+
+      bestASequence = recursivelyGetBestMatch(iterA, iterB, [a])
+      bestBSequence = recursivelyGetBestMatch(iterB, iterA, [b])
+
+      if (bestASequence.length === 0 && bestBSequence.length === 0) {
         continue;
       }
 
-      const { lcs, indexA, indexB, side } = getLCS({ a, b, iterA, iterB, candidatesAtoB, candidatesBtoA });
+
+
+      const { lcs, indexA, indexB, side } = getLCS({ a, b, iterA, iterB, candidatesAtoB: bestASequence, candidatesBtoA: bestBSequence });
 
       // We may get an sequence of length 1, in that case will only create a move if that single node can be matched alone (more about this in the node creation)
       // Notice that we pick either `a` or `b` depending on the side of the lcs, this is because a match will happen with one of those in the their current index
