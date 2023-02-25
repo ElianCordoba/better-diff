@@ -99,7 +99,7 @@ const defaultOptions: Options = {
 
 let _options: Required<Options>;
 export function getOptions(): Required<Options> {
-  return _options;
+  return _options || {};
 }
 
 export interface LayoutShift {
@@ -117,7 +117,7 @@ export class LayoutShiftCandidate {
     // Value: Length of the string
     public a = new Map<number, number>(),
     public b = new Map<number, number>(),
-  ) {}
+  ) { }
 
   add(side: Side, at: number, length: number) {
     if (side === Side.a) {
