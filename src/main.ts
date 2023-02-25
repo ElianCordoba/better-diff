@@ -118,7 +118,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       }
 
       let best = bestASequence.bestSequence > bestBSequence.bestSequence ? bestASequence : bestBSequence
-
+      const side = bestASequence.bestSequence > bestBSequence.bestSequence ? Side.a : Side.b
       // Start indexes for both iterators
       const indexA = best.indexA
       const indexB = best.indexB
@@ -135,7 +135,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       // B side:
       // 3 2 1
       //     ^ matching with this one
-      const canNodeBeMatchedAlone = false //side === Side.a ? a.canBeMatchedAlone : b.canBeMatchedAlone
+      const canNodeBeMatchedAlone = side === Side.a ? a.canBeMatchedAlone : b.canBeMatchedAlone
 
       // TODO: Add lcs 1 move fast path
 
