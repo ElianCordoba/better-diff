@@ -1,4 +1,4 @@
-import { assert } from "./debug";
+import { assert, fail } from "./debug";
 import { Node } from "./node";
 import { equals, getClosingNode, getPrettyKind } from "./utils";
 import { Iterator } from "./iterator";
@@ -133,6 +133,10 @@ export function pickLCSFromCandidates(indexOfWanted: number, candidates: number[
       bestSequence = newLCS;
       startOfSequence = candidateNodeIndex;
     }
+  }
+
+  if (bestSequence === 0) {
+    fail('asd')
   }
 
   return { startOfSequence, bestSequence };

@@ -127,6 +127,36 @@ export class Iterator {
     return candidates;
   }
 
+  findSequence(targetSequence: Node[]): number[] {
+    const candidates: number[] = []
+
+    const startOfSequence = targetSequence[0]
+    const sequenceLength = targetSequence.length
+
+    for (let i = 0; i < this.textNodes.length; i++) {
+      const node = this.textNodes[i];
+
+      // If the start of the sequence doesn't match then we know it's not a candidate, skipping
+      if (node.matched || !equals(startOfSequence, node)) {
+        continue
+      }
+
+      // Take a slice of the desired length and compare it to the target
+      const candidateSeq = this.textNodes.slice(i, i + sequenceLength)
+
+      if (areSequencesIdentical(candidateSeq, targetSequence)) {
+        // Push the index, we can retrieve the full sequence later
+        candidates.push(i)
+        i += targetSequence.length
+        continue
+      }
+
+      i++
+    }
+
+    return candidates
+  }
+
   printList(nodesToPrint?: Node[]) {
     console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("exp n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
@@ -247,4 +277,23 @@ export class Iterator {
 
     console.log(list.join("\n"));
   }
+}
+
+function areSequencesIdentical(seq1: Node[], seq2: Node[]): boolean {
+  if (seq1.length !== seq2.length) {
+    return false
+  }
+
+  for (let i = 0; i < seq1.length; i++) {
+    const a = seq1[i];
+    const b = seq2[i];
+
+    if (equals(a, b)) {
+      continue
+    }
+
+    return false
+  }
+
+  return true
 }

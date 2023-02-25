@@ -42,8 +42,8 @@ export class Node {
     this.start = start;
     this.end = end;
     this.kind = kind;
-    const prettyKind = getNodeForPrinting(kind, text).kind;
-    this.prettyKind = prettyKind;
+    const prettyKind = getNodeForPrinting(kind, text);
+    this.prettyKind = `${prettyKind.text} ${prettyKind.kind}`;
     this.text = text;
 
     this.triviaLinesAbove = triviaLinesAbove;
