@@ -31,54 +31,6 @@ export class NodeMatchingStack {
   }
 }
 
-interface GetLCS {
-  a: Node;
-  b: Node;
-  candidatesAtoB: number[];
-  candidatesBtoA: number[];
-  iterA: Iterator;
-  iterB: Iterator;
-}
-
-export function getLCS({ a, b, candidatesAtoB, candidatesBtoA, iterA, iterB }: GetLCS) {
-  const aSideLCS = candidatesAtoB.length ? pickLCSFromCandidates(a.index, candidatesAtoB, iterA, iterB) : { bestSequence: 0, startOfSequence: 0 };
-  const bSideLCS = candidatesBtoA.length ? pickLCSFromCandidates(b.index, candidatesBtoA, iterB, iterA) : { bestSequence: 0, startOfSequence: 0 };
-
-  // Length of the best sequence
-  let lcs: number;
-  let side: Side;
-
-  // Start indexes for both iterators
-  let indexA: number;
-  let indexB: number;
-
-  // For simplicity the A to B perspective has preference
-  if (aSideLCS.bestSequence >= bSideLCS.bestSequence) {
-    side = Side.a;
-    lcs = aSideLCS.bestSequence;
-
-    // If the best LCS is found on the A to B perspective, indexA is the current position since we moved on the b side
-    indexA = a.index;
-    indexB = aSideLCS.startOfSequence;
-  } else {
-    side = Side.b;
-    lcs = bSideLCS.bestSequence;
-
-    // This is the opposite of the above branch, since the best LCS was on the A side, there is were we need to reposition the cursor
-    indexA = bSideLCS.startOfSequence;
-    indexB = b.index;
-  }
-
-  assert(lcs !== 0, "LCS resulted in 0");
-
-  return {
-    side,
-    lcs,
-    indexA,
-    indexB,
-  };
-}
-
 export function getSequenceLength(
   iterA: Iterator,
   iterB: Iterator,

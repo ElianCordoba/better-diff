@@ -93,48 +93,6 @@ export class Iterator {
     }
   }
 
-  getCandidates(
-    expected: Node,
-  ): number[] {
-    // This variable will hold the indexes of known nodes that match the node we are looking for.
-    // We returns more than once in order to calculate the LCS from a multiple places and then take the best result
-    const candidates: number[] = [];
-
-    // Start from the next node
-    let offset = 0;
-
-    const search = (startFrom: number): void => {
-      const ahead = this.textNodes[startFrom + offset];
-      const back = this.textNodes[startFrom - offset];
-
-      // We checked everything and nothing was found, exit early
-      if (!ahead && !back) {
-        return;
-      }
-
-      const foundAhead = ahead && !ahead.matched && equals(expected, ahead);
-      const foundBack = back && !back.matched && equals(expected, back);
-
-      if (foundAhead || foundBack) {
-        const index = foundAhead ? startFrom + offset : startFrom - offset;
-
-        candidates.push(index);
-      }
-
-      offset++;
-
-      if (offset >= getOptions?.()?.maxMatchingOffset) {
-        return;
-      }
-
-      return search(startFrom);
-    };
-
-    search(this.indexOfLastItem);
-
-    return candidates;
-  }
-
   findSequence(targetSequence: Node[]): number[] {
     const candidates: number[] = [];
 
