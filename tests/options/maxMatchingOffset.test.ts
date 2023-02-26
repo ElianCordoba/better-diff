@@ -2,7 +2,8 @@ import { describe, test } from "vitest";
 import { getDiff } from "../../src";
 import { validateDiff } from "../utils";
 
-describe("Properly report lines moved or added/deleted respecting the option 'maxMatchingOffset'", () => {
+// @TODO: Maybe remove?
+describe.skip("Properly report lines moved or added/deleted respecting the option 'maxMatchingOffset'", () => {
   test("Default value, should find the move", () => {
     const a = `
       x

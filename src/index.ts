@@ -28,6 +28,7 @@ export interface Options {
   //
   // There are 3 node of distances between the two "x", if "maxMatchingOffset" is set to less than 3 the move won't be found and it will be reported as an addition/removal.
   // This is present so that we have acceptable performance on long files where many nodes are present
+  // @TODO No longer working, now we use the recursive function, maybe implement a depth limit there or remove
   maxMatchingOffset?: number;
 
   alignmentText?: string;
