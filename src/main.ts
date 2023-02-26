@@ -86,12 +86,11 @@ export function getChanges(codeA: string, codeB: string): Change[] {
           return { indexA: -1, indexB: -1, bestSequence: 0 }
         }
 
+        const { bestSequence, startOfSequence } = pickLCSFromCandidates(node.index, candidateOppositeSide, iterOne, iterTwo)
 
         if (candidateOppositeSide.length === 1) {
-          return { bestSequence: currentBestSequence.length, ...getIndexes(perspective, node, iterTwo.peek(candidateOppositeSide[0])!) }
+          return { bestSequence, ...getIndexes(perspective, node, iterTwo.peek(startOfSequence)!) }
         }
-
-        const { bestSequence, startOfSequence } = pickLCSFromCandidates(node.index, candidateOppositeSide, iterOne, iterTwo)
 
         if (bestSequence === currentBestSequence.length) {
           return { bestSequence: currentBestSequence.length, ...getIndexes(perspective, node, iterTwo.peek(startOfSequence)!) }
