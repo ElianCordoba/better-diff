@@ -85,6 +85,14 @@ export class Iterator {
     this.textNodes[index].markedAs = markedAs;
   }
 
+  markMultiple(startIndex: number, numberOfNodes: number, markAs: ChangeType) {
+    let i = startIndex;
+    while (i < startIndex + numberOfNodes) {
+      this.mark(i, markAs);
+      i++;
+    }
+  }
+
   getCandidates(
     expected: Node,
   ): number[] {
@@ -128,33 +136,33 @@ export class Iterator {
   }
 
   findSequence(targetSequence: Node[]): number[] {
-    const candidates: number[] = []
+    const candidates: number[] = [];
 
-    const startOfSequence = targetSequence[0]
-    const sequenceLength = targetSequence.length
+    const startOfSequence = targetSequence[0];
+    const sequenceLength = targetSequence.length;
 
     for (let i = 0; i < this.textNodes.length; i++) {
       const node = this.textNodes[i];
 
       // If the start of the sequence doesn't match then we know it's not a candidate, skipping
       if (node.matched || !equals(startOfSequence, node)) {
-        continue
+        continue;
       }
 
       // Take a slice of the desired length and compare it to the target
-      const candidateSeq = this.textNodes.slice(i, i + sequenceLength)
+      const candidateSeq = this.textNodes.slice(i, i + sequenceLength);
 
       if (areSequencesIdentical(candidateSeq, targetSequence)) {
         // Push the index, we can retrieve the full sequence later
-        candidates.push(i)
-        i += targetSequence.length
-        continue
+        candidates.push(i);
+        i += targetSequence.length;
+        continue;
       }
 
-      i++
+      i++;
     }
 
-    return candidates
+    return candidates;
   }
 
   printList(nodesToPrint?: Node[]) {
@@ -281,7 +289,7 @@ export class Iterator {
 
 function areSequencesIdentical(seq1: Node[], seq2: Node[]): boolean {
   if (seq1.length !== seq2.length) {
-    return false
+    return false;
   }
 
   for (let i = 0; i < seq1.length; i++) {
@@ -289,11 +297,11 @@ function areSequencesIdentical(seq1: Node[], seq2: Node[]): boolean {
     const b = seq2[i];
 
     if (equals(a, b)) {
-      continue
+      continue;
     }
 
-    return false
+    return false;
   }
 
-  return true
+  return true;
 }

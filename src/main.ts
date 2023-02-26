@@ -47,81 +47,22 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       // const candidatesAtoB = iterB.getCandidates(a);
       // const candidatesBtoA = iterA.getCandidates(b);
 
-      interface NewLCSResult {
-        bestSequence: number;
-        indexA: number;
-        indexB: number;
+      const bestASequence = recursivelyGetBestMatch(iterA, iterB, [a]);
+      const bestBSequence = recursivelyGetBestMatch(iterB, iterA, [b]);
+
+      if (bestASequence.changes.length || bestBSequence.changes.length) {
+        changes.push(...bestASequence.changes, ...bestBSequence.changes);
       }
-
-      function getIndexes(perspective: Side, one: Node, two: Node): { indexA: number, indexB: number } {
-        if (perspective === Side.a) {
-          return {
-            indexA: one.index,
-            indexB: two.index
-          }
-        } else {
-          return {
-            indexA: two.index,
-            indexB: one.index
-          }
-        }
-      }
-
-      function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBestSequence: Node[]): NewLCSResult {
-        const node = currentBestSequence[0]
-        const candidateOppositeSide = iterTwo.findSequence(currentBestSequence)
-
-        const perspective = iterOne.name === Side.a ? Side.a : Side.b
-
-        if (candidateOppositeSide.length === 0) {
-          for (const notFoundNode of currentBestSequence) {
-            if (perspective === Side.a) {
-              changes.push(new Change(ChangeType.deletion, notFoundNode, undefined));
-              iterA.mark(notFoundNode.index, ChangeType.deletion);
-            } else {
-              changes.push(new Change(ChangeType.addition, undefined, notFoundNode));
-              iterB.mark(notFoundNode.index, ChangeType.addition);
-            }
-          }
-          return { indexA: -1, indexB: -1, bestSequence: 0 }
-        }
-
-        const { bestSequence, startOfSequence } = pickLCSFromCandidates(node.index, candidateOppositeSide, iterOne, iterTwo)
-
-        if (candidateOppositeSide.length === 1) {
-          return { bestSequence, ...getIndexes(perspective, node, iterTwo.peek(startOfSequence)!) }
-        }
-
-        if (bestSequence === currentBestSequence.length) {
-          return { bestSequence: currentBestSequence.length, ...getIndexes(perspective, node, iterTwo.peek(startOfSequence)!) }
-        }
-
-        const seq = iterTwo.textNodes.slice(startOfSequence, startOfSequence + bestSequence)
-
-        if (seq.length === 0) {
-          fail('dddd')
-        }
-        return recursivelyGetBestMatch(iterTwo, iterOne, seq)
-
-      }
-
-      let bestASequence: NewLCSResult;
-      let bestBSequence: NewLCSResult;
-
-
-      bestASequence = recursivelyGetBestMatch(iterA, iterB, [a])
-      bestBSequence = recursivelyGetBestMatch(iterB, iterA, [b])
 
       if (bestASequence.bestSequence === 0 && bestBSequence.bestSequence === 0) {
-        continue
+        continue;
       }
 
-      let best = bestASequence.bestSequence > bestBSequence.bestSequence ? bestASequence : bestBSequence
-      const side = bestASequence.bestSequence > bestBSequence.bestSequence ? Side.a : Side.b
+      const best = bestASequence.bestSequence > bestBSequence.bestSequence ? bestASequence : bestBSequence;
+      const side = bestASequence.bestSequence > bestBSequence.bestSequence ? Side.a : Side.b;
       // Start indexes for both iterators
-      const indexA = best.indexA
-      const indexB = best.indexB
-
+      const indexA = best.indexA;
+      const indexB = best.indexB;
 
       // We may get an sequence of length 1, in that case will only create a move if that single node can be matched alone (more about this in the node creation)
       // Notice that we pick either `a` or `b` depending on the side of the lcs, this is because a match will happen with one of those in the their current index
@@ -130,11 +71,11 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       // A side:
       // 1 2 3
       // ^ cursor here
-      // 
+      //
       // B side:
       // 3 2 1
       //     ^ matching with this one
-      const canNodeBeMatchedAlone = side === Side.a ? a.canBeMatchedAlone : b.canBeMatchedAlone
+      const canNodeBeMatchedAlone = side === Side.a ? a.canBeMatchedAlone : b.canBeMatchedAlone;
 
       // TODO: Add lcs 1 move fast path
 
@@ -143,7 +84,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         iterA.mark(a.index, ChangeType.deletion);
         changes.push(new Change(ChangeType.addition, a, b));
         iterB.mark(b.index, ChangeType.addition);
-        continue
+        continue;
       }
 
       const moveChanges = matchSubsequence(iterA, iterB, indexA, indexB, best.bestSequence);
@@ -357,4 +298,65 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   }
 
   return changes;
+}
+
+interface NewLCSResult {
+  changes: Change[];
+  bestSequence: number;
+  indexA: number;
+  indexB: number;
+}
+
+function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBestSequence: Node[]): NewLCSResult {
+  const changes: Change[] = [];
+
+  const node = currentBestSequence[0];
+  const candidateOppositeSide = iterTwo.findSequence(currentBestSequence);
+
+  const perspective = iterOne.name === Side.a ? Side.a : Side.b;
+
+  if (candidateOppositeSide.length === 0) {
+    // May be counter intuitive why both perspectives use `iterOne` instead of using both, the rationale is that on both perspective `iterOne` holds the missing node.
+    // If it's a deletion perspective is `a`, iterOne is `a` and there is where we mark the node that is present now but we didn't find it on the revision
+    // If it's an addition, perspective is `b`, iterOne is also `b` and again thats the iterator that holds, in this case, the newly added node that wasn't present before
+    if (perspective === Side.a) {
+      changes.push(new Change(ChangeType.deletion, node, undefined));
+      iterOne.markMultiple(node.index, currentBestSequence.length, ChangeType.deletion);
+    } else {
+      changes.push(new Change(ChangeType.addition, undefined, node));
+      iterOne.markMultiple(node.index, currentBestSequence.length, ChangeType.addition);
+    }
+    return { changes, indexA: -1, indexB: -1, bestSequence: 0 };
+  }
+
+  const { bestSequence, startOfSequence } = pickLCSFromCandidates(node.index, candidateOppositeSide, iterOne, iterTwo);
+
+  if (candidateOppositeSide.length === 1) {
+    return { changes, bestSequence, ...getIndexes(perspective, node, iterTwo.peek(startOfSequence)!) };
+  }
+
+  if (bestSequence === currentBestSequence.length) {
+    return { changes, bestSequence: currentBestSequence.length, ...getIndexes(perspective, node, iterTwo.peek(startOfSequence)!) };
+  }
+
+  const seq = iterTwo.textNodes.slice(startOfSequence, startOfSequence + bestSequence);
+
+  if (seq.length === 0) {
+    fail("dddd");
+  }
+  return recursivelyGetBestMatch(iterTwo, iterOne, seq);
+}
+
+function getIndexes(perspective: Side, one: Node, two: Node): { indexA: number; indexB: number } {
+  if (perspective === Side.a) {
+    return {
+      indexA: one.index,
+      indexB: two.index,
+    };
+  } else {
+    return {
+      indexA: two.index,
+      indexB: one.index,
+    };
+  }
 }

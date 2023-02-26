@@ -61,7 +61,7 @@ export function getLCS({ a, b, candidatesAtoB, candidatesBtoA, iterA, iterB }: G
     indexA = a.index;
     indexB = aSideLCS.startOfSequence;
   } else {
-    side = Side.b
+    side = Side.b;
     lcs = bSideLCS.bestSequence;
 
     // This is the opposite of the above branch, since the best LCS was on the A side, there is were we need to reposition the cursor
@@ -136,7 +136,7 @@ export function pickLCSFromCandidates(indexOfWanted: number, candidates: number[
   }
 
   if (bestSequence === 0) {
-    fail('asd')
+    fail("asd");
   }
 
   return { startOfSequence, bestSequence };

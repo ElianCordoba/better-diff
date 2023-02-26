@@ -61,8 +61,8 @@ export function getNodesArray(source: string) {
       newNode.isOpeningNode = true;
     }
 
-    const canBeMatchedAlone = getIfNodeCanBeMatchedAlone(node.kind)
-    newNode.canBeMatchedAlone = canBeMatchedAlone
+    const canBeMatchedAlone = getIfNodeCanBeMatchedAlone(node.kind);
+    newNode.canBeMatchedAlone = canBeMatchedAlone;
 
     // Only include visible node, nodes that represent some text in the source code.
     if (node.text || isReservedWord || isPunctuation) {
@@ -163,13 +163,13 @@ function getLineNumber(sourceFile: ts.SourceFile, pos: number) {
 
 function getIfNodeCanBeMatchedAlone(kind: number) {
   const isLiteral = kind >= ts.SyntaxKind.FirstLiteralToken && kind <= ts.SyntaxKind.LastLiteralToken;
-  const isIdentifier = kind === ts.SyntaxKind.Identifier || kind === ts.SyntaxKind.PrivateIdentifier
-  const isTemplate = kind === ts.SyntaxKind.FirstTemplateToken || kind === ts.SyntaxKind.LastTemplateToken
-  const other = kind === ts.SyntaxKind.DebuggerKeyword
+  const isIdentifier = kind === ts.SyntaxKind.Identifier || kind === ts.SyntaxKind.PrivateIdentifier;
+  const isTemplate = kind === ts.SyntaxKind.FirstTemplateToken || kind === ts.SyntaxKind.LastTemplateToken;
+  const other = kind === ts.SyntaxKind.DebuggerKeyword;
 
   if (isLiteral || isIdentifier || isTemplate || other) {
     return true;
   } else {
-    return false
+    return false;
   }
 }
