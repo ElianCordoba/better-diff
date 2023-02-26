@@ -1,6 +1,5 @@
 import { describe } from "vitest";
-import { OutputType, getDiff } from "../../src";
-import { validateDiff, test } from "../utils";
+import { test } from "../utils";
 
 test({
   name: "Simple move",
@@ -128,12 +127,12 @@ describe("Properly report moves in a same sequence", () => {
       let down;
     `,
     expA: `
-      🔀let⏹️ ➖up➖🔀;⏹️
+      ➖let➖ ➖up;➖
       🔀let middle;⏹️
     `,
     expB: `
       🔀let middle;⏹️
-      🔀let⏹️ ➕down➕🔀;⏹️
+      ➕let➕ ➕down;➕
     `
   })
 });

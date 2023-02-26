@@ -43,10 +43,10 @@ describe("Properly report line changed", () => {
       let firstName = "elian"
     `,
     expA: `
-      let ➖name➖ = "elian"
+      ➖let➖ ➖name➖ = "elian"
     `,
     expB: `
-      let ➕firstName➕ = "elian"
+      ➕let➕ ➕firstName➕ = "elian"
     `
   })
 
@@ -82,6 +82,7 @@ describe("Properly report line changed", () => {
     `
   })
 
+  // TODO: This test got downgraded with the inclusion of the single node matching policy, if we introduce an LCS skip count nodes we may regain the old output
   test({
     name: "Multi line change",
     a: `
@@ -91,10 +92,10 @@ describe("Properly report line changed", () => {
       let firstName = "eliam"
     `,
     expA: `
-      let ➖name➖ = ➖"elian"➖
+      ➖let➖ ➖name➖ ➖=➖ ➖"elian"➖
     `,
     expB: `
-      let ➕firstName➕ = ➕"eliam"➕
+      ➕let➕ ➕firstName➕ ➕=➕ ➕"eliam"➕
     `
   })
 });
