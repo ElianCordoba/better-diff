@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest'
 import { getDiff } from '../../src'
 
 // TODO: Fix
-const IGNORED_TESTS = ['case1']
+const IGNORED_TESTS: string[] = []
 
 const path = join(__dirname, './')
 let dirs = readdirSync(path)

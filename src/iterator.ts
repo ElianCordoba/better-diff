@@ -113,7 +113,7 @@ export class Iterator {
       if (areSequencesIdentical(candidateSeq, targetSequence)) {
         // Push the index, we can retrieve the full sequence later
         candidates.push(i);
-        i += targetSequence.length;
+        i += targetSequence.length - 1;
         continue;
       }
 

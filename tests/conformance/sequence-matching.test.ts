@@ -136,3 +136,53 @@ describe("Properly report moves in a same sequence", () => {
     `
   })
 });
+
+describe("Recursive matching", () => {
+  test({
+    name: "Recursive matching 1",
+    a: `
+      import { foo } from "foo";
+      import { bar } from "bar";
+    `,
+    b: `
+      1
+      import { bar } from "bar";
+    `,
+    expA: `
+      ➖import➖ ➖{➖ ➖foo➖ ➖}➖ ➖from➖ ➖"foo";➖
+      🔀import { bar } from "bar";⏹️
+    `,
+    expB: `
+      ➕1➕
+      🔀import { bar } from "bar";⏹️
+    `
+  })
+
+  test({
+    name: "Recursive matching 2",
+    a: `
+      1 2 3
+      1 2 3 4
+    `,
+    b: `
+      1 2
+      0
+      1 
+      0
+      0
+      1 2 3 4
+    `,
+    expA: `
+      1 2 ➖3➖
+      🔀1 2 3 4⏹️
+    `,
+    expB: `
+      1 2
+      ➕0➕
+      ➕1➕ 
+      ➕0➕
+      ➕0➕
+      🔀1 2 3 4⏹️
+    `
+  })
+})
