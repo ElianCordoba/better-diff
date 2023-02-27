@@ -349,8 +349,7 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
 
   const { bestSequence, startOfSequence } = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo);
 
-  // TODO explain
-  if (bestSequence === 1 || bestSequence === currentBestSequence.length) {
+  if (bestSequence === currentBestSequence.length) {
     return {
       changes,
       bestSequence,
