@@ -1,6 +1,5 @@
 import { describe } from "vitest";
-import { OutputType, getDiff } from "../../src";
-import { validateDiff, test } from "../utils";
+import { test } from "../utils";
 
 test({
   name: "Simple move",
@@ -128,12 +127,92 @@ describe("Properly report moves in a same sequence", () => {
       let down;
     `,
     expA: `
-      🔀let⏹️ ➖up➖🔀;⏹️
+      ➖let➖ ➖up;➖
       🔀let middle;⏹️
     `,
     expB: `
       🔀let middle;⏹️
-      🔀let⏹️ ➕down➕🔀;⏹️
+      ➕let➕ ➕down;➕
     `
   })
 });
+
+describe("Recursive matching", () => {
+  test({
+    name: "Recursive matching 1",
+    a: `
+      import { foo } from "foo";
+      import { bar } from "bar";
+    `,
+    b: `
+      1
+      import { bar } from "bar";
+    `,
+    expA: `
+      ➖import➖ ➖{➖ ➖foo➖ ➖}➖ ➖from➖ ➖"foo";➖
+      🔀import { bar } from "bar";⏹️
+    `,
+    expB: `
+      ➕1➕
+      🔀import { bar } from "bar";⏹️
+    `
+  })
+
+  test({
+    name: "Recursive matching 2",
+    a: `
+      1 2 3
+      1 2 3 4
+    `,
+    b: `
+      1 2
+      0
+      1 
+      0
+      0
+      1 2 3 4
+    `,
+    expA: `
+      1 2 ➖3➖
+      🔀1 2 3 4⏹️
+    `,
+    expB: `
+      1 2
+      ➕0➕
+      ➕1➕ 
+      ➕0➕
+      ➕0➕
+      🔀1 2 3 4⏹️
+    `
+  })
+
+  test({
+    name: "Recursive matching 3",
+    a: `
+      12
+      12 34
+      12 34 56
+    `,
+    b: `
+      12 34 56
+      0
+      12
+      0
+      0
+      12 34
+    `,
+    expA: `
+      🔀12⏹️
+      🔀12 34⏹️
+      🔀12 34 56⏹️
+    `,
+    expB: `
+      🔀12 34 56⏹️
+      ➕0➕
+      🔀12⏹️
+      ➕0➕
+      ➕0➕
+      🔀12 34⏹️
+    `
+  })
+})

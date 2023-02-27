@@ -2,7 +2,7 @@ import { equals, getClosingNode, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
 import { ChangeType, Side } from "./types";
-import { getContext, getOptions } from ".";
+import { getContext } from ".";
 import { NodeMatchingStack } from "./sequence";
 import { getNodesArray } from "./ts-util";
 
@@ -66,11 +66,11 @@ export class Iterator {
     }
   }
 
-  peek(index: number, skipMatched = true) {
+  peek(index: number) {
     const item = this.textNodes[index];
 
-    if (!item || (skipMatched && item.matched)) {
-      return;
+    if (!item) {
+      return
     }
 
     return item;
@@ -85,44 +85,42 @@ export class Iterator {
     this.textNodes[index].markedAs = markedAs;
   }
 
-  getCandidates(
-    expected: Node,
-  ): number[] {
-    // This variable will hold the indexes of known nodes that match the node we are looking for.
-    // We returns more than once in order to calculate the LCS from a multiple places and then take the best result
+  markMultiple(startIndex: number, numberOfNodes: number, markAs: ChangeType) {
+    let i = startIndex;
+    while (i < startIndex + numberOfNodes) {
+      this.mark(i, markAs);
+      i++;
+    }
+  }
+
+  findSequence(targetSequence: Node[]): number[] {
     const candidates: number[] = [];
 
-    // Start from the next node
-    let offset = 0;
+    const startOfSequence = targetSequence[0];
+    const sequenceLength = targetSequence.length;
 
-    const search = (startFrom: number): void => {
-      const ahead = this.textNodes[startFrom + offset];
-      const back = this.textNodes[startFrom - offset];
+    for (let i = 0; i < this.textNodes.length; i++) {
+      const node = this.textNodes[i];
 
-      // We checked everything and nothing was found, exit early
-      if (!ahead && !back) {
-        return;
+      // If the start of the sequence doesn't match then we know it's not a candidate, skipping
+      if (node.matched || !equals(startOfSequence, node)) {
+        continue;
       }
 
-      const foundAhead = ahead && !ahead.matched && equals(expected, ahead);
-      const foundBack = back && !back.matched && equals(expected, back);
+      // Take a slice of the desired length and compare it to the target
+      const candidateSeq = this.textNodes.slice(i, i + sequenceLength);
 
-      if (foundAhead || foundBack) {
-        const index = foundAhead ? startFrom + offset : startFrom - offset;
+      if (areSequencesIdentical(candidateSeq, targetSequence)) {
+        // Push the index, we can retrieve the full sequence later
+        candidates.push(i);
 
-        candidates.push(index);
+        // We can safely jump ahead to the next node after the already added candidate
+        i += targetSequence.length - 1;
+        continue;
       }
 
-      offset++;
-
-      if (offset >= getOptions?.()?.maxMatchingOffset) {
-        return;
-      }
-
-      return search(startFrom);
-    };
-
-    search(this.indexOfLastItem);
+      i++;
+    }
 
     return candidates;
   }
@@ -247,4 +245,23 @@ export class Iterator {
 
     console.log(list.join("\n"));
   }
+}
+
+function areSequencesIdentical(seq1: Node[], seq2: Node[]): boolean {
+  if (seq1.length !== seq2.length) {
+    return false;
+  }
+
+  for (let i = 0; i < seq1.length; i++) {
+    const a = seq1[i];
+    const b = seq2[i];
+
+    if (equals(a, b)) {
+      continue;
+    }
+
+    return false;
+  }
+
+  return true;
 }
