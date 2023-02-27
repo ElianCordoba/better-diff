@@ -113,6 +113,8 @@ export class Iterator {
       if (areSequencesIdentical(candidateSeq, targetSequence)) {
         // Push the index, we can retrieve the full sequence later
         candidates.push(i);
+
+        // We can safely jump ahead to the next node after the already added candidate
         i += targetSequence.length - 1;
         continue;
       }

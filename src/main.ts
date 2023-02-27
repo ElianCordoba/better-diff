@@ -37,32 +37,26 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         break;
       }
 
-      // We will try to match the code, comparing a node to another one on the other iterator
-      // For a node X in the iterator A, we could get multiple possible matches on iterator B
-      // But, we also check from the perspective of the iterator B, this is because of the following example
-      // A: 1 2 x 1 2 3
-      // B: 1 2 3
-      // From the perspective of A, the LCS is [1, 2], but from the other perspective it's the real maxima [1, 2, 3]
-      // More about this in the move tests
-      // const candidatesAtoB = iterB.getCandidates(a);
-      // const candidatesBtoA = iterA.getCandidates(b);
+      // Based on `a` and `b` find their best sequence
+      const lcsA = recursivelyGetBestMatch(iterA, iterB, [a]);
+      const lcsB = recursivelyGetBestMatch(iterB, iterA, [b]);
 
-      const bestASequence = recursivelyGetBestMatch(iterA, iterB, [a]);
-      const bestBSequence = recursivelyGetBestMatch(iterB, iterA, [b]);
-
-      if (bestASequence.changes.length || bestBSequence.changes.length) {
-        changes.push(...bestASequence.changes, ...bestBSequence.changes);
+      // Regardless of which side is the best, the above function internally mark nodes as deleted / added, this is why we need to make sure we push the changes
+      if (lcsA.changes.length || lcsB.changes.length) {
+        changes.push(...lcsA.changes, ...lcsB.changes);
       }
 
-      if (bestASequence.bestSequence === 0 && bestBSequence.bestSequence === 0) {
+      // This covers the case where it happens that both `a` and `b` where deleted and added, respectively
+      if (lcsA.bestSequence === 0 && lcsB.bestSequence === 0) {
         continue;
       }
 
-      const best = bestASequence.bestSequence > bestBSequence.bestSequence ? bestASequence : bestBSequence;
-      const side = bestASequence.bestSequence > bestBSequence.bestSequence ? Side.a : Side.b;
+      const bestMatch = lcsA.bestSequence > lcsB.bestSequence ? lcsA : lcsB;
+      const side = lcsA.bestSequence > lcsB.bestSequence ? Side.a : Side.b;
+
       // Start indexes for both iterators
-      const indexA = best.indexA;
-      const indexB = best.indexB;
+      const indexA = bestMatch.indexA;
+      const indexB = bestMatch.indexB;
 
       // We may get an sequence of length 1, in that case will only create a move if that single node can be matched alone (more about this in the node creation)
       // Notice that we pick either `a` or `b` depending on the side of the lcs, this is because a match will happen with one of those in the their current index
@@ -79,19 +73,24 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 
       // TODO: Add lcs 1 move fast path
 
-      if (best.bestSequence === 1 && !canNodeBeMatchedAlone) {
-        changes.push(new Change(ChangeType.deletion, a, b));
+      if (bestMatch.bestSequence === 1 && !canNodeBeMatchedAlone) {
         iterA.mark(a.index, ChangeType.deletion);
-        changes.push(new Change(ChangeType.addition, a, b));
         iterB.mark(b.index, ChangeType.addition);
+
+        changes.push(
+          new Change(ChangeType.addition, a, b),
+          new Change(ChangeType.deletion, a, b)
+        );
         continue;
       }
 
-      const moveChanges = matchSubsequence(iterA, iterB, indexA, indexB, best.bestSequence);
+      const moveChanges = matchSubsequence(iterA, iterB, indexA, indexB, bestMatch.bestSequence);
 
       if (moveChanges.length) {
         changes.push(...moveChanges);
       }
+
+      // TODO: Check the other candidate sequence, if it's nodes are unmatched we can safely match it. This is going to be more performant since we already calculated it
     }
   }
 
@@ -307,6 +306,23 @@ interface NewLCSResult {
   indexB: number;
 }
 
+// This function recursively goes zig-zag between `a` and `b` trying to find the best match for a given sequence. Can be started with a sequence of just one node
+// The main issue this algorithm tries to solve is the following case
+// 
+// a:
+//
+// 1 2 3
+// 1 2 3 4
+//
+// b:
+// 1 2
+// 1 2 3 4
+//
+// If we start with "1" on `a` side, we will pick the sequence "1 2 3", the problem is that taking that match breaks a better match for the `b` side sequence, which is the full "1 2 3 4"
+// This is why we jump from one side to the other, getting the candidates for each sequence and LCS to ensure we pick the best one, in the example above it should be something like this:
+// - Start on `a` side, "1 2 3"
+// - Jumps to `b` side, we have 2 candidates, one of which is longer, being "1 2 3 4", pick that one
+// - Jumps back to `a`, no better matches found, exit
 function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBestSequence: Node[]): NewLCSResult {
   const changes: Change[] = [];
 
