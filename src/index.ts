@@ -14,23 +14,6 @@ export interface Options {
 
   renderFn?: DiffRendererFn;
 
-  // Indicates how many nodes are we going to check while trying to find a match. Note that this is number is doubled since we look both backwards and forwards
-  // For example:
-  //
-  // x
-  //
-  // ---------------
-  //
-  // 1
-  // 2
-  // 3
-  // x
-  //
-  // There are 3 node of distances between the two "x", if "maxMatchingOffset" is set to less than 3 the move won't be found and it will be reported as an addition/removal.
-  // This is present so that we have acceptable performance on long files where many nodes are present
-  // @TODO No longer working, now we use the recursive function, maybe implement a depth limit there or remove
-  maxMatchingOffset?: number;
-
   alignmentText?: string;
   includeDebugAlignmentInfo?: boolean;
 }
@@ -92,8 +75,6 @@ const defaultOptions: Options = {
   outputType: OutputType.text,
   warnOnInvalidCode: false,
   renderFn: asciiRenderFn,
-  // TODO: Look for a good value
-  maxMatchingOffset: 200,
   alignmentText: "\n",
   includeDebugAlignmentInfo: false,
 };
@@ -118,7 +99,7 @@ export class LayoutShiftCandidate {
     // Value: Length of the string
     public a = new Map<number, number>(),
     public b = new Map<number, number>(),
-  ) {}
+  ) { }
 
   add(side: Side, at: number, length: number) {
     if (side === Side.a) {

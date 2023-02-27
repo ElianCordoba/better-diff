@@ -15,7 +15,7 @@ server.post("/", ({ body }, _reply) => {
 
   console.time("diff took");
   // TODO: Enable "serializedAlignedChunks"
-  const res = getDiff(a, b, { outputType: OutputType.serializedChunks, maxMatchingOffset: Infinity });
+  const res = getDiff(a, b, { outputType: OutputType.serializedChunks });
   console.timeEnd("diff took");
 
   return res;
