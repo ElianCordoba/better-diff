@@ -310,40 +310,44 @@ interface NewLCSResult {
 function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBestSequence: Node[]): NewLCSResult {
   const changes: Change[] = [];
 
+  // Start of the sequence node
   const node = currentBestSequence[0];
+
+  // Find the current best sequence on the other side
   const candidateOppositeSide = iterTwo.findSequence(currentBestSequence);
 
   const perspective = iterOne.name === Side.a ? Side.a : Side.b;
 
+  // Report addition / deletion
   if (candidateOppositeSide.length === 0) {
-    // May be counter intuitive why both perspectives use `iterOne` instead of using both, the rationale is that on both perspective `iterOne` holds the missing node.
-    // If it's a deletion perspective is `a`, iterOne is `a` and there is where we mark the node that is present now but we didn't find it on the revision
-    // If it's an addition, perspective is `b`, iterOne is also `b` and again thats the iterator that holds, in this case, the newly added node that wasn't present before
-    if (perspective === Side.a) {
-      changes.push(new Change(ChangeType.deletion, node, undefined));
-      iterOne.markMultiple(node.index, currentBestSequence.length, ChangeType.deletion);
-    } else {
-      changes.push(new Change(ChangeType.addition, undefined, node));
-      iterOne.markMultiple(node.index, currentBestSequence.length, ChangeType.addition);
-    }
+    const changeType = perspective === Side.a ? ChangeType.deletion : ChangeType.addition
+    changes.push(new Change(changeType, node, node));
+
+    // May be counter intuitive why both perspectives use `iterOne` instead of using both `iterOne` and `iterTwo`, the rationale is that on both perspective `iterOne` holds the missing node.
+    // If it's a deletion `iterOne` is `a` and there where we mark the node that was present but it's no longer there in the revision
+    // If it's an addition `iterOne` is `b` and there where we mark the node the newly added node that wasn't present in the source
+    iterOne.markMultiple(node.index, currentBestSequence.length, changeType);
+
     return { changes, indexA: -1, indexB: -1, bestSequence: 0 };
   }
 
   const { bestSequence, startOfSequence } = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo);
 
-  if (bestSequence === 1) {
-    return { changes, bestSequence, ...getIndexes(perspective, node, iterTwo.peek(startOfSequence)!) };
-  }
-
-  if (bestSequence === currentBestSequence.length) {
-    return { changes, bestSequence: currentBestSequence.length, ...getIndexes(perspective, node, iterTwo.peek(startOfSequence)!) };
+  // TODO explain
+  if (bestSequence === 1 || bestSequence === currentBestSequence.length) {
+    return {
+      changes,
+      bestSequence,
+      ...getIndexes(perspective, node, iterTwo.peek(startOfSequence)!)
+    };
   }
 
   const seq = iterTwo.textNodes.slice(startOfSequence, startOfSequence + bestSequence);
 
   if (seq.length === 0) {
-    fail("dddd");
+    fail("New sequence has length 0");
   }
+
   return recursivelyGetBestMatch(iterTwo, iterOne, seq);
 }
 

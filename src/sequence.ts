@@ -87,7 +87,7 @@ export function getLCS(indexOfWanted: number, candidates: number[], iterA: Itera
   }
 
   if (bestSequence === 0) {
-    fail("asd");
+    fail("LCS resulted in 0");
   }
 
   return { startOfSequence, bestSequence };
