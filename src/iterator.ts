@@ -66,11 +66,11 @@ export class Iterator {
     }
   }
 
-  peek(index: number, skipMatched = true) {
+  peek(index: number) {
     const item = this.textNodes[index];
 
-    if (!item || (skipMatched && item.matched)) {
-      return;
+    if (!item) {
+      return
     }
 
     return item;
