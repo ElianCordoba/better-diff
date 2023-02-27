@@ -6,7 +6,7 @@ import { getContext } from "./index";
 import { Node } from "./node";
 import { assert, fail } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
-import { NodeMatchingStack, pickLCSFromCandidates } from "./sequence";
+import { NodeMatchingStack, getLCS } from "./sequence";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -329,7 +329,7 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
     return { changes, indexA: -1, indexB: -1, bestSequence: 0 };
   }
 
-  const { bestSequence, startOfSequence } = pickLCSFromCandidates(node.index, candidateOppositeSide, iterOne, iterTwo);
+  const { bestSequence, startOfSequence } = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo);
 
   if (bestSequence === 1) {
     return { changes, bestSequence, ...getIndexes(perspective, node, iterTwo.peek(startOfSequence)!) };

@@ -70,7 +70,7 @@ export interface LCSResult {
 }
 
 // Given a node (based on it's index) and one or more candidates nodes on the opposite side, evaluate all the possibilities and return the best result and index of it
-export function pickLCSFromCandidates(indexOfWanted: number, candidates: number[], iterA: Iterator, iterB: Iterator): LCSResult {
+export function getLCS(indexOfWanted: number, candidates: number[], iterA: Iterator, iterB: Iterator): LCSResult {
   let bestSequence = 0;
   let startOfSequence = 0;
 
