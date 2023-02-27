@@ -2,7 +2,6 @@ import { assert, fail } from "./debug";
 import { Node } from "./node";
 import { equals, getClosingNode, getPrettyKind } from "./utils";
 import { Iterator } from "./iterator";
-import { Side } from "./types";
 
 export class NodeMatchingStack {
   allowedKind: number[];

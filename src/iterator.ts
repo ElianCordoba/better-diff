@@ -2,7 +2,7 @@ import { equals, getClosingNode, getNodeForPrinting } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
 import { ChangeType, Side } from "./types";
-import { getContext, getOptions } from ".";
+import { getContext } from ".";
 import { NodeMatchingStack } from "./sequence";
 import { getNodesArray } from "./ts-util";
 
