@@ -358,8 +358,8 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
   const result = {
     changes,
     bestSequence: lcs.bestSequence,
-    indexA: lcs.indexA,
-    indexB: lcs.indexB
+    indexA: perspective === Side.a ? lcs.indexA : lcs.indexB,
+    indexB: perspective === Side.a ? lcs.indexB : lcs.indexA
   } as NewLCSResult
 
   // Exit early since we where just peeking the next result

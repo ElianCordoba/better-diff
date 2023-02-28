@@ -29,11 +29,11 @@ describe("Properly calculate LCS", () => {
     const iterA: any = new MockIterator(charsA);
     const iterB: any = new MockIterator(charsB);
 
-    let lcs = getSequence(iterA, iterB, 0, 0);
+    let lcs = getSequence(iterA, iterB, 0, 0).bestSequence;
 
     expect(lcs).toBe(2);
 
-    lcs = getSequence(iterB, iterA, 0, 0);
+    lcs = getSequence(iterB, iterA, 0, 0).bestSequence;
 
     expect(lcs).toBe(2);
   });
@@ -45,7 +45,7 @@ describe("Properly calculate LCS", () => {
     const iterA: any = new MockIterator(charsA);
     const iterB: any = new MockIterator(charsB);
 
-    const lcs = getSequence(iterA, iterB, 0, 0);
+    const lcs = getSequence(iterA, iterB, 0, 0).bestSequence;
 
     expect(lcs).toBe(3);
   });

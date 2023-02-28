@@ -246,6 +246,7 @@ describe("Recursive matching", () => {
     `
   })
 
+  // This tests going backward in the LCS calculation
   test({
     name: "Recursive matching 5",
     a: `
@@ -269,7 +270,7 @@ describe("Recursive matching", () => {
     expA: `
       ➖let➖ ➖start➖
 
-      ➖export➖ 🔀function bar(range) {
+      🔀export function bar(range) {
         return {
           start: range.start
         };
@@ -278,7 +279,7 @@ describe("Recursive matching", () => {
     expB: `
       ➕function➕ ➕foo()➕ ➕{➕ ➕}➕
 
-      ➕export➕ 🔀function bar(range) {
+      🔀export function bar(range) {
         return {
           start: range.start
         };
