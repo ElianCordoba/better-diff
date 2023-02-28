@@ -55,8 +55,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       const side = lcsA.bestSequence > lcsB.bestSequence ? Side.a : Side.b;
 
       // Start indexes for both iterators
-      const indexA = bestMatch.indexA;
-      const indexB = bestMatch.indexB;
+      const indexA = bestMatch.indexA//side === Side.a ? bestMatch.indexA : bestMatch.indexB;
+      const indexB = bestMatch.indexB//side === Side.a ? bestMatch.indexB : bestMatch.indexA;
 
       // We may get an sequence of length 1, in that case will only create a move if that single node can be matched alone (more about this in the node creation)
       // Notice that we pick either `a` or `b` depending on the side of the lcs, this is because a match will happen with one of those in the their current index
@@ -347,9 +347,9 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
     return { changes, indexA: -1, indexB: -1, bestSequence: 0 };
   }
 
-  const { bestSequence, startOfSequence } = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo);
+  const lcs = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo);
 
-  const seq = iterTwo.textNodes.slice(startOfSequence, startOfSequence + bestSequence);
+  const seq = iterTwo.textNodes.slice(lcs.indexB, lcs.indexB + lcs.bestSequence);
 
   if (seq.length === 0) {
     fail("New sequence has length 0");
@@ -357,9 +357,10 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
 
   const result = {
     changes,
-    bestSequence,
-    ...getIndexes(perspective, node, iterTwo.peek(startOfSequence)!)
-  }
+    bestSequence: lcs.bestSequence,
+    indexA: lcs.indexA,
+    indexB: lcs.indexB
+  } as NewLCSResult
 
   // Exit early since we where just peeking the next result
   if (once) {
@@ -369,25 +370,11 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
   const peekNext = recursivelyGetBestMatch(iterTwo, iterOne, seq, true);
 
   // If there is no better match, exit
-  if (bestSequence === peekNext.bestSequence) {
+  if (lcs.bestSequence === peekNext.bestSequence) {
     return result
   }
 
   // TODO: Maybe pass some of the peeked data to the next iteration so that we don't need to recalculate it
 
   return recursivelyGetBestMatch(iterTwo, iterOne, seq);
-}
-
-function getIndexes(perspective: Side, one: Node, two: Node): { indexA: number; indexB: number } {
-  if (perspective === Side.a) {
-    return {
-      indexA: one.index,
-      indexB: two.index,
-    };
-  } else {
-    return {
-      indexA: two.index,
-      indexB: one.index,
-    };
-  }
 }

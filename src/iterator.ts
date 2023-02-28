@@ -128,6 +128,7 @@ export class Iterator {
   }
 
   printList(nodesToPrint?: Node[]) {
+    console.log(`----------- SIDE ${this.name} -----------`)
     console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("exp n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
     const list: string[] = [];

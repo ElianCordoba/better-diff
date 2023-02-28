@@ -30,65 +30,92 @@ export class NodeMatchingStack {
   }
 }
 
-export function getSequenceLength(
+export function getSequence(
   iterA: Iterator,
   iterB: Iterator,
   indexA: number,
-  indexB: number,
-): number {
-  // Represents how long is the sequence
-  let sequence = 0;
+  indexB: number
+): LCSResult {
+  function checkSequenceInDirection(
+    _indexA: number,
+    _indexB: number,
+    stepFn: (n: number) => number
+  ): LCSResult {
+    let bestSequence = 0;
 
-  while (true) {
-    const nextA = iterA.peek(indexA);
+    let candidateIndexA = _indexA;
+    let candidateIndexB = _indexB;
 
-    if (!nextA) {
-      break;
+    while (true) {
+      const nextA = iterA.peek(_indexA);
+
+      if (!nextA) {
+        break;
+      }
+
+      const nextB = iterB.peek(_indexB);
+
+      if (!nextB) {
+        break;
+      }
+
+      if (!equals(nextA, nextB)) {
+        break;
+      }
+
+      // Store indexes so that if the next iteration breaks early we don't end up with one step extra
+      candidateIndexA = _indexA
+      candidateIndexB = _indexB
+
+      _indexA = stepFn(_indexA)
+      _indexB = stepFn(_indexB)
+
+      bestSequence++
     }
 
-    const nextB = iterB.peek(indexB);
-
-    if (!nextB) {
-      break;
+    return {
+      bestSequence,
+      indexA: candidateIndexA,
+      indexB: candidateIndexB,
     }
-
-    if (!equals(nextA, nextB)) {
-      break;
-    }
-
-    indexA++;
-    indexB++;
-    sequence++;
   }
 
-  return sequence;
+  const backwardsPass = checkSequenceInDirection(indexA, indexB, x => x - 1)
+  const forwardPass = checkSequenceInDirection(backwardsPass.indexA, backwardsPass.indexB, x => x + 1)
+
+  return {
+    indexA: backwardsPass.indexA,
+    indexB: backwardsPass.indexB,
+    bestSequence: forwardPass.bestSequence
+  }
 }
 
 export interface LCSResult {
   bestSequence: number;
-  startOfSequence: number;
+  indexA: number;
+  indexB: number;
 }
 
 // Given a node (based on it's index) and one or more candidates nodes on the opposite side, evaluate all the possibilities and return the best result and index of it
 export function getLCS(indexOfWanted: number, candidates: number[], iterA: Iterator, iterB: Iterator): LCSResult {
   let bestSequence = 0;
-  let startOfSequence = 0;
+  let indexA = 0;
+  let indexB = 0;
 
   for (const candidateNodeIndex of candidates) {
-    const newLCS = getSequenceLength(iterA, iterB, indexOfWanted, candidateNodeIndex);
+    const newLCS = getSequence(iterA, iterB, indexOfWanted, candidateNodeIndex);
 
     // Store the new result if it's better that the previous one based on the length of the sequence
     if (
-      newLCS > bestSequence
+      newLCS.bestSequence > bestSequence
     ) {
-      bestSequence = newLCS;
-      startOfSequence = candidateNodeIndex;
+      bestSequence = newLCS.bestSequence;
+      indexA = newLCS.indexA;
+      indexB = newLCS.indexB;
     }
   }
 
-  if (bestSequence === 0) {
-    fail("LCS resulted in 0");
-  }
+  assert(bestSequence !== 0, "LCS resulted in 0")
 
-  return { startOfSequence, bestSequence };
+  return { bestSequence, indexA, indexB }
 }
