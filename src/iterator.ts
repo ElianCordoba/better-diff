@@ -14,9 +14,11 @@ interface IteratorOptions {
 export class Iterator {
   name: string;
 
-  private indexOfLastItem = 0;
   matchNumber = 0;
   public textNodes: Node[];
+
+  // Only read when printing nodes
+  private indexOfLastItem = 0;
 
   constructor({ source, name }: IteratorOptions) {
     this.textNodes = getNodesArray(source);
@@ -69,7 +71,7 @@ export class Iterator {
   peek(index: number) {
     const item = this.textNodes[index];
 
-    if (!item) {
+    if (!item || item.matched) {
       return
     }
 

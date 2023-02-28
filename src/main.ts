@@ -349,7 +349,15 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
 
   const { bestSequence, startOfSequence } = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo);
 
-  if (bestSequence === currentBestSequence.length) {
+  const seq = iterTwo.textNodes.slice(startOfSequence, startOfSequence + bestSequence);
+  const candidatesThisSide = iterOne.findSequence(seq);
+
+  if (candidatesThisSide.length === 0) {
+    fail("Sequence not found")
+  }
+
+  // If there is no other candidate, we know it's the best possible sequence
+  if (candidatesThisSide.length === 1) {
     return {
       changes,
       bestSequence,
@@ -357,7 +365,7 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
     };
   }
 
-  const seq = iterTwo.textNodes.slice(startOfSequence, startOfSequence + bestSequence);
+
 
   if (seq.length === 0) {
     fail("New sequence has length 0");
