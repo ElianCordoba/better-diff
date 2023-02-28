@@ -323,7 +323,7 @@ interface NewLCSResult {
 // - Start on `a` side, "1 2 3"
 // - Jumps to `b` side, we have 2 candidates, one of which is longer, being "1 2 3 4", pick that one
 // - Jumps back to `a`, no better matches found, exit
-function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBestSequence: Node[]): NewLCSResult {
+function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBestSequence: Node[], once = false): NewLCSResult {
   const changes: Change[] = [];
 
   // Start of the sequence node
@@ -350,26 +350,30 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
   const { bestSequence, startOfSequence } = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo);
 
   const seq = iterTwo.textNodes.slice(startOfSequence, startOfSequence + bestSequence);
-  const candidatesThisSide = iterOne.findSequence(seq);
-
-  if (candidatesThisSide.length === 0) {
-    fail("Sequence not found")
-  }
-
-  // If there is no other candidate, we know it's the best possible sequence
-  if (candidatesThisSide.length === 1) {
-    return {
-      changes,
-      bestSequence,
-      ...getIndexes(perspective, node, iterTwo.peek(startOfSequence)!)
-    };
-  }
-
-
 
   if (seq.length === 0) {
     fail("New sequence has length 0");
   }
+
+  const result = {
+    changes,
+    bestSequence,
+    ...getIndexes(perspective, node, iterTwo.peek(startOfSequence)!)
+  }
+
+  // Exit early since we where just peeking the next result
+  if (once) {
+    return result;
+  }
+
+  const peekNext = recursivelyGetBestMatch(iterTwo, iterOne, seq, true);
+
+  // If there is no better match, exit
+  if (bestSequence === peekNext.bestSequence) {
+    return result
+  }
+
+  // TODO: Maybe pass some of the peeked data to the next iteration so that we don't need to recalculate it
 
   return recursivelyGetBestMatch(iterTwo, iterOne, seq);
 }

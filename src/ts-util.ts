@@ -85,6 +85,8 @@ export function getNodesArray(source: string) {
     i++;
   }
 
+  // TODO: Store node kind in a table so that we can reuse it when finding sequences
+
   return textNodes;
 }
 

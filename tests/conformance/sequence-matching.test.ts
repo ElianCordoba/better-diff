@@ -215,4 +215,112 @@ describe("Recursive matching", () => {
       🔀12 34⏹️
     `
   })
+
+  test({
+    name: "Recursive matching 4",
+    a: `
+      12
+      12 34
+      12 34 56
+    `,
+    b: `
+      12 34 56
+      0
+      12
+      0
+      0
+      12 34
+    `,
+    expA: `
+      🔀12⏹️
+      🔀12 34⏹️
+      🔀12 34 56⏹️
+    `,
+    expB: `
+      🔀12 34 56⏹️
+      ➕0➕
+      🔀12⏹️
+      ➕0➕
+      ➕0➕
+      🔀12 34⏹️
+    `
+  })
+
+  test({
+    name: "Recursive matching 5",
+    a: `
+      let start
+
+      export function bar(range) {
+        return {
+          start: range.start
+        };
+      }
+    `,
+    b: `
+      function foo() { }
+
+      export function bar(range) {
+        return {
+          start: range.start
+        };
+      }
+    `,
+    expA: `
+      ➖let➖ ➖start➖
+
+      ➖export➖ 🔀function bar(range) {
+        return {
+          start: range.start
+        };
+      }⏹️
+    `,
+    expB: `
+      ➕function➕ ➕foo()➕ ➕{➕ ➕}➕
+
+      ➕export➕ 🔀function bar(range) {
+        return {
+          start: range.start
+        };
+      }⏹️
+    `
+  })
+
+  test({
+    name: "Recursive matching 6",
+    a: `
+      x
+      const foo = {
+        a: 1
+      }
+    `,
+    b: `
+      function foo() {
+        return z
+      }
+    
+      function zor() {
+        return {
+          a: 1
+        }
+      }
+    `,
+    expA: `
+      ➖x➖
+      ➖const➖ 🔀foo⏹️ ➖=➖ 🔀{
+        a: 1
+      }⏹️
+    `,
+    expB: `
+      ➕function➕ 🔀foo⏹️➕()➕ ➕{➕
+        ➕return➕ ➕z➕
+      ➕}➕
+    
+      ➕function➕ ➕zor()➕ ➕{➕
+        ➕return➕ 🔀{
+          a: 1
+        }⏹️
+      ➕}➕
+    `
+  })
 })
