@@ -6,7 +6,7 @@ import { getContext } from "./index";
 import { Node } from "./node";
 import { assert, fail } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
-import { NodeMatchingStack, getLCS } from "./sequence";
+import { getLCS, NodeMatchingStack } from "./sequence";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -55,8 +55,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       const side = lcsA.bestSequence > lcsB.bestSequence ? Side.a : Side.b;
 
       // Start indexes for both iterators
-      const indexA = bestMatch.indexA//side === Side.a ? bestMatch.indexA : bestMatch.indexB;
-      const indexB = bestMatch.indexB//side === Side.a ? bestMatch.indexB : bestMatch.indexA;
+      const indexA = bestMatch.indexA;
+      const indexB = bestMatch.indexB;
 
       // We may get an sequence of length 1, in that case will only create a move if that single node can be matched alone (more about this in the node creation)
       // Notice that we pick either `a` or `b` depending on the side of the lcs, this is because a match will happen with one of those in the their current index
@@ -79,7 +79,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 
         changes.push(
           new Change(ChangeType.addition, a, b),
-          new Change(ChangeType.deletion, a, b)
+          new Change(ChangeType.deletion, a, b),
         );
         continue;
       }
@@ -308,7 +308,7 @@ interface NewLCSResult {
 
 // This function recursively goes zig-zag between `a` and `b` trying to find the best match for a given sequence. Can be started with a sequence of just one node
 // The main issue this algorithm tries to solve is the following case
-// 
+//
 // a:
 //
 // 1 2 3
@@ -336,7 +336,7 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
 
   // Report addition / deletion
   if (candidateOppositeSide.length === 0) {
-    const changeType = perspective === Side.a ? ChangeType.deletion : ChangeType.addition
+    const changeType = perspective === Side.a ? ChangeType.deletion : ChangeType.addition;
     changes.push(new Change(changeType, node, node));
 
     // May be counter intuitive why both perspectives use `iterOne` instead of using both `iterOne` and `iterTwo`, the rationale is that on both perspective `iterOne` holds the missing node.
@@ -359,8 +359,8 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
     changes,
     bestSequence: lcs.bestSequence,
     indexA: perspective === Side.a ? lcs.indexA : lcs.indexB,
-    indexB: perspective === Side.a ? lcs.indexB : lcs.indexA
-  } as NewLCSResult
+    indexB: perspective === Side.a ? lcs.indexB : lcs.indexA,
+  } as NewLCSResult;
 
   // Exit early since we where just peeking the next result
   if (once) {
@@ -371,7 +371,7 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
 
   // If there is no better match, exit
   if (lcs.bestSequence === peekNext.bestSequence) {
-    return result
+    return result;
   }
 
   // TODO: Maybe pass some of the peeked data to the next iteration so that we don't need to recalculate it

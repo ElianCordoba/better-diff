@@ -1,4 +1,4 @@
-import { assert, fail } from "./debug";
+import { assert } from "./debug";
 import { Node } from "./node";
 import { equals, getClosingNode, getPrettyKind } from "./utils";
 import { Iterator } from "./iterator";
@@ -34,12 +34,12 @@ export function getSequence(
   iterA: Iterator,
   iterB: Iterator,
   indexA: number,
-  indexB: number
+  indexB: number,
 ): LCSResult {
   function checkSequenceInDirection(
     _indexA: number,
     _indexB: number,
-    stepFn: (n: number) => number
+    stepFn: (n: number) => number,
   ): LCSResult {
     let bestSequence = 0;
 
@@ -64,30 +64,30 @@ export function getSequence(
       }
 
       // Store indexes so that if the next iteration breaks early we don't end up with one step extra
-      candidateIndexA = _indexA
-      candidateIndexB = _indexB
+      candidateIndexA = _indexA;
+      candidateIndexB = _indexB;
 
-      _indexA = stepFn(_indexA)
-      _indexB = stepFn(_indexB)
+      _indexA = stepFn(_indexA);
+      _indexB = stepFn(_indexB);
 
-      bestSequence++
+      bestSequence++;
     }
 
     return {
       bestSequence,
       indexA: candidateIndexA,
       indexB: candidateIndexB,
-    }
+    };
   }
 
-  const backwardsPass = checkSequenceInDirection(indexA, indexB, x => x - 1)
-  const forwardPass = checkSequenceInDirection(backwardsPass.indexA, backwardsPass.indexB, x => x + 1)
+  const backwardsPass = checkSequenceInDirection(indexA, indexB, (x) => x - 1);
+  const forwardPass = checkSequenceInDirection(backwardsPass.indexA, backwardsPass.indexB, (x) => x + 1);
 
   return {
     indexA: backwardsPass.indexA,
     indexB: backwardsPass.indexB,
-    bestSequence: forwardPass.bestSequence
-  }
+    bestSequence: forwardPass.bestSequence,
+  };
 }
 
 export interface LCSResult {
@@ -115,7 +115,7 @@ export function getLCS(indexOfWanted: number, candidates: number[], iterA: Itera
     }
   }
 
-  assert(bestSequence !== 0, "LCS resulted in 0")
+  assert(bestSequence !== 0, "LCS resulted in 0");
 
-  return { bestSequence, indexA, indexB }
+  return { bestSequence, indexA, indexB };
 }
