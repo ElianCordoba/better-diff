@@ -48,8 +48,9 @@ export class Iterator {
       const next = this.peek(i);
       i++;
 
+      // Undefined will be found if the node is matched
       if (!next) {
-        return undefined;
+        continue
       }
 
       // Not a node we are interested in, skipping
@@ -69,7 +70,7 @@ export class Iterator {
   peek(index: number) {
     const item = this.textNodes[index];
 
-    if (!item) {
+    if (!item || item.matched) {
       return
     }
 
@@ -91,6 +92,10 @@ export class Iterator {
       this.mark(i, markAs);
       i++;
     }
+  }
+
+  done() {
+    return !this.textNodes.some(x => !x.matched)
   }
 
   findSequence(targetSequence: Node[]): number[] {

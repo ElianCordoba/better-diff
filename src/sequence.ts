@@ -35,7 +35,7 @@ export function getSequenceLength(
   iterB: Iterator,
   indexA: number,
   indexB: number,
-): number {
+): { indexA: number; indexB: number, sequence: number } {
   // Represents how long is the sequence
   let sequence = 0;
 
@@ -61,34 +61,40 @@ export function getSequenceLength(
     sequence++;
   }
 
-  return sequence;
+  return { indexA: indexA - sequence, indexB: indexB - sequence, sequence };
 }
 
 export interface LCSResult {
   bestSequence: number;
-  startOfSequence: number;
+  indexA: number
+  indexB: number
 }
 
 // Given a node (based on it's index) and one or more candidates nodes on the opposite side, evaluate all the possibilities and return the best result and index of it
 export function getLCS(indexOfWanted: number, candidates: number[], iterA: Iterator, iterB: Iterator): LCSResult {
   let bestSequence = 0;
-  let startOfSequence = 0;
+  let indexA = -1
+  let indexB = -1
 
   for (const candidateNodeIndex of candidates) {
     const newLCS = getSequenceLength(iterA, iterB, indexOfWanted, candidateNodeIndex);
 
     // Store the new result if it's better that the previous one based on the length of the sequence
     if (
-      newLCS > bestSequence
+      newLCS.sequence > bestSequence
     ) {
-      bestSequence = newLCS;
-      startOfSequence = candidateNodeIndex;
+      bestSequence = newLCS.sequence;
+      // TODO: NON REVERSIBLE
+      indexA = newLCS.indexA
+      indexB = newLCS.indexB
     }
   }
 
-  if (bestSequence === 0) {
-    fail("LCS resulted in 0");
-  }
+  assert(indexA !== -1 && indexB !== -1)
 
-  return { startOfSequence, bestSequence };
+  // if (bestSequence === 0) {
+  //   fail("LCS resulted in 0");
+  // }
+
+  return { bestSequence, indexA, indexB };
 }

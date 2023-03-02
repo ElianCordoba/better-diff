@@ -34,13 +34,20 @@ export function getNodesArray(source: string) {
     //
     // This is why we add the leading trivia to the `start` of the node, so we get where the actual
     // value of the node starts and not where the trivia starts
+    // console.time('leading trivia')
     const start = node.pos + node.getLeadingTriviaWidth();
+    // console.timeEnd('leading trivia')
 
+    // console.time('Line number')
     const lineNumberStart = getLineNumber(sourceFile, start);
+    // console.timeEnd('Line number')
     const lineNumberEnd = getLineNumber(sourceFile, node.end);
 
+    // console.time('Trivia')
+    // TODO: Disabled because it took too long
     const leadingTriviaHasNewLine = node.getFullText().split("\n").length > 1;
-    const triviaLinesAbove = leadingTriviaHasNewLine ? getTriviaLinesAbove(source, lineNumberStart) : 0;
+    const triviaLinesAbove = 0// leadingTriviaHasNewLine ? getTriviaLinesAbove(source, lineNumberStart) : 0;
+    // console.timeEnd('Trivia')
 
     const newNode = new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove });
     newNode.expressionNumber = depth;
@@ -61,7 +68,9 @@ export function getNodesArray(source: string) {
       newNode.isOpeningNode = true;
     }
 
+    // console.time('Alone')
     const canBeMatchedAlone = getIfNodeCanBeMatchedAlone(node.kind);
+    // console.timeEnd('Alone')
     newNode.canBeMatchedAlone = canBeMatchedAlone;
 
     // Only include visible node, nodes that represent some text in the source code.
