@@ -50,8 +50,13 @@ export class Iterator {
       const next = this.peek(i);
       i++;
 
+      if (i > this.textNodes.length) {
+        break
+      }
+
+      // Means that the node was matched
       if (!next) {
-        return undefined;
+        continue
       }
 
       // Not a node we are interested in, skipping
