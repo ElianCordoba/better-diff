@@ -35,6 +35,7 @@ export function getSequence(
   iterB: Iterator,
   indexA: number,
   indexB: number,
+  direction: 'forward' | 'backward' = 'forward'
 ): LCSResult {
   function checkSequenceInDirection(
     _indexA: number,
@@ -80,14 +81,9 @@ export function getSequence(
     };
   }
 
-  const backwardsPass = checkSequenceInDirection(indexA, indexB, (x) => x - 1);
-  const forwardPass = checkSequenceInDirection(backwardsPass.indexA, backwardsPass.indexB, (x) => x + 1);
+  const stepFn = direction === 'forward' ? (x: number) => x + 1 : (x: number) => x - 1
 
-  return {
-    indexA: backwardsPass.indexA,
-    indexB: backwardsPass.indexB,
-    bestSequence: forwardPass.bestSequence,
-  };
+  return checkSequenceInDirection(indexA, indexB, stepFn)
 }
 
 export interface LCSResult {
@@ -118,4 +114,14 @@ export function getLCS(indexOfWanted: number, candidates: number[], iterA: Itera
   assert(bestSequence !== 0, "LCS resulted in 0");
 
   return { bestSequence, indexA, indexB };
+}
+
+export function getAllLCS(indexOfWanted: number, candidates: number[], iterA: Iterator, iterB: Iterator): LCSResult[] {
+  const result: LCSResult[] = []
+
+  for (const candidateNodeIndex of candidates) {
+    result.push(getSequence(iterA, iterB, indexOfWanted, candidateNodeIndex))
+  }
+
+  return result
 }
