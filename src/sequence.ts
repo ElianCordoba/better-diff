@@ -35,7 +35,85 @@ export function getSequence(
   iterB: Iterator,
   indexA: number,
   indexB: number,
-  direction: 'forward' | 'backward' = 'forward'
+  direction = SequenceDirection.Forward
+): LCSResult {
+  const stepFn = direction === SequenceDirection.Forward ? (x: number) => x + 1 : (x: number) => x - 1
+  let bestSequence = 0;
+
+  while (true) {
+    const nextA = iterA.peek(indexA);
+
+    if (!nextA) {
+      break;
+    }
+
+    const nextB = iterB.peek(indexB);
+
+    if (!nextB) {
+      break;
+    }
+
+    if (!equals(nextA, nextB)) {
+      break;
+    }
+
+    indexA = stepFn(indexA);
+    indexB = stepFn(indexB);
+
+    bestSequence++;
+  }
+
+  return {
+    bestSequence,
+    indexA: indexA - bestSequence,
+    indexB: indexB - bestSequence,
+  };
+}
+
+export interface LCSResult {
+  bestSequence: number;
+  indexA: number;
+  indexB: number;
+}
+
+export enum SequenceDirection {
+  Forward = "Forward",
+  Backward = "Backward"
+}
+
+// Given a node (based on it's index) and one or more candidates nodes on the opposite side, evaluate all the possibilities and return the best result and index of it
+export function getLCS(indexOfWanted: number, candidates: number[], iterA: Iterator, iterB: Iterator, direction = SequenceDirection.Forward, dual = false): LCSResult {
+  const fn = dual ? getSequenceDual : getSequence
+
+  let bestSequence = 0;
+  let indexA = 0;
+  let indexB = 0;
+
+  for (const candidateNodeIndex of candidates) {
+    const newLCS = fn(iterA, iterB, indexOfWanted, candidateNodeIndex, direction);
+
+    // Store the new result if it's better that the previous one based on the length of the sequence
+    if (
+      newLCS.bestSequence > bestSequence
+    ) {
+      bestSequence = newLCS.bestSequence;
+      indexA = newLCS.indexA;
+      indexB = newLCS.indexB;
+    }
+  }
+
+  assert(bestSequence !== 0, "LCS resulted in 0");
+
+  return { bestSequence, indexA, indexB };
+}
+
+
+
+export function getSequenceDual(
+  iterA: Iterator,
+  iterB: Iterator,
+  indexA: number,
+  indexB: number,
 ): LCSResult {
   function checkSequenceInDirection(
     _indexA: number,
@@ -81,47 +159,12 @@ export function getSequence(
     };
   }
 
-  const stepFn = direction === 'forward' ? (x: number) => x + 1 : (x: number) => x - 1
+  const backwardsPass = checkSequenceInDirection(indexA, indexB, (x) => x - 1);
+  const forwardPass = checkSequenceInDirection(backwardsPass.indexA, backwardsPass.indexB, (x) => x + 1);
 
-  return checkSequenceInDirection(indexA, indexB, stepFn)
-}
-
-export interface LCSResult {
-  bestSequence: number;
-  indexA: number;
-  indexB: number;
-}
-
-// Given a node (based on it's index) and one or more candidates nodes on the opposite side, evaluate all the possibilities and return the best result and index of it
-export function getLCS(indexOfWanted: number, candidates: number[], iterA: Iterator, iterB: Iterator): LCSResult {
-  let bestSequence = 0;
-  let indexA = 0;
-  let indexB = 0;
-
-  for (const candidateNodeIndex of candidates) {
-    const newLCS = getSequence(iterA, iterB, indexOfWanted, candidateNodeIndex);
-
-    // Store the new result if it's better that the previous one based on the length of the sequence
-    if (
-      newLCS.bestSequence > bestSequence
-    ) {
-      bestSequence = newLCS.bestSequence;
-      indexA = newLCS.indexA;
-      indexB = newLCS.indexB;
-    }
-  }
-
-  assert(bestSequence !== 0, "LCS resulted in 0");
-
-  return { bestSequence, indexA, indexB };
-}
-
-export function getAllLCS(indexOfWanted: number, candidates: number[], iterA: Iterator, iterB: Iterator): LCSResult[] {
-  const result: LCSResult[] = []
-
-  for (const candidateNodeIndex of candidates) {
-    result.push(getSequence(iterA, iterB, indexOfWanted, candidateNodeIndex))
-  }
-
-  return result
+  return {
+    indexA: backwardsPass.indexA,
+    indexB: backwardsPass.indexB,
+    bestSequence: forwardPass.bestSequence,
+  };
 }

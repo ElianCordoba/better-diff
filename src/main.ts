@@ -6,7 +6,7 @@ import { getContext } from "./index";
 import { Node } from "./node";
 import { assert, fail } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
-import { getAllLCS, getLCS, getSequence, LCSResult, NodeMatchingStack } from "./sequence";
+import { getLCS, NodeMatchingStack, SequenceDirection } from "./sequence";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -37,27 +37,19 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         break;
       }
 
-      // Based on `a` and `b` find their best sequence
-      const lcsA = findBestMatch(iterA, iterB, a);
-      const lcsB = findBestMatch(iterB, iterA, b);
+      // Get best sequence based on the current a node
+      const lcs = findBestMatch(iterA, iterB, a);
 
-      // Regardless of which side is the best, the above function internally mark nodes as deleted / added, this is why we need to make sure we push the changes
-      if (lcsA.changes.length || lcsB.changes.length) {
-        changes.push(...lcsA.changes, ...lcsB.changes);
+      // The above function internally may mark nodes as deleted, this is why we need to make sure we push the changes
+      if (lcs.changes?.length) {
+        changes.push(...lcs.changes);
       }
 
-      // This covers the case where it happens that both `a` and `b` where deleted and added, respectively
-      if (lcsA.bestSequence === 0 && lcsB.bestSequence === 0) {
+      if (lcs.bestSequence === 0) {
         continue;
       }
 
-      const bestMatch = lcsA.bestSequence > lcsB.bestSequence ? lcsA : lcsB;
-      const side = lcsA.bestSequence > lcsB.bestSequence ? Side.a : Side.b;
-
-      // Start indexes for both iterators
-      const indexA = bestMatch.indexA;
-      const indexB = bestMatch.indexB;
-
+      // TODO: UPDATE COMMENT
       // We may get an sequence of length 1, in that case will only create a move if that single node can be matched alone (more about this in the node creation)
       // Notice that we pick either `a` or `b` depending on the side of the lcs, this is because a match will happen with one of those in the their current index
       // and a node in the opposite side that may be in another index
@@ -69,11 +61,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       // B side:
       // 3 2 1
       //     ^ matching with this one
-      const canNodeBeMatchedAlone = side === Side.a ? a.canBeMatchedAlone : b.canBeMatchedAlone;
-
-      // TODO: Add lcs 1 move fast path
-
-      if (bestMatch.bestSequence === 1 && !canNodeBeMatchedAlone) {
+      if (lcs.bestSequence === 1 && !a.canBeMatchedAlone) {
         iterA.mark(a.index, ChangeType.deletion);
         iterB.mark(b.index, ChangeType.addition);
 
@@ -84,13 +72,11 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         continue;
       }
 
-      const moveChanges = matchSubsequence(iterA, iterB, indexA, indexB, bestMatch.bestSequence);
+      const moveChanges = matchSubsequence(iterA, iterB, lcs.indexA, lcs.indexB, lcs.bestSequence);
 
       if (moveChanges.length) {
         changes.push(...moveChanges);
       }
-
-      // TODO: Check the other candidate sequence, if it's nodes are unmatched we can safely match it. This is going to be more performant since we already calculated it
     }
   }
 
@@ -300,51 +286,56 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 }
 
 interface NewLCSResult {
-  changes: Change[];
+  changes?: Change[];
   bestSequence: number;
   indexA: number;
   indexB: number;
 }
 
-function findBestMatch(iterOne: Iterator, iterTwo: Iterator, startNode: Node): NewLCSResult {
+function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): NewLCSResult {
   const changes: Change[] = [];
-
   const currentBestSequence = [startNode]
 
-  const candidateOppositeSide = iterTwo.findSequence(currentBestSequence);
+  const candidateOppositeSide = iterB.findSequence(currentBestSequence);
 
-  const perspective = iterOne.name === Side.a ? Side.a : Side.b;
-
-  // Report addition / deletion
+  // Report deletion if applicable
   if (candidateOppositeSide.length === 0) {
-    const changeType = perspective === Side.a ? ChangeType.deletion : ChangeType.addition;
-    changes.push(new Change(changeType, startNode, startNode));
-
-    // May be counter intuitive why both perspectives use `iterOne` instead of using both `iterOne` and `iterTwo`, the rationale is that on both perspective `iterOne` holds the missing node.
-    // If it's a deletion `iterOne` is `a` and there where we mark the node that was present but it's no longer there in the revision
-    // If it's an addition `iterOne` is `b` and there where we mark the node the newly added node that wasn't present in the source
-    iterOne.markMultiple(startNode.index, currentBestSequence.length, changeType);
+    changes.push(new Change(ChangeType.deletion, startNode, startNode));
+    iterA.markMultiple(startNode.index, currentBestSequence.length, ChangeType.deletion);
 
     return { changes, indexA: -1, indexB: -1, bestSequence: 0 };
   }
 
   // 1- Take best overall sequence
-  let lcs = getLCS(startNode.index, candidateOppositeSide, iterOne, iterTwo)
+  let lcs = getLCS(startNode.index, candidateOppositeSide, iterA, iterB)
 
   // 2- Find best subsequence in the LCS, excluding the first node since we know that result
 
-  const sequenceEnd = lcs.indexA + lcs.bestSequence
+  const start = lcs.indexB
+  const end = start + lcs.bestSequence
+  let seq = iterB.textNodes.slice(start, end)
 
-  for (const i of range(lcs.indexA, sequenceEnd)) {
-    const seq = iterTwo.textNodes.slice(i, sequenceEnd);
-    const candidateLCS = recursivelyGetBestMatch(iterTwo, iterOne, seq)
+  for (const i of range(start, end)) {
+    const newSeq = iterB.textNodes.slice(i, i + 1);
+    const candidateLCS = recursivelyGetBestMatch(iterB, iterA, newSeq)
+
+    assert(candidateLCS.bestSequence !== 0, "Subsequence LCS resulted in 0")
 
     if (candidateLCS.bestSequence > lcs.bestSequence) {
       lcs = candidateLCS
+      seq = iterB.textNodes.slice(candidateLCS.indexB, candidateLCS.indexB + candidateLCS.bestSequence);
     }
   }
 
   // 3- Before exiting do a backward pass to the lcs
+
+  const newSequenceCandidates = iterB.findSequence(seq);
+  const backwardPassLCS = getLCS(lcs.indexA, newSequenceCandidates, iterA, iterB)
+
+  if (backwardPassLCS.bestSequence > lcs.bestSequence) {
+    console.log('BETTER')
+    lcs = backwardPassLCS
+  }
 
   return { ...lcs, changes }
 
@@ -368,7 +359,6 @@ function findBestMatch(iterOne: Iterator, iterTwo: Iterator, startNode: Node): N
 // - Jumps to `b` side, we have 2 candidates, one of which is longer, being "1 2 3 4", pick that one
 // - Jumps back to `a`, no better matches found, exit
 function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBestSequence: Node[], once = false): NewLCSResult {
-  const changes: Change[] = [];
 
   // Start of the sequence node
   const node = currentBestSequence[0];
@@ -376,22 +366,11 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
   // Find the current best sequence on the other side
   const candidateOppositeSide = iterTwo.findSequence(currentBestSequence);
 
-  const perspective = iterOne.name === Side.a ? Side.a : Side.b;
-
-  // Report addition / deletion
   if (candidateOppositeSide.length === 0) {
-    const changeType = perspective === Side.a ? ChangeType.deletion : ChangeType.addition;
-    changes.push(new Change(changeType, node, node));
-
-    // May be counter intuitive why both perspectives use `iterOne` instead of using both `iterOne` and `iterTwo`, the rationale is that on both perspective `iterOne` holds the missing node.
-    // If it's a deletion `iterOne` is `a` and there where we mark the node that was present but it's no longer there in the revision
-    // If it's an addition `iterOne` is `b` and there where we mark the node the newly added node that wasn't present in the source
-    iterOne.markMultiple(node.index, currentBestSequence.length, changeType);
-
-    return { changes, indexA: -1, indexB: -1, bestSequence: 0 };
+    return { indexA: -1, indexB: -1, bestSequence: 0 };
   }
 
-  let lcs = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo);
+  let lcs = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo, SequenceDirection.Forward, true);
 
   const seq = iterTwo.textNodes.slice(lcs.indexB, lcs.indexB + lcs.bestSequence);
 
@@ -399,8 +378,9 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
     fail("New sequence has length 0");
   }
 
+  const perspective = iterOne.name === Side.a ? Side.a : Side.b;
+
   const result = {
-    changes,
     bestSequence: lcs.bestSequence,
     indexA: perspective === Side.a ? lcs.indexA : lcs.indexB,
     indexB: perspective === Side.a ? lcs.indexB : lcs.indexA,

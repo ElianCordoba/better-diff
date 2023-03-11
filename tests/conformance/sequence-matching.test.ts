@@ -287,41 +287,28 @@ describe("Recursive matching", () => {
     `
   })
 
+  // This tests the subsequence matching
   test({
     name: "Recursive matching 6",
     a: `
-      x
-      const foo = {
-        a: 1
-      }
+      1
+      import { Y } from "./y";
+      import { X } from "./x";
     `,
     b: `
-      function foo() {
-        return z
-      }
-    
-      function zor() {
-        return {
-          a: 1
-        }
-      }
+      1
+      import { X } from "./x";
     `,
     expA: `
-      ➖x➖
-      ➖const➖ 🔀foo⏹️ ➖=➖ 🔀{
-        a: 1
-      }⏹️
+      1
+      ➖import➖ ➖{➖ ➖Y➖ ➖}➖ ➖from➖ ➖"./y";➖
+      🔀import { X } from "./x";⏹️
     `,
     expB: `
-      ➕function➕ 🔀foo⏹️➕()➕ ➕{➕
-        ➕return➕ ➕z➕
-      ➕}➕
-    
-      ➕function➕ ➕zor()➕ ➕{➕
-        ➕return➕ 🔀{
-          a: 1
-        }⏹️
-      ➕}➕
+      1
+      🔀import { X } from "./x";⏹️
     `
   })
+
+
 })

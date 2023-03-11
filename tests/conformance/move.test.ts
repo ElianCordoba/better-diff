@@ -239,7 +239,7 @@ describe("Properly report lines added", () => {
   })
 
   test({
-    name: "Properly match closing paren 3",
+    name: "Properly match closing paren 4",
     a: `
       321
       if (true) {
@@ -257,6 +257,98 @@ describe("Properly report lines added", () => {
     `,
     expB: `
       🔀print(⏹️➕123➕🔀)⏹️
+    `
+  })
+
+  test({
+    name: "Properly match closing paren 5",
+    a: `
+      )fn(x)
+    `,
+    b: `
+      console.log(fn(1))
+    `,
+    expA: `
+      ➖)➖🔀fn(⏹️➖x➖🔀)⏹️
+    `,
+    expB: `
+      ➕console.log(➕🔀fn(⏹️➕1➕🔀)⏹️➕)➕
+    `
+  })
+
+  test({
+    name: "Properly match closing paren 6",
+    a: `
+      x
+      const foo = {
+        a: 1
+      }
+    `,
+    b: `
+      function foo() {
+        return z
+      }
+    
+      function zor() {
+        return {
+          a: 1
+        }
+      }
+    `,
+    expA: `
+      ➖x➖
+      ➖const➖ 🔀foo⏹️ ➖=➖ 🔀{
+        a: 1
+      }⏹️
+    `,
+    expB: `
+      ➕function➕ 🔀foo⏹️➕()➕ ➕{➕
+        ➕return➕ ➕z➕
+      ➕}➕
+    
+      ➕function➕ ➕zor()➕ ➕{➕
+        ➕return➕ 🔀{
+          a: 1
+        }⏹️
+      ➕}➕
+    `
+  })
+
+  // Testing single node matching
+
+  test({
+    name: "Noise reduction",
+    a: `
+      function foo() {
+        const name = 123;
+      }
+        
+      function bar() {
+        return 123
+      }
+      
+      let var1 = foo()
+      let var2 = bar()
+    `,
+    b: `
+      const var1 = foo()
+      const var2 = bar()
+    `,
+    expA: `
+      ➖function➖ ➖foo()➖ ➖{➖
+        ➖const➖ ➖name➖ ➖=➖ ➖123;➖
+      ➖}➖
+        
+      ➖function➖ ➖bar()➖ ➖{➖
+        ➖return➖ ➖123➖
+      ➖}➖
+      
+      ➖let➖ 🔀var1 = foo()⏹️
+      ➖let➖ 🔀var2 = bar()⏹️
+    `,
+    expB: `
+      ➕const➕ 🔀var1 = foo()⏹️
+      ➕const➕ 🔀var2 = bar()⏹️
     `
   })
 });
