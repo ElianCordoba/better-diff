@@ -6,7 +6,7 @@ import { getContext } from "./index";
 import { Node } from "./node";
 import { assert, fail } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
-import { getLCS, NodeMatchingStack, SequenceDirection } from "./sequence";
+import { getLCS, LCSResult, NodeMatchingStack, SequenceDirection } from "./sequence";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -388,17 +388,30 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
 
   // Exit early since we where just peeking the next result
   if (once) {
-    return result;
+    return result//checkLCSBackwards(iterOne, iterTwo, result);
   }
 
   const peekNext = recursivelyGetBestMatch(iterTwo, iterOne, seq, true);
 
   // If there is no better match, exit
   if (lcs.bestSequence === peekNext.bestSequence) {
-    return result;
+    return result//checkLCSBackwards(iterOne, iterTwo, result);
   }
 
   // TODO: Maybe pass some of the peeked data to the next iteration so that we don't need to recalculate it
 
   return recursivelyGetBestMatch(iterTwo, iterOne, seq);
+}
+
+function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
+  let currentBestResult = lcs
+  const newSequenceCandidates = iterB.findSequence(seq);
+  const backwardPassLCS = getLCS(lcs.indexA, newSequenceCandidates, iterA, iterB)
+
+  if (backwardPassLCS.bestSequence > lcs.bestSequence) {
+    console.log('BETTER')
+    currentBestResult = backwardPassLCS
+  }
+
+  return currentBestResult
 }
