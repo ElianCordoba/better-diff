@@ -286,13 +286,11 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 }
 
 function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSResult {
-  const changes: Change[] = [];
-
   const candidateOppositeSide = iterB.find(startNode);
 
   // Report deletion if applicable
   if (candidateOppositeSide.length === 0) {
-    changes.push(new Change(ChangeType.deletion, startNode, startNode));
+    const changes = [new Change(ChangeType.deletion, startNode, startNode)]
     iterA.mark(startNode.index, ChangeType.deletion);
 
     return { changes, indexA: -1, indexB: -1, bestSequence: 0 };
@@ -315,18 +313,7 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSRe
   }
 
   // 3- Before exiting do a backward pass to the lcs
-
-  // TODO-NOW
-  // const seq = getSequence(iterB, lcs)
-  // const newSequenceCandidates = iterB.findSequence(seq);
-  // const backwardPassLCS = getLCS(lcs.indexA, newSequenceCandidates, iterA, iterB, SequenceDirection.Backward)
-
-  // if (backwardPassLCS.bestSequence > lcs.bestSequence) {
-  //   console.log('BETTER')
-  //   lcs = backwardPassLCS
-  // }
-
-  return { ...lcs, changes }
+  return checkLCSBackwards(iterA, iterB, lcs)
 
 }
 
@@ -459,15 +446,14 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
   return recursivelyGetBestMatch(iterTwo, iterOne, seq);
 }
 
-// function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
-//   let currentBestResult = lcs
-//   const newSequenceCandidates = iterB.findSequence(seq);
-//   const backwardPassLCS = getLCS(lcs.indexA, newSequenceCandidates, iterA, iterB)
+function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
+  const seq = getSequence(iterB, lcs)
+  const newSequenceCandidates = iterB.findSequence(seq);
+  const backwardPassLCS = getLCS(lcs.indexA, newSequenceCandidates, iterA, iterB, SequenceDirection.Forward, true)
 
-//   if (backwardPassLCS.bestSequence > lcs.bestSequence) {
-//     console.log('BETTER')
-//     currentBestResult = backwardPassLCS
-//   }
-
-//   return currentBestResult
-// }
+  if (backwardPassLCS.bestSequence > lcs.bestSequence) {
+    return backwardPassLCS
+  } else {
+    return lcs
+  }
+}
