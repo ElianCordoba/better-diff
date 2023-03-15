@@ -84,7 +84,7 @@ export enum SequenceDirection {
 }
 
 // Given a node (based on it's index) and one or more candidates nodes on the opposite side, evaluate all the possibilities and return the best result and index of it
-export function getLCS(indexOfWanted: number, candidates: number[], iterA: Iterator, iterB: Iterator, direction = SequenceDirection.Forward, dual = false): LCSResult {
+export function getLCS(indexOfWanted: number, candidates: number[], iterA: Iterator, iterB: Iterator, dual = false): LCSResult {
   const fn = dual ? getSequenceDual : getSequence
 
   let bestSequence = 0;
@@ -92,7 +92,7 @@ export function getLCS(indexOfWanted: number, candidates: number[], iterA: Itera
   let indexB = 0;
 
   for (const candidateNodeIndex of candidates) {
-    const newLCS = fn(iterA, iterB, indexOfWanted, candidateNodeIndex, direction);
+    const newLCS = fn(iterA, iterB, indexOfWanted, candidateNodeIndex, SequenceDirection.Forward);
 
     // Store the new result if it's better that the previous one based on the length of the sequence
     if (

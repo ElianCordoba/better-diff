@@ -330,7 +330,7 @@ function findBestMatchWithZigZag(iterA: Iterator, iterB: Iterator, startNode: No
 
     const node = sequence[0]
 
-    const lcs = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo, SequenceDirection.Forward);
+    const lcs = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo, true);
 
     assert(lcs.bestSequence !== 0, "LCS resulted in 0");
 
@@ -413,7 +413,7 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
     return { indexA: -1, indexB: -1, bestSequence: 0 };
   }
 
-  let lcs = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo, SequenceDirection.Forward, true);
+  let lcs = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo);
 
   const seq = iterTwo.textNodes.slice(lcs.indexB, lcs.indexB + lcs.bestSequence);
 
@@ -449,7 +449,7 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
 function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
   const seq = getSequence(iterB, lcs)
   const newSequenceCandidates = iterB.findSequence(seq);
-  const backwardPassLCS = getLCS(lcs.indexA, newSequenceCandidates, iterA, iterB, SequenceDirection.Forward, true)
+  const backwardPassLCS = getLCS(lcs.indexA, newSequenceCandidates, iterA, iterB)
 
   if (backwardPassLCS.bestSequence > lcs.bestSequence) {
     return backwardPassLCS
