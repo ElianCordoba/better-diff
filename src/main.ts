@@ -305,7 +305,10 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSRe
   const end = start + lcs.bestSequence
 
   for (const i of range(start, end)) {
-    const candidateLCS = findBestMatchWithZigZag(iterB, iterA, iterB.peek(i)!)
+    const node = iterB.peek(i)
+    assert(node)
+
+    const candidateLCS = findBestMatchWithZigZag(iterB, iterA, node)
 
     if (candidateLCS.bestSequence > lcs.bestSequence) {
       lcs = candidateLCS
@@ -330,7 +333,7 @@ function findBestMatchWithZigZag(iterA: Iterator, iterB: Iterator, startNode: No
 
     const node = sequence[0]
 
-    const lcs = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo, true);
+    const lcs = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo);
 
     assert(lcs.bestSequence !== 0, "LCS resulted in 0");
 
