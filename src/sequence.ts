@@ -2,6 +2,7 @@ import { assert } from "./debug";
 import { Node } from "./node";
 import { equals, getClosingNode, getPrettyKind } from "./utils";
 import { Iterator } from "./iterator";
+import { Change } from "./change";
 
 export class NodeMatchingStack {
   allowedKind: number[];
@@ -71,6 +72,7 @@ export function getSequence(
 }
 
 export interface LCSResult {
+  changes?: Change[]
   bestSequence: number;
   indexA: number;
   indexB: number;

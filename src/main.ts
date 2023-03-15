@@ -285,23 +285,15 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   return changes;
 }
 
-interface NewLCSResult {
-  changes?: Change[];
-  bestSequence: number;
-  indexA: number;
-  indexB: number;
-}
-
-function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): NewLCSResult {
+function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSResult {
   const changes: Change[] = [];
-  const currentBestSequence = [startNode]
 
-  const candidateOppositeSide = iterB.findSequence(currentBestSequence);
+  const candidateOppositeSide = iterB.find(startNode);
 
   // Report deletion if applicable
   if (candidateOppositeSide.length === 0) {
     changes.push(new Change(ChangeType.deletion, startNode, startNode));
-    iterA.markMultiple(startNode.index, currentBestSequence.length, ChangeType.deletion);
+    iterA.mark(startNode.index, ChangeType.deletion);
 
     return { changes, indexA: -1, indexB: -1, bestSequence: 0 };
   }
@@ -313,32 +305,96 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): NewLC
 
   const start = lcs.indexB
   const end = start + lcs.bestSequence
-  let seq = iterB.textNodes.slice(start, end)
 
   for (const i of range(start, end)) {
-    const newSeq = iterB.textNodes.slice(i, i + 1);
-    const candidateLCS = recursivelyGetBestMatch(iterB, iterA, newSeq)
-
-    assert(candidateLCS.bestSequence !== 0, "Subsequence LCS resulted in 0")
+    const candidateLCS = findBestMatchWithZigZag(iterB, iterA, iterB.peek(i)!)
 
     if (candidateLCS.bestSequence > lcs.bestSequence) {
       lcs = candidateLCS
-      seq = iterB.textNodes.slice(candidateLCS.indexB, candidateLCS.indexB + candidateLCS.bestSequence);
     }
   }
 
   // 3- Before exiting do a backward pass to the lcs
 
-  const newSequenceCandidates = iterB.findSequence(seq);
-  const backwardPassLCS = getLCS(lcs.indexA, newSequenceCandidates, iterA, iterB)
+  // TODO-NOW
+  // const seq = getSequence(iterB, lcs)
+  // const newSequenceCandidates = iterB.findSequence(seq);
+  // const backwardPassLCS = getLCS(lcs.indexA, newSequenceCandidates, iterA, iterB, SequenceDirection.Backward)
 
-  if (backwardPassLCS.bestSequence > lcs.bestSequence) {
-    console.log('BETTER')
-    lcs = backwardPassLCS
-  }
+  // if (backwardPassLCS.bestSequence > lcs.bestSequence) {
+  //   console.log('BETTER')
+  //   lcs = backwardPassLCS
+  // }
 
   return { ...lcs, changes }
 
+}
+
+function findBestMatchWithZigZag(iterA: Iterator, iterB: Iterator, startNode: Node): LCSResult {
+  let bestSequence = 0
+  let bestLCS: LCSResult | undefined
+
+  function process(iterOne: Iterator, iterTwo: Iterator, sequence: Node[]): LCSResult | undefined {
+    const candidateOppositeSide = iterTwo.findSequence(sequence);
+
+    if (candidateOppositeSide.length === 0) {
+      return
+    }
+
+    const node = sequence[0]
+
+    const lcs = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo, SequenceDirection.Forward);
+
+    assert(lcs.bestSequence !== 0, "LCS resulted in 0");
+
+    // If there is no better match, exit
+    if (lcs.bestSequence === bestSequence) {
+      return
+    }
+
+    return lcs
+  }
+
+  let _iterOne = iterA
+  let _iterTwo = iterB
+  let _sequence = [startNode]
+
+  while (true) {
+    // TODO-NOW: Optimize first run since we know the result
+    const newResult = process(_iterOne, _iterTwo, _sequence)
+
+    if (!newResult) {
+      break
+    }
+
+    if (newResult.bestSequence <= bestSequence) {
+      continue
+    }
+
+    bestLCS = newResult;
+    bestSequence = newResult.bestSequence;
+    _sequence = getSequence(_iterTwo, bestLCS);
+
+    [_iterOne, _iterTwo] = [_iterTwo, _iterOne];
+  }
+
+  assert(bestLCS)
+
+  return normalize(_iterTwo, bestLCS)
+}
+
+function getSequence(iter: Iterator, lcs: LCSResult): Node[] {
+  return iter.textNodes.slice(lcs.indexB, lcs.indexB + lcs.bestSequence);
+}
+
+function normalize(iter: Iterator, lcs: LCSResult): LCSResult {
+  const perspective = iter.name === Side.a ? Side.a : Side.b;
+
+  return {
+    bestSequence: lcs.bestSequence,
+    indexA: perspective === Side.a ? lcs.indexA : lcs.indexB,
+    indexB: perspective === Side.a ? lcs.indexB : lcs.indexA,
+  }
 }
 
 // This function recursively goes zig-zag between `a` and `b` trying to find the best match for a given sequence. Can be started with a sequence of just one node
@@ -358,7 +414,7 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): NewLC
 // - Start on `a` side, "1 2 3"
 // - Jumps to `b` side, we have 2 candidates, one of which is longer, being "1 2 3 4", pick that one
 // - Jumps back to `a`, no better matches found, exit
-function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBestSequence: Node[], once = false): NewLCSResult {
+function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBestSequence: Node[], once = false): LCSResult {
 
   // Start of the sequence node
   const node = currentBestSequence[0];
@@ -384,7 +440,7 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
     bestSequence: lcs.bestSequence,
     indexA: perspective === Side.a ? lcs.indexA : lcs.indexB,
     indexB: perspective === Side.a ? lcs.indexB : lcs.indexA,
-  } as NewLCSResult;
+  } as LCSResult;
 
   // Exit early since we where just peeking the next result
   if (once) {
@@ -403,15 +459,15 @@ function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBe
   return recursivelyGetBestMatch(iterTwo, iterOne, seq);
 }
 
-function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
-  let currentBestResult = lcs
-  const newSequenceCandidates = iterB.findSequence(seq);
-  const backwardPassLCS = getLCS(lcs.indexA, newSequenceCandidates, iterA, iterB)
+// function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
+//   let currentBestResult = lcs
+//   const newSequenceCandidates = iterB.findSequence(seq);
+//   const backwardPassLCS = getLCS(lcs.indexA, newSequenceCandidates, iterA, iterB)
 
-  if (backwardPassLCS.bestSequence > lcs.bestSequence) {
-    console.log('BETTER')
-    currentBestResult = backwardPassLCS
-  }
+//   if (backwardPassLCS.bestSequence > lcs.bestSequence) {
+//     console.log('BETTER')
+//     currentBestResult = backwardPassLCS
+//   }
 
-  return currentBestResult
-}
+//   return currentBestResult
+// }

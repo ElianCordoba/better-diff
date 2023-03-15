@@ -132,6 +132,23 @@ export class Iterator {
     return candidates;
   }
 
+  find(targetNode: Node): number[] {
+    const candidates: number[] = [];
+
+    for (let i = 0; i < this.textNodes.length; i++) {
+      const node = this.textNodes[i];
+
+      // If the start of the sequence doesn't match then we know it's not a candidate, skipping
+      if (node.matched || !equals(targetNode, node)) {
+        continue;
+      }
+
+      candidates.push(node.index)
+    }
+
+    return candidates;
+  }
+
   printList(nodesToPrint?: Node[]) {
     console.log(`----------- SIDE ${this.name} -----------`);
     console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("exp n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
