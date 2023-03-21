@@ -39,8 +39,9 @@ export function getNodesArray(source: string) {
     const lineNumberStart = getLineNumber(sourceFile, start);
     const lineNumberEnd = getLineNumber(sourceFile, node.end);
 
-    const leadingTriviaHasNewLine = node.getFullText().split("\n").length > 1;
-    const triviaLinesAbove = leadingTriviaHasNewLine ? getTriviaLinesAbove(source, lineNumberStart) : 0;
+    // TODO: This was disabled because it was too expensive, enable when we work on the code-alignment algo again
+    // const leadingTriviaHasNewLine = node.getFullText().split("\n").length > 1;
+    const triviaLinesAbove = 0; //leadingTriviaHasNewLine ? getTriviaLinesAbove(source, lineNumberStart) : 0;
 
     const newNode = new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove });
     newNode.expressionNumber = depth;
@@ -84,6 +85,8 @@ export function getNodesArray(source: string) {
 
     i++;
   }
+
+  // TODO: Store node kind in a table so that we can reuse it when finding sequences
 
   return textNodes;
 }

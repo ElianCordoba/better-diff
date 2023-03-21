@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { getSequenceLength } from "../src/sequence";
+import { getSequenceSingleDirection } from "../src/sequence";
 
 class MockIterator {
   constructor(public items: any[]) { }
@@ -29,11 +29,11 @@ describe("Properly calculate LCS", () => {
     const iterA: any = new MockIterator(charsA);
     const iterB: any = new MockIterator(charsB);
 
-    let lcs = getSequenceLength(iterA, iterB, 0, 0);
+    let lcs = getSequenceSingleDirection(iterA, iterB, 0, 0).bestSequence;
 
     expect(lcs).toBe(2);
 
-    lcs = getSequenceLength(iterB, iterA, 0, 0);
+    lcs = getSequenceSingleDirection(iterB, iterA, 0, 0).bestSequence;
 
     expect(lcs).toBe(2);
   });
@@ -45,7 +45,7 @@ describe("Properly calculate LCS", () => {
     const iterA: any = new MockIterator(charsA);
     const iterB: any = new MockIterator(charsB);
 
-    const lcs = getSequenceLength(iterA, iterB, 0, 0);
+    const lcs = getSequenceSingleDirection(iterA, iterB, 0, 0).bestSequence;
 
     expect(lcs).toBe(3);
   });

@@ -215,4 +215,100 @@ describe("Recursive matching", () => {
       🔀12 34⏹️
     `
   })
+
+  test({
+    name: "Recursive matching 4",
+    a: `
+      12
+      12 34
+      12 34 56
+    `,
+    b: `
+      12 34 56
+      0
+      12
+      0
+      0
+      12 34
+    `,
+    expA: `
+      🔀12⏹️
+      🔀12 34⏹️
+      🔀12 34 56⏹️
+    `,
+    expB: `
+      🔀12 34 56⏹️
+      ➕0➕
+      🔀12⏹️
+      ➕0➕
+      ➕0➕
+      🔀12 34⏹️
+    `
+  })
+
+  // This tests going backward in the LCS calculation
+  test({
+    name: "Recursive matching 5",
+    a: `
+      let start
+
+      export function bar(range) {
+        return {
+          start: range.start
+        };
+      }
+    `,
+    b: `
+      function foo() { }
+
+      export function bar(range) {
+        return {
+          start: range.start
+        };
+      }
+    `,
+    expA: `
+      ➖let➖ ➖start➖
+
+      🔀export function bar(range) {
+        return {
+          start: range.start
+        };
+      }⏹️
+    `,
+    expB: `
+      ➕function➕ ➕foo()➕ ➕{➕ ➕}➕
+
+      🔀export function bar(range) {
+        return {
+          start: range.start
+        };
+      }⏹️
+    `
+  })
+
+  // This tests the subsequence matching
+  test({
+    name: "Recursive matching 6",
+    a: `
+      1
+      import { Y } from "./y";
+      import { X } from "./x";
+    `,
+    b: `
+      1
+      import { X } from "./x";
+    `,
+    expA: `
+      1
+      ➖import➖ ➖{➖ ➖Y➖ ➖}➖ ➖from➖ ➖"./y";➖
+      🔀import { X } from "./x";⏹️
+    `,
+    expB: `
+      1
+      🔀import { X } from "./x";⏹️
+    `
+  })
+
+
 })

@@ -1,12 +1,12 @@
 import { ChangeType, Side } from "./types";
-import { ClosingNodeGroup, equals, getClosingNodeGroup, mergeRanges, range } from "./utils";
+import { ClosingNodeGroup, equals, getClosingNodeGroup, mergeRanges, normalize, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change, compactChanges } from "./change";
 import { getContext } from "./index";
 import { Node } from "./node";
-import { assert, fail } from "./debug";
+import { assert } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
-import { NodeMatchingStack, getLCS } from "./sequence";
+import { getLCS, LCSResult, NodeMatchingStack } from "./sequence";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -37,60 +37,36 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         break;
       }
 
-      // Based on `a` and `b` find their best sequence
-      const lcsA = recursivelyGetBestMatch(iterA, iterB, [a]);
-      const lcsB = recursivelyGetBestMatch(iterB, iterA, [b]);
+      // Get best sequence based on the current a node
+      const lcs = findBestMatch(iterA, iterB, a);
 
-      // Regardless of which side is the best, the above function internally mark nodes as deleted / added, this is why we need to make sure we push the changes
-      if (lcsA.changes.length || lcsB.changes.length) {
-        changes.push(...lcsA.changes, ...lcsB.changes);
+      // The above function internally may mark nodes as deleted, this is why we need to make sure we push the changes
+      if (lcs.changes?.length) {
+        changes.push(...lcs.changes);
       }
 
-      // This covers the case where it happens that both `a` and `b` where deleted and added, respectively
-      if (lcsA.bestSequence === 0 && lcsB.bestSequence === 0) {
+      if (lcs.bestSequence === 0) {
         continue;
       }
 
-      const bestMatch = lcsA.bestSequence > lcsB.bestSequence ? lcsA : lcsB;
-      const side = lcsA.bestSequence > lcsB.bestSequence ? Side.a : Side.b;
-
-      // Start indexes for both iterators
-      const indexA = bestMatch.indexA;
-      const indexB = bestMatch.indexB;
-
-      // We may get an sequence of length 1, in that case will only create a move if that single node can be matched alone (more about this in the node creation)
-      // Notice that we pick either `a` or `b` depending on the side of the lcs, this is because a match will happen with one of those in the their current index
-      // and a node in the opposite side that may be in another index
-      //
-      // A side:
-      // 1 2 3
-      // ^ cursor here
-      //
-      // B side:
-      // 3 2 1
-      //     ^ matching with this one
-      const canNodeBeMatchedAlone = side === Side.a ? a.canBeMatchedAlone : b.canBeMatchedAlone;
-
-      // TODO: Add lcs 1 move fast path
-
-      if (bestMatch.bestSequence === 1 && !canNodeBeMatchedAlone) {
+      // In case we obtain a sequence of length 1, we will only create a move if that single node can be matched alone.
+      // If the move isn't created then we report them as addition/removal
+      if (lcs.bestSequence === 1 && !a.canBeMatchedAlone) {
         iterA.mark(a.index, ChangeType.deletion);
         iterB.mark(b.index, ChangeType.addition);
 
         changes.push(
           new Change(ChangeType.addition, a, b),
-          new Change(ChangeType.deletion, a, b)
+          new Change(ChangeType.deletion, a, b),
         );
         continue;
       }
 
-      const moveChanges = matchSubsequence(iterA, iterB, indexA, indexB, bestMatch.bestSequence);
+      const moveChanges = matchSubsequence(iterA, iterB, lcs.indexA, lcs.indexB, lcs.bestSequence);
 
       if (moveChanges.length) {
         changes.push(...moveChanges);
       }
-
-      // TODO: Check the other candidate sequence, if it's nodes are unmatched we can safely match it. This is going to be more performant since we already calculated it
     }
   }
 
@@ -299,83 +275,146 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   return changes;
 }
 
-interface NewLCSResult {
-  changes: Change[];
-  bestSequence: number;
-  indexA: number;
-  indexB: number;
-}
+function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSResult {
+  const candidateOppositeSide = iterB.find(startNode);
 
-// This function recursively goes zig-zag between `a` and `b` trying to find the best match for a given sequence. Can be started with a sequence of just one node
-// The main issue this algorithm tries to solve is the following case
-// 
-// a:
-//
-// 1 2 3
-// 1 2 3 4
-//
-// b:
-// 1 2
-// 1 2 3 4
-//
-// If we start with "1" on `a` side, we will pick the sequence "1 2 3", the problem is that taking that match breaks a better match for the `b` side sequence, which is the full "1 2 3 4"
-// This is why we jump from one side to the other, getting the candidates for each sequence and LCS to ensure we pick the best one, in the example above it should be something like this:
-// - Start on `a` side, "1 2 3"
-// - Jumps to `b` side, we have 2 candidates, one of which is longer, being "1 2 3 4", pick that one
-// - Jumps back to `a`, no better matches found, exit
-function recursivelyGetBestMatch(iterOne: Iterator, iterTwo: Iterator, currentBestSequence: Node[]): NewLCSResult {
-  const changes: Change[] = [];
-
-  // Start of the sequence node
-  const node = currentBestSequence[0];
-
-  // Find the current best sequence on the other side
-  const candidateOppositeSide = iterTwo.findSequence(currentBestSequence);
-
-  const perspective = iterOne.name === Side.a ? Side.a : Side.b;
-
-  // Report addition / deletion
+  // Report deletion if applicable
   if (candidateOppositeSide.length === 0) {
-    const changeType = perspective === Side.a ? ChangeType.deletion : ChangeType.addition
-    changes.push(new Change(changeType, node, node));
-
-    // May be counter intuitive why both perspectives use `iterOne` instead of using both `iterOne` and `iterTwo`, the rationale is that on both perspective `iterOne` holds the missing node.
-    // If it's a deletion `iterOne` is `a` and there where we mark the node that was present but it's no longer there in the revision
-    // If it's an addition `iterOne` is `b` and there where we mark the node the newly added node that wasn't present in the source
-    iterOne.markMultiple(node.index, currentBestSequence.length, changeType);
+    const changes = [new Change(ChangeType.deletion, startNode, startNode)];
+    iterA.mark(startNode.index, ChangeType.deletion);
 
     return { changes, indexA: -1, indexB: -1, bestSequence: 0 };
   }
 
-  const { bestSequence, startOfSequence } = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo);
+  // 1- Take best overall sequence
+  let lcs = getLCS(startNode.index, candidateOppositeSide, iterA, iterB);
 
-  if (bestSequence === currentBestSequence.length) {
-    return {
-      changes,
-      bestSequence,
-      ...getIndexes(perspective, node, iterTwo.peek(startOfSequence)!)
-    };
+  const start = lcs.indexB;
+  const end = start + lcs.bestSequence;
+
+  // 2- Perform a match for every sub sequence, given "1 2 3", get the best match for "1", "2", "3", then pick the best
+  for (const i of range(start, end)) {
+    const node = iterB.peek(i);
+    assert(node);
+
+    // The Zigzag starts from B to A, intentionally. The rationale behind this is as follows:
+    // The algorithm processes a sequence (beginning with a single node) and searches for it on the opposite side. If we were to start from A to B,
+    // a suboptimal match might be found, such as matching "()" when a better match would be "console.log(". To avoid this,
+    // we start from the other side, essentially questioning the assumption that the current node is the best choice.
+    // For instance, if the current node is "(" on side A, we will examine all other alternatives on that side, like
+    // "if (" or "console.log(", among others. Then, we select the best match based on the LCS.
+    // Refer to the test "Properly match closing paren 3 inverse" for more information.
+    // const candidateLCS = findBestMatchWithZigZag(iterB, iterA, node, true)
+    const lcsForward = findBestMatchWithZigZag(iterB, iterA, node, false);
+    const lcsForwardBackward = findBestMatchWithZigZag(iterB, iterA, node, true);
+
+    // The rationale for performing two passes (forward and backward-forward) is somewhat intricate, but can be summarized as follows:
+    // - Moving forward only might cause us to miss better matches when starting ahead of an optimal sequence:
+    //
+    // console.log()
+    // ^ cursor here
+    //
+    // log(console.log())
+    // ^ cursor here
+    //
+    // Forward-only LCS will select the sequence "()" instead of the preferable "console.log()".
+    //
+    // - Using both backward and forward passes avoids a situation where subsequence matching converges to the same result.
+    // For example, given "1 2 3", if there is a "1 2 3" on the other side as well, all subsequences "1", "2", and "3" will lead to the same match.
+    // However, we might lose a better match with a suboptimal start. Under "2", a superior match could be concealed within a zigzag iteration.
+    // For a real-world example, refer to the test "Test Recursive matching 6 inverse".
+    const candidateLCS = lcsForward.bestSequence > lcsForwardBackward.bestSequence ? lcsForward : lcsForwardBackward;
+
+    if (candidateLCS.bestSequence > lcs.bestSequence) {
+      lcs = candidateLCS;
+    }
   }
 
-  const seq = iterTwo.textNodes.slice(startOfSequence, startOfSequence + bestSequence);
-
-  if (seq.length === 0) {
-    fail("New sequence has length 0");
-  }
-
-  return recursivelyGetBestMatch(iterTwo, iterOne, seq);
+  // 3- Before exiting do a backward pass to the lcs
+  return checkLCSBackwards(iterA, iterB, lcs);
 }
 
-function getIndexes(perspective: Side, one: Node, two: Node): { indexA: number; indexB: number } {
-  if (perspective === Side.a) {
-    return {
-      indexA: one.index,
-      indexB: two.index,
-    };
+// This function performs a zigzag search between A and B to find the best match for a given sequence.
+// The primary issue this algorithm addresses is illustrated in the following case:
+//
+// ----------A----------
+//
+// 1 2 3
+// 1 2 3 4
+//
+// ----------B----------
+// 1 2
+// 1 2 3 4
+//
+// If we start with "1" on side A, we will choose the sequence "1 2 3". However, selecting this match disrupts a better match for the sequence on side B, which is the complete "1 2 3 4".
+// This is why we alternate between sides, gathering candidates for each sequence and using LCS to ensure we choose the best match. In the example above, the process should be as follows:
+// - Start on side A with "1 2 3".
+// - Switch to side B, two candidates are available, one of which is longer "1 2 3 4", select that one.
+// - Return to side A, no better matches found, so exit the search.
+function findBestMatchWithZigZag(iterA: Iterator, iterB: Iterator, startNode: Node, bothDirections: boolean): LCSResult {
+  let bestSequence = 0;
+  let bestLCS: LCSResult | undefined;
+
+  function process(iterOne: Iterator, iterTwo: Iterator, sequence: Node[]): LCSResult | undefined {
+    const candidateOppositeSide = iterTwo.findSequence(sequence);
+
+    if (candidateOppositeSide.length === 0) {
+      return;
+    }
+
+    const node = sequence[0];
+
+    const lcs = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo, bothDirections);
+
+    assert(lcs.bestSequence !== 0, "LCS resulted in 0");
+
+    // If there is no better match, exit
+    if (lcs.bestSequence === bestSequence) {
+      return;
+    }
+
+    return lcs;
+  }
+
+  let _iterOne = iterA;
+  let _iterTwo = iterB;
+  let _sequence = [startNode];
+
+  while (true) {
+    const newResult = process(_iterOne, _iterTwo, _sequence);
+
+    if (!newResult) {
+      break;
+    }
+
+    if (newResult.bestSequence <= bestSequence) {
+      continue;
+    }
+
+    bestLCS = newResult;
+    bestSequence = newResult.bestSequence;
+    _sequence = getSequence(_iterTwo, bestLCS);
+
+    [_iterOne, _iterTwo] = [_iterTwo, _iterOne];
+  }
+
+  assert(bestLCS);
+
+  return normalize(_iterTwo, bestLCS);
+}
+
+function getSequence(iter: Iterator, lcs: LCSResult): Node[] {
+  return iter.textNodes.slice(lcs.indexB, lcs.indexB + lcs.bestSequence);
+}
+
+function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
+  const seq = getSequence(iterB, lcs);
+  const newSequenceCandidates = iterB.findSequence(seq);
+  const backwardPassLCS = getLCS(lcs.indexA, newSequenceCandidates, iterA, iterB);
+
+  if (backwardPassLCS.bestSequence > lcs.bestSequence) {
+    return backwardPassLCS;
   } else {
-    return {
-      indexA: two.index,
-      indexB: one.index,
-    };
+    return lcs;
   }
 }

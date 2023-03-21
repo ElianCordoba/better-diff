@@ -2,6 +2,8 @@ import ts from "typescript";
 import { Node } from "./node";
 import { Range, Side } from "./types";
 import { fail } from "./debug";
+import { LCSResult } from "./sequence";
+import { Iterator } from "./iterator";
 
 export function getPrettyKind(kind: number): string {
   // deno-lint-ignore no-explicit-any
@@ -89,4 +91,14 @@ export function getClosingNode({ kind, prettyKind }: Node): ts.SyntaxKind {
       fail(`Unknown kind ${prettyKind}`);
     }
   }
+}
+
+export function normalize(iter: Iterator, lcs: LCSResult): LCSResult {
+  const perspective = iter.name === Side.a ? Side.a : Side.b;
+
+  return {
+    bestSequence: lcs.bestSequence,
+    indexA: perspective === Side.a ? lcs.indexA : lcs.indexB,
+    indexB: perspective === Side.a ? lcs.indexB : lcs.indexA,
+  };
 }

@@ -14,9 +14,11 @@ interface IteratorOptions {
 export class Iterator {
   name: string;
 
-  private indexOfLastItem = 0;
   matchNumber = 0;
   public textNodes: Node[];
+
+  // Only read when printing nodes
+  private indexOfLastItem = 0;
 
   constructor({ source, name }: IteratorOptions) {
     this.textNodes = getNodesArray(source);
@@ -48,8 +50,13 @@ export class Iterator {
       const next = this.peek(i);
       i++;
 
+      if (i > this.textNodes.length) {
+        break;
+      }
+
+      // Means that the node was matched
       if (!next) {
-        return undefined;
+        continue;
       }
 
       // Not a node we are interested in, skipping
@@ -69,8 +76,8 @@ export class Iterator {
   peek(index: number) {
     const item = this.textNodes[index];
 
-    if (!item) {
-      return
+    if (!item || item.matched) {
+      return;
     }
 
     return item;
@@ -125,7 +132,25 @@ export class Iterator {
     return candidates;
   }
 
+  find(targetNode: Node): number[] {
+    const candidates: number[] = [];
+
+    for (let i = 0; i < this.textNodes.length; i++) {
+      const node = this.textNodes[i];
+
+      // If the start of the sequence doesn't match then we know it's not a candidate, skipping
+      if (node.matched || !equals(targetNode, node)) {
+        continue;
+      }
+
+      candidates.push(node.index);
+    }
+
+    return candidates;
+  }
+
   printList(nodesToPrint?: Node[]) {
+    console.log(`----------- SIDE ${this.name} -----------`);
     console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("exp n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
     const list: string[] = [];
