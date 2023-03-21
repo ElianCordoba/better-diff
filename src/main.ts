@@ -49,18 +49,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         continue;
       }
 
-      // TODO: UPDATE COMMENT
-      // We may get an sequence of length 1, in that case will only create a move if that single node can be matched alone (more about this in the node creation)
-      // Notice that we pick either `a` or `b` depending on the side of the lcs, this is because a match will happen with one of those in the their current index
-      // and a node in the opposite side that may be in another index
-      //
-      // A side:
-      // 1 2 3
-      // ^ cursor here
-      //
-      // B side:
-      // 3 2 1
-      //     ^ matching with this one
+      // In case we obtain a sequence of length 1, we will only create a move if that single node can be matched alone.
+      // If the move isn't created then we report them as addition/removal
       if (lcs.bestSequence === 1 && !a.canBeMatchedAlone) {
         iterA.mark(a.index, ChangeType.deletion);
         iterB.mark(b.index, ChangeType.addition);
@@ -299,12 +289,10 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSRe
   // 1- Take best overall sequence
   let lcs = getLCS(startNode.index, candidateOppositeSide, iterA, iterB);
 
-  // 2- Find best subsequence in the LCS, excluding the first node since we know that result
-
   const start = lcs.indexB;
   const end = start + lcs.bestSequence;
 
-  // Perform a match for every sub sequence, give "1 2 3", get the best match for "1", "2", "3", then pick the best
+  // 2- Perform a match for every sub sequence, given "1 2 3", get the best match for "1", "2", "3", then pick the best
   for (const i of range(start, end)) {
     const node = iterB.peek(i);
     assert(node);
@@ -393,7 +381,6 @@ function findBestMatchWithZigZag(iterA: Iterator, iterB: Iterator, startNode: No
   let _sequence = [startNode];
 
   while (true) {
-    // TODO-NOW: Optimize first run since we know the result
     const newResult = process(_iterOne, _iterTwo, _sequence);
 
     if (!newResult) {

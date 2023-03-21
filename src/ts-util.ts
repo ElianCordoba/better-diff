@@ -39,6 +39,7 @@ export function getNodesArray(source: string) {
     const lineNumberStart = getLineNumber(sourceFile, start);
     const lineNumberEnd = getLineNumber(sourceFile, node.end);
 
+    // TODO: This was disabled because it was too expensive, enable when we work on the code-alignment algo again
     // const leadingTriviaHasNewLine = node.getFullText().split("\n").length > 1;
     const triviaLinesAbove = 0; //leadingTriviaHasNewLine ? getTriviaLinesAbove(source, lineNumberStart) : 0;
 
