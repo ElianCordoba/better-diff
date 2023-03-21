@@ -31,7 +31,7 @@ export class NodeMatchingStack {
   }
 }
 
-export function getSequence(
+export function getSequenceSingleDirection(
   iterA: Iterator,
   iterB: Iterator,
   indexA: number,
@@ -85,6 +85,17 @@ export function getSequence(
   }
 }
 
+export function getSequenceBothDirections(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number) {
+  const backwardsPass = getSequenceSingleDirection(iterA, iterB, indexA, indexB, SequenceDirection.Backward);
+  const forwardPass = getSequenceSingleDirection(iterA, iterB, backwardsPass.indexA, backwardsPass.indexB, SequenceDirection.Forward);
+
+  return {
+    indexA: backwardsPass.indexA,
+    indexB: backwardsPass.indexB,
+    bestSequence: forwardPass.bestSequence,
+  };
+}
+
 export interface LCSResult {
   changes?: Change[];
   bestSequence: number;
@@ -99,7 +110,7 @@ export enum SequenceDirection {
 
 // Given a node (based on it's index) and one or more candidates nodes on the opposite side, evaluate all the possibilities and return the best result and index of it
 export function getLCS(indexOfWanted: number, candidates: number[], iterA: Iterator, iterB: Iterator, bothDirections = false): LCSResult {
-  const fn = bothDirections ? getSequenceBothDirections : getSequence;
+  const fn = bothDirections ? getSequenceBothDirections : getSequenceSingleDirection;
 
   let bestSequence = 0;
   let indexA = 0;
@@ -121,15 +132,4 @@ export function getLCS(indexOfWanted: number, candidates: number[], iterA: Itera
   assert(bestSequence !== 0, "LCS resulted in 0");
 
   return { bestSequence, indexA, indexB };
-}
-
-export function getSequenceBothDirections(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number) {
-  const backwardsPass = getSequence(iterA, iterB, indexA, indexB, SequenceDirection.Backward);
-  const forwardPass = getSequence(iterA, iterB, backwardsPass.indexA, backwardsPass.indexB, SequenceDirection.Forward);
-
-  return {
-    indexA: backwardsPass.indexA,
-    indexB: backwardsPass.indexB,
-    bestSequence: forwardPass.bestSequence,
-  };
 }
