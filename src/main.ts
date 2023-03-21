@@ -1,12 +1,13 @@
 import { ChangeType, Side } from "./types";
-import { ClosingNodeGroup, equals, getClosingNodeGroup, mergeRanges, normalize, range } from "./utils";
+import { equals, mergeRanges, normalize, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change, compactChanges } from "./change";
 import { getContext } from "./index";
 import { Node } from "./node";
 import { assert } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
-import { getLCS, LCSResult, NodeMatchingStack } from "./sequence";
+import { getLCS, LCSResult } from "./sequence";
+import { OpenCloseVerifier } from "./openCloseVerifier";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -127,7 +128,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   const { alignmentTable } = getContext();
   const localAlignmentTable = new AlignmentTable();
 
-  const nodesWithClosingVerifier: Map<ClosingNodeGroup, NodeMatchingStack> = new Map();
+  const verifier = new OpenCloseVerifier(iterA, iterB);
 
   let i = 0;
   while (i < lcs) {
@@ -143,15 +144,8 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
     assert(equals(a!, b!), `Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
 
-    // If the node is either opening or closing, we need to track it to see if it has all opening nodes are closed
-    if (a.isOpeningNode || a.isClosingNode) {
-      const nodeGroup = getClosingNodeGroup(a);
-      if (nodesWithClosingVerifier.has(nodeGroup)) {
-        nodesWithClosingVerifier.get(nodeGroup)!.add(a);
-      } else {
-        nodesWithClosingVerifier.set(nodeGroup, new NodeMatchingStack(a));
-      }
-    }
+    // Track node to ensure all open node are propertly matched with the correspodning closing nodes
+    verifier.track(a);
 
     /// Alignment: Move ///
 
@@ -242,35 +236,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     changes.push(change);
   }
 
-  // After matching the sequence we need to verify all the kind of nodes that required matching are matched
-  for (const stack of nodesWithClosingVerifier.values()) {
-    // An empty stack means that that all open node got their respective closing node
-    if (!stack.isEmpty()) {
-      // For each kind, for example paren, brace, etc
-      for (const unmatchedOpeningNode of stack.values) {
-        const closingNodeForA = iterA.findClosingNode(unmatchedOpeningNode, indexA);
-        assert(closingNodeForA, `Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on A side`);
-
-        const closingNodeForB = iterB.findClosingNode(unmatchedOpeningNode, indexB);
-        assert(closingNodeForB, `Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on B side`);
-
-        // We know for sure that the closing nodes move, otherwise we would have seen them in the LCS matching
-        iterA.mark(closingNodeForA.index, ChangeType.move);
-        iterB.mark(closingNodeForB.index, ChangeType.move);
-
-        // Similar to the LCS matching, only report moves if the nodes did in fact move
-        if (didChange) {
-          changes.push(
-            new Change(
-              ChangeType.move,
-              closingNodeForA,
-              closingNodeForB,
-            ),
-          );
-        }
-      }
-    }
-  }
+  changes.push(...verifier.verify(didChange, indexA, indexB));
 
   return changes;
 }

@@ -3,7 +3,7 @@ import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
 import { ChangeType, Side } from "./types";
 import { getContext } from ".";
-import { NodeMatchingStack } from "./sequence";
+import { OpenCloseStack } from "./openCloseVerifier";
 import { getNodesArray } from "./ts-util";
 
 interface IteratorOptions {
@@ -42,7 +42,7 @@ export class Iterator {
   // Find the first closing node that matches the wanted kind
   findClosingNode(openNode: Node, startFrom = 0): Node | undefined {
     const closingNodeKind = getClosingNode(openNode);
-    const stack = new NodeMatchingStack(openNode);
+    const stack = new OpenCloseStack(openNode);
 
     let i = startFrom;
 
