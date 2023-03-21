@@ -41,6 +41,9 @@ export function getSequence(
   const stepFn = direction === SequenceDirection.Forward ? (x: number) => x + 1 : (x: number) => x - 1
   let bestSequence = 0;
 
+  let ogIndexA = indexA
+  let ogIndexB = indexB
+
   while (true) {
     const nextA = iterA.peek(indexA);
 
@@ -66,8 +69,8 @@ export function getSequence(
 
   return {
     bestSequence,
-    indexA: indexA - bestSequence,
-    indexB: indexB - bestSequence,
+    indexA: ogIndexA,
+    indexB: ogIndexB,
   };
 }
 
@@ -86,13 +89,15 @@ export enum SequenceDirection {
 // Given a node (based on it's index) and one or more candidates nodes on the opposite side, evaluate all the possibilities and return the best result and index of it
 export function getLCS(indexOfWanted: number, candidates: number[], iterA: Iterator, iterB: Iterator, bothDirections = false): LCSResult {
   const fn = bothDirections ? getSequenceDual : getSequence
+  const dummy = getSequenceBothDirections
+  // const fn = bothDirections ? getSequenceBothDirections : getSequence
 
   let bestSequence = 0;
   let indexA = 0;
   let indexB = 0;
 
   for (const candidateNodeIndex of candidates) {
-    const newLCS = fn(iterA, iterB, indexOfWanted, candidateNodeIndex, SequenceDirection.Forward);
+    const newLCS = fn(iterA, iterB, indexOfWanted, candidateNodeIndex);
 
     // Store the new result if it's better that the previous one based on the length of the sequence
     if (
@@ -109,7 +114,19 @@ export function getLCS(indexOfWanted: number, candidates: number[], iterA: Itera
   return { bestSequence, indexA, indexB };
 }
 
+export function getSequenceBothDirections(iterA: Iterator,
+  iterB: Iterator,
+  indexA: number,
+  indexB: number,) {
+  const backwardsPass = getSequence(iterA, iterB, indexA, indexB, SequenceDirection.Backward)
+  const forwardPass = getSequence(iterA, iterB, backwardsPass.indexA, backwardsPass.indexB, SequenceDirection.Forward)
 
+  return {
+    indexA: backwardsPass.indexA,
+    indexB: backwardsPass.indexB,
+    bestSequence: forwardPass.bestSequence,
+  };
+}
 
 export function getSequenceDual(
   iterA: Iterator,
