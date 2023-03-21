@@ -51,12 +51,12 @@ export class Iterator {
       i++;
 
       if (i > this.textNodes.length) {
-        break
+        break;
       }
 
       // Means that the node was matched
       if (!next) {
-        continue
+        continue;
       }
 
       // Not a node we are interested in, skipping
@@ -143,7 +143,7 @@ export class Iterator {
         continue;
       }
 
-      candidates.push(node.index)
+      candidates.push(node.index);
     }
 
     return candidates;

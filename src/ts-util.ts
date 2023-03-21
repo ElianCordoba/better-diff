@@ -40,7 +40,7 @@ export function getNodesArray(source: string) {
     const lineNumberEnd = getLineNumber(sourceFile, node.end);
 
     // const leadingTriviaHasNewLine = node.getFullText().split("\n").length > 1;
-    const triviaLinesAbove = 0//leadingTriviaHasNewLine ? getTriviaLinesAbove(source, lineNumberStart) : 0;
+    const triviaLinesAbove = 0; //leadingTriviaHasNewLine ? getTriviaLinesAbove(source, lineNumberStart) : 0;
 
     const newNode = new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove });
     newNode.expressionNumber = depth;

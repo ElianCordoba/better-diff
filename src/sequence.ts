@@ -36,13 +36,10 @@ export function getSequence(
   iterB: Iterator,
   indexA: number,
   indexB: number,
-  direction = SequenceDirection.Forward
+  direction = SequenceDirection.Forward,
 ): LCSResult {
-  const stepFn = direction === SequenceDirection.Forward ? (x: number) => x + 1 : (x: number) => x - 1
+  const stepFn = direction === SequenceDirection.Forward ? (x: number) => x + 1 : (x: number) => x - 1;
   let bestSequence = 0;
-
-  let ogIndexA = indexA
-  let ogIndexB = indexB
 
   while (true) {
     const nextA = iterA.peek(indexA);
@@ -67,15 +64,29 @@ export function getSequence(
     bestSequence++;
   }
 
-  return {
-    bestSequence,
-    indexA: ogIndexA,
-    indexB: ogIndexB,
-  };
+  // During the iteration, both indexes are updated. If we start with indices 3 and 5 and obtain a sequence of length 2, the resulting indices will be:
+  // - 1 and 3 when going backward
+  // - 5 and 7 when going forward
+  //
+  // For the forward direction, we need to return the original indices, so we subtract the sequence length from the updated indices.
+  // For the backward direction, we can return the updated indices, but we need to add 1 because when the iteration breaks, it has already performed an extra step.
+  if (direction === SequenceDirection.Forward) {
+    return {
+      bestSequence,
+      indexA: indexA - bestSequence,
+      indexB: indexB - bestSequence,
+    };
+  } else {
+    return {
+      bestSequence,
+      indexA: indexA + 1,
+      indexB: indexB + 1,
+    };
+  }
 }
 
 export interface LCSResult {
-  changes?: Change[]
+  changes?: Change[];
   bestSequence: number;
   indexA: number;
   indexB: number;
@@ -83,14 +94,12 @@ export interface LCSResult {
 
 export enum SequenceDirection {
   Forward = "Forward",
-  Backward = "Backward"
+  Backward = "Backward",
 }
 
 // Given a node (based on it's index) and one or more candidates nodes on the opposite side, evaluate all the possibilities and return the best result and index of it
 export function getLCS(indexOfWanted: number, candidates: number[], iterA: Iterator, iterB: Iterator, bothDirections = false): LCSResult {
-  const fn = bothDirections ? getSequenceDual : getSequence
-  const dummy = getSequenceBothDirections
-  // const fn = bothDirections ? getSequenceBothDirections : getSequence
+  const fn = bothDirections ? getSequenceBothDirections : getSequence;
 
   let bestSequence = 0;
   let indexA = 0;
@@ -114,72 +123,9 @@ export function getLCS(indexOfWanted: number, candidates: number[], iterA: Itera
   return { bestSequence, indexA, indexB };
 }
 
-export function getSequenceBothDirections(iterA: Iterator,
-  iterB: Iterator,
-  indexA: number,
-  indexB: number,) {
-  const backwardsPass = getSequence(iterA, iterB, indexA, indexB, SequenceDirection.Backward)
-  const forwardPass = getSequence(iterA, iterB, backwardsPass.indexA, backwardsPass.indexB, SequenceDirection.Forward)
-
-  return {
-    indexA: backwardsPass.indexA,
-    indexB: backwardsPass.indexB,
-    bestSequence: forwardPass.bestSequence,
-  };
-}
-
-export function getSequenceDual(
-  iterA: Iterator,
-  iterB: Iterator,
-  indexA: number,
-  indexB: number,
-): LCSResult {
-  function checkSequenceInDirection(
-    _indexA: number,
-    _indexB: number,
-    stepFn: (n: number) => number,
-  ): LCSResult {
-    let bestSequence = 0;
-
-    let candidateIndexA = _indexA;
-    let candidateIndexB = _indexB;
-
-    while (true) {
-      const nextA = iterA.peek(_indexA);
-
-      if (!nextA) {
-        break;
-      }
-
-      const nextB = iterB.peek(_indexB);
-
-      if (!nextB) {
-        break;
-      }
-
-      if (!equals(nextA, nextB)) {
-        break;
-      }
-
-      // Store indexes so that if the next iteration breaks early we don't end up with one step extra
-      candidateIndexA = _indexA;
-      candidateIndexB = _indexB;
-
-      _indexA = stepFn(_indexA);
-      _indexB = stepFn(_indexB);
-
-      bestSequence++;
-    }
-
-    return {
-      bestSequence,
-      indexA: candidateIndexA,
-      indexB: candidateIndexB,
-    };
-  }
-
-  const backwardsPass = checkSequenceInDirection(indexA, indexB, (x) => x - 1);
-  const forwardPass = checkSequenceInDirection(backwardsPass.indexA, backwardsPass.indexB, (x) => x + 1);
+export function getSequenceBothDirections(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number) {
+  const backwardsPass = getSequence(iterA, iterB, indexA, indexB, SequenceDirection.Backward);
+  const forwardPass = getSequence(iterA, iterB, backwardsPass.indexA, backwardsPass.indexB, SequenceDirection.Forward);
 
   return {
     indexA: backwardsPass.indexA,
