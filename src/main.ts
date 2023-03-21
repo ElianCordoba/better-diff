@@ -304,15 +304,10 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSRe
   const start = lcs.indexB
   const end = start + lcs.bestSequence
 
+  // Perform a match for every sub sequence, give "1 2 3", get the best match for "1", "2", "3", then pick the best
   for (const i of range(start, end)) {
     const node = iterB.peek(i)
     assert(node)
-
-    // TODO-NOW
-    // const lcsForward = findBestMatchWithZigZag(iterB, iterA, node, false)
-    // const lcsForwardBackward = findBestMatchWithZigZag(iterB, iterA, node, true)
-
-    // const candidateLCS = lcsForward.bestSequence > lcsForwardBackward.bestSequence ? lcsForward : lcsForwardBackward
 
     // The Zigzag starts from B to A, intentionally. The rationale behind this is as follows:
     // The algorithm processes a sequence (beginning with a single node) and searches for it on the opposite side. If we were to start from A to B,
@@ -321,7 +316,26 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSRe
     // For instance, if the current node is "(" on side A, we will examine all other alternatives on that side, like
     // "if (" or "console.log(", among others. Then, we select the best match based on the LCS.
     // Refer to the test "Properly match closing paren 3 inverse" for more information.
-    const candidateLCS = findBestMatchWithZigZag(iterB, iterA, node, true)
+    // const candidateLCS = findBestMatchWithZigZag(iterB, iterA, node, true)
+    const lcsForward = findBestMatchWithZigZag(iterB, iterA, node, false)
+    const lcsForwardBackward = findBestMatchWithZigZag(iterB, iterA, node, true)
+
+    // The rationale for performing two passes (forward and backward-forward) is somewhat intricate, but can be summarized as follows:
+    // - Moving forward only might cause us to miss better matches when starting ahead of an optimal sequence:
+    //
+    // console.log()
+    // ^ cursor here
+    //
+    // log(console.log())
+    // ^ cursor here
+    //
+    // Forward-only LCS will select the sequence "()" instead of the preferable "console.log()".
+    //
+    // - Using both backward and forward passes avoids a situation where subsequence matching converges to the same result.
+    // For example, given "1 2 3", if there is a "1 2 3" on the other side as well, all subsequences "1", "2", and "3" will lead to the same match.
+    // However, we might lose a better match with a suboptimal start. Under "2", a superior match could be concealed within a zigzag iteration.
+    // For a real-world example, refer to the test "Test Recursive matching 6 inverse".
+    const candidateLCS = lcsForward.bestSequence > lcsForwardBackward.bestSequence ? lcsForward : lcsForwardBackward
 
     if (candidateLCS.bestSequence > lcs.bestSequence) {
       lcs = candidateLCS
@@ -330,7 +344,6 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSRe
 
   // 3- Before exiting do a backward pass to the lcs
   return checkLCSBackwards(iterA, iterB, lcs)
-
 }
 
 // This function performs a zigzag search between A and B to find the best match for a given sequence.
