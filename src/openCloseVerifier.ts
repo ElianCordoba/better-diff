@@ -10,9 +10,6 @@ export class OpenCloseStack {
   values: Node[] = [];
 
   constructor(openNode: Node) {
-    // if (!openNode.isOpeningNode) {
-    //   return (this.allowedKind = [] as any)
-    // }
     assert(openNode.isOpeningNode, `Expected a opening node when initializing a node-matching stack but found a ${openNode.prettyKind}`);
 
     const closeNodeKind = getClosingNode(openNode);

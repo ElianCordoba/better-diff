@@ -61,6 +61,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
           new Change(ChangeType.deletion, a, b),
         );
 
+        // We need to ensure that we the closing one is matched as well. Also, a == b, so no need to check if b is an open node
         if (a.isOpeningNode) {
           changes.push(
             ...OpenCloseVerifier.verifySingle(ChangeType.deletion, a, iterA, iterB),
@@ -152,7 +153,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
     assert(equals(a, b), `Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
 
-    // Track node to ensure all open node are property matched with the corresponding closing nodes
+    // Used for the open-close node correctness
     verifier.track(a);
 
     /// Alignment: Move ///
@@ -230,7 +231,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     );
   }
 
-  // Verify that any open node has the corresponding closing node, otherwise find it, mark it and push a change
+  // Ensure open-close node correctness, may push a change if nodes are missing
   changes.push(...verifier.verify(ChangeType.move, trackChange, indexA, indexB));
 
   return changes;
