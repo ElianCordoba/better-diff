@@ -100,7 +100,7 @@ export class OpenCloseVerifier {
                 changes.push(new Change(ChangeType.deletion, closingNodeForA, undefined))
               } else {
                 this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-                changes.push(new Change(ChangeType.deletion, undefined, closingNodeForB))
+                changes.push(new Change(ChangeType.addition, undefined, closingNodeForB))
               }
             }
 

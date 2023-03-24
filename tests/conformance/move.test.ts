@@ -176,9 +176,7 @@ describe("Properly report lines added", () => {
     `
   })
 
-  // TODO: Unhandled case here
   test({
-    only: 'standard',
     name: "Properly match closing paren",
     a: `
       console.log()
@@ -339,8 +337,38 @@ describe("Properly report lines added", () => {
     `
   })
 
-  // Testing single node matching
+  // Test closing the paren on a move with syntax error
+  test({
+    name: "Properly match closing paren 8",
+    a: `
+      function asd() {
+        123
+        123
+        x
+      }
+    `,
+    b: `
+      function asd() {
+        123
+        123
+        Z
+    `,
+    expA: `
+      function asd() {
+        123
+        123
+        ➖x➖
+      ➖}➖
+    `,
+    expB: `
+      function asd() {
+        123
+        123
+        ➕Z➕
+    `
+  })
 
+  // Testing single node matching
   test({
     name: "Noise reduction",
     a: `
