@@ -64,7 +64,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         if (a.isOpeningNode) {
           changes.push(
             ...OpenCloseVerifier.verifySingle(ChangeType.deletion, a, iterA, iterB),
-            ...OpenCloseVerifier.verifySingle(ChangeType.addition, b, iterA, iterB)
+            ...OpenCloseVerifier.verifySingle(ChangeType.addition, b, iterA, iterB),
           );
         }
 

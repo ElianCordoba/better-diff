@@ -100,7 +100,7 @@ function getSourceFile(source: string): SourceFile {
   );
 }
 
-function getTriviaLinesAbove(source: string, startAt: number) {
+function _getTriviaLinesAbove(source: string, startAt: number) {
   const lines = getArrayOrLines(source);
 
   // -1 because line numbers are 1-indexed

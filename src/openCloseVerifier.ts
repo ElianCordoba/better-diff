@@ -59,7 +59,6 @@ export class OpenCloseVerifier {
       if (!stack.isEmpty()) {
         // For each kind, for example paren, brace, etc
         for (const unmatchedOpeningNode of stack.values) {
-
           // First we need to try find the closing nodes, which is not guaranteed
           let closingNodeForA: Node | undefined;
           let closingNodeForB: Node | undefined;
@@ -69,7 +68,7 @@ export class OpenCloseVerifier {
           }
 
           if (changeType === ChangeType.addition || changeType === ChangeType.move) {
-            closingNodeForB = this.iterB.findClosingNode(unmatchedOpeningNode, indexB)
+            closingNodeForB = this.iterB.findClosingNode(unmatchedOpeningNode, indexB);
           }
 
           // Now we diverge depending if we the nodes where removed / added or moved
@@ -90,31 +89,30 @@ export class OpenCloseVerifier {
                 );
               }
             } else {
-              // If one of the nodes is missing, it's a syntax error, the is a open node unclosed. 
+              // If one of the nodes is missing, it's a syntax error, the is a open node unclosed.
               // We will still continue to processing the code by marking the found node as added / removed
 
-              assert(closingNodeForA || closingNodeForB, "Neither A or B where found during Open/Close reconciliation")
+              assert(closingNodeForA || closingNodeForB, "Neither A or B where found during Open/Close reconciliation");
 
               if (closingNodeForA) {
                 this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
-                changes.push(new Change(ChangeType.deletion, closingNodeForA, undefined))
+                changes.push(new Change(ChangeType.deletion, closingNodeForA, undefined));
               } else {
                 this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-                changes.push(new Change(ChangeType.addition, undefined, closingNodeForB))
+                changes.push(new Change(ChangeType.addition, undefined, closingNodeForB));
               }
             }
-
           } else {
             // We are in a addition / deletion
 
             if (closingNodeForA) {
               this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
-              changes.push(new Change(ChangeType.deletion, closingNodeForA, undefined))
+              changes.push(new Change(ChangeType.deletion, closingNodeForA, undefined));
             }
 
             if (closingNodeForB) {
               this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-              changes.push(new Change(ChangeType.deletion, undefined, closingNodeForB))
+              changes.push(new Change(ChangeType.deletion, undefined, closingNodeForB));
             }
           }
         }
