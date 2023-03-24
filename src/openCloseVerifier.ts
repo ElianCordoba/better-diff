@@ -51,7 +51,7 @@ export class OpenCloseVerifier {
     }
   }
 
-  verify(changeType: ChangeType, didChange: boolean, indexA?: number, indexB?: number) {
+  verify(changeType: ChangeType, trackChange: boolean, indexA?: number, indexB?: number) {
     const changes: Change[] = [];
 
     for (const unmatchedOpeningNode of this.forEachRemainingNode()) {
@@ -88,7 +88,7 @@ export class OpenCloseVerifier {
         this.iterA.mark(closingNodeForA.index, ChangeType.move);
         this.iterB.mark(closingNodeForB.index, ChangeType.move);
 
-        if (didChange) {
+        if (trackChange) {
           changes.push(
             new Change(
               changeType,

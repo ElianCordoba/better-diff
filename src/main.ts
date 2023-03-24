@@ -216,9 +216,9 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   }
 
   // If the nodes are not in the same position then it's a move
-  const didChange = a.index !== b.index;
+  const trackChange = a.index !== b.index;
 
-  if (didChange) {
+  if (trackChange) {
     changes.push(
       new Change(
         ChangeType.move,
@@ -231,7 +231,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   }
 
   // Verify that any open node has the corresponding closing node, otherwise find it, mark it and push a change
-  changes.push(...verifier.verify(ChangeType.move, didChange, indexA, indexB));
+  changes.push(...verifier.verify(ChangeType.move, trackChange, indexA, indexB));
 
   return changes;
 }
