@@ -9,9 +9,9 @@ export interface DiffResult {
 }
 
 export enum ChangeType {
-  addition = "addition",
-  deletion = "removal",
-  move = "move",
+  addition = 1 << 1,
+  deletion = 1 << 2,
+  move = 1 << 3,
 }
 
 export interface Range {

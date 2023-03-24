@@ -230,6 +230,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     );
   }
 
+  // Verify that any open node has the corresponding closing node, otherwise find it, mark it and push a change
   changes.push(...verifier.verify(ChangeType.move, didChange, indexA, indexB));
 
   return changes;

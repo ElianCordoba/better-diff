@@ -53,10 +53,10 @@ export class OpenCloseVerifier {
 
   verify(changeType: ChangeType, didChange: boolean, indexA?: number, indexB?: number) {
     const changes: Change[] = [];
-    // After matching the sequence we need to verify all the kind of nodes that required matching are matched
-    for (const stack of this.nodesToVerify.values()) {
-      // An empty stack means that that all open node got their respective closing node
-      if (!stack.isEmpty()) {
+
+    for (const unmatchedOpeningNode of this.forEachRemainingNode()) {
+      // First we need to try find the closing nodes, which is not guaranteed
+
         // For each kind, for example paren, brace, etc
         for (const unmatchedOpeningNode of stack.values) {
           // First we need to try find the closing nodes, which is not guaranteed
@@ -67,54 +67,52 @@ export class OpenCloseVerifier {
             closingNodeForA = this.iterA.findClosingNode(unmatchedOpeningNode, indexA);
           }
 
-          if (changeType === ChangeType.addition || changeType === ChangeType.move) {
-            closingNodeForB = this.iterB.findClosingNode(unmatchedOpeningNode, indexB);
+      if (changeType === ChangeType.addition || changeType === ChangeType.move) {
+        closingNodeForB = this.iterB.findClosingNode(unmatchedOpeningNode, indexB);
+      }
+
+      // Now we diverge depending if we the nodes where removed / added or moved
+
+      if (changeType === ChangeType.move) {
+        // If we are in a move, there are two path, the happy one where we find both nodes
+        if (closingNodeForA && closingNodeForB) {
+          this.iterA.mark(closingNodeForA.index, ChangeType.move);
+          this.iterB.mark(closingNodeForB.index, ChangeType.move);
+
+          if (didChange) {
+            changes.push(
+              new Change(
+                changeType,
+                closingNodeForA,
+                closingNodeForB,
+              ),
+            );
           }
+        } else {
+          // If one of the nodes is missing, it's a syntax error, the is a open node unclosed.
+          // We will still continue to processing the code by marking the found node as added / removed
 
-          // Now we diverge depending if we the nodes where removed / added or moved
+          assert(closingNodeForA || closingNodeForB, "Neither A or B where found during Open/Close reconciliation");
 
-          if (changeType === ChangeType.move) {
-            // If we are in a move, there are two path, the happy one where we find both nodes
-            if (closingNodeForA && closingNodeForB) {
-              this.iterA.mark(closingNodeForA.index, ChangeType.move);
-              this.iterB.mark(closingNodeForB.index, ChangeType.move);
-
-              if (didChange) {
-                changes.push(
-                  new Change(
-                    changeType,
-                    closingNodeForA,
-                    closingNodeForB,
-                  ),
-                );
-              }
-            } else {
-              // If one of the nodes is missing, it's a syntax error, the is a open node unclosed.
-              // We will still continue to processing the code by marking the found node as added / removed
-
-              assert(closingNodeForA || closingNodeForB, "Neither A or B where found during Open/Close reconciliation");
-
-              if (closingNodeForA) {
-                this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
-                changes.push(new Change(ChangeType.deletion, closingNodeForA, undefined));
-              } else {
-                this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-                changes.push(new Change(ChangeType.addition, undefined, closingNodeForB));
-              }
-            }
+          if (closingNodeForA) {
+            this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
+            changes.push(new Change(ChangeType.deletion, closingNodeForA, undefined));
           } else {
-            // We are in a addition / deletion
-
-            if (closingNodeForA) {
-              this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
-              changes.push(new Change(ChangeType.deletion, closingNodeForA, undefined));
-            }
-
-            if (closingNodeForB) {
-              this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-              changes.push(new Change(ChangeType.deletion, undefined, closingNodeForB));
-            }
+            this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
+            changes.push(new Change(ChangeType.addition, undefined, closingNodeForB));
           }
+        }
+      } else {
+        // We are in a addition / deletion
+
+        if (closingNodeForA) {
+          this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
+          changes.push(new Change(ChangeType.deletion, closingNodeForA, undefined));
+        }
+
+        if (closingNodeForB) {
+          this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
+          changes.push(new Change(ChangeType.deletion, undefined, closingNodeForB));
         }
       }
     }
@@ -127,5 +125,17 @@ export class OpenCloseVerifier {
     nodes.track(node);
 
     return nodes.verify(changeType, true);
+  }
+
+  *forEachRemainingNode() {
+    // For each open node kind (paren, brace, etc)...
+    for (const stack of this.nodesToVerify.values()) {
+      // If the stack isn't empty, then there are unmatched nodes
+      if (!stack.isEmpty()) {
+        for (const unmatchedOpeningNode of stack.values) {
+          yield unmatchedOpeningNode;
+        }
+      }
+    }
   }
 }
