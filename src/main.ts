@@ -80,8 +80,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
   loop();
 
   // TODO: Once we improve compaction to be on-demand, we will be able to remove this
-  const deletions = changes.filter((x) => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start! - b.rangeA?.start!);
-  const additions = changes.filter((x) => x.type === ChangeType.addition).sort((a, b) => a.rangeB?.start! - b.rangeB?.start!);
+  const deletions = changes.filter((x) => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start - b.rangeA?.start);
+  const additions = changes.filter((x) => x.type === ChangeType.addition).sort((a, b) => a.rangeB?.start - b.rangeB?.start);
   const moves = changes.filter((x) => x.type === ChangeType.move);
 
   return compactChanges([...additions, ...deletions, ...moves]);
@@ -148,9 +148,9 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     indexA++;
     indexB++;
 
-    assert(equals(a!, b!), `Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
+    assert(equals(a, b), `Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
 
-    // Track node to ensure all open node are propertly matched with the correspodning closing nodes
+    // Track node to ensure all open node are property matched with the corresponding closing nodes
     verifier.track(a);
 
     /// Alignment: Move ///
@@ -214,14 +214,14 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   }
 
   // If the nodes are not in the same position then it's a move
-  const didChange = a!.index !== b!.index;
+  const didChange = a.index !== b.index;
 
   if (didChange) {
     changes.push(
       new Change(
         ChangeType.move,
-        a!,
-        b!,
+        a,
+        b,
         rangeA,
         rangeB,
       ),
