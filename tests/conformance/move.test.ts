@@ -314,6 +314,31 @@ describe("Properly report lines added", () => {
     `
   })
 
+  // Test closing the paren on a deletion / addition on the "verifySingle"
+  test({
+    name: "Properly match closing paren 7",
+    a: `
+      function* range() {
+        while (i < end - 1) {
+          yield i;
+        }
+      }
+    `,
+    b: `
+      console.log(1)
+    `,
+    expA: `
+      ➖function*➖ ➖range()➖ ➖{➖
+        ➖while➖ ➖(i➖ ➖<➖ ➖end➖ ➖-➖ 🔀1⏹️➖)➖ ➖{➖
+          ➖yield➖ ➖i;➖
+        ➖}➖
+      ➖}➖
+    `,
+    expB: `
+      ➕console.log(➕🔀1⏹️➕)➕
+    `
+  })
+
   // Testing single node matching
 
   test({
