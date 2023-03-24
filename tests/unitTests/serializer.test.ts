@@ -1,9 +1,7 @@
 import { expect, test } from "vitest";
 import { OutputType, getDiff } from "../../src";
 
-// TODO: Enable. Disabled due now we sort changes
-
-test.skip('Case 1', () => {
+test('Case 1', () => {
   const a = `
     console.log() && 3
   `
@@ -13,117 +11,117 @@ test.skip('Case 1', () => {
   `
 
   const expected = {
-    "chunksA": [
+    chunksA: [
       [
         {
-          "text": "\n",
-          "type": "default",
-          "moveNumber": ""
-        }
+          text: "\n",
+          type: "default",
+          moveNumber: "",
+        },
       ],
       [
         {
-          "text": "    ",
-          "type": "default",
-          "moveNumber": ""
+          text: "    ",
+          type: "default",
+          moveNumber: "",
         },
         {
-          "text": "console.log(",
-          "type": "move",
-          "moveNumber": "4"
+          text: "console.log(",
+          type: "move",
+          moveNumber: "4",
         },
         {
-          "text": ")",
-          "type": "move",
-          "moveNumber": "5"
+          text: ")",
+          type: "move",
+          moveNumber: "5",
         },
         {
-          "text": " ",
-          "type": "default",
-          "moveNumber": ""
+          text: " ",
+          type: "default",
+          moveNumber: "",
         },
         {
-          "text": "&&",
-          "type": "deletion",
-          "moveNumber": ""
+          text: "&&",
+          type: "deletion",
+          moveNumber: "",
         },
         {
-          "text": " ",
-          "type": "default",
-          "moveNumber": ""
+          text: " ",
+          type: "default",
+          moveNumber: "",
         },
         {
-          "text": "3",
-          "type": "deletion",
-          "moveNumber": ""
+          text: "3",
+          type: "deletion",
+          moveNumber: "",
         },
         {
-          "text": "\n",
-          "type": "default",
-          "moveNumber": ""
-        }
+          text: "\n",
+          type: "default",
+          moveNumber: "",
+        },
       ],
       [
         {
-          "text": "  ",
-          "type": "default",
-          "moveNumber": ""
-        }
-      ]
+          text: "  ",
+          type: "default",
+          moveNumber: "",
+        },
+      ],
     ],
-    "chunksB": [
+    chunksB: [
       [
         {
-          "text": "\n",
-          "type": "default",
-          "moveNumber": ""
-        }
+          text: "\n",
+          type: "default",
+          moveNumber: "",
+        },
       ],
       [
         {
-          "text": "    ",
-          "type": "default",
-          "moveNumber": ""
+          text: "    ",
+          type: "default",
+          moveNumber: "",
         },
         {
-          "text": "fn(",
-          "type": "addition",
-          "moveNumber": ""
+          text: "fn(",
+          type: "addition",
+          moveNumber: "",
         },
         {
-          "text": "console.log(",
-          "type": "move",
-          "moveNumber": "4"
+          text: "console.log(",
+          type: "move",
+          moveNumber: "4",
         },
         {
-          "text": "1",
-          "type": "addition",
-          "moveNumber": ""
+          text: "1",
+          type: "addition",
+          moveNumber: "",
         },
         {
-          "text": ")",
-          "type": "move",
-          "moveNumber": "5"
+          text: ")",
+          type: "move",
+          moveNumber: "5",
         },
         {
-          "text": ")",
-          "type": "addition",
-          "moveNumber": ""
+          text: ")",
+          type: "addition",
+          moveNumber: "",
         },
         {
-          "text": "\n",
-          "type": "default",
-          "moveNumber": ""
-        }
+          text: "\n",
+          type: "default",
+          moveNumber: "",
+        },
       ],
       [
         {
-          "text": "  ",
-          "type": "default",
-          "moveNumber": ""
-        }
-      ]
-    ]
+          text: "  ",
+          type: "default",
+          moveNumber: "",
+        },
+      ],
+    ],
   }
 
   const result = getDiff(a, b, { outputType: OutputType.serializedChunks })
@@ -131,8 +129,8 @@ test.skip('Case 1', () => {
   expect(result).toEqual(expected)
 })
 
-test.skip('Case 2', () => {
-  const a = ` 
+test('Case 2', () => {
+  const a = `
     if (true) {
       3; print
     }
@@ -145,190 +143,190 @@ test.skip('Case 2', () => {
   `
 
   const expected = {
-    "chunksA": [
+    chunksA: [
       [
         {
-          "text": " \n",
-          "type": "default",
-          "moveNumber": ""
-        }
+          text: "\n",
+          type: "default",
+          moveNumber: "",
+        },
       ],
       [
         {
-          "text": "    ",
-          "type": "default",
-          "moveNumber": ""
+          text: "    ",
+          type: "default",
+          moveNumber: "",
         },
         {
-          "text": "if",
-          "type": "deletion",
-          "moveNumber": ""
+          text: "if",
+          type: "deletion",
+          moveNumber: "",
         },
         {
-          "text": " ",
-          "type": "default",
-          "moveNumber": ""
+          text: " ",
+          type: "default",
+          moveNumber: "",
         },
         {
-          "text": "(true)",
-          "type": "deletion",
-          "moveNumber": ""
+          text: "(true)",
+          type: "deletion",
+          moveNumber: "",
         },
         {
-          "text": " ",
-          "type": "default",
-          "moveNumber": ""
+          text: " ",
+          type: "default",
+          moveNumber: "",
         },
         {
-          "text": "{",
-          "type": "deletion",
-          "moveNumber": ""
+          text: "{",
+          type: "deletion",
+          moveNumber: "",
         },
         {
-          "text": "\n",
-          "type": "default",
-          "moveNumber": ""
-        }
+          text: "\n",
+          type: "default",
+          moveNumber: "",
+        },
       ],
       [
         {
-          "text": "      ",
-          "type": "default",
-          "moveNumber": ""
+          text: "      ",
+          type: "default",
+          moveNumber: "",
         },
         {
-          "text": "3",
-          "type": "move",
-          "moveNumber": "4"
+          text: "3",
+          type: "move",
+          moveNumber: "6",
         },
         {
-          "text": ";",
-          "type": "move",
-          "moveNumber": "3"
+          text: ";",
+          type: "deletion",
+          moveNumber: "",
         },
         {
-          "text": " ",
-          "type": "default",
-          "moveNumber": ""
+          text: " ",
+          type: "default",
+          moveNumber: "",
         },
         {
-          "text": "print",
-          "type": "move",
-          "moveNumber": "2"
+          text: "print",
+          type: "move",
+          moveNumber: "8",
         },
         {
-          "text": "\n",
-          "type": "default",
-          "moveNumber": ""
-        }
+          text: "\n",
+          type: "default",
+          moveNumber: "",
+        },
       ],
       [
         {
-          "text": "    ",
-          "type": "default",
-          "moveNumber": ""
+          text: "    ",
+          type: "default",
+          moveNumber: "",
         },
         {
-          "text": "}",
-          "type": "deletion",
-          "moveNumber": ""
+          text: "}",
+          type: "deletion",
+          moveNumber: "",
         },
         {
-          "text": "\n",
-          "type": "default",
-          "moveNumber": ""
-        }
+          text: "\n",
+          type: "default",
+          moveNumber: "",
+        },
       ],
       [
         {
-          "text": "  ",
-          "type": "default",
-          "moveNumber": ""
-        }
-      ]
+          text: "  ",
+          type: "default",
+          moveNumber: "",
+        },
+      ],
     ],
-    "chunksB": [
+    chunksB: [
       [
         {
-          "text": "\n",
-          "type": "default",
-          "moveNumber": ""
-        }
+          text: "\n",
+          type: "default",
+          moveNumber: "",
+        },
       ],
       [
         {
-          "text": "    ",
-          "type": "default",
-          "moveNumber": ""
+          text: "    ",
+          type: "default",
+          moveNumber: "",
         },
         {
-          "text": "z",
-          "type": "addition",
-          "moveNumber": ""
+          text: "z",
+          type: "addition",
+          moveNumber: "",
         },
         {
-          "text": "\n",
-          "type": "default",
-          "moveNumber": ""
-        }
+          text: "\n",
+          type: "default",
+          moveNumber: "",
+        },
       ],
       [
         {
-          "text": "    ",
-          "type": "default",
-          "moveNumber": ""
+          text: "    ",
+          type: "default",
+          moveNumber: "",
         },
         {
-          "text": "print",
-          "type": "move",
-          "moveNumber": "2"
+          text: "print",
+          type: "move",
+          moveNumber: "8",
         },
         {
-          "text": ";",
-          "type": "move",
-          "moveNumber": "3"
+          text: ";",
+          type: "addition",
+          moveNumber: "",
         },
         {
-          "text": " ",
-          "type": "default",
-          "moveNumber": ""
+          text: " ",
+          type: "default",
+          moveNumber: "",
         },
         {
-          "text": "3",
-          "type": "move",
-          "moveNumber": "4"
+          text: "3",
+          type: "move",
+          moveNumber: "6",
         },
         {
-          "text": "\n",
-          "type": "default",
-          "moveNumber": ""
-        }
+          text: "\n",
+          type: "default",
+          moveNumber: "",
+        },
       ],
       [
         {
-          "text": "    ",
-          "type": "default",
-          "moveNumber": ""
+          text: "    ",
+          type: "default",
+          moveNumber: "",
         },
         {
-          "text": "x",
-          "type": "addition",
-          "moveNumber": ""
+          text: "x",
+          type: "addition",
+          moveNumber: "",
         },
         {
-          "text": "\n",
-          "type": "default",
-          "moveNumber": ""
-        }
+          text: "\n",
+          type: "default",
+          moveNumber: "",
+        },
       ],
       [
         {
-          "text": "  ",
-          "type": "default",
-          "moveNumber": ""
-        }
-      ]
-    ]
+          text: "  ",
+          type: "default",
+          moveNumber: "",
+        },
+      ],
+    ],
   }
 
   const result = getDiff(a, b, { outputType: OutputType.serializedChunks })
