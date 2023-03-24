@@ -10,6 +10,9 @@ export class OpenCloseStack {
   values: Node[] = [];
 
   constructor(openNode: Node) {
+    // if (!openNode.isOpeningNode) {
+    //   return (this.allowedKind = [] as any)
+    // }
     assert(openNode.isOpeningNode, `Expected a opening node when initializing a node-matching stack but found a ${openNode.prettyKind}`);
 
     const closeNodeKind = getClosingNode(openNode);
@@ -48,7 +51,7 @@ export class OpenCloseVerifier {
     }
   }
 
-  verify(didChange: boolean, indexA: number, indexB: number) {
+  verify(changeType: ChangeType, didChange: boolean, indexA?: number, indexB?: number) {
     const changes: Change[] = [];
     // After matching the sequence we need to verify all the kind of nodes that required matching are matched
     for (const stack of this.nodesToVerify.values()) {
@@ -56,21 +59,32 @@ export class OpenCloseVerifier {
       if (!stack.isEmpty()) {
         // For each kind, for example paren, brace, etc
         for (const unmatchedOpeningNode of stack.values) {
-          const closingNodeForA = this.iterA.findClosingNode(unmatchedOpeningNode, indexA);
-          assert(closingNodeForA, `Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on A side`);
+          let closingNodeForA: Node | undefined;
+          let closingNodeForB: Node | undefined;
 
-          const closingNodeForB = this.iterB.findClosingNode(unmatchedOpeningNode, indexB);
-          assert(closingNodeForB, `Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on B side`);
+          if (changeType === ChangeType.deletion || changeType === ChangeType.move) {
+            closingNodeForA = this.iterA.findClosingNode(unmatchedOpeningNode, indexA);
+            if (closingNodeForA) {
+              this.iterA.mark(closingNodeForA.index, changeType);
+            }
+            // assert(closingNodeForA, `Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on A side`);
 
-          // We know for sure that the closing nodes move, otherwise we would have seen them in the LCS matching
-          this.iterA.mark(closingNodeForA.index, ChangeType.move);
-          this.iterB.mark(closingNodeForB.index, ChangeType.move);
+          }
+
+          if (changeType === ChangeType.addition || changeType === ChangeType.move) {
+            closingNodeForB = this.iterB.findClosingNode(unmatchedOpeningNode, indexB);
+            if (closingNodeForB) {
+              this.iterB.mark(closingNodeForB.index, changeType);
+            }
+            // assert(closingNodeForB, `Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on B side`);
+
+          }
 
           // Similar to the LCS matching, only report moves if the nodes did in fact move
           if (didChange) {
             changes.push(
               new Change(
-                ChangeType.move,
+                changeType,
                 closingNodeForA,
                 closingNodeForB,
               ),
@@ -80,5 +94,13 @@ export class OpenCloseVerifier {
       }
     }
     return changes;
+  }
+
+  static verifySingle(changeType: ChangeType, node: Node, iterA: Iterator, iterB: Iterator) {
+    const nodes = new OpenCloseVerifier(iterA, iterB)
+
+    nodes.track(node)
+
+    return nodes.verify(changeType, true)
   }
 }

@@ -60,6 +60,12 @@ export function getChanges(codeA: string, codeB: string): Change[] {
           new Change(ChangeType.addition, a, b),
           new Change(ChangeType.deletion, a, b),
         );
+
+        if (a.isOpeningNode) {
+          changes.push(...OpenCloseVerifier.verifySingle(ChangeType.deletion, a, iterA, iterB))
+          changes.push(...OpenCloseVerifier.verifySingle(ChangeType.addition, b, iterA, iterB))
+        }
+
         continue;
       }
 
@@ -236,7 +242,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     changes.push(change);
   }
 
-  changes.push(...verifier.verify(didChange, indexA, indexB));
+  changes.push(...verifier.verify(ChangeType.move, didChange, indexA, indexB));
 
   return changes;
 }
@@ -249,6 +255,7 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSRe
     const changes = [new Change(ChangeType.deletion, startNode, startNode)];
     iterA.mark(startNode.index, ChangeType.deletion);
 
+    // TODO: Maybe add the open/close here?
     return { changes, indexA: -1, indexB: -1, bestSequence: 0 };
   }
 
