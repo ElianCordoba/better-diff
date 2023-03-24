@@ -57,19 +57,13 @@ export class OpenCloseVerifier {
     for (const unmatchedOpeningNode of this.forEachRemainingNode()) {
       // First we need to try find the closing nodes, which is not guaranteed
 
-        // For each kind, for example paren, brace, etc
-        for (const unmatchedOpeningNode of stack.values) {
-          // First we need to try find the closing nodes, which is not guaranteed
-          let closingNodeForA: Node | undefined;
-          let closingNodeForB: Node | undefined;
+      const delOrMove = ChangeType.deletion | ChangeType.move
+      const addOrMove = ChangeType.addition | ChangeType.move
 
-          if (changeType === ChangeType.deletion || changeType === ChangeType.move) {
-            closingNodeForA = this.iterA.findClosingNode(unmatchedOpeningNode, indexA);
-          }
+      // Only calculate when needed, A is involved in deletions, B in additions, moves require both
 
-      if (changeType === ChangeType.addition || changeType === ChangeType.move) {
-        closingNodeForB = this.iterB.findClosingNode(unmatchedOpeningNode, indexB);
-      }
+      const closingNodeForA = changeType & delOrMove ? this.iterA.findClosingNode(unmatchedOpeningNode, indexA) : undefined;
+      const closingNodeForB = changeType & addOrMove ? this.iterB.findClosingNode(unmatchedOpeningNode, indexB) : undefined
 
       // Now we diverge depending if we the nodes where removed / added or moved
 
