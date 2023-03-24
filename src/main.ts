@@ -62,8 +62,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         );
 
         if (a.isOpeningNode) {
-          changes.push(...OpenCloseVerifier.verifySingle(ChangeType.deletion, a, iterA, iterB))
-          changes.push(...OpenCloseVerifier.verifySingle(ChangeType.addition, b, iterA, iterB))
+          changes.push(...OpenCloseVerifier.verifySingle(ChangeType.deletion, a, iterA, iterB));
+          changes.push(...OpenCloseVerifier.verifySingle(ChangeType.addition, b, iterA, iterB));
         }
 
         continue;
@@ -217,13 +217,15 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   const didChange = a!.index !== b!.index;
 
   if (didChange) {
-    changes.push(new Change(
-      ChangeType.move,
-      a!,
-      b!,
-      rangeA,
-      rangeB,
-    ));
+    changes.push(
+      new Change(
+        ChangeType.move,
+        a!,
+        b!,
+        rangeA,
+        rangeB,
+      ),
+    );
   }
 
   changes.push(...verifier.verify(ChangeType.move, didChange, indexA, indexB));

@@ -68,7 +68,6 @@ export class OpenCloseVerifier {
               this.iterA.mark(closingNodeForA.index, changeType);
             }
             // assert(closingNodeForA, `Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on A side`);
-
           }
 
           if (changeType === ChangeType.addition || changeType === ChangeType.move) {
@@ -77,7 +76,6 @@ export class OpenCloseVerifier {
               this.iterB.mark(closingNodeForB.index, changeType);
             }
             // assert(closingNodeForB, `Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on B side`);
-
           }
 
           // Similar to the LCS matching, only report moves if the nodes did in fact move
@@ -97,10 +95,10 @@ export class OpenCloseVerifier {
   }
 
   static verifySingle(changeType: ChangeType, node: Node, iterA: Iterator, iterB: Iterator) {
-    const nodes = new OpenCloseVerifier(iterA, iterB)
+    const nodes = new OpenCloseVerifier(iterA, iterB);
 
-    nodes.track(node)
+    nodes.track(node);
 
-    return nodes.verify(changeType, true)
+    return nodes.verify(changeType, true);
   }
 }
