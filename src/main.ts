@@ -217,29 +217,13 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   const didChange = a!.index !== b!.index;
 
   if (didChange) {
-    // Since this function is reversible we need to check the perspective so that we know if the change is an addition or a removal
-    const perspectiveAtoB = iterA.name === "a";
-
-    let change: Change;
-    if (perspectiveAtoB) {
-      change = new Change(
-        ChangeType.move,
-        a!,
-        b!,
-        rangeA,
-        rangeB,
-      );
-    } else {
-      change = new Change(
-        ChangeType.move,
-        b!,
-        a!,
-        rangeB,
-        rangeA,
-      );
-    }
-
-    changes.push(change);
+    changes.push(new Change(
+      ChangeType.move,
+      a!,
+      b!,
+      rangeA,
+      rangeB,
+    ));
   }
 
   changes.push(...verifier.verify(ChangeType.move, didChange, indexA, indexB));
