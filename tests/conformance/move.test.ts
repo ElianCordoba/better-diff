@@ -368,6 +368,23 @@ describe("Properly report lines added", () => {
     `
   })
 
+  // Test for another syntax error, this hit the branch where we initialize a stack with a closing paren
+  test({
+    name: "Properly match closing paren 9",
+    a: `
+      {
+    `,
+    b: `
+      }{
+    `,
+    expA: `
+      ➖{➖
+    `,
+    expB: `
+      ➕}{➕
+    `
+  })
+
   // Testing single node matching
   test({
     name: "Noise reduction",
