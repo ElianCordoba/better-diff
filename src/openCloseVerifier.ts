@@ -1,20 +1,21 @@
 import { Node } from "./node";
 import { Iterator } from "./iterator";
-import { ClosingNodeGroup, getClosingNode, getClosingNodeGroup, getPrettyKind } from "./utils";
+import { ClosingNodeGroup, getClosingNodeGroup, getOppositeNodeKind, getPrettyKind } from "./utils";
 import { assert } from "./debug";
-import { ChangeType } from "./types";
+import { ChangeType, TypeMasks } from "./types";
 import { Change } from "./change";
 
 export class OpenCloseStack {
   allowedKind: number[];
   values: Node[] = [];
 
-  constructor(openNode: Node) {
-    assert(openNode.isOpeningNode, `Expected a opening node when initializing a node-matching stack but found a ${openNode.prettyKind}`);
+  constructor(node: Node) {
+    // Normally we would like to initialize the stack only with a opening node, but if the code has syntax error we could end up in a situation
+    // where we get the closing node first, check the test "Properly match closing paren 9" for an example
+    const oppositeNode = getOppositeNodeKind(node);
 
-    const closeNodeKind = getClosingNode(openNode);
-    this.allowedKind = [openNode.kind, closeNodeKind];
-    this.values = [openNode];
+    this.allowedKind = [node.kind, oppositeNode];
+    this.values = [node];
   }
 
   add(node: Node) {
@@ -42,7 +43,7 @@ export class OpenCloseVerifier {
       const nodeGroup = getClosingNodeGroup(node);
       if (this.nodesToVerify.has(nodeGroup)) {
         this.nodesToVerify.get(nodeGroup)!.add(node);
-      } else {
+      } else if (node.isOpeningNode) {
         this.nodesToVerify.set(nodeGroup, new OpenCloseStack(node));
       }
     }
@@ -54,13 +55,10 @@ export class OpenCloseVerifier {
     for (const unmatchedOpeningNode of this.forEachRemainingNode()) {
       // First we need to try find the closing nodes, which is not guaranteed
 
-      const delOrMove = ChangeType.deletion | ChangeType.move;
-      const addOrMove = ChangeType.addition | ChangeType.move;
-
       // Only calculate when needed, A is involved in deletions, B in additions, moves require both
 
-      const closingNodeForA = changeType & delOrMove ? this.iterA.findClosingNode(unmatchedOpeningNode, indexA) : undefined;
-      const closingNodeForB = changeType & addOrMove ? this.iterB.findClosingNode(unmatchedOpeningNode, indexB) : undefined;
+      const closingNodeForA = changeType & TypeMasks.DelOrMove ? this.iterA.findClosingNode(unmatchedOpeningNode, indexA) : undefined;
+      const closingNodeForB = changeType & TypeMasks.AddOrMove ? this.iterB.findClosingNode(unmatchedOpeningNode, indexB) : undefined;
 
       // Now we diverge depending if we the nodes where removed / added or moved
 
@@ -74,7 +72,7 @@ export class OpenCloseVerifier {
 
         if (closingNodeForB) {
           this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-          changes.push(new Change(ChangeType.deletion, undefined, closingNodeForB));
+          changes.push(new Change(ChangeType.addition, undefined, closingNodeForB));
         }
 
         return changes;

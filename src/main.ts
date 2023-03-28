@@ -6,7 +6,7 @@ import { getContext } from "./index";
 import { Node } from "./node";
 import { assert } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
-import { getLCS, LCSResult } from "./sequence";
+import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from "./sequence";
 import { OpenCloseVerifier } from "./openCloseVerifier";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
@@ -57,8 +57,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         iterB.mark(b.index, ChangeType.addition);
 
         changes.push(
-          new Change(ChangeType.addition, a, b),
           new Change(ChangeType.deletion, a, b),
+          new Change(ChangeType.addition, a, b),
         );
 
         // We need to ensure that we the closing one is matched as well. Also, a == b, so no need to check if b is an open node
@@ -249,7 +249,7 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSRe
     return { changes, indexA: -1, indexB: -1, bestSequence: 0 };
   }
 
-  // 1- Take best overall sequence
+  // 1- Take best overall sequence // todo now remove
   let lcs = getLCS(startNode.index, candidateOppositeSide, iterA, iterB);
 
   const start = lcs.indexB;
@@ -371,9 +371,9 @@ function getSequence(iter: Iterator, lcs: LCSResult): Node[] {
 }
 
 function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
-  const seq = getSequence(iterB, lcs);
-  const newSequenceCandidates = iterB.findSequence(seq);
-  const backwardPassLCS = getLCS(lcs.indexA, newSequenceCandidates, iterA, iterB);
+  const backwardPassLCS = getSequenceSingleDirection(iterA, iterB, lcs.indexA, lcs.indexB, SequenceDirection.Backward)
+
+  assert(backwardPassLCS.bestSequence !== 0, "Backwards LCS resulted in 0")
 
   if (backwardPassLCS.bestSequence > lcs.bestSequence) {
     return backwardPassLCS;
