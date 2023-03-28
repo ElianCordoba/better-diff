@@ -36,8 +36,8 @@ export function getNodesArray(source: string) {
     // value of the node starts and not where the trivia starts
     const start = node.pos + node.getLeadingTriviaWidth();
 
-    const lineNumberStart = 0// TODO ALIGNMENT = getLineNumber(sourceFile, start);
-    const lineNumberEnd = 0// TODO ALIGNMENT = getLineNumber(sourceFile, node.end);
+    const lineNumberStart = 0; // TODO ALIGNMENT = getLineNumber(sourceFile, start);
+    const lineNumberEnd = 0; // TODO ALIGNMENT = getLineNumber(sourceFile, node.end);
 
     // TODO: This was disabled because it was too expensive, enable when we work on the code-alignment algo again
     // const leadingTriviaHasNewLine = node.getFullText().split("\n").length > 1;
@@ -77,7 +77,7 @@ export function getNodesArray(source: string) {
 
   sourceFile.getChildren().forEach((x) => walk(x as TSNode));
 
-  const nodeKindTable = new Map<number, Set<number>>()
+  const nodeKindTable = new Map<number, Set<number>>();
 
   // TODO(Perf): Maybe do this inside the walk.
   // Before returning the result we need process the data one last time.
@@ -85,13 +85,12 @@ export function getNodesArray(source: string) {
   for (const node of textNodes) {
     node.index = i;
 
-
-    const currentValue = nodeKindTable.get(node.kind)
+    const currentValue = nodeKindTable.get(node.kind);
 
     if (currentValue) {
-      currentValue.add(i)
+      currentValue.add(i);
     } else {
-      nodeKindTable.set(node.kind, new Set([i]))
+      nodeKindTable.set(node.kind, new Set([i]));
     }
 
     i++;
@@ -101,7 +100,7 @@ export function getNodesArray(source: string) {
 
   return {
     nodes: textNodes,
-    table: nodeKindTable
+    table: nodeKindTable,
   };
 }
 
@@ -173,7 +172,7 @@ export function getLineMap(source: string): number[] {
 }
 
 // Get the line number (1-indexed) of a given character
-function getLineNumber(sourceFile: ts.SourceFile, pos: number) {
+function _getLineNumber(sourceFile: ts.SourceFile, pos: number) {
   // deno-lint-ignore no-explicit-any
   return (ts as any).getLineAndCharacterOfPosition(sourceFile, pos).line + 1;
 }

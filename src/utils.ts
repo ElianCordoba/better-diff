@@ -30,7 +30,7 @@ export function getNodeForPrinting(kind: number, text: string | undefined) {
 }
 
 export function equals(nodeA: Node, nodeB: Node) {
-  return nodeA?.kind === nodeB?.kind && nodeA?.text === nodeB?.text;
+  return nodeA.kind === nodeB.kind && nodeA.text === nodeB.text;
 }
 
 export function mergeRanges(currentRange: Range, newRange: Range) {

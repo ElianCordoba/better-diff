@@ -78,5 +78,5 @@ export interface GetDiffPayload {
 
 export enum Mode {
   release,
-  debug
+  debug,
 }

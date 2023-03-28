@@ -1,10 +1,9 @@
 import { SyntaxKind } from "typescript";
 import { getNodeForPrinting } from "./utils";
 import { ChangeType, Mode } from "./types";
-import { getOptions } from ".";
 
 interface NodeArgs {
-  mode: Mode,
+  mode: Mode;
   fullStart: number;
   start: number;
   end: number;
@@ -49,7 +48,7 @@ export class Node {
       const prettyKind = getNodeForPrinting(kind, text);
       this.prettyKind = `${prettyKind.text} ${prettyKind.kind}`;
     } else {
-      this.prettyKind = ''
+      this.prettyKind = "";
     }
 
     this.text = text;

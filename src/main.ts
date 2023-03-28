@@ -32,7 +32,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       if (!a || !b) {
         const iterOn = !a ? iterB : iterA;
         const type = !a ? ChangeType.addition : ChangeType.deletion;
-        const startFrom = !a ? b?.index : a.index
+        const startFrom = !a ? b?.index : a.index;
 
         const remainingChanges = oneSidedIteration(iterOn, type, startFrom!);
         changes.push(...remainingChanges);

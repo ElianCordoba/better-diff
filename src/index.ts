@@ -21,11 +21,11 @@ export interface Options {
 }
 
 export enum OutputType {
-  serializedChunks = "serializedChunks",
-  serializedAlignedChunks = "serializedAlignedChunks",
-  text = "text",
-  alignedText = "alignedText",
-  noop = 'noop'
+  serializedChunks,
+  serializedAlignedChunks,
+  text,
+  alignedText,
+  noop,
 }
 
 interface ResultTypeMapper {
@@ -33,7 +33,7 @@ interface ResultTypeMapper {
   [OutputType.serializedAlignedChunks]: SerializedResponse;
   [OutputType.text]: { sourceA: string; sourceB: string };
   [OutputType.alignedText]: { sourceA: string; sourceB: string };
-  [OutputType.noop]: void
+  [OutputType.noop]: void;
 }
 
 export function getDiff<_OutputType extends OutputType = OutputType.text>(
@@ -71,11 +71,11 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
 
     case OutputType.noop: {
       // deno-lint-ignore no-explicit-any
-      return undefined as any
+      return undefined as any;
     }
 
     default: {
-      const assert: never = _options.outputType
+      const assert: never = _options.outputType;
       fail(`Unknown output type "${assert}"`);
     }
   }
@@ -110,7 +110,7 @@ export class LayoutShiftCandidate {
     // Value: Length of the string
     public a = new Map<number, number>(),
     public b = new Map<number, number>(),
-  ) { }
+  ) {}
 
   add(side: Side, at: number, length: number) {
     if (side === Side.a) {

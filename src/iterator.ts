@@ -1,4 +1,4 @@
-import { equals, getNodeForPrinting, getOppositeNodeKind } from "./utils";
+import { getNodeForPrinting, getOppositeNodeKind } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
 import { ChangeType, Side } from "./types";
@@ -18,14 +18,13 @@ export class Iterator {
   textNodes: Node[];
   kindTable: Map<number, Set<number>>;
 
-
   // Only read when printing nodes
   private indexOfLastItem = 0;
 
   constructor({ source, name }: IteratorOptions) {
     const { nodes, table } = getNodesArray(source);
-    this.textNodes = nodes
-    this.kindTable = table
+    this.textNodes = nodes;
+    this.kindTable = table;
     this.name = name;
   }
 
@@ -100,7 +99,7 @@ export class Iterator {
       // We remove the index from the table so that:
       // - We don't need to check if the node is matched or not when we use it
       // - To improve performance, this way we have less nodes to check
-      this.kindTable.get(this.textNodes[index].kind)!.delete(index)
+      this.kindTable.get(this.textNodes[index].kind)!.delete(index);
     }
   }
 
@@ -118,17 +117,17 @@ export class Iterator {
     const startOfSequence = targetSequence[0];
     const sequenceLength = targetSequence.length;
 
-    const candidateNodes = this.find(startOfSequence)
+    const candidateNodes = this.find(startOfSequence);
 
     if (!candidateNodes) {
-      return []
+      return [];
     }
 
     for (const candidateIndex of candidateNodes) {
-      const node = this.textNodes[candidateIndex]
+      const node = this.textNodes[candidateIndex];
 
       // If the start of the sequence doesn't match then we know it's not a candidate, skipping
-      if (!equals(startOfSequence, node)) {
+      if (startOfSequence.text !== node.text) {
         continue;
       }
 
@@ -148,23 +147,24 @@ export class Iterator {
   find(targetNode: Node): number[] {
     const candidates: number[] = [];
 
-    const rawCandidates = this.kindTable.get(targetNode.kind)
+    const rawCandidates = this.kindTable.get(targetNode.kind);
 
     if (!rawCandidates) {
-      return []
+      return [];
     }
 
     for (const candidateIndex of rawCandidates) {
-      const node = this.textNodes[candidateIndex]
+      const node = this.textNodes[candidateIndex];
 
-      if (!equals(targetNode, node)) {
+      // No need to compare kinds since we got the nodes from the kind table
+      if (targetNode.text !== node.text) {
         continue;
       }
 
-      candidates.push(candidateIndex)
+      candidates.push(candidateIndex);
     }
 
-    return candidates
+    return candidates;
   }
 
   printList(nodesToPrint?: Node[]) {
@@ -299,7 +299,7 @@ function areSequencesIdentical(seq1: Node[], seq2: Node[]): boolean {
     const a = seq1[i];
     const b = seq2[i];
 
-    if (equals(a, b)) {
+    if (a.text === b.text) {
       continue;
     }
 
