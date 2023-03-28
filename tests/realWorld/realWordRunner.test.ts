@@ -12,17 +12,25 @@ let dirs = readdirSync(path)
 // Remove the test runner file which is always the last one
 dirs.splice(dirs.length - 1, 1)
 
-describe('Real world tests', () => {
+describe('Real world tests', async () => {
   for (const testCase of dirs) {
     if (IGNORED_TESTS.includes(testCase)) {
       continue
     }
 
-    test(testCase, async () => {
-      const { a, b } = await getTestFilesFromDir(testCase)
+    const { a, b } = await getTestFilesFromDir(testCase)
 
+    test(testCase, () => {
       try {
         getDiff(a, b)
+      } catch (error) {
+        expect((error as any)?.message).toBe(undefined)
+      }
+    })
+
+    test(`${testCase} inverse`, async () => {
+      try {
+        getDiff(b, a)
       } catch (error) {
         expect((error as any)?.message).toBe(undefined)
       }
