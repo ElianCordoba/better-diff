@@ -110,8 +110,14 @@ export class Iterator {
     const startOfSequence = targetSequence[0];
     const sequenceLength = targetSequence.length;
 
-    for (let i = 0; i < this.textNodes.length; i++) {
-      const node = this.textNodes[i];
+    const candidateNodes = this.find(startOfSequence)
+
+    if (!candidateNodes) {
+      return []
+    }
+
+    for (const candidateIndex of candidateNodes) {
+      const node = this.textNodes[candidateIndex]
 
       // If the start of the sequence doesn't match then we know it's not a candidate, skipping
       if (node.matched || !equals(startOfSequence, node)) {
@@ -119,18 +125,13 @@ export class Iterator {
       }
 
       // Take a slice of the desired length and compare it to the target
-      const candidateSeq = this.textNodes.slice(i, i + sequenceLength);
+      const candidateSeq = this.textNodes.slice(candidateIndex, candidateIndex + sequenceLength);
 
       if (areSequencesIdentical(candidateSeq, targetSequence)) {
         // Push the index, we can retrieve the full sequence later
-        candidates.push(i);
-
-        // We can safely jump ahead to the next node after the already added candidate
-        i += targetSequence.length - 1;
+        candidates.push(candidateIndex);
         continue;
       }
-
-      i++;
     }
 
     return candidates;
