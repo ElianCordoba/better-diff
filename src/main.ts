@@ -371,9 +371,9 @@ function getSequence(iter: Iterator, lcs: LCSResult): Node[] {
 }
 
 function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
-  const backwardPassLCS = getSequenceSingleDirection(iterA, iterB, lcs.indexA, lcs.indexB, SequenceDirection.Backward)
+  const backwardPassLCS = getSequenceSingleDirection(iterA, iterB, lcs.indexA, lcs.indexB, SequenceDirection.Backward);
 
-  assert(backwardPassLCS.bestSequence !== 0, "Backwards LCS resulted in 0")
+  assert(backwardPassLCS.bestSequence !== 0, "Backwards LCS resulted in 0");
 
   if (backwardPassLCS.bestSequence > lcs.bestSequence) {
     return backwardPassLCS;
