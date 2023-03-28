@@ -80,7 +80,7 @@ export class OpenCloseVerifier {
 
       // TODO Comment
       if (!closingNodeForA && !closingNodeForB) {
-        return changes
+        return changes;
       }
 
       // If we are in a move, there are two path, the happy one where we find both nodes
