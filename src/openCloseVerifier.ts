@@ -78,6 +78,11 @@ export class OpenCloseVerifier {
         return changes;
       }
 
+      // TODO Comment
+      if (!closingNodeForA && !closingNodeForB) {
+        return changes
+      }
+
       // If we are in a move, there are two path, the happy one where we find both nodes
       if (closingNodeForA && closingNodeForB) {
         this.iterA.mark(closingNodeForA.index, ChangeType.move);
@@ -95,9 +100,6 @@ export class OpenCloseVerifier {
       } else {
         // If one of the nodes is missing, it's a syntax error, the is a open node unclosed.
         // We will still continue to processing the code by marking the found node as added / removed
-
-        assert(closingNodeForA || closingNodeForB, () => "Neither A or B where found during Open/Close reconciliation");
-
         if (closingNodeForA) {
           this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
           changes.push(new Change(ChangeType.deletion, closingNodeForA, undefined));

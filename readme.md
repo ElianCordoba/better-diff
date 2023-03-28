@@ -16,4 +16,6 @@ r viewProfile pprof-time-96522.pb.gz
 
 ```sh
 time git diff ./internal/diff/midA.ts ./internal/diff/midB.ts > /dev/null
+time git diff --patience ./internal/diff/midA.ts ./internal/diff/midB.ts > /dev/null
+
 ```
