@@ -9,9 +9,14 @@ export interface DiffResult {
 }
 
 export enum ChangeType {
-  addition = 1 << 1,
-  deletion = 1 << 2,
-  move = 1 << 3,
+  addition = 1 << 0, // 1
+  deletion = 1 << 1, // 2
+  move = 1 << 2,     // 4
+}
+
+export const TypeMasks = {
+  DelOrMove: ChangeType.deletion | ChangeType.move,
+  AddOrMove: ChangeType.addition | ChangeType.move
 }
 
 export interface Range {
