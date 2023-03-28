@@ -8,6 +8,8 @@ import { fail } from "./debug";
 
 // These options have their own tests under the /tests/options folder
 export interface Options {
+  mode?: 'debug' | 'release';
+
   outputType?: OutputType;
 
   warnOnInvalidCode?: boolean;
@@ -23,6 +25,7 @@ export enum OutputType {
   serializedAlignedChunks = "serializedAlignedChunks",
   text = "text",
   alignedText = "alignedText",
+  noop = 'noop'
 }
 
 interface ResultTypeMapper {
@@ -30,6 +33,7 @@ interface ResultTypeMapper {
   [OutputType.serializedAlignedChunks]: SerializedResponse;
   [OutputType.text]: { sourceA: string; sourceB: string };
   [OutputType.alignedText]: { sourceA: string; sourceB: string };
+  [OutputType.noop]: void
 }
 
 export function getDiff<_OutputType extends OutputType = OutputType.text>(
@@ -65,13 +69,20 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
       return getAlignedSources(sourceA, sourceB) as any;
     }
 
+    case OutputType.noop: {
+      // deno-lint-ignore no-explicit-any
+      return undefined as any
+    }
+
     default: {
-      fail(`Unknown output type "${_options.outputType}"`);
+      const assert: never = _options.outputType
+      fail(`Unknown output type "${assert}"`);
     }
   }
 }
 
 const defaultOptions: Options = {
+  mode: 'debug',
   outputType: OutputType.text,
   warnOnInvalidCode: false,
   renderFn: asciiRenderFn,
@@ -99,7 +110,7 @@ export class LayoutShiftCandidate {
     // Value: Length of the string
     public a = new Map<number, number>(),
     public b = new Map<number, number>(),
-  ) {}
+  ) { }
 
   add(side: Side, at: number, length: number) {
     if (side === Side.a) {

@@ -32,8 +32,9 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       if (!a || !b) {
         const iterOn = !a ? iterB : iterA;
         const type = !a ? ChangeType.addition : ChangeType.deletion;
+        const startFrom = !a ? b?.index : a.index
 
-        const remainingChanges = oneSidedIteration(iterOn, type);
+        const remainingChanges = oneSidedIteration(iterOn, type, startFrom!);
         changes.push(...remainingChanges);
         break;
       }
@@ -93,27 +94,28 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 function oneSidedIteration(
   iter: Iterator,
   typeOfChange: ChangeType.addition | ChangeType.deletion,
+  startFrom: number,
 ): Change[] {
   const changes: Change[] = [];
 
-  let value = iter.next();
+  let value = iter.next(startFrom);
 
-  const { alignmentTable } = getContext();
+  // TODO: ALIGNMENT const { alignmentTable } = getContext();
 
   // TODO: Compact
   while (value) {
     /// Alignment: Addition / Deletion ///
     if (typeOfChange === ChangeType.addition) {
-      alignmentTable.add(Side.a, value.lineNumberStart, value.text.length);
+      // TODO: ALIGNMENT alignmentTable.add(Side.a, value.lineNumberStart, value.text.length);
       changes.push(new Change(typeOfChange, undefined, value));
     } else {
-      alignmentTable.add(Side.b, value.lineNumberStart, value.text.length);
+      // TODO: ALIGNMENT alignmentTable.add(Side.b, value.lineNumberStart, value.text.length);
       changes.push(new Change(typeOfChange, value, undefined));
     }
 
     iter.mark(value.index, typeOfChange);
 
-    value = iter.next();
+    value = iter.next(value.index + 1);
   }
 
   return changes;

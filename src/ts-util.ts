@@ -36,8 +36,8 @@ export function getNodesArray(source: string) {
     // value of the node starts and not where the trivia starts
     const start = node.pos + node.getLeadingTriviaWidth();
 
-    const lineNumberStart = getLineNumber(sourceFile, start);
-    const lineNumberEnd = getLineNumber(sourceFile, node.end);
+    const lineNumberStart = 0// TODO ALIGNMENT = getLineNumber(sourceFile, start);
+    const lineNumberEnd = 0// TODO ALIGNMENT = getLineNumber(sourceFile, node.end);
 
     // TODO: This was disabled because it was too expensive, enable when we work on the code-alignment algo again
     // const leadingTriviaHasNewLine = node.getFullText().split("\n").length > 1;
@@ -141,7 +141,7 @@ function _getTriviaLinesAbove(source: string, startAt: number) {
 }
 
 // Returns an array of lines of code
-export function getArrayOrLines(source: string) {
+function getArrayOrLines(source: string) {
   const lineMap = getLineMap(source);
 
   const lines: string[] = [];

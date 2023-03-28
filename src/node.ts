@@ -1,6 +1,7 @@
 import { SyntaxKind } from "typescript";
 import { getNodeForPrinting } from "./utils";
 import { ChangeType } from "./types";
+import { getOptions } from ".";
 
 interface NodeArgs {
   fullStart: number;
@@ -42,8 +43,14 @@ export class Node {
     this.start = start;
     this.end = end;
     this.kind = kind;
-    const prettyKind = getNodeForPrinting(kind, text);
-    this.prettyKind = `${prettyKind.text} ${prettyKind.kind}`;
+
+    if (getOptions().mode === 'debug') {
+      const prettyKind = getNodeForPrinting(kind, text);
+      this.prettyKind = `${prettyKind.text} ${prettyKind.kind}`;
+    } else {
+      this.prettyKind = ''
+    }
+
     this.text = text;
 
     this.triviaLinesAbove = triviaLinesAbove;
