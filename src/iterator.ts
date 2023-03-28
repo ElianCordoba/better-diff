@@ -15,13 +15,17 @@ export class Iterator {
   name: string;
 
   matchNumber = 0;
-  public textNodes: Node[];
+  textNodes: Node[];
+  kindTable: Map<number, Set<number>>;
+
 
   // Only read when printing nodes
   private indexOfLastItem = 0;
 
   constructor({ source, name }: IteratorOptions) {
-    this.textNodes = getNodesArray(source);
+    const { nodes, table } = getNodesArray(source);
+    this.textNodes = nodes
+    this.kindTable = table
     this.name = name;
   }
 
@@ -135,18 +139,23 @@ export class Iterator {
   find(targetNode: Node): number[] {
     const candidates: number[] = [];
 
-    for (let i = 0; i < this.textNodes.length; i++) {
-      const node = this.textNodes[i];
+    const rawCandidates = this.kindTable.get(targetNode.kind)
 
-      // If the start of the sequence doesn't match then we know it's not a candidate, skipping
+    if (!rawCandidates) {
+      return []
+    }
+
+    for (const candidateIndex of rawCandidates) {
+      const node = this.textNodes[candidateIndex]
+
       if (node.matched || !equals(targetNode, node)) {
         continue;
       }
 
-      candidates.push(node.index);
+      candidates.push(candidateIndex)
     }
 
-    return candidates;
+    return candidates
   }
 
   printList(nodesToPrint?: Node[]) {

@@ -77,18 +77,32 @@ export function getNodesArray(source: string) {
 
   sourceFile.getChildren().forEach((x) => walk(x as TSNode));
 
+  const nodeKindTable = new Map<number, Set<number>>()
+
   // TODO(Perf): Maybe do this inside the walk.
   // Before returning the result we need process the data one last time.
   let i = 0;
   for (const node of textNodes) {
     node.index = i;
 
+
+    const currentValue = nodeKindTable.get(node.kind)
+
+    if (currentValue) {
+      currentValue.add(i)
+    } else {
+      nodeKindTable.set(node.kind, new Set([i]))
+    }
+
     i++;
   }
 
   // TODO: Store node kind in a table so that we can reuse it when finding sequences
 
-  return textNodes;
+  return {
+    nodes: textNodes,
+    table: nodeKindTable
+  };
 }
 
 function getSourceFile(source: string): SourceFile {
