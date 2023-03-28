@@ -8,8 +8,8 @@
 ## Profiling
 
 ```
-pprof-it ./dist/scripts/test.js
-pprof -http=: pprof-time-XXX
+r profile
+r viewProfile pprof-time-96522.pb.gz 
 ```
 
 ## Bench
