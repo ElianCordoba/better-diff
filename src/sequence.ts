@@ -101,7 +101,7 @@ export function getLCS(indexOfWanted: number, candidates: number[], iterA: Itera
     }
   }
 
-  assert(bestSequence !== 0, "LCS resulted in 0");
+  assert(bestSequence !== 0, () => "LCS resulted in 0");
 
   return { bestSequence, indexA, indexB };
 }

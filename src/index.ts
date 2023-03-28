@@ -1,14 +1,14 @@
 import { getChanges } from "./main";
 import { applyChangesToSources, asciiRenderFn, DiffRendererFn, getAlignedSources } from "./reporter";
 import { serialize } from "./serializer";
-import { ChangeType, SerializedResponse, Side } from "./types";
+import { ChangeType, Mode, SerializedResponse, Side } from "./types";
 import { Node } from "./node";
 import { AlignmentTable } from "./alignmentTable";
 import { fail } from "./debug";
 
 // These options have their own tests under the /tests/options folder
 export interface Options {
-  mode?: 'debug' | 'release';
+  mode?: Mode;
 
   outputType?: OutputType;
 
@@ -82,7 +82,7 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
 }
 
 const defaultOptions: Options = {
-  mode: 'debug',
+  mode: Mode.debug,
   outputType: OutputType.text,
   warnOnInvalidCode: false,
   renderFn: asciiRenderFn,

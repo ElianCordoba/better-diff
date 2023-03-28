@@ -87,13 +87,21 @@ export class Iterator {
     return item;
   }
 
-  mark(index: number, markedAs: ChangeType) {
+  mark(index: number, markedAs: ChangeType, done = false) {
     // TODO: Should only apply for moves, otherwise a move, addition and move
     // will display 1 for the first move and 3 for the second
     this.matchNumber++;
     this.textNodes[index].matched = true;
     this.textNodes[index].matchNumber = this.matchNumber;
     this.textNodes[index].markedAs = markedAs;
+
+    // Only set to true when we are calling this from `oneSidedIteration`
+    if (!done) {
+      // We remove the index from the table so that:
+      // - We don't need to check if the node is matched or not when we use it
+      // - To improve performance, this way we have less nodes to check
+      this.kindTable.get(this.textNodes[index].kind)!.delete(index)
+    }
   }
 
   markMultiple(startIndex: number, numberOfNodes: number, markAs: ChangeType) {
@@ -120,7 +128,7 @@ export class Iterator {
       const node = this.textNodes[candidateIndex]
 
       // If the start of the sequence doesn't match then we know it's not a candidate, skipping
-      if (node.matched || !equals(startOfSequence, node)) {
+      if (!equals(startOfSequence, node)) {
         continue;
       }
 
@@ -149,7 +157,7 @@ export class Iterator {
     for (const candidateIndex of rawCandidates) {
       const node = this.textNodes[candidateIndex]
 
-      if (node.matched || !equals(targetNode, node)) {
+      if (!equals(targetNode, node)) {
         continue;
       }
 

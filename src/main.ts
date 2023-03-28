@@ -113,7 +113,7 @@ function oneSidedIteration(
       changes.push(new Change(typeOfChange, value, undefined));
     }
 
-    iter.mark(value.index, typeOfChange);
+    iter.mark(value.index, typeOfChange, true);
 
     value = iter.next(value.index + 1);
   }
@@ -153,7 +153,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     indexA++;
     indexB++;
 
-    assert(equals(a, b), `Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
+    assert(equals(a, b), () => `Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
 
     // Used for the open-close node correctness
     verifier.track(a);
@@ -331,7 +331,7 @@ function findBestMatchWithZigZag(iterA: Iterator, iterB: Iterator, startNode: No
 
     const lcs = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo, bothDirections);
 
-    assert(lcs.bestSequence !== 0, "LCS resulted in 0");
+    assert(lcs.bestSequence !== 0, () => "LCS resulted in 0");
 
     // If there is no better match, exit
     if (lcs.bestSequence === bestSequence) {
@@ -363,7 +363,7 @@ function findBestMatchWithZigZag(iterA: Iterator, iterB: Iterator, startNode: No
     [_iterOne, _iterTwo] = [_iterTwo, _iterOne];
   }
 
-  assert(bestLCS);
+  assert(bestLCS, () => "No LCS found");
 
   return normalize(_iterTwo, bestLCS);
 }
@@ -375,7 +375,7 @@ function getSequence(iter: Iterator, lcs: LCSResult): Node[] {
 function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
   const backwardPassLCS = getSequenceSingleDirection(iterA, iterB, lcs.indexA, lcs.indexB, SequenceDirection.Backward);
 
-  assert(backwardPassLCS.bestSequence !== 0, "Backwards LCS resulted in 0");
+  assert(backwardPassLCS.bestSequence !== 0, () => "Backwards LCS resulted in 0");
 
   if (backwardPassLCS.bestSequence > lcs.bestSequence) {
     return backwardPassLCS;

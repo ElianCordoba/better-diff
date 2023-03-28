@@ -19,7 +19,7 @@ export class OpenCloseStack {
   }
 
   add(node: Node) {
-    assert(this.allowedKind.includes(node.kind), `Invalid kind provided to node-matching stack, expected either ${getPrettyKind(this.allowedKind[0])} or ${getPrettyKind(this.allowedKind[1])} but found ${node.prettyKind}`);
+    assert(this.allowedKind.includes(node.kind), () => `Invalid kind provided to node-matching stack, expected either ${getPrettyKind(this.allowedKind[0])} or ${getPrettyKind(this.allowedKind[1])} but found ${node.prettyKind}`);
 
     if (node.isOpeningNode) {
       this.values.push(node);
@@ -96,7 +96,7 @@ export class OpenCloseVerifier {
         // If one of the nodes is missing, it's a syntax error, the is a open node unclosed.
         // We will still continue to processing the code by marking the found node as added / removed
 
-        assert(closingNodeForA || closingNodeForB, "Neither A or B where found during Open/Close reconciliation");
+        assert(closingNodeForA || closingNodeForB, () => "Neither A or B where found during Open/Close reconciliation");
 
         if (closingNodeForA) {
           this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);

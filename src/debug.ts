@@ -5,7 +5,7 @@ enum ErrorType {
 }
 
 class BaseError {
-  constructor(public type: ErrorType, public message: string, public serializedError?: string, public extra?: unknown) {}
+  constructor(public type: ErrorType, public message: string, public serializedError?: string, public extra?: unknown) { }
 }
 
 class DebugFailure extends BaseError {
@@ -18,8 +18,10 @@ export function fail(errorMessage?: string): never {
   throw new DebugFailure(errorMessage || "Assertion failed");
 }
 
-export function assert<T>(condition: T, errorMessage?: string): asserts condition is NonNullable<T> {
+// It receives a function instead of a raw string so that the content evaluates lazily, for example, if the error message
+// uses the function `getPrettyKind` it will get calculated independently if the assertion passes of not
+export function assert<T>(condition: T, errorMessage?: () => string): asserts condition is NonNullable<T> {
   if (!condition) {
-    fail(errorMessage);
+    fail(errorMessage?.());
   }
 }

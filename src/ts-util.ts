@@ -9,7 +9,7 @@ type TSNode = ts.Node & { text: string };
 export function getNodesArray(source: string) {
   const sourceFile = getSourceFile(source);
 
-  const { warnOnInvalidCode } = getOptions();
+  const { warnOnInvalidCode, mode } = getOptions();
 
   // deno-lint-ignore no-explicit-any
   if (warnOnInvalidCode && (sourceFile as any).parseDiagnostics.length > 0) {
@@ -43,7 +43,7 @@ export function getNodesArray(source: string) {
     // const leadingTriviaHasNewLine = node.getFullText().split("\n").length > 1;
     const triviaLinesAbove = 0; //leadingTriviaHasNewLine ? getTriviaLinesAbove(source, lineNumberStart) : 0;
 
-    const newNode = new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove });
+    const newNode = new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove, mode });
     newNode.expressionNumber = depth;
 
     const isClosingNode = node.kind === ts.SyntaxKind.CloseBraceToken ||
@@ -157,7 +157,7 @@ function getArrayOrLines(source: string) {
     lines.push(slice);
   }
 
-  assert(lines.length === lineMap.length, "Line number and line map length didn't match");
+  assert(lines.length === lineMap.length, () => "Line number and line map length didn't match");
 
   return lines;
 }
