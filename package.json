@@ -10,7 +10,7 @@
     "bench": "node ./dist/bench/bench.js",
     "debug": "node --inspect-brk dist/src/server.js",
     "profile": "pprof-it ./dist/scripts/test.js",
-    "viewProfile": "pprof -http=:"
+    "view": "pprof -http=:"
   },
   "devDependencies": {
     "@types/benchmark": "^2.1.2",
