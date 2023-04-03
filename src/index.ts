@@ -16,6 +16,7 @@ export interface Options {
 
   renderFn?: DiffRendererFn;
 
+  // For testing and debugging mostly
   alignmentText?: string;
   includeDebugAlignmentInfo?: boolean;
 }
@@ -69,6 +70,8 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
       return getAlignedSources(sourceA, sourceB) as any;
     }
 
+    // Used mainly for benchmarking the core algorithm on it's own. Without this the total execution time of the `getDiff`
+    // function will include the time it takes to do the reporting, which can be quite a lot
     case OutputType.noop: {
       // deno-lint-ignore no-explicit-any
       return undefined as any;
@@ -110,7 +113,7 @@ export class LayoutShiftCandidate {
     // Value: Length of the string
     public a = new Map<number, number>(),
     public b = new Map<number, number>(),
-  ) {}
+  ) { }
 
   add(side: Side, at: number, length: number) {
     if (side === Side.a) {

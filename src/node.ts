@@ -44,6 +44,7 @@ export class Node {
     this.end = end;
     this.kind = kind;
 
+    // Not calculating and allocating the pretty kind string greatly improves performance and memory consumption
     if (mode === Mode.debug) {
       const prettyKind = getNodeForPrinting(kind, text);
       this.prettyKind = `${prettyKind.text} ${prettyKind.kind}`;

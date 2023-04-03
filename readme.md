@@ -9,7 +9,7 @@
 
 ```
 r profile
-r viewProfile pprof-time-96522.pb.gz
+r view pprof-time-96522.pb.gz
 ```
 
 ## Bench

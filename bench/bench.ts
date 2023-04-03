@@ -10,9 +10,11 @@ const a = readFileSync("./tests/realWorld/case1/a.ts", { encoding: "utf-8" });
 const b = readFileSync("./tests/realWorld/case1/b.ts", { encoding: "utf-8" });
 
 suite
-  // Too long
   .add("Output text, debug mode", function () {
     getDiff(a, b);
+  })
+  .add("Output text, release mode", function () {
+    getDiff(a, b, { mode: Mode.release });
   })
   .add("Output noop, debug mode", function () {
     getDiff(a, b, { outputType: OutputType.noop });

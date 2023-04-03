@@ -1,7 +1,7 @@
 import { getNodeForPrinting, getOppositeNodeKind, getSequence } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
-import { ChangeType, Side } from "./types";
+import { ChangeType, KindTable, Side } from "./types";
 import { getContext } from ".";
 import { OpenCloseStack } from "./openCloseVerifier";
 import { getNodesArray } from "./ts-util";
@@ -16,7 +16,7 @@ export class Iterator {
 
   matchNumber = 0;
   textNodes: Node[];
-  kindTable: Map<number, Set<number>>;
+  kindTable: KindTable
 
   // Only read when printing nodes
   private indexOfLastItem = 0;
@@ -94,7 +94,7 @@ export class Iterator {
     this.textNodes[index].matchNumber = this.matchNumber;
     this.textNodes[index].markedAs = markedAs;
 
-    // Only set to true when we are calling this from `oneSidedIteration`
+    // Optimization, done is only set to `true` when we are calling this from `oneSidedIteration`,  by that time we don't need to update the kindTable
     if (!done) {
       // We remove the index from the table so that:
       // - We don't need to check if the node is matched or not when we use it
