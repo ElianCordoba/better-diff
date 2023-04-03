@@ -64,12 +64,16 @@ export class OpenCloseVerifier {
 
       // Now we diverge depending if we the nodes where removed / added or moved
       if (changeType & TypeMasks.AddOrDel) {
+        // In a addition / deletion case, we need to find the corresponding missing node
+
         if (closingNodeForA) {
+          assert(!closingNodeForB, () => "Found a node on B side node even though we are in a deletion");
           this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
           changes.push(new Change(ChangeType.deletion, closingNodeForA, undefined));
         }
 
         if (closingNodeForB) {
+          assert(!closingNodeForA, () => "Found a node on a side node even though we are in a addition");
           this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
           changes.push(new Change(ChangeType.addition, undefined, closingNodeForB));
         }
@@ -111,6 +115,7 @@ export class OpenCloseVerifier {
     return changes;
   }
 
+  // Simplified method for cases where we only need to check one node
   static verifySingle(changeType: ChangeType, node: Node, iterA: Iterator, iterB: Iterator) {
     return new OpenCloseVerifier(iterA, iterB).track(node).verify(changeType, true);
   }

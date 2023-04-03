@@ -16,7 +16,7 @@ export class Iterator {
 
   matchNumber = 0;
   textNodes: Node[];
-  kindTable: KindTable
+  kindTable: KindTable;
 
   // Only read when printing nodes
   private indexOfLastItem = 0;
