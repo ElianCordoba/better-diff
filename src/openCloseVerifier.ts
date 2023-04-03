@@ -51,7 +51,7 @@ export class OpenCloseVerifier {
       }
     }
 
-    return this
+    return this;
   }
 
   verify(changeType: ChangeType, trackChange = false, indexA?: number, indexB?: number) {
@@ -112,7 +112,7 @@ export class OpenCloseVerifier {
   }
 
   static verifySingle(changeType: ChangeType, node: Node, iterA: Iterator, iterB: Iterator) {
-    return new OpenCloseVerifier(iterA, iterB).track(node).verify(changeType, true)
+    return new OpenCloseVerifier(iterA, iterB).track(node).verify(changeType, true);
   }
 
   *forEachRemainingNode() {

@@ -11,8 +11,8 @@ const b = readFileSync("./tests/realWorld/case1/b.ts", { encoding: "utf-8" });
 
 suite
   // Too long
-  .add('Output text, debug mode', function () {
-    getDiff(a, b)
+  .add("Output text, debug mode", function () {
+    getDiff(a, b);
   })
   .add("Output noop, debug mode", function () {
     getDiff(a, b, { outputType: OutputType.noop });

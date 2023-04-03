@@ -7,7 +7,7 @@ import { KindTable } from "./types";
 
 type TSNode = ts.Node & { text: string };
 
-export function getNodesArray(source: string): { nodes: Node[], kindTable: KindTable } {
+export function getNodesArray(source: string): { nodes: Node[]; kindTable: KindTable } {
   const sourceFile = getSourceFile(source);
 
   const { warnOnInvalidCode, mode } = getOptions();
