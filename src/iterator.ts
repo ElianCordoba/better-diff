@@ -22,9 +22,9 @@ export class Iterator {
   private indexOfLastItem = 0;
 
   constructor({ source, name }: IteratorOptions) {
-    const { nodes, table } = getNodesArray(source);
+    const { nodes, kindTable } = getNodesArray(source);
     this.textNodes = nodes;
-    this.kindTable = table;
+    this.kindTable = kindTable;
     this.name = name;
   }
 

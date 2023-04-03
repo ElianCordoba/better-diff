@@ -38,33 +38,32 @@ export class OpenCloseVerifier {
   constructor(private iterA: Iterator, private iterB: Iterator) {
   }
 
+  // This function will be called with all nodes, but we will discard everything but opening or closing nodes
   track(node: Node) {
     if (node.isOpeningNode || node.isClosingNode) {
       const nodeGroup = getClosingNodeGroup(node);
+      // If the stack is not yet created, initialize it
       if (this.nodesToVerify.has(nodeGroup)) {
         this.nodesToVerify.get(nodeGroup)!.add(node);
       } else if (node.isOpeningNode) {
+        // If the stack is not initialized _and_ it's a closing node, ignore it. This is to avoid syntax error and other edge cases
         this.nodesToVerify.set(nodeGroup, new OpenCloseStack(node));
       }
     }
+
+    return this
   }
 
-  verify(changeType: ChangeType, trackChange: boolean, indexA?: number, indexB?: number) {
+  verify(changeType: ChangeType, trackChange = false, indexA?: number, indexB?: number) {
     const changes: Change[] = [];
 
     for (const unmatchedOpeningNode of this.forEachRemainingNode()) {
-      // First we need to try find the closing nodes, which is not guaranteed
-
-      // Only calculate when needed, A is involved in deletions, B in additions, moves require both
-
+      // Only calculate when needed, A is only involved in deletions, B only in additions. Moves require both nodes to be present
       const closingNodeForA = changeType & TypeMasks.DelOrMove ? this.iterA.findClosingNode(unmatchedOpeningNode, indexA) : undefined;
       const closingNodeForB = changeType & TypeMasks.AddOrMove ? this.iterB.findClosingNode(unmatchedOpeningNode, indexB) : undefined;
 
       // Now we diverge depending if we the nodes where removed / added or moved
-
-      const addOrDel = ChangeType.deletion | ChangeType.addition;
-
-      if (changeType & addOrDel) {
+      if (changeType & TypeMasks.AddOrDel) {
         if (closingNodeForA) {
           this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
           changes.push(new Change(ChangeType.deletion, closingNodeForA, undefined));
@@ -78,7 +77,7 @@ export class OpenCloseVerifier {
         return changes;
       }
 
-      // TODO Comment
+      // I haven't figured out this one yet to include it in a test, but without this check the extreme test crashes
       if (!closingNodeForA && !closingNodeForB) {
         return changes;
       }
@@ -113,11 +112,7 @@ export class OpenCloseVerifier {
   }
 
   static verifySingle(changeType: ChangeType, node: Node, iterA: Iterator, iterB: Iterator) {
-    const nodes = new OpenCloseVerifier(iterA, iterB);
-
-    nodes.track(node);
-
-    return nodes.verify(changeType, true);
+    return new OpenCloseVerifier(iterA, iterB).track(node).verify(changeType, true)
   }
 
   *forEachRemainingNode() {

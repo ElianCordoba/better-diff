@@ -3,10 +3,11 @@ import { Node } from "./node";
 import { assert } from "./debug";
 import { k } from "./reporter";
 import { getOptions } from ".";
+import { KindTable } from "./types";
 
 type TSNode = ts.Node & { text: string };
 
-export function getNodesArray(source: string) {
+export function getNodesArray(source: string): { nodes: Node[], kindTable: KindTable } {
   const sourceFile = getSourceFile(source);
 
   const { warnOnInvalidCode, mode } = getOptions();
@@ -19,7 +20,7 @@ export function getNodesArray(source: string) {
     `);
   }
 
-  const textNodes: Node[] = [];
+  const nodes: Node[] = [];
   let depth = 0;
 
   function walk(node: TSNode) {
@@ -67,7 +68,7 @@ export function getNodesArray(source: string) {
 
     // Only include visible node, nodes that represent some text in the source code.
     if (node.text || isReservedWord || isPunctuation) {
-      textNodes.push(newNode);
+      nodes.push(newNode);
     }
 
     depth++;
@@ -77,30 +78,28 @@ export function getNodesArray(source: string) {
 
   sourceFile.getChildren().forEach((x) => walk(x as TSNode));
 
-  const nodeKindTable = new Map<number, Set<number>>();
+  const kindTable: KindTable = new Map();
 
   // TODO(Perf): Maybe do this inside the walk.
   // Before returning the result we need process the data one last time.
   let i = 0;
-  for (const node of textNodes) {
+  for (const node of nodes) {
     node.index = i;
 
-    const currentValue = nodeKindTable.get(node.kind);
+    const currentValue = kindTable.get(node.kind);
 
     if (currentValue) {
       currentValue.add(i);
     } else {
-      nodeKindTable.set(node.kind, new Set([i]));
+      kindTable.set(node.kind, new Set([i]));
     }
 
     i++;
   }
 
-  // TODO: Store node kind in a table so that we can reuse it when finding sequences
-
   return {
-    nodes: textNodes,
-    table: nodeKindTable,
+    nodes,
+    kindTable,
   };
 }
 

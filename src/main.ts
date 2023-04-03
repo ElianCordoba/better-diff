@@ -251,7 +251,7 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSRe
     return { changes, indexA: -1, indexB: -1, bestSequence: 0 };
   }
 
-  // 1- Take best overall sequence // todo now remove
+  // 1- Take best overall sequence
   let lcs = getLCS(startNode.index, candidateOppositeSide, iterA, iterB);
 
   const start = lcs.indexB;
