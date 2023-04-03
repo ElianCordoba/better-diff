@@ -1,5 +1,5 @@
 import { ChangeType, Side } from "./types";
-import { equals, mergeRanges, normalize, range } from "./utils";
+import { equals, getSequence, mergeRanges, normalize, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change, compactChanges } from "./change";
 import { getContext } from "./index";
@@ -358,7 +358,7 @@ function findBestMatchWithZigZag(iterA: Iterator, iterB: Iterator, startNode: No
 
     bestLCS = newResult;
     bestSequence = newResult.bestSequence;
-    _sequence = getSequence(_iterTwo, bestLCS);
+    _sequence = getSequence(_iterTwo, bestLCS.indexB, bestLCS.bestSequence);
 
     [_iterOne, _iterTwo] = [_iterTwo, _iterOne];
   }
@@ -366,10 +366,6 @@ function findBestMatchWithZigZag(iterA: Iterator, iterB: Iterator, startNode: No
   assert(bestLCS, () => "No LCS found");
 
   return normalize(_iterTwo, bestLCS);
-}
-
-function getSequence(iter: Iterator, lcs: LCSResult): Node[] {
-  return iter.textNodes.slice(lcs.indexB, lcs.indexB + lcs.bestSequence);
 }
 
 function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {

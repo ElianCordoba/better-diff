@@ -1,4 +1,4 @@
-import { getNodeForPrinting, getOppositeNodeKind } from "./utils";
+import { getNodeForPrinting, getOppositeNodeKind, getSequence } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
 import { ChangeType, Side } from "./types";
@@ -132,7 +132,7 @@ export class Iterator {
       }
 
       // Take a slice of the desired length and compare it to the target
-      const candidateSeq = this.textNodes.slice(candidateIndex, candidateIndex + sequenceLength);
+      const candidateSeq = getSequence(this, candidateIndex, sequenceLength);
 
       if (areSequencesIdentical(candidateSeq, targetSequence)) {
         // Push the index, we can retrieve the full sequence later
