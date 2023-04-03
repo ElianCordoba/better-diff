@@ -30,7 +30,7 @@ export function getNodeForPrinting(kind: number, text: string | undefined) {
 }
 
 export function equals(nodeA: Node, nodeB: Node) {
-  return nodeA?.kind === nodeB?.kind && nodeA?.text === nodeB?.text;
+  return nodeA.kind === nodeB.kind && nodeA.text === nodeB.text;
 }
 
 export function mergeRanges(currentRange: Range, newRange: Range) {
@@ -78,15 +78,27 @@ export function getClosingNodeGroup(node: Node): ClosingNodeGroup {
   }
 }
 
-// Given an opening node, you get back the closing one
-export function getClosingNode({ kind, prettyKind }: Node): ts.SyntaxKind {
+export function getOppositeNodeKind({ kind, prettyKind }: Node): number {
   switch (kind) {
+    // {
     case ts.SyntaxKind.OpenBraceToken:
       return ts.SyntaxKind.CloseBraceToken;
+    // }
+    case ts.SyntaxKind.CloseBraceToken:
+      return ts.SyntaxKind.OpenBraceToken;
+    // [
     case ts.SyntaxKind.OpenBracketToken:
       return ts.SyntaxKind.CloseBracketToken;
+    // ]
+    case ts.SyntaxKind.CloseBracketToken:
+      return ts.SyntaxKind.OpenBracketToken;
+    // (
     case ts.SyntaxKind.OpenParenToken:
       return ts.SyntaxKind.CloseParenToken;
+    // )
+    case ts.SyntaxKind.CloseParenToken:
+      return ts.SyntaxKind.OpenParenToken;
+
     default: {
       fail(`Unknown kind ${prettyKind}`);
     }
@@ -101,4 +113,8 @@ export function normalize(iter: Iterator, lcs: LCSResult): LCSResult {
     indexA: perspective === Side.a ? lcs.indexA : lcs.indexB,
     indexB: perspective === Side.a ? lcs.indexB : lcs.indexA,
   };
+}
+
+export function getSequence(iter: Iterator, from: number, length: number): Node[] {
+  return iter.textNodes.slice(from, from + length);
 }

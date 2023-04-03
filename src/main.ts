@@ -1,12 +1,13 @@
 import { ChangeType, Side } from "./types";
-import { ClosingNodeGroup, equals, getClosingNodeGroup, mergeRanges, normalize, range } from "./utils";
+import { equals, getSequence, mergeRanges, normalize, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change, compactChanges } from "./change";
 import { getContext } from "./index";
 import { Node } from "./node";
 import { assert } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
-import { getLCS, LCSResult, NodeMatchingStack } from "./sequence";
+import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from "./sequence";
+import { OpenCloseVerifier } from "./openCloseVerifier";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -31,8 +32,9 @@ export function getChanges(codeA: string, codeB: string): Change[] {
       if (!a || !b) {
         const iterOn = !a ? iterB : iterA;
         const type = !a ? ChangeType.addition : ChangeType.deletion;
+        const startFrom = !a ? b?.index : a.index;
 
-        const remainingChanges = oneSidedIteration(iterOn, type);
+        const remainingChanges = oneSidedIteration(iterOn, type, startFrom!);
         changes.push(...remainingChanges);
         break;
       }
@@ -56,9 +58,18 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         iterB.mark(b.index, ChangeType.addition);
 
         changes.push(
-          new Change(ChangeType.addition, a, b),
           new Change(ChangeType.deletion, a, b),
+          new Change(ChangeType.addition, a, b),
         );
+
+        // We need to ensure that we the closing one is matched as well. Also, a == b, so no need to check if b is an open node
+        if (a.isOpeningNode) {
+          changes.push(
+            ...OpenCloseVerifier.verifySingle(ChangeType.deletion, a, iterA, iterB),
+            ...OpenCloseVerifier.verifySingle(ChangeType.addition, b, iterA, iterB),
+          );
+        }
+
         continue;
       }
 
@@ -73,8 +84,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
   loop();
 
   // TODO: Once we improve compaction to be on-demand, we will be able to remove this
-  const deletions = changes.filter((x) => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start! - b.rangeA?.start!);
-  const additions = changes.filter((x) => x.type === ChangeType.addition).sort((a, b) => a.rangeB?.start! - b.rangeB?.start!);
+  const deletions = changes.filter((x) => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start - b.rangeA?.start);
+  const additions = changes.filter((x) => x.type === ChangeType.addition).sort((a, b) => a.rangeB?.start - b.rangeB?.start);
   const moves = changes.filter((x) => x.type === ChangeType.move);
 
   return compactChanges([...additions, ...deletions, ...moves]);
@@ -83,27 +94,28 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 function oneSidedIteration(
   iter: Iterator,
   typeOfChange: ChangeType.addition | ChangeType.deletion,
+  startFrom: number,
 ): Change[] {
   const changes: Change[] = [];
 
-  let value = iter.next();
+  let value = iter.next(startFrom);
 
-  const { alignmentTable } = getContext();
+  // TODO: ALIGNMENT const { alignmentTable } = getContext();
 
   // TODO: Compact
   while (value) {
     /// Alignment: Addition / Deletion ///
     if (typeOfChange === ChangeType.addition) {
-      alignmentTable.add(Side.a, value.lineNumberStart, value.text.length);
+      // TODO: ALIGNMENT alignmentTable.add(Side.a, value.lineNumberStart, value.text.length);
       changes.push(new Change(typeOfChange, undefined, value));
     } else {
-      alignmentTable.add(Side.b, value.lineNumberStart, value.text.length);
+      // TODO: ALIGNMENT alignmentTable.add(Side.b, value.lineNumberStart, value.text.length);
       changes.push(new Change(typeOfChange, value, undefined));
     }
 
-    iter.mark(value.index, typeOfChange);
+    iter.mark(value.index, typeOfChange, true);
 
-    value = iter.next();
+    value = iter.next(value.index + 1);
   }
 
   return changes;
@@ -127,7 +139,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   const { alignmentTable } = getContext();
   const localAlignmentTable = new AlignmentTable();
 
-  const nodesWithClosingVerifier: Map<ClosingNodeGroup, NodeMatchingStack> = new Map();
+  const verifier = new OpenCloseVerifier(iterA, iterB);
 
   let i = 0;
   while (i < lcs) {
@@ -141,17 +153,10 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     indexA++;
     indexB++;
 
-    assert(equals(a!, b!), `Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
+    assert(equals(a, b), () => `Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
 
-    // If the node is either opening or closing, we need to track it to see if it has all opening nodes are closed
-    if (a.isOpeningNode || a.isClosingNode) {
-      const nodeGroup = getClosingNodeGroup(a);
-      if (nodesWithClosingVerifier.has(nodeGroup)) {
-        nodesWithClosingVerifier.get(nodeGroup)!.add(a);
-      } else {
-        nodesWithClosingVerifier.set(nodeGroup, new NodeMatchingStack(a));
-      }
-    }
+    // Used for the open-close node correctness
+    verifier.track(a);
 
     /// Alignment: Move ///
 
@@ -214,63 +219,22 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   }
 
   // If the nodes are not in the same position then it's a move
-  const didChange = a!.index !== b!.index;
+  const trackChange = a.index !== b.index;
 
-  if (didChange) {
-    // Since this function is reversible we need to check the perspective so that we know if the change is an addition or a removal
-    const perspectiveAtoB = iterA.name === "a";
-
-    let change: Change;
-    if (perspectiveAtoB) {
-      change = new Change(
+  if (trackChange) {
+    changes.push(
+      new Change(
         ChangeType.move,
-        a!,
-        b!,
+        a,
+        b,
         rangeA,
         rangeB,
-      );
-    } else {
-      change = new Change(
-        ChangeType.move,
-        b!,
-        a!,
-        rangeB,
-        rangeA,
-      );
-    }
-
-    changes.push(change);
+      ),
+    );
   }
 
-  // After matching the sequence we need to verify all the kind of nodes that required matching are matched
-  for (const stack of nodesWithClosingVerifier.values()) {
-    // An empty stack means that that all open node got their respective closing node
-    if (!stack.isEmpty()) {
-      // For each kind, for example paren, brace, etc
-      for (const unmatchedOpeningNode of stack.values) {
-        const closingNodeForA = iterA.findClosingNode(unmatchedOpeningNode, indexA);
-        assert(closingNodeForA, `Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on A side`);
-
-        const closingNodeForB = iterB.findClosingNode(unmatchedOpeningNode, indexB);
-        assert(closingNodeForB, `Couldn't kind closing node for ${unmatchedOpeningNode.prettyKind} on B side`);
-
-        // We know for sure that the closing nodes move, otherwise we would have seen them in the LCS matching
-        iterA.mark(closingNodeForA.index, ChangeType.move);
-        iterB.mark(closingNodeForB.index, ChangeType.move);
-
-        // Similar to the LCS matching, only report moves if the nodes did in fact move
-        if (didChange) {
-          changes.push(
-            new Change(
-              ChangeType.move,
-              closingNodeForA,
-              closingNodeForB,
-            ),
-          );
-        }
-      }
-    }
-  }
+  // Ensure open-close node correctness, may push a change if nodes are missing
+  changes.push(...verifier.verify(ChangeType.move, trackChange, indexA, indexB));
 
   return changes;
 }
@@ -283,6 +247,7 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSRe
     const changes = [new Change(ChangeType.deletion, startNode, startNode)];
     iterA.mark(startNode.index, ChangeType.deletion);
 
+    // TODO: Maybe add the open/close here?
     return { changes, indexA: -1, indexB: -1, bestSequence: 0 };
   }
 
@@ -366,7 +331,7 @@ function findBestMatchWithZigZag(iterA: Iterator, iterB: Iterator, startNode: No
 
     const lcs = getLCS(node.index, candidateOppositeSide, iterOne, iterTwo, bothDirections);
 
-    assert(lcs.bestSequence !== 0, "LCS resulted in 0");
+    assert(lcs.bestSequence !== 0, () => "LCS resulted in 0");
 
     // If there is no better match, exit
     if (lcs.bestSequence === bestSequence) {
@@ -393,24 +358,20 @@ function findBestMatchWithZigZag(iterA: Iterator, iterB: Iterator, startNode: No
 
     bestLCS = newResult;
     bestSequence = newResult.bestSequence;
-    _sequence = getSequence(_iterTwo, bestLCS);
+    _sequence = getSequence(_iterTwo, bestLCS.indexB, bestLCS.bestSequence);
 
     [_iterOne, _iterTwo] = [_iterTwo, _iterOne];
   }
 
-  assert(bestLCS);
+  assert(bestLCS, () => "No LCS found");
 
   return normalize(_iterTwo, bestLCS);
 }
 
-function getSequence(iter: Iterator, lcs: LCSResult): Node[] {
-  return iter.textNodes.slice(lcs.indexB, lcs.indexB + lcs.bestSequence);
-}
-
 function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
-  const seq = getSequence(iterB, lcs);
-  const newSequenceCandidates = iterB.findSequence(seq);
-  const backwardPassLCS = getLCS(lcs.indexA, newSequenceCandidates, iterA, iterB);
+  const backwardPassLCS = getSequenceSingleDirection(iterA, iterB, lcs.indexA, lcs.indexB, SequenceDirection.Backward);
+
+  assert(backwardPassLCS.bestSequence !== 0, () => "Backwards LCS resulted in 0");
 
   if (backwardPassLCS.bestSequence > lcs.bestSequence) {
     return backwardPassLCS;

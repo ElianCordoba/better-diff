@@ -1,8 +1,9 @@
 import { SyntaxKind } from "typescript";
 import { getNodeForPrinting } from "./utils";
-import { ChangeType } from "./types";
+import { ChangeType, Mode } from "./types";
 
 interface NodeArgs {
+  mode: Mode;
   fullStart: number;
   start: number;
   end: number;
@@ -36,14 +37,21 @@ export class Node {
   // For printing proposes
   markedAs?: ChangeType;
   constructor(args: NodeArgs) {
-    const { fullStart, start, end, kind, triviaLinesAbove, lineNumberStart, lineNumberEnd, text } = args;
+    const { fullStart, start, end, kind, triviaLinesAbove, lineNumberStart, lineNumberEnd, text, mode } = args;
 
     this.fullStart = fullStart;
     this.start = start;
     this.end = end;
     this.kind = kind;
-    const prettyKind = getNodeForPrinting(kind, text);
-    this.prettyKind = `${prettyKind.text} ${prettyKind.kind}`;
+
+    // Not calculating and allocating the pretty kind string greatly improves performance and memory consumption
+    if (mode === Mode.debug) {
+      const prettyKind = getNodeForPrinting(kind, text);
+      this.prettyKind = `${prettyKind.text} ${prettyKind.kind}`;
+    } else {
+      this.prettyKind = "";
+    }
+
     this.text = text;
 
     this.triviaLinesAbove = triviaLinesAbove;

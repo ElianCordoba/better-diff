@@ -7,9 +7,15 @@
     "lint": "deno lint --ignore=node_modules,diff,internal,dist,tests,ui,scripts",
     "startServer": "tsx src/server.ts",
     "start": "node dist/src/server.js",
-    "debug": "node --inspect-brk dist/src/server.js"
+    "bench": "node ./dist/bench/bench.js",
+    "debug": "node --inspect-brk dist/src/server.js",
+    "profile": "pprof-it ./dist/scripts/test.js",
+    "view": "pprof -http=:"
   },
   "devDependencies": {
+    "@types/benchmark": "^2.1.2",
+    "benchmark": "^2.1.4",
+    "pprof-it": "^1.2.0",
     "vite": "4.0.3",
     "vitest": "0.26.2"
   },

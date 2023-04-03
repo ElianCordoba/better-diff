@@ -18,8 +18,10 @@ export function fail(errorMessage?: string): never {
   throw new DebugFailure(errorMessage || "Assertion failed");
 }
 
-export function assert<T>(condition: T, errorMessage?: string): asserts condition is NonNullable<T> {
+// It receives a function instead of a raw string so that the content gets evaluated lazily. Without this, an error message that
+// uses the function `getPrettyKind` will trigger it independently if the assertion passes of not
+export function assert<T>(condition: T, errorMessage?: () => string): asserts condition is NonNullable<T> {
   if (!condition) {
-    fail(errorMessage);
+    fail(errorMessage?.());
   }
 }

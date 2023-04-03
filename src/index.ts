@@ -1,28 +1,32 @@
 import { getChanges } from "./main";
 import { applyChangesToSources, asciiRenderFn, DiffRendererFn, getAlignedSources } from "./reporter";
 import { serialize } from "./serializer";
-import { ChangeType, SerializedResponse, Side } from "./types";
+import { ChangeType, Mode, SerializedResponse, Side } from "./types";
 import { Node } from "./node";
 import { AlignmentTable } from "./alignmentTable";
 import { fail } from "./debug";
 
 // These options have their own tests under the /tests/options folder
 export interface Options {
+  mode?: Mode;
+
   outputType?: OutputType;
 
   warnOnInvalidCode?: boolean;
 
   renderFn?: DiffRendererFn;
 
+  // For testing and debugging mostly
   alignmentText?: string;
   includeDebugAlignmentInfo?: boolean;
 }
 
 export enum OutputType {
-  serializedChunks = "serializedChunks",
-  serializedAlignedChunks = "serializedAlignedChunks",
-  text = "text",
-  alignedText = "alignedText",
+  serializedChunks,
+  serializedAlignedChunks,
+  text,
+  alignedText,
+  noop,
 }
 
 interface ResultTypeMapper {
@@ -30,6 +34,7 @@ interface ResultTypeMapper {
   [OutputType.serializedAlignedChunks]: SerializedResponse;
   [OutputType.text]: { sourceA: string; sourceB: string };
   [OutputType.alignedText]: { sourceA: string; sourceB: string };
+  [OutputType.noop]: void;
 }
 
 export function getDiff<_OutputType extends OutputType = OutputType.text>(
@@ -65,13 +70,22 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
       return getAlignedSources(sourceA, sourceB) as any;
     }
 
+    // Used mainly for benchmarking the core algorithm on it's own. Without this the total execution time of the `getDiff`
+    // function will include the time it takes to do the reporting, which can be quite a lot
+    case OutputType.noop: {
+      // deno-lint-ignore no-explicit-any
+      return undefined as any;
+    }
+
     default: {
-      fail(`Unknown output type "${_options.outputType}"`);
+      const assert: never = _options.outputType;
+      fail(`Unknown output type "${assert}"`);
     }
   }
 }
 
 const defaultOptions: Options = {
+  mode: Mode.debug,
   outputType: OutputType.text,
   warnOnInvalidCode: false,
   renderFn: asciiRenderFn,

@@ -176,9 +176,7 @@ describe("Properly report lines added", () => {
     `
   })
 
-  // TODO: Unhandled case here
   test({
-    only: 'standard',
     name: "Properly match closing paren",
     a: `
       console.log()
@@ -314,8 +312,80 @@ describe("Properly report lines added", () => {
     `
   })
 
-  // Testing single node matching
+  // Test closing the paren on a deletion / addition on the "verifySingle"
+  test({
+    name: "Properly match closing paren 7",
+    a: `
+      function* range() {
+        while (i < end - 1) {
+          yield i;
+        }
+      }
+    `,
+    b: `
+      console.log(1)
+    `,
+    expA: `
+      ➖function*➖ ➖range()➖ ➖{➖
+        ➖while➖ ➖(i➖ ➖<➖ ➖end➖ ➖-➖ 🔀1⏹️➖)➖ ➖{➖
+          ➖yield➖ ➖i;➖
+        ➖}➖
+      ➖}➖
+    `,
+    expB: `
+      ➕console.log(➕🔀1⏹️➕)➕
+    `
+  })
 
+  // Test closing the paren on a move with syntax error
+  test({
+    name: "Properly match closing paren 8",
+    a: `
+      function asd() {
+        123
+        123
+        x
+      }
+    `,
+    b: `
+      function asd() {
+        123
+        123
+        Z
+    `,
+    expA: `
+      function asd() {
+        123
+        123
+        ➖x➖
+      ➖}➖
+    `,
+    expB: `
+      function asd() {
+        123
+        123
+        ➕Z➕
+    `
+  })
+
+  // Test for another syntax error, this hit the branch where we initialize a stack with a closing paren
+  test({
+    name: "Properly match closing paren 9",
+    a: `
+      {
+    `,
+    b: `
+      }{
+    `,
+    expA: `
+      ➖{➖
+    `,
+    expB: `
+      ➕}{➕
+    `
+  })
+
+  // Testing single node matching
   test({
     name: "Noise reduction",
     a: `

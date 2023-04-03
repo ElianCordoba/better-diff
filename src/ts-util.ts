@@ -3,13 +3,14 @@ import { Node } from "./node";
 import { assert } from "./debug";
 import { k } from "./reporter";
 import { getOptions } from ".";
+import { KindTable } from "./types";
 
 type TSNode = ts.Node & { text: string };
 
-export function getNodesArray(source: string) {
+export function getNodesArray(source: string): { nodes: Node[]; kindTable: KindTable } {
   const sourceFile = getSourceFile(source);
 
-  const { warnOnInvalidCode } = getOptions();
+  const { warnOnInvalidCode, mode } = getOptions();
 
   // deno-lint-ignore no-explicit-any
   if (warnOnInvalidCode && (sourceFile as any).parseDiagnostics.length > 0) {
@@ -19,7 +20,7 @@ export function getNodesArray(source: string) {
     `);
   }
 
-  const textNodes: Node[] = [];
+  const nodes: Node[] = [];
   let depth = 0;
 
   function walk(node: TSNode) {
@@ -36,14 +37,14 @@ export function getNodesArray(source: string) {
     // value of the node starts and not where the trivia starts
     const start = node.pos + node.getLeadingTriviaWidth();
 
-    const lineNumberStart = getLineNumber(sourceFile, start);
-    const lineNumberEnd = getLineNumber(sourceFile, node.end);
+    const lineNumberStart = 0; // TODO ALIGNMENT = getLineNumber(sourceFile, start);
+    const lineNumberEnd = 0; // TODO ALIGNMENT = getLineNumber(sourceFile, node.end);
 
     // TODO: This was disabled because it was too expensive, enable when we work on the code-alignment algo again
     // const leadingTriviaHasNewLine = node.getFullText().split("\n").length > 1;
     const triviaLinesAbove = 0; //leadingTriviaHasNewLine ? getTriviaLinesAbove(source, lineNumberStart) : 0;
 
-    const newNode = new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove });
+    const newNode = new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove, mode });
     newNode.expressionNumber = depth;
 
     const isClosingNode = node.kind === ts.SyntaxKind.CloseBraceToken ||
@@ -67,7 +68,7 @@ export function getNodesArray(source: string) {
 
     // Only include visible node, nodes that represent some text in the source code.
     if (node.text || isReservedWord || isPunctuation) {
-      textNodes.push(newNode);
+      nodes.push(newNode);
     }
 
     depth++;
@@ -77,18 +78,29 @@ export function getNodesArray(source: string) {
 
   sourceFile.getChildren().forEach((x) => walk(x as TSNode));
 
+  const kindTable: KindTable = new Map();
+
   // TODO(Perf): Maybe do this inside the walk.
   // Before returning the result we need process the data one last time.
   let i = 0;
-  for (const node of textNodes) {
+  for (const node of nodes) {
     node.index = i;
+
+    const currentValue = kindTable.get(node.kind);
+
+    if (currentValue) {
+      currentValue.add(i);
+    } else {
+      kindTable.set(node.kind, new Set([i]));
+    }
 
     i++;
   }
 
-  // TODO: Store node kind in a table so that we can reuse it when finding sequences
-
-  return textNodes;
+  return {
+    nodes,
+    kindTable,
+  };
 }
 
 function getSourceFile(source: string): SourceFile {
@@ -100,7 +112,7 @@ function getSourceFile(source: string): SourceFile {
   );
 }
 
-function getTriviaLinesAbove(source: string, startAt: number) {
+function _getTriviaLinesAbove(source: string, startAt: number) {
   const lines = getArrayOrLines(source);
 
   // -1 because line numbers are 1-indexed
@@ -127,7 +139,7 @@ function getTriviaLinesAbove(source: string, startAt: number) {
 }
 
 // Returns an array of lines of code
-export function getArrayOrLines(source: string) {
+function getArrayOrLines(source: string) {
   const lineMap = getLineMap(source);
 
   const lines: string[] = [];
@@ -143,7 +155,7 @@ export function getArrayOrLines(source: string) {
     lines.push(slice);
   }
 
-  assert(lines.length === lineMap.length, "Line number and line map length didn't match");
+  assert(lines.length === lineMap.length, () => "Line number and line map length didn't match");
 
   return lines;
 }
@@ -159,7 +171,7 @@ export function getLineMap(source: string): number[] {
 }
 
 // Get the line number (1-indexed) of a given character
-function getLineNumber(sourceFile: ts.SourceFile, pos: number) {
+function _getLineNumber(sourceFile: ts.SourceFile, pos: number) {
   // deno-lint-ignore no-explicit-any
   return (ts as any).getLineAndCharacterOfPosition(sourceFile, pos).line + 1;
 }

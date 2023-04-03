@@ -1,7 +1,8 @@
-import { ChangeType, Range } from "./types";
+import { ChangeType, Range, TypeMasks } from "./types";
 import { colorFn, getSourceWithChange } from "./reporter";
 import { Node } from "./node";
 import { getContext } from "./index";
+import { assert } from "./debug";
 
 export class Change {
   rangeA: Range;
@@ -16,6 +17,14 @@ export class Change {
     // Changes on revision
     rangeB?: Range,
   ) {
+    if (type & TypeMasks.DelOrMove) {
+      assert(nodeA, () => "A node was missing during new change creation");
+    }
+
+    if (type & TypeMasks.AddOrMove) {
+      assert(nodeB, () => "B node was missing during new change creation");
+    }
+
     this.rangeA = rangeA ?? nodeA?.getPosition()!;
     this.rangeB = rangeB ?? nodeB?.getPosition()!;
   }

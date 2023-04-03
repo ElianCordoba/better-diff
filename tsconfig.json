@@ -95,7 +95,8 @@
   "include": [
     "./src",
     "./tests",
-    "./scripts"
+    "./scripts",
+    "./bench"
   ],
   "exclude": [
     "./ui",

@@ -9,10 +9,21 @@ export interface DiffResult {
 }
 
 export enum ChangeType {
-  addition = "addition",
-  deletion = "removal",
-  move = "move",
+  addition = 1 << 0, // 1
+  deletion = 1 << 1, // 2
+  move = 1 << 2, // 4
 }
+
+export type SyntaxKind = number;
+
+// A table with the syntax kind as the key an a set of indexes where an _unmatched_ node with that kind is found. Nodes get removed from the table as they get marked
+export type KindTable = Map<SyntaxKind, Set<number>>;
+
+export const TypeMasks = {
+  AddOrDel: ChangeType.addition | ChangeType.deletion,
+  DelOrMove: ChangeType.deletion | ChangeType.move,
+  AddOrMove: ChangeType.addition | ChangeType.move,
+};
 
 export interface Range {
   start: number;
@@ -69,4 +80,9 @@ export interface SerializedResponse {
 export interface GetDiffPayload {
   a: string;
   b: string;
+}
+
+export enum Mode {
+  release,
+  debug,
 }

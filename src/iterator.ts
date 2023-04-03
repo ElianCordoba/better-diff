@@ -1,9 +1,9 @@
-import { equals, getClosingNode, getNodeForPrinting } from "./utils";
+import { getNodeForPrinting, getOppositeNodeKind, getSequence } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
-import { ChangeType, Side } from "./types";
+import { ChangeType, KindTable, Side } from "./types";
 import { getContext } from ".";
-import { NodeMatchingStack } from "./sequence";
+import { OpenCloseStack } from "./openCloseVerifier";
 import { getNodesArray } from "./ts-util";
 
 interface IteratorOptions {
@@ -15,13 +15,16 @@ export class Iterator {
   name: string;
 
   matchNumber = 0;
-  public textNodes: Node[];
+  textNodes: Node[];
+  kindTable: KindTable;
 
   // Only read when printing nodes
   private indexOfLastItem = 0;
 
   constructor({ source, name }: IteratorOptions) {
-    this.textNodes = getNodesArray(source);
+    const { nodes, kindTable } = getNodesArray(source);
+    this.textNodes = nodes;
+    this.kindTable = kindTable;
     this.name = name;
   }
 
@@ -41,8 +44,8 @@ export class Iterator {
 
   // Find the first closing node that matches the wanted kind
   findClosingNode(openNode: Node, startFrom = 0): Node | undefined {
-    const closingNodeKind = getClosingNode(openNode);
-    const stack = new NodeMatchingStack(openNode);
+    const closingNodeKind = getOppositeNodeKind(openNode);
+    const stack = new OpenCloseStack(openNode);
 
     let i = startFrom;
 
@@ -83,13 +86,21 @@ export class Iterator {
     return item;
   }
 
-  mark(index: number, markedAs: ChangeType) {
+  mark(index: number, markedAs: ChangeType, done = false) {
     // TODO: Should only apply for moves, otherwise a move, addition and move
     // will display 1 for the first move and 3 for the second
     this.matchNumber++;
     this.textNodes[index].matched = true;
     this.textNodes[index].matchNumber = this.matchNumber;
     this.textNodes[index].markedAs = markedAs;
+
+    // Optimization, done is only set to `true` when we are calling this from `oneSidedIteration`,  by that time we don't need to update the kindTable
+    if (!done) {
+      // We remove the index from the table so that:
+      // - We don't need to check if the node is matched or not when we use it
+      // - To improve performance, this way we have less nodes to check
+      this.kindTable.get(this.textNodes[index].kind)!.delete(index);
+    }
   }
 
   markMultiple(startIndex: number, numberOfNodes: number, markAs: ChangeType) {
@@ -106,27 +117,28 @@ export class Iterator {
     const startOfSequence = targetSequence[0];
     const sequenceLength = targetSequence.length;
 
-    for (let i = 0; i < this.textNodes.length; i++) {
-      const node = this.textNodes[i];
+    const candidateNodes = this.find(startOfSequence);
+
+    if (!candidateNodes) {
+      return [];
+    }
+
+    for (const candidateIndex of candidateNodes) {
+      const node = this.textNodes[candidateIndex];
 
       // If the start of the sequence doesn't match then we know it's not a candidate, skipping
-      if (node.matched || !equals(startOfSequence, node)) {
+      if (startOfSequence.text !== node.text) {
         continue;
       }
 
       // Take a slice of the desired length and compare it to the target
-      const candidateSeq = this.textNodes.slice(i, i + sequenceLength);
+      const candidateSeq = getSequence(this, candidateIndex, sequenceLength);
 
       if (areSequencesIdentical(candidateSeq, targetSequence)) {
         // Push the index, we can retrieve the full sequence later
-        candidates.push(i);
-
-        // We can safely jump ahead to the next node after the already added candidate
-        i += targetSequence.length - 1;
+        candidates.push(candidateIndex);
         continue;
       }
-
-      i++;
     }
 
     return candidates;
@@ -135,15 +147,21 @@ export class Iterator {
   find(targetNode: Node): number[] {
     const candidates: number[] = [];
 
-    for (let i = 0; i < this.textNodes.length; i++) {
-      const node = this.textNodes[i];
+    const rawCandidates = this.kindTable.get(targetNode.kind);
 
-      // If the start of the sequence doesn't match then we know it's not a candidate, skipping
-      if (node.matched || !equals(targetNode, node)) {
+    if (!rawCandidates) {
+      return [];
+    }
+
+    for (const candidateIndex of rawCandidates) {
+      const node = this.textNodes[candidateIndex];
+
+      // No need to compare kinds since we got the nodes from the kind table
+      if (targetNode.text !== node.text) {
         continue;
       }
 
-      candidates.push(node.index);
+      candidates.push(candidateIndex);
     }
 
     return candidates;
@@ -281,7 +299,7 @@ function areSequencesIdentical(seq1: Node[], seq2: Node[]): boolean {
     const a = seq1[i];
     const b = seq2[i];
 
-    if (equals(a, b)) {
+    if (a.text === b.text) {
       continue;
     }
 
