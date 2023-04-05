@@ -18,11 +18,11 @@ export class Change {
     rangeB?: Range,
   ) {
     if (type & TypeMasks.DelOrMove) {
-      assert(nodeA, () => "A node was missing during new change creation");
+      assert(nodeA, () => "A node was missing during change creation");
     }
 
     if (type & TypeMasks.AddOrMove) {
-      assert(nodeB, () => "B node was missing during new change creation");
+      assert(nodeB, () => "B node was missing during change creation");
     }
 
     this.rangeA = rangeA ?? nodeA?.getPosition()!;
