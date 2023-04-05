@@ -86,9 +86,38 @@ export function getChanges(codeA: string, codeB: string): Change[] {
   // TODO: Once we improve compaction to be on-demand, we will be able to remove this
   const deletions = changes.filter((x) => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start - b.rangeA?.start);
   const additions = changes.filter((x) => x.type === ChangeType.addition).sort((a, b) => a.rangeB?.start - b.rangeB?.start);
-  const moves = changes.filter((x) => x.type === ChangeType.move);
+  const moves = processMoves();
 
   return compactChanges([...additions, ...deletions, ...moves]);
+}
+
+function processMoves() {
+  const changes: Change[] = [];
+
+  const { matches, offsetTracker } = getContext()
+
+  for (const match of matches) {
+    const nodeA = match.nodeA!
+    const nodeB = match.nodeB!
+
+
+    const offsettedAIndex = nodeA.index + offsetTracker.getOffset(Side.a, nodeB.index)
+    const offsettedBIndex = nodeB.index + offsetTracker.getOffset(Side.b, nodeA.index)
+
+    if (offsettedAIndex !== offsettedBIndex) {
+      changes.push(
+        new Change(
+          ChangeType.move,
+          nodeA,
+          nodeB,
+          match.rangeA,
+          match.rangeB,
+        ),
+      );
+    }
+  }
+
+  return changes
 }
 
 function oneSidedIteration(
@@ -124,6 +153,7 @@ function oneSidedIteration(
 // This function has side effects, mutates data in the iterators
 function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, lcs: number): Change[] {
   const changes: Change[] = [];
+  const { matches } = getContext()
 
   let a = iterA.next(indexA)!;
   let b = iterB.next(indexB)!;
@@ -222,7 +252,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   const trackChange = a.index !== b.index;
 
   if (trackChange) {
-    changes.push(
+    matches.push(
       new Change(
         ChangeType.move,
         a,

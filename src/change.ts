@@ -1,4 +1,4 @@
-import { ChangeType, Range, TypeMasks } from "./types";
+import { ChangeType, Range, Side, TypeMasks } from "./types";
 import { colorFn, getSourceWithChange } from "./reporter";
 import { Node } from "./node";
 import { getContext } from "./index";
@@ -27,6 +27,27 @@ export class Change {
 
     this.rangeA = rangeA ?? nodeA?.getPosition()!;
     this.rangeB = rangeB ?? nodeB?.getPosition()!;
+
+    // TODO-NOW
+    // Additions and removals needs to get tracked so that we can later on process the moves, more on this in the "processMoves" function
+    if (type & TypeMasks.AddOrDel) {
+
+      // We calculate the offset from all the index up to here
+      let index: number;
+      // 
+      let sideToReadOffset: Side;
+
+      if (type === ChangeType.deletion) {
+        index = nodeA!.index;
+        sideToReadOffset = Side.b;
+      } else {
+        index = nodeB!.index;
+        sideToReadOffset = Side.a;
+      }
+
+      getContext().offsetTracker.add(sideToReadOffset, index!)
+    }
+
   }
 
   draw() {

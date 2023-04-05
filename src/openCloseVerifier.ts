@@ -4,6 +4,7 @@ import { ClosingNodeGroup, getClosingNodeGroup, getOppositeNodeKind, getPrettyKi
 import { assert } from "./debug";
 import { ChangeType, TypeMasks } from "./types";
 import { Change } from "./change";
+import { getContext } from ".";
 
 export class OpenCloseStack {
   allowedKind: number[];
@@ -56,6 +57,7 @@ export class OpenCloseVerifier {
 
   verify(changeType: ChangeType, trackChange = false, indexA?: number, indexB?: number) {
     const changes: Change[] = [];
+    const { matches } = getContext()
 
     for (const unmatchedOpeningNode of this.forEachRemainingNode()) {
       // Only calculate when needed, A is only involved in deletions, B only in additions. Moves require both nodes to be present
@@ -92,9 +94,9 @@ export class OpenCloseVerifier {
         this.iterB.mark(closingNodeForB.index, ChangeType.move);
 
         if (trackChange) {
-          changes.push(
+          matches.push(
             new Change(
-              changeType,
+              ChangeType.move,
               closingNodeForA,
               closingNodeForB,
             ),

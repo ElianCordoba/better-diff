@@ -5,6 +5,8 @@ import { ChangeType, Mode, SerializedResponse, Side } from "./types";
 import { Node } from "./node";
 import { AlignmentTable } from "./alignmentTable";
 import { fail } from "./debug";
+import { Change } from "./change";
+import { OffsetTracker } from "./offsetTracker";
 
 // These options have their own tests under the /tests/options folder
 export interface Options {
@@ -44,7 +46,16 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
 ): ResultTypeMapper[_OutputType] {
   // Set up globals
   _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
-  _context = { sourceA, sourceB, alignmentTable: new AlignmentTable(), alignmentsOfMoves: [] };
+  _context = {
+    sourceA,
+    sourceB,
+
+    matches: [],
+    offsetTracker: new OffsetTracker(),
+
+    alignmentTable: new AlignmentTable(),
+    alignmentsOfMoves: []
+  };
 
   const changes = getChanges(sourceA, sourceB);
 
@@ -113,7 +124,7 @@ export class LayoutShiftCandidate {
     // Value: Length of the string
     public a = new Map<number, number>(),
     public b = new Map<number, number>(),
-  ) {}
+  ) { }
 
   add(side: Side, at: number, length: number) {
     if (side === Side.a) {
@@ -171,6 +182,10 @@ export interface MoveAlignmentInfo {
 interface Context {
   sourceA: string;
   sourceB: string;
+
+  matches: Change[];
+  offsetTracker: OffsetTracker;
+
   alignmentTable: AlignmentTable;
   alignmentsOfMoves: MoveAlignmentInfo[];
 }
