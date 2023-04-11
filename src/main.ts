@@ -62,7 +62,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 
         changes.push(
           new Change(ChangeType.deletion, a.getPosition(), undefined, a.index),
-          new Change(ChangeType.addition, undefined, b.getPosition(), b.index),
+          new Change(ChangeType.addition, undefined, b.getPosition(), undefined, b.index),
         );
 
         // We need to ensure that we the closing one is matched as well. Also, a == b, so no need to check if b is an open node
@@ -170,10 +170,10 @@ function oneSidedIteration(
     /// Alignment: Addition / Deletion ///
     if (typeOfChange === ChangeType.addition) {
       // TODO: ALIGNMENT alignmentTable.add(Side.a, value.lineNumberStart, value.text.length);
-      changes.push(new Change(typeOfChange, undefined, value));
+      changes.push(new Change(typeOfChange, undefined, value, undefined, value.index));
     } else {
       // TODO: ALIGNMENT alignmentTable.add(Side.b, value.lineNumberStart, value.text.length);
-      changes.push(new Change(typeOfChange, value, undefined));
+      changes.push(new Change(typeOfChange, value, undefined, value.index, undefined));
     }
 
     iter.mark(value.index, typeOfChange, true);
@@ -318,7 +318,7 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSRe
 
   // Report deletion if applicable
   if (candidateOppositeSide.length === 0) {
-    const changes = [new Change(ChangeType.deletion, startNode, startNode)];
+    const changes = [new Change(ChangeType.deletion, startNode, startNode, startNode.index, startNode.index)];
     iterA.mark(startNode.index, ChangeType.deletion);
 
     // TODO: Maybe add the open/close here?

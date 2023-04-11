@@ -1,4 +1,5 @@
 import { Change } from "./change";
+import { assert } from "./debug";
 import { Side } from "./types";
 import { range } from "./utils";
 
@@ -8,6 +9,7 @@ export class OffsetTracker {
   offsetsB = new Set<number>();
 
   add(side: Side, index: number) {
+    assert(typeof index === 'number', () => `Expected number when storing offset but received ${typeof index}`)
     this.getSide(side).add(index);
   }
 
