@@ -21,7 +21,7 @@ test({
   `
 })
 
-describe("Properly report moves in a same sequence", () => {
+describe.only("Properly report moves in a same sequence", () => {
   test({
     name: "Case 1",
     a: `

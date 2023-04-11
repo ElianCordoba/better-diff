@@ -4,7 +4,7 @@ import { ClosingNodeGroup, getClosingNodeGroup, getOppositeNodeKind, getPrettyKi
 import { assert } from "./debug";
 import { ChangeType, TypeMasks } from "./types";
 import { Change } from "./change";
-import { getContext } from ".";
+import { _context } from ".";
 
 export class OpenCloseStack {
   allowedKind: number[];
@@ -57,7 +57,7 @@ export class OpenCloseVerifier {
 
   verify(changeType: ChangeType, trackChange = false, indexA?: number, indexB?: number) {
     const changes: Change[] = [];
-    const { matches } = getContext()
+    const { matches } = _context;
 
     for (const unmatchedOpeningNode of this.forEachRemainingNode()) {
       // Only calculate when needed, A is only involved in deletions, B only in additions. Moves require both nodes to be present
@@ -97,8 +97,10 @@ export class OpenCloseVerifier {
           matches.push(
             new Change(
               ChangeType.move,
-              closingNodeForA,
-              closingNodeForB,
+              closingNodeForA.getPosition(),
+              closingNodeForB.getPosition(),
+              closingNodeForA.index,
+              closingNodeForB.index,
             ),
           );
         }
@@ -107,10 +109,17 @@ export class OpenCloseVerifier {
         // We will still continue to processing the code by marking the found node as added / removed
         if (closingNodeForA) {
           this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
-          changes.push(new Change(ChangeType.deletion, closingNodeForA, undefined));
+          changes.push(
+            new Change(
+              ChangeType.deletion,
+              closingNodeForA.getPosition(),
+              undefined,
+              closingNodeForA.index,
+            ),
+          );
         } else {
           this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-          changes.push(new Change(ChangeType.addition, undefined, closingNodeForB));
+          changes.push(new Change(ChangeType.addition, undefined, closingNodeForB!.getPosition(), closingNodeForB!.index));
         }
       }
     }

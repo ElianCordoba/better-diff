@@ -7,6 +7,8 @@ import { AlignmentTable } from "./alignmentTable";
 import { fail } from "./debug";
 import { Change } from "./change";
 import { OffsetTracker } from "./offsetTracker";
+import { Iterator } from "./iterator";
+import { Context } from "./context";
 
 // These options have their own tests under the /tests/options folder
 export interface Options {
@@ -46,16 +48,8 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
 ): ResultTypeMapper[_OutputType] {
   // Set up globals
   _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
-  _context = {
-    sourceA,
-    sourceB,
 
-    matches: [],
-    offsetTracker: new OffsetTracker(),
-
-    alignmentTable: new AlignmentTable(),
-    alignmentsOfMoves: []
-  };
+  _context = new Context(sourceA, sourceB);
 
   const changes = getChanges(sourceA, sourceB);
 
@@ -124,7 +118,7 @@ export class LayoutShiftCandidate {
     // Value: Length of the string
     public a = new Map<number, number>(),
     public b = new Map<number, number>(),
-  ) { }
+  ) {}
 
   add(side: Side, at: number, length: number) {
     if (side === Side.a) {
@@ -179,18 +173,13 @@ export interface MoveAlignmentInfo {
   text: string;
 }
 
-interface Context {
-  sourceA: string;
-  sourceB: string;
+// let _context: Context;
+// export function getContext() {
+//   return _context;
+// }
 
-  matches: Change[];
-  offsetTracker: OffsetTracker;
+// export function setContext(key: any, val: any) {
+//   (_context as any)[key] = val
+// }
 
-  alignmentTable: AlignmentTable;
-  alignmentsOfMoves: MoveAlignmentInfo[];
-}
-
-let _context: Context;
-export function getContext() {
-  return _context;
-}
+export let _context: Context;

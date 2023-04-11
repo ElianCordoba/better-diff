@@ -1,57 +1,73 @@
 import { ChangeType, Range, Side, TypeMasks } from "./types";
 import { colorFn, getSourceWithChange } from "./reporter";
-import { Node } from "./node";
-import { getContext } from "./index";
+import { _context } from "./index";
 import { assert } from "./debug";
 
 export class Change {
-  rangeA: Range;
-  rangeB: Range;
+  indexesA: number[] = [];
+  indexesB: number[] = [];
 
   constructor(
     public type: ChangeType,
-    public nodeA: Node | undefined,
-    public nodeB: Node | undefined,
-    // Changes on source
-    rangeA?: Range,
-    // Changes on revision
-    rangeB?: Range,
+    public rangeA: Range | undefined,
+    public rangeB: Range | undefined,
+    // List of all the indexes of nodes involved in the change
+
+    indexesA?: number | number[],
+    indexesB?: number | number[],
+    // More characters the change involved the more weight. TODO-NOW only for moves now
+    public weight = 0,
   ) {
+    if (indexesA) {
+      if (typeof indexesA === "number") {
+        this.indexesA = [indexesA];
+      } else {
+        this.indexesA = indexesA;
+      }
+    }
+
+    if (indexesB) {
+      if (typeof indexesB === "number") {
+        this.indexesB = [indexesB];
+      } else {
+        this.indexesB = indexesB;
+      }
+    }
+
     if (type & TypeMasks.DelOrMove) {
-      assert(nodeA, () => "A node was missing during change creation");
+      assert(this.rangeA, () => "Range A was missing during change creation");
     }
 
     if (type & TypeMasks.AddOrMove) {
-      assert(nodeB, () => "B node was missing during change creation");
+      assert(this.rangeB, () => "Range B was missing during change creation");
     }
-
-    this.rangeA = rangeA ?? nodeA?.getPosition()!;
-    this.rangeB = rangeB ?? nodeB?.getPosition()!;
 
     // TODO-NOW
     // Additions and removals needs to get tracked so that we can later on process the moves, more on this in the "processMoves" function
     if (type & TypeMasks.AddOrDel) {
-
       // We calculate the offset from all the index up to here
       let index: number;
-      // 
+      //
       let sideToReadOffset: Side;
 
       if (type === ChangeType.deletion) {
-        index = nodeA!.index;
+        index = this.indexesA[0];
         sideToReadOffset = Side.b;
       } else {
-        index = nodeB!.index;
+        index = this.indexesB[0];
         sideToReadOffset = Side.a;
       }
 
-      getContext().offsetTracker.add(sideToReadOffset, index!)
-    }
+      _context.offsetTracker.add(sideToReadOffset, index!);
+    } else {
+      // move
 
+      this.weight = weight || 0;
+    }
   }
 
   draw() {
-    const { sourceA, sourceB } = getContext();
+    const { sourceA, sourceB } = _context;
 
     const charsA = sourceA.split("");
     const charsB = sourceB.split("");

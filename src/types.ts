@@ -10,7 +10,7 @@ export interface DiffResult {
 
 export enum ChangeType {
   deletion = 1 << 0, // 1
-  addition = 1 << 1, // 2 
+  addition = 1 << 1, // 2
   move = 1 << 2, // 4
 }
 

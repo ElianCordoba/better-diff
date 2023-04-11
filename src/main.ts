@@ -1,19 +1,25 @@
 import { ChangeType, Side } from "./types";
-import { equals, getSequence, mergeRanges, normalize, range } from "./utils";
+import { equals, getSequence, mergeRanges, normalize, oppositeSide, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change, compactChanges } from "./change";
-import { getContext } from "./index";
+import { _context } from "./index";
 import { Node } from "./node";
 import { assert } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
 import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from "./sequence";
 import { OpenCloseVerifier } from "./openCloseVerifier";
+import { OffsetTracker } from "./offsetTracker";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
 
   const iterA = new Iterator({ source: codeA, name: Side.a });
   const iterB = new Iterator({ source: codeB, name: Side.b });
+
+  _context.iterA = iterA;
+  _context.iterB = iterB;
+
+  console.log(_context);
 
   let a: Node | undefined;
   let b: Node | undefined;
@@ -58,8 +64,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         iterB.mark(b.index, ChangeType.addition);
 
         changes.push(
-          new Change(ChangeType.deletion, a, b),
-          new Change(ChangeType.addition, a, b),
+          new Change(ChangeType.deletion, a.getPosition(), undefined, a.index),
+          new Change(ChangeType.addition, undefined, b.getPosition(), b.index),
         );
 
         // We need to ensure that we the closing one is matched as well. Also, a == b, so no need to check if b is an open node
@@ -84,8 +90,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
   loop();
 
   // TODO: Once we improve compaction to be on-demand, we will be able to remove this
-  const deletions = changes.filter((x) => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start - b.rangeA?.start);
-  const additions = changes.filter((x) => x.type === ChangeType.addition).sort((a, b) => a.rangeB?.start - b.rangeB?.start);
+  const deletions = changes.filter((x) => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start! - b.rangeA?.start!);
+  const additions = changes.filter((x) => x.type === ChangeType.addition).sort((a, b) => a.rangeB?.start! - b.rangeB?.start!);
   const moves = processMoves();
 
   return compactChanges([...additions, ...deletions, ...moves]);
@@ -94,30 +100,61 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 function processMoves() {
   const changes: Change[] = [];
 
-  const { matches, offsetTracker } = getContext()
+  const { matches, offsetTracker } = _context;
 
-  for (const match of matches) {
-    const nodeA = match.nodeA!
-    const nodeB = match.nodeB!
+  // Process matches starting with the most relevant ones, the ones with the most text involved
+  for (const match of matches.sort((a, b) => a.weight < b.weight ? 1 : -1)) {
+    assert(match.indexesA.length && match.indexesB.length);
 
+    const indexA = match.indexesA[0];
+    const indexB = match.indexesB[0];
 
-    const offsettedAIndex = nodeA.index + offsetTracker.getOffset(Side.a, nodeB.index)
-    const offsettedBIndex = nodeB.index + offsetTracker.getOffset(Side.b, nodeA.index)
+    const offsettedAIndex = indexA + offsetTracker.getOffset(Side.a, indexA);
+    const offsettedBIndex = indexB + offsetTracker.getOffset(Side.b, indexB);
 
-    if (offsettedAIndex !== offsettedBIndex) {
-      changes.push(
-        new Change(
-          ChangeType.move,
-          nodeA,
-          nodeB,
-          match.rangeA,
-          match.rangeB,
-        ),
-      );
+    // No index diff means no extra work needed
+    if (offsettedAIndex === offsettedBIndex) {
+      continue;
+    }
+
+    // There are two possibilities, if the match can be aligned then it be aligned, otherwise a move will be created
+    if (offsetTracker.moveCanGetAligned(match)) {
+      // We need to add alignments to both sides, for example
+      //
+      // A)         B)
+      // 1          2
+      // 2          3
+      // 3          1
+      //
+      // Results in:
+      //
+      // A)         B)
+      // 1          -
+      // 2          2
+      // 3          3
+      // -          1
+
+      const sideToAlignStart = indexA < indexB ? Side.a : Side.b;
+      const startIndex = sideToAlignStart === Side.a ? indexA : indexB;
+
+      const indexDiff = Math.abs(indexA - indexB);
+
+      for (const i of range(startIndex, startIndex + indexDiff)) {
+        offsetTracker.add(sideToAlignStart, i);
+      }
+
+      const sideToAlignEnd = oppositeSide(sideToAlignStart);
+      const endIndex = sideToAlignEnd === Side.a ? indexA : indexB;
+
+      for (const i of range(endIndex, endIndex + indexDiff)) {
+        offsetTracker.add(sideToAlignEnd, i);
+      }
+    } else {
+      changes.push(match);
     }
   }
 
-  return changes
+  return changes;
 }
 
 function oneSidedIteration(
@@ -129,7 +166,7 @@ function oneSidedIteration(
 
   let value = iter.next(startFrom);
 
-  // TODO: ALIGNMENT const { alignmentTable } = getContext();
+  // TODO: ALIGNMENT const { alignmentTable } = _context;
 
   // TODO: Compact
   while (value) {
@@ -153,7 +190,7 @@ function oneSidedIteration(
 // This function has side effects, mutates data in the iterators
 function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, lcs: number): Change[] {
   const changes: Change[] = [];
-  const { matches } = getContext()
+  const { matches } = _context;
 
   let a = iterA.next(indexA)!;
   let b = iterB.next(indexB)!;
@@ -165,8 +202,12 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   const startB = b.lineNumberStart;
 
   let textMatched = "";
+  let matchWeight = 0;
 
-  const { alignmentTable } = getContext();
+  const indexesA: number[] = [];
+  const indexesB: number[] = [];
+
+  const { alignmentTable } = _context;
   const localAlignmentTable = new AlignmentTable();
 
   const verifier = new OpenCloseVerifier(iterA, iterB);
@@ -182,6 +223,11 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     i++;
     indexA++;
     indexB++;
+
+    matchWeight += a.text.length;
+
+    indexesA.push(a.index);
+    indexesB.push(b.index);
 
     assert(equals(a, b), () => `Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
 
@@ -239,7 +285,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   const endB = b.lineNumberEnd;
 
   if (startA !== startB || endA !== endB) {
-    getContext().alignmentsOfMoves.push({
+    _context.alignmentsOfMoves.push({
       startA,
       startB,
       endA,
@@ -255,10 +301,11 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     matches.push(
       new Change(
         ChangeType.move,
-        a,
-        b,
         rangeA,
         rangeB,
+        indexesA,
+        indexesB,
+        matchWeight,
       ),
     );
   }
