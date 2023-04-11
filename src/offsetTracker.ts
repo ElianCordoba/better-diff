@@ -43,7 +43,8 @@ export class OffsetTracker {
     const indexDiff = Math.abs(indexA - indexB);
 
     let valid = true;
-    for (const i of range(startIndex, startIndex + indexDiff)) {
+    // +1 so it includes the last index
+    for (const i of range(startIndex, startIndex + indexDiff + 1)) {
       if (offsetsToCheck.has(i)) {
         valid = false;
         break;

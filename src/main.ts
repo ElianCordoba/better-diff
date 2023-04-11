@@ -18,8 +18,6 @@ export function getChanges(codeA: string, codeB: string): Change[] {
   _context.iterA = iterA;
   _context.iterB = iterB;
 
-  console.log(_context);
-
   let a: Node | undefined;
   let b: Node | undefined;
 

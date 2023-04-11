@@ -5,20 +5,20 @@ describe("Properly report lines added", () => {
   test({
     name: "Simple move",
     a: `
-      a
+      aa
       b
     `,
     b: `
       b
-      a
+      aa
     `,
     expA: `
-      🔀a⏹️
+      aa
       🔀b⏹️
     `,
     expB: `
       🔀b⏹️
-      🔀a⏹️
+      aa
     `
   })
 

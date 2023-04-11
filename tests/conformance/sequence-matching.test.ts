@@ -32,11 +32,11 @@ describe.only("Properly report moves in a same sequence", () => {
       let age = 24
     `,
     expA: `
-      🔀let age = 24⏹️ ➖&&➖ 🔀print('elian')⏹️
+      let age = 24 ➖&&➖ print('elian')
     `,
     expB: `
-      🔀print('elian')⏹️
-      🔀let age = 24⏹️
+      print('elian')
+      let age = 24
     `
   })
 
@@ -50,11 +50,11 @@ describe.only("Properly report moves in a same sequence", () => {
       print('elian')
     `,
     expA: `
-      let age = 24 ➖&&➖ 🔀print('elian')⏹️
+      let age = 24 ➖&&➖ print('elian')
     `,
     expB: `
       let age = 24
-      🔀print('elian')⏹️
+      print('elian')
     `
   })
 
@@ -68,11 +68,11 @@ describe.only("Properly report moves in a same sequence", () => {
       print('elian')
     `,
     expA: `
-      let age = 🔀print('elian')⏹️ ➖&&➖ 🔀24⏹️
+      let age = print('elian') ➖&&➖ 🔀24⏹️
     `,
     expB: `
       let age = 🔀24⏹️
-      🔀print('elian')⏹️
+      print('elian')
     `
   })
 
@@ -86,11 +86,11 @@ describe.only("Properly report moves in a same sequence", () => {
       let age = 24
     `,
     expA: `
-    🔀let age =⏹️ 🔀print('elian')⏹️ ➖&&➖ 🔀24⏹️
+      🔀let age =⏹️ print('elian') ➖&&➖ 24
     `,
     expB: `
-      🔀print('elian')⏹️
-      🔀let age =⏹️ 🔀24⏹️
+      print('elian')
+      🔀let age =⏹️ 24
     `
   })
 
@@ -106,13 +106,13 @@ describe.only("Properly report moves in a same sequence", () => {
       print('elian')
     `,
     expA: `
-      let age = 24 ➖&&➖ 🔀print('elian')⏹️
+      let age = 24 ➖&&➖ print('elian')
       🔀fn()⏹️
       ➖1➖
     `,
     expB: `
       let age = 24 ➕||➕ 🔀fn()⏹️
-      🔀print('elian')⏹️
+      print('elian')
     `
   })
 
