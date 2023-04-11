@@ -3,11 +3,7 @@ import { applyChangesToSources, asciiRenderFn, DiffRendererFn, getAlignedSources
 import { serialize } from "./serializer";
 import { ChangeType, Mode, SerializedResponse, Side } from "./types";
 import { Node } from "./node";
-import { AlignmentTable } from "./alignmentTable";
 import { fail } from "./debug";
-import { Change } from "./change";
-import { OffsetTracker } from "./offsetTracker";
-import { Iterator } from "./iterator";
 import { Context } from "./context";
 
 // These options have their own tests under the /tests/options folder
@@ -172,14 +168,5 @@ export interface MoveAlignmentInfo {
   endB: number;
   text: string;
 }
-
-// let _context: Context;
-// export function getContext() {
-//   return _context;
-// }
-
-// export function setContext(key: any, val: any) {
-//   (_context as any)[key] = val
-// }
 
 export let _context: Context;

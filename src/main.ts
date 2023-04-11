@@ -8,7 +8,6 @@ import { assert } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
 import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from "./sequence";
 import { OpenCloseVerifier } from "./openCloseVerifier";
-import { OffsetTracker } from "./offsetTracker";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
