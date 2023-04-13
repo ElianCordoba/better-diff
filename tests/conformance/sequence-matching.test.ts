@@ -21,7 +21,7 @@ test({
   `
 })
 
-describe.only("Properly report moves in a same sequence", () => {
+describe("Properly report moves in a same sequence", () => {
   test({
     name: "Case 1",
     a: `
@@ -151,11 +151,11 @@ describe("Recursive matching", () => {
     `,
     expA: `
       ➖import➖ ➖{➖ ➖foo➖ ➖}➖ ➖from➖ ➖"foo";➖
-      🔀import { bar } from "bar";⏹️
+      import { bar } from "bar";
     `,
     expB: `
       ➕1➕
-      🔀import { bar } from "bar";⏹️
+      import { bar } from "bar";
     `
   })
 
@@ -175,7 +175,7 @@ describe("Recursive matching", () => {
     `,
     expA: `
       1 2 ➖3➖
-      🔀1 2 3 4⏹️
+      1 2 3 4
     `,
     expB: `
       1 2
@@ -183,7 +183,7 @@ describe("Recursive matching", () => {
       ➕1➕ 
       ➕0➕
       ➕0➕
-      🔀1 2 3 4⏹️
+      1 2 3 4
     `
   })
 

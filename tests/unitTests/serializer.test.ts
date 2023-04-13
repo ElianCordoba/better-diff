@@ -4,39 +4,19 @@ import { OutputType, getDiff } from "../../src";
 test('Case 1', () => {
   const a = `
     console.log() && 3
-  `
+  `.trim()
 
   const b = `
     fn(console.log(1))
-  `
+  `.trim()
 
   const expected = {
     chunksA: [
       [
-        {
-          text: "\n",
-          type: "default",
-          moveNumber: "",
-        },
       ],
       [
         {
-          text: "    ",
-          type: "default",
-          moveNumber: "",
-        },
-        {
-          text: "console.log(",
-          type: "move",
-          moveNumber: "4",
-        },
-        {
-          text: ")",
-          type: "move",
-          moveNumber: "5",
-        },
-        {
-          text: " ",
+          text: "console.log() ",
           type: "default",
           moveNumber: "",
         },
@@ -55,34 +35,12 @@ test('Case 1', () => {
           type: "deletion",
           moveNumber: "",
         },
-        {
-          text: "\n",
-          type: "default",
-          moveNumber: "",
-        },
-      ],
-      [
-        {
-          text: "  ",
-          type: "default",
-          moveNumber: "",
-        },
       ],
     ],
     chunksB: [
       [
-        {
-          text: "\n",
-          type: "default",
-          moveNumber: "",
-        },
       ],
       [
-        {
-          text: "    ",
-          type: "default",
-          moveNumber: "",
-        },
         {
           text: "fn(",
           type: "addition",
@@ -90,8 +48,8 @@ test('Case 1', () => {
         },
         {
           text: "console.log(",
-          type: "move",
-          moveNumber: "4",
+          type: "default",
+          moveNumber: "",
         },
         {
           text: "1",
@@ -100,24 +58,12 @@ test('Case 1', () => {
         },
         {
           text: ")",
-          type: "move",
-          moveNumber: "5",
+          type: "default",
+          moveNumber: "",
         },
         {
           text: ")",
           type: "addition",
-          moveNumber: "",
-        },
-        {
-          text: "\n",
-          type: "default",
-          moveNumber: "",
-        },
-      ],
-      [
-        {
-          text: "  ",
-          type: "default",
           moveNumber: "",
         },
       ],
