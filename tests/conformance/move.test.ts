@@ -327,13 +327,13 @@ describe("Properly report lines added", () => {
     `,
     expA: `
       ➖function*➖ ➖range()➖ ➖{➖
-        ➖while➖ ➖(i➖ ➖<➖ ➖end➖ ➖-➖ 🔀1⏹️➖)➖ ➖{➖
+        ➖while➖ ➖(i➖ ➖<➖ ➖end➖ ➖-➖ 1➖)➖ ➖{➖
           ➖yield➖ ➖i;➖
         ➖}➖
       ➖}➖
     `,
     expB: `
-      ➕console.log(➕🔀1⏹️➕)➕
+      ➕console.log(➕1➕)➕
     `
   })
 
@@ -419,6 +419,23 @@ describe("Properly report lines added", () => {
     expB: `
       ➕const➕ var1 = foo()
       ➕const➕ var2 = bar()
+    `
+  })
+
+  // This used to break the inverse
+  test({
+    name: "Simple alignment",
+    a: `
+      fn(-1)
+    `,
+    b: `
+      (1)
+    `,
+    expA: `
+      ➖fn(-➖1➖)➖
+    `,
+    expB: `
+      ➕(➕1➕)➕
     `
   })
 });
