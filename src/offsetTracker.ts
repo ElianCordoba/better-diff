@@ -1,3 +1,4 @@
+import { _context } from ".";
 import { Change } from "./change";
 import { assert } from "./debug";
 import { Side } from "./types";
@@ -33,7 +34,7 @@ export class OffsetTracker {
     return side === Side.a ? this.offsetsA : this.offsetsB;
   }
 
-  moveCanGetAligned(move: Change): boolean {
+  moveCanGetAligned(indexA: number, indexB: number): boolean {
     // Fast-path
     if (this.offsetsA.size === 0 && this.offsetsB.size === 0) {
       return true
@@ -41,9 +42,6 @@ export class OffsetTracker {
 
     // It's enough to check the start to determinate which side we need to iterate on. Also, since we are going to
     // go forward we pick the side with the smallest index
-
-    const indexA = move.indexesA[0];
-    const indexB = move.indexesB[0];
 
     const sideToIterate = indexA < indexB ? Side.a : Side.b;
     const offsetsToCheck = sideToIterate === Side.a ? this.offsetsB : this.offsetsA;

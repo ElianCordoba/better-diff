@@ -106,20 +106,24 @@ function processMoves() {
   for (const match of matches.sort((a, b) => a.weight < b.weight ? 1 : -1)) {
     assert(match.indexesA.length && match.indexesB.length);
 
-    const indexA = match.indexesA[0];// match.indexesA.at(-1)!
-    const indexB = match.indexesB[0];// match.indexesB.at(-1)!
+    const _indexA = match.indexesA[0];
+    const _indexB = match.indexesB[0];
+
+    const biggest = Math.max(_indexA, _indexB)
 
     // TODO-NOW documentar los indexes flipleados 
-    const offsettedAIndex = indexA + offsetTracker.getOffset(Side.a, indexB);
-    const offsettedBIndex = indexB + offsetTracker.getOffset(Side.b, indexA);
+    const indexA = _indexA + offsetTracker.getOffset(Side.a, biggest);
+    const indexB = _indexB + offsetTracker.getOffset(Side.b, biggest);
 
     // No index diff means no extra work needed
-    if (offsettedAIndex === offsettedBIndex) {
+    if (indexA === indexB) {
       continue;
     }
 
     // There are two possibilities, if the match can be aligned then it be aligned, otherwise a move will be created
-    if (moveOffsetTracker.moveCanGetAligned(match)) {
+    const canMoveBeAligned = moveOffsetTracker.moveCanGetAligned(indexA, indexB)
+    // const canMoveBeAligned = moveOffsetTracker.moveCanGetAligned(offsettedAIndex, offsettedBIndex)
+    if (canMoveBeAligned) {
       // We need to add alignments to both sides, for example
       //
       // A)         B)
@@ -141,13 +145,15 @@ function processMoves() {
       const indexDiff = Math.abs(indexA - indexB);
 
       for (const i of range(startIndex, startIndex + indexDiff)) {
+        offsetTracker.add(sideToAlignStart, i);
         moveOffsetTracker.add(sideToAlignStart, i);
       }
 
       const sideToAlignEnd = oppositeSide(sideToAlignStart);
-      const endIndex = sideToAlignEnd === Side.a ? indexA : indexB;
+      const endIndex = (sideToAlignEnd === Side.a ? indexA : indexB) + 1;
 
       for (const i of range(endIndex, endIndex + indexDiff)) {
+        offsetTracker.add(sideToAlignEnd, i);
         moveOffsetTracker.add(sideToAlignEnd, i);
       }
     } else {
@@ -274,9 +280,9 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     /// Alignment end ///
 
     // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
-    if (a?.index === b?.index) {
-      continue;
-    }
+    // if (a?.index === b?.index) {
+    //   continue;
+    // }
 
     rangeA = mergeRanges(rangeA, a.getPosition());
     rangeB = mergeRanges(rangeB, b.getPosition());
@@ -296,7 +302,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   }
 
   // If the nodes are not in the same position then it's a move
-  const trackChange = a.index !== b.index;
+  const trackChange = true // a.index !== b.index;
 
   if (trackChange) {
     matches.push(
@@ -322,7 +328,7 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSRe
 
   // Report deletion if applicable
   if (candidateOppositeSide.length === 0) {
-    const changes = [new Change(ChangeType.deletion, startNode, startNode, startNode.index, startNode.index)];
+    const changes = [new Change(ChangeType.deletion, startNode, undefined, startNode.index, undefined)];
     iterA.mark(startNode.index, ChangeType.deletion);
 
     // TODO: Maybe add the open/close here?

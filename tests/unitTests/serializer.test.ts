@@ -80,13 +80,13 @@ test('Case 2', () => {
     if (true) {
       3; print
     }
-  `
+  `.trim()
 
   const b = `
     z
     print; 3
     x
-  `
+  `.trim()
 
   const expected = {
     chunksA: [

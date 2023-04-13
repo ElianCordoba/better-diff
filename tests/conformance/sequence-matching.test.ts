@@ -312,4 +312,27 @@ describe("Recursive matching", () => {
   })
 
 
+  test({
+    name: "Random 1",
+    a: `
+      1
+      2
+      33 
+    `,
+    b: `
+      33
+      2
+    `,
+    expA: `
+      ➖1➖
+      🔀2⏹️
+      33
+    `,
+    expB: `
+      33
+      🔀2⏹️
+    `
+  })
+
+
 })
