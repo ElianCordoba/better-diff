@@ -4,20 +4,20 @@ import { test } from "../utils";
 test({
   name: "Simple move",
   a: `
-    a
+    aa
     b
   `,
   b: `
     b
-    a
+    aa
   `,
   expA: `
-  🔀a⏹️
+  aa
   🔀b⏹️
   `,
   expB: `
   🔀b⏹️
-  🔀a⏹️
+  aa
   `
 })
 
@@ -205,10 +205,10 @@ describe("Recursive matching", () => {
     expA: `
       🔀12⏹️
       🔀12 34⏹️
-      🔀12 34 56⏹️
+      12 34 56
     `,
     expB: `
-      🔀12 34 56⏹️
+      12 34 56
       ➕0➕
       🔀12⏹️
       ➕0➕
@@ -235,10 +235,10 @@ describe("Recursive matching", () => {
     expA: `
       🔀12⏹️
       🔀12 34⏹️
-      🔀12 34 56⏹️
+      12 34 56
     `,
     expB: `
-      🔀12 34 56⏹️
+      12 34 56
       ➕0➕
       🔀12⏹️
       ➕0➕
@@ -271,20 +271,20 @@ describe("Recursive matching", () => {
     expA: `
       ➖let➖ ➖start➖
 
-      🔀export function bar(range) {
+      export function bar(range) {
         return {
           start: range.start
         };
-      }⏹️
+      }
     `,
     expB: `
       ➕function➕ ➕foo()➕ ➕{➕ ➕}➕
 
-      🔀export function bar(range) {
+      export function bar(range) {
         return {
           start: range.start
         };
-      }⏹️
+      }
     `
   })
 
@@ -303,11 +303,11 @@ describe("Recursive matching", () => {
     expA: `
       1
       ➖import➖ ➖{➖ ➖Y➖ ➖}➖ ➖from➖ ➖"./y";➖
-      🔀import { X } from "./x";⏹️
+      import { X } from "./x";
     `,
     expB: `
       1
-      🔀import { X } from "./x";⏹️
+      import { X } from "./x";
     `
   })
 

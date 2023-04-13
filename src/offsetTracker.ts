@@ -34,6 +34,11 @@ export class OffsetTracker {
   }
 
   moveCanGetAligned(move: Change): boolean {
+    // Fast-path
+    if (this.offsetsA.size === 0 && this.offsetsB.size === 0) {
+      return true
+    }
+
     // It's enough to check the start to determinate which side we need to iterate on. Also, since we are going to
     // go forward we pick the side with the smallest index
 

@@ -8,6 +8,7 @@ import { assert } from "./debug";
 import { AlignmentTable } from "./alignmentTable";
 import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from "./sequence";
 import { OpenCloseVerifier } from "./openCloseVerifier";
+import { OffsetTracker } from "./offsetTracker";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -99,6 +100,7 @@ function processMoves() {
 
   const { iterA, iterB, matches, offsetTracker } = _context;
 
+  const moveOffsetTracker = new OffsetTracker()
 
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of matches.sort((a, b) => a.weight < b.weight ? 1 : -1)) {
@@ -117,7 +119,7 @@ function processMoves() {
     }
 
     // There are two possibilities, if the match can be aligned then it be aligned, otherwise a move will be created
-    if (offsetTracker.moveCanGetAligned(match)) {
+    if (moveOffsetTracker.moveCanGetAligned(match)) {
       // We need to add alignments to both sides, for example
       //
       // A)         B)
@@ -139,14 +141,14 @@ function processMoves() {
       const indexDiff = Math.abs(indexA - indexB);
 
       for (const i of range(startIndex, startIndex + indexDiff)) {
-        offsetTracker.add(sideToAlignStart, i);
+        moveOffsetTracker.add(sideToAlignStart, i);
       }
 
       const sideToAlignEnd = oppositeSide(sideToAlignStart);
       const endIndex = sideToAlignEnd === Side.a ? indexA : indexB;
 
       for (const i of range(endIndex, endIndex + indexDiff)) {
-        offsetTracker.add(sideToAlignEnd, i);
+        moveOffsetTracker.add(sideToAlignEnd, i);
       }
     } else {
       changes.push(match);
