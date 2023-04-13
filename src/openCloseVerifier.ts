@@ -71,13 +71,13 @@ export class OpenCloseVerifier {
         if (closingNodeForA) {
           assert(!closingNodeForB, () => "Found a node on B side node even though we are in a deletion");
           this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
-          changes.push(new Change(ChangeType.deletion, closingNodeForA, undefined));
+          changes.push(new Change(ChangeType.deletion, closingNodeForA, undefined, closingNodeForA.index));
         }
 
         if (closingNodeForB) {
           assert(!closingNodeForA, () => "Found a node on a side node even though we are in a addition");
           this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-          changes.push(new Change(ChangeType.addition, undefined, closingNodeForB));
+          changes.push(new Change(ChangeType.addition, undefined, closingNodeForB, undefined, closingNodeForB.index));
         }
 
         return changes;

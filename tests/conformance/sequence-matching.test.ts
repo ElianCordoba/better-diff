@@ -32,11 +32,11 @@ describe.only("Properly report moves in a same sequence", () => {
       let age = 24
     `,
     expA: `
-      let age = 24 ➖&&➖ print('elian')
+      🔀let age = 24⏹️ ➖&&➖ print('elian')
     `,
     expB: `
       print('elian')
-      let age = 24
+      🔀let age = 24⏹️
     `
   })
 
@@ -116,6 +116,7 @@ describe.only("Properly report moves in a same sequence", () => {
     `
   })
 
+  // TODO: Can be improved
   test({
     name: "Mid sequence",
     a: `
@@ -128,10 +129,10 @@ describe.only("Properly report moves in a same sequence", () => {
     `,
     expA: `
       ➖let➖ ➖up;➖
-      🔀let middle;⏹️
+      let middle;
     `,
     expB: `
-      🔀let middle;⏹️
+      let middle;
       ➕let➕ ➕down;➕
     `
   })

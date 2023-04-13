@@ -97,17 +97,19 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 function processMoves() {
   const changes: Change[] = [];
 
-  const { matches, offsetTracker } = _context;
+  const { iterA, iterB, matches, offsetTracker } = _context;
+
 
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of matches.sort((a, b) => a.weight < b.weight ? 1 : -1)) {
     assert(match.indexesA.length && match.indexesB.length);
 
-    const indexA = match.indexesA[0];
-    const indexB = match.indexesB[0];
+    const indexA = match.indexesA[0];// match.indexesA.at(-1)!
+    const indexB = match.indexesB[0];// match.indexesB.at(-1)!
 
-    const offsettedAIndex = indexA + offsetTracker.getOffset(Side.a, indexA);
-    const offsettedBIndex = indexB + offsetTracker.getOffset(Side.b, indexB);
+    // TODO-NOW documentar los indexes flipleados 
+    const offsettedAIndex = indexA + offsetTracker.getOffset(Side.a, indexB);
+    const offsettedBIndex = indexB + offsetTracker.getOffset(Side.b, indexA);
 
     // No index diff means no extra work needed
     if (offsettedAIndex === offsettedBIndex) {

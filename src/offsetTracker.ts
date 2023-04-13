@@ -17,7 +17,9 @@ export class OffsetTracker {
     const _side = this.getSide(side);
 
     let offset = 0;
-    for (const index of _side.values()) {
+
+    // The offset is unsorted, so we need to order the indexes first before processing it
+    for (const index of [..._side.values()].sort((a, b) => a > b ? 1 : -1)) {
       if (index <= targetIndex) {
         offset++;
       } else {
@@ -39,7 +41,7 @@ export class OffsetTracker {
     const indexB = move.indexesB[0];
 
     const sideToIterate = indexA < indexB ? Side.a : Side.b;
-    const offsetsToCheck = sideToIterate === Side.a ? this.offsetsA : this.offsetsB;
+    const offsetsToCheck = sideToIterate === Side.a ? this.offsetsB : this.offsetsA;
 
     const startIndex = sideToIterate === Side.a ? indexA : indexB;
     const indexDiff = Math.abs(indexA - indexB);
