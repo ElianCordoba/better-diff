@@ -18,21 +18,17 @@ export class Change {
     // More characters the change involved the more weight. TODO-NOW only for moves now
     public weight = 0,
   ) {
-
     if (typeof indexesA === "number") {
       this.indexesA = [indexesA];
     } else {
       this.indexesA = indexesA!;
     }
 
-
-
     if (typeof indexesB === "number") {
       this.indexesB = [indexesB];
     } else {
       this.indexesB = indexesB!;
     }
-
 
     if (type & TypeMasks.DelOrMove) {
       assert(this.rangeA, () => "Range A was missing during change creation");

@@ -98,10 +98,9 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 function processMoves() {
   const changes: Change[] = [];
 
-  const { iterA, iterB, matches, offsetTracker } = _context;
+  const { matches, offsetTracker } = _context;
 
-
-  const moveOffsetTracker = new OffsetTracker()
+  const moveOffsetTracker = new OffsetTracker();
 
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of matches.sort((a, b) => a.weight < b.weight ? 1 : -1)) {
@@ -110,7 +109,7 @@ function processMoves() {
     const _indexA = match.indexesA[0];
     const _indexB = match.indexesB[0];
 
-    // TODO-NOW documentar los indexes flipleados 
+    // TODO-NOW documentar los indexes flipleados
     const indexA = _indexA + offsetTracker.getOffset(Side.a, _indexA);
     const indexB = _indexB + offsetTracker.getOffset(Side.b, _indexB);
 
@@ -120,7 +119,7 @@ function processMoves() {
     }
 
     // There are two possibilities, if the match can be aligned then it be aligned, otherwise a move will be created
-    const canMoveBeAligned = moveOffsetTracker.moveCanGetAligned(indexA, indexB)
+    const canMoveBeAligned = moveOffsetTracker.moveCanGetAligned(indexA, indexB);
     // const canMoveBeAligned = moveOffsetTracker.moveCanGetAligned(offsettedAIndex, offsettedBIndex)
     if (canMoveBeAligned) {
       // We need to add alignments to both sides, for example
@@ -301,7 +300,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   }
 
   // If the nodes are not in the same position then it's a move
-  const trackChange = true // a.index !== b.index;
+  const trackChange = true; // a.index !== b.index;
 
   if (trackChange) {
     matches.push(

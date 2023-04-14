@@ -1,5 +1,4 @@
 import { _context } from ".";
-import { Change } from "./change";
 import { assert } from "./debug";
 import { Side } from "./types";
 import { range } from "./utils";
@@ -10,7 +9,7 @@ export class OffsetTracker {
   offsetsB = new Set<number>();
 
   add(side: Side, index: number) {
-    assert(typeof index === 'number', () => `Expected number when storing offset but received ${typeof index}`)
+    assert(typeof index === "number", () => `Expected number when storing offset but received ${typeof index}`);
     this.getSide(side).add(index);
   }
 
@@ -21,13 +20,12 @@ export class OffsetTracker {
     // The offset is unsorted, so we need to order the indexes first before processing it
     for (const index of [..._side.values()].sort((a, b) => a > b ? 1 : -1)) {
       if (index < targetIndex) {
-        targetIndex++
+        targetIndex++;
         offset++;
       } else {
         break;
       }
     }
-
 
     return offset;
   }
@@ -39,7 +37,7 @@ export class OffsetTracker {
   moveCanGetAligned(indexA: number, indexB: number): boolean {
     // Fast-path
     if (this.offsetsA.size === 0 && this.offsetsB.size === 0) {
-      return true
+      return true;
     }
 
     // It's enough to check the start to determinate which side we need to iterate on. Also, since we are going to
