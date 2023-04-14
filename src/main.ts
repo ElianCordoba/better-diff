@@ -100,6 +100,7 @@ function processMoves() {
 
   const { iterA, iterB, matches, offsetTracker } = _context;
 
+
   const moveOffsetTracker = new OffsetTracker()
 
   // Process matches starting with the most relevant ones, the ones with the most text involved
@@ -109,11 +110,9 @@ function processMoves() {
     const _indexA = match.indexesA[0];
     const _indexB = match.indexesB[0];
 
-    const biggest = Math.max(_indexA, _indexB)
-
     // TODO-NOW documentar los indexes flipleados 
-    const indexA = _indexA + offsetTracker.getOffset(Side.a, biggest);
-    const indexB = _indexB + offsetTracker.getOffset(Side.b, biggest);
+    const indexA = _indexA + offsetTracker.getOffset(Side.a, _indexA);
+    const indexB = _indexB + offsetTracker.getOffset(Side.b, _indexB);
 
     // No index diff means no extra work needed
     if (indexA === indexB) {

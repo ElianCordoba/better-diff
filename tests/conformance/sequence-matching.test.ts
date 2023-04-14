@@ -1,4 +1,4 @@
-import { describe } from "vitest";
+import { describe, test as vTest } from "vitest";
 import { test } from "../utils";
 
 test({
@@ -334,5 +334,60 @@ describe("Recursive matching", () => {
     `
   })
 
+  // The bug that we are testing here is if we have 2 moves, crossing each other and both are of the same length. The result
+  // is that depending of which one gets processed first, that will be aligned, this means that the result is not the same A to B and B to A,
+  // this is why I had to create the cases separated
+  test({
+    only: 'standard',
+    name: "Random 2",
+    a: `
+      1
+      2
+      3
+      4
+    `,
+    b: `
+      5
+      4
+      3
+    `,
+    expA: `
+      ➖1➖
+      ➖2➖
+      🔀3⏹️
+      4
+    `,
+    expB: `
+      ➕5➕
+      4
+      🔀3⏹️
+    `
+  })
 
+  test({
+    only: 'inversed',
+    name: "Random 2 inversed",
+    a: `
+      1
+      2
+      3
+      4
+    `,
+    b: `
+      5
+      4
+      3
+    `,
+    expA: `
+      ➖1➖
+      ➖2➖
+      3
+      🔀4⏹️
+    `,
+    expB: `
+      ➕5➕
+      🔀4⏹️
+      3
+    `
+  })
 })
