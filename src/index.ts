@@ -1,5 +1,5 @@
 import { getChanges } from "./main";
-import { applyChangesToSources, asciiRenderFn, DiffRendererFn, getAlignedSources } from "./reporter";
+import { applyChangesToSources, asciiRenderFn, DiffRendererFn, getAlignedSources, prettyRenderFn } from "./reporter";
 import { serialize } from "./serializer";
 import { ChangeType, Mode, SerializedResponse, Side } from "./types";
 import { Node } from "./node";
@@ -14,8 +14,6 @@ export interface Options {
 
   warnOnInvalidCode?: boolean;
 
-  renderFn?: DiffRendererFn;
-
   // For testing and debugging mostly
   alignmentText?: string;
   includeDebugAlignmentInfo?: boolean;
@@ -25,6 +23,7 @@ export enum OutputType {
   serializedChunks,
   serializedAlignedChunks,
   text,
+  prettyText,
   alignedText,
   noop,
 }
@@ -33,6 +32,7 @@ interface ResultTypeMapper {
   [OutputType.serializedChunks]: SerializedResponse;
   [OutputType.serializedAlignedChunks]: SerializedResponse;
   [OutputType.text]: { sourceA: string; sourceB: string };
+  [OutputType.prettyText]: { sourceA: string; sourceB: string };
   [OutputType.alignedText]: { sourceA: string; sourceB: string };
   [OutputType.noop]: void;
 }
@@ -66,6 +66,11 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
       return applyChangesToSources(sourceA, sourceB, changes) as any;
     }
 
+    case OutputType.prettyText: {
+      // deno-lint-ignore no-explicit-any
+      return applyChangesToSources(sourceA, sourceB, changes, prettyRenderFn) as any;
+    }
+
     case OutputType.alignedText: {
       // deno-lint-ignore no-explicit-any
       return getAlignedSources(sourceA, sourceB) as any;
@@ -89,7 +94,6 @@ const defaultOptions: Options = {
   mode: Mode.debug,
   outputType: OutputType.text,
   warnOnInvalidCode: false,
-  renderFn: asciiRenderFn,
   alignmentText: "\n",
   includeDebugAlignmentInfo: false,
 };
@@ -114,7 +118,7 @@ export class LayoutShiftCandidate {
     // Value: Length of the string
     public a = new Map<number, number>(),
     public b = new Map<number, number>(),
-  ) {}
+  ) { }
 
   add(side: Side, at: number, length: number) {
     if (side === Side.a) {

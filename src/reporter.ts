@@ -62,9 +62,8 @@ export function applyChangesToSources(
   sourceA: string,
   sourceB: string,
   changes: Change[],
+  renderFn = asciiRenderFn
 ) {
-  const { renderFn } = getOptions();
-
   let charsA = sourceA.split("");
   let charsB = sourceB.split("");
 

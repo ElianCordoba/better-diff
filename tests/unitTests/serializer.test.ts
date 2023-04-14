@@ -92,18 +92,6 @@ test('Case 2', () => {
     chunksA: [
       [
         {
-          text: "\n",
-          type: "default",
-          moveNumber: "",
-        },
-      ],
-      [
-        {
-          text: "    ",
-          type: "default",
-          moveNumber: "",
-        },
-        {
           text: "if",
           type: "deletion",
           moveNumber: "",
@@ -151,17 +139,7 @@ test('Case 2', () => {
           moveNumber: "",
         },
         {
-          text: " ",
-          type: "default",
-          moveNumber: "",
-        },
-        {
-          text: "print",
-          type: "move",
-          moveNumber: "8",
-        },
-        {
-          text: "\n",
+          text: " print\n",
           type: "default",
           moveNumber: "",
         },
@@ -177,34 +155,10 @@ test('Case 2', () => {
           type: "deletion",
           moveNumber: "",
         },
-        {
-          text: "\n",
-          type: "default",
-          moveNumber: "",
-        },
-      ],
-      [
-        {
-          text: "  ",
-          type: "default",
-          moveNumber: "",
-        },
       ],
     ],
     chunksB: [
       [
-        {
-          text: "\n",
-          type: "default",
-          moveNumber: "",
-        },
-      ],
-      [
-        {
-          text: "    ",
-          type: "default",
-          moveNumber: "",
-        },
         {
           text: "z",
           type: "addition",
@@ -218,14 +172,9 @@ test('Case 2', () => {
       ],
       [
         {
-          text: "    ",
+          text: "    print",
           type: "default",
           moveNumber: "",
-        },
-        {
-          text: "print",
-          type: "move",
-          moveNumber: "8",
         },
         {
           text: ";",
@@ -257,18 +206,6 @@ test('Case 2', () => {
         {
           text: "x",
           type: "addition",
-          moveNumber: "",
-        },
-        {
-          text: "\n",
-          type: "default",
-          moveNumber: "",
-        },
-      ],
-      [
-        {
-          text: "  ",
-          type: "default",
           moveNumber: "",
         },
       ],
