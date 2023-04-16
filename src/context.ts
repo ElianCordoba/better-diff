@@ -3,6 +3,7 @@ import { AlignmentTable } from "./alignmentTable";
 import { Change } from "./change";
 import { Iterator } from "./iterator";
 import { OffsetTracker } from "./offsetTracker";
+import { ChangeType } from "./types";
 
 interface ContextValues {
   sourceA: string;
@@ -23,7 +24,7 @@ export class Context implements ContextValues {
   iterA!: Iterator;
   iterB!: Iterator;
 
-  matches: Change[];
+  matches: Change<ChangeType.move>[];
   offsetTracker: OffsetTracker;
   alignmentTable: AlignmentTable;
   alignmentsOfMoves: MoveAlignmentInfo[];
