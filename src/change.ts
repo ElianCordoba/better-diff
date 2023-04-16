@@ -3,12 +3,12 @@ import { colorFn, getSourceWithChange } from "./reporter";
 import { _context } from "./index";
 import { assert } from "./debug";
 
-export class Change {
+export class Change<Type extends ChangeType = any> {
   indexesA: number[] = [];
   indexesB: number[] = [];
 
   constructor(
-    public type: ChangeType,
+    public type: Type,
     public rangeA: Range | undefined,
     public rangeB: Range | undefined,
     // List of all the indexes of nodes involved in the change
