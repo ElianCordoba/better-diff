@@ -102,8 +102,10 @@ function processMoves() {
 
   const moveOffsetTracker = new OffsetTracker();
 
+  const sortedMatched = matches.sort((a, b) => a.weight < b.weight ? 1 : -1)
+
   // Process matches starting with the most relevant ones, the ones with the most text involved
-  for (const match of matches.sort((a, b) => a.weight < b.weight ? 1 : -1)) {
+  for (const match of sortedMatched) {
     assert(match.indexesA.length && match.indexesB.length);
 
     const _indexA = match.indexesA[0];
@@ -115,6 +117,7 @@ function processMoves() {
 
     // No index diff means no extra work needed
     if (indexA === indexB) {
+      // TODO-NOW also skip closing node move
       continue;
     }
 

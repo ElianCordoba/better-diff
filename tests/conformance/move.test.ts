@@ -385,6 +385,29 @@ describe("Properly report lines added", () => {
     `
   })
 
+  test({
+    name: "Properly match closing paren 10",
+    a: `
+      {
+        { a, b, x } = obj
+      }
+    `,
+    b: `
+      {
+        { x } = obj
+        z
+      }
+    `,
+    expA: `
+      ➖{➖
+    `,
+    expB: `
+      ➕}{➕
+    `
+  })
+
+
+
   // Testing single node matching
   test({
     name: "Noise reduction",
