@@ -5,12 +5,12 @@ import { assert } from "./debug";
 
 // deno-lint-ignore no-explicit-any
 export class Change<Type extends ChangeType = any> {
-  indexesA: number[] = [];
-  indexesB: number[] = [];
+  indexA = -1;
+  indexB = -1;
   index: number;
 
-  // This is used when processing matches, if a match contains opening nodes, it's necessary to process the closing counterpart in the same way. 
-  // For instance, a match resulting in an "(" being moved, the matching ")" should also be moved accordingly. 
+  // This is used when processing matches, if a match contains opening nodes, it's necessary to process the closing counterpart in the same way.
+  // For instance, a match resulting in an "(" being moved, the matching ")" should also be moved accordingly.
   // Similarly, if the initial match is ignored, the corresponding closing node should also be ignored.
   indexesOfClosingMoves: number[] = [];
 
@@ -20,24 +20,14 @@ export class Change<Type extends ChangeType = any> {
     public rangeB: Range | undefined,
     // List of all the indexes of nodes involved in the change
 
-    indexesA?: number | number[],
-    indexesB?: number | number[],
+    indexA?: number,
+    indexB?: number,
     // More characters the change involved the more weight. TODO-NOW only for moves now
     public weight = 0,
   ) {
     this.index = _context.matches.length;
-
-    if (typeof indexesA === "number") {
-      this.indexesA = [indexesA];
-    } else {
-      this.indexesA = indexesA!;
-    }
-
-    if (typeof indexesB === "number") {
-      this.indexesB = [indexesB];
-    } else {
-      this.indexesB = indexesB!;
-    }
+    this.indexA = indexA!;
+    this.indexB = indexB!;
 
     if (type & TypeMasks.DelOrMove) {
       assert(this.rangeA, () => "Range A was missing during change creation");
@@ -56,10 +46,10 @@ export class Change<Type extends ChangeType = any> {
       let sideToReadOffset: Side;
 
       if (type === ChangeType.deletion) {
-        index = this.indexesA[0];
+        index = this.indexA;
         sideToReadOffset = Side.b;
       } else {
-        index = this.indexesB[0];
+        index = this.indexB;
         sideToReadOffset = Side.a;
       }
 

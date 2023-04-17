@@ -131,7 +131,7 @@ test('Case 2', () => {
         {
           text: "3",
           type: "move",
-          moveNumber: "6",
+          moveNumber: "7",
         },
         {
           text: ";",
@@ -189,7 +189,7 @@ test('Case 2', () => {
         {
           text: "3",
           type: "move",
-          moveNumber: "6",
+          moveNumber: "7",
         },
         {
           text: "\n",

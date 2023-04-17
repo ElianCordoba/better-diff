@@ -111,10 +111,10 @@ function processMoves() {
     if (matchesToIgnore.includes(match.index)) {
       continue;
     }
-    assert(match.indexesA.length && match.indexesB.length);
+    assert(match.indexA !== -1 && match.indexB !== -1);
 
-    const _indexA = match.indexesA[0];
-    const _indexB = match.indexesB[0];
+    const _indexA = match.indexA;
+    const _indexB = match.indexB;
 
     // TODO-NOW documentar los indexes flipleados
     const indexA = _indexA + offsetTracker.getOffset(Side.a, _indexA);
@@ -228,9 +228,6 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   let textMatched = "";
   let matchWeight = 0;
 
-  const indexesA: number[] = [];
-  const indexesB: number[] = [];
-
   const { alignmentTable } = _context;
   const localAlignmentTable = new AlignmentTable();
 
@@ -249,9 +246,6 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     indexB++;
 
     matchWeight += a.text.length;
-
-    indexesA.push(a.index);
-    indexesB.push(b.index);
 
     assert(equals(a, b), () => `Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
 
@@ -327,8 +321,8 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
         ChangeType.move,
         rangeA,
         rangeB,
-        indexesA,
-        indexesB,
+        indexA,
+        indexB,
         matchWeight,
       ),
     );
