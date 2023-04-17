@@ -7,8 +7,11 @@ import { assert } from "./debug";
 export class Change<Type extends ChangeType = any> {
   indexesA: number[] = [];
   indexesB: number[] = [];
-
   index: number;
+
+  // This is used when processing matches, if a match contains opening nodes, it's necessary to process the closing counterpart in the same way. 
+  // For instance, a match resulting in an "(" being moved, the matching ")" should also be moved accordingly. 
+  // Similarly, if the initial match is ignored, the corresponding closing node should also be ignored.
   indexesOfClosingMoves: number[] = [];
 
   constructor(
@@ -23,6 +26,7 @@ export class Change<Type extends ChangeType = any> {
     public weight = 0,
   ) {
     this.index = _context.matches.length;
+
     if (typeof indexesA === "number") {
       this.indexesA = [indexesA];
     } else {
