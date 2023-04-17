@@ -1,6 +1,6 @@
 import { Node } from "./node";
 import { Iterator } from "./iterator";
-import { ClosingNodeGroup, getClosingNodeGroup, getDataForChange, getOppositeNodeKind, getPrettyKind } from "./utils";
+import { ClosingNodeGroup, getClosingNodeGroup, getOppositeNodeKind, getPrettyKind } from "./utils";
 import { assert } from "./debug";
 import { ChangeType, TypeMasks } from "./types";
 import { Change } from "./change";
@@ -73,13 +73,13 @@ export class OpenCloseVerifier {
         if (closingNodeForA) {
           assert(!closingNodeForB, () => "Found a node on B side node even though we are in a deletion");
           this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
-          changes.push(new Change(ChangeType.deletion, getDataForChange(closingNodeForA)));
+          changes.push(new Change(ChangeType.deletion, closingNodeForA));
         }
 
         if (closingNodeForB) {
           assert(!closingNodeForA, () => "Found a node on a side node even though we are in a addition");
           this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-          changes.push(new Change(ChangeType.addition, getDataForChange(undefined, closingNodeForB)));
+          changes.push(new Change(ChangeType.addition, undefined, closingNodeForB));
         }
 
         return changes;
@@ -98,7 +98,8 @@ export class OpenCloseVerifier {
         if (trackChange) {
           const c = new Change(
             ChangeType.move,
-            getDataForChange(closingNodeForA, closingNodeForB)
+            closingNodeForA,
+            closingNodeForB,
           );
           matches.push(
             c,
@@ -114,12 +115,12 @@ export class OpenCloseVerifier {
           changes.push(
             new Change(
               ChangeType.deletion,
-              getDataForChange(closingNodeForA)
+              closingNodeForA,
             ),
           );
         } else {
           this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-          changes.push(new Change(ChangeType.addition, getDataForChange(undefined, closingNodeForB)));
+          changes.push(new Change(ChangeType.addition, undefined, closingNodeForB));
         }
       }
     }

@@ -1,15 +1,17 @@
-import { ChangeType, NewChangeInfo, Range, Side, TypeMasks } from "./types";
+import { ChangeType, Range, Side, TypeMasks } from "./types";
 import { colorFn, getSourceWithChange } from "./reporter";
 import { _context } from "./index";
 import { assert } from "./debug";
+import { getDataForChange } from "./utils";
+import { Node } from "./node";
 
 // deno-lint-ignore no-explicit-any
 export class Change<Type extends ChangeType = any> {
   rangeA: Range | undefined;
   rangeB: Range | undefined;
 
-  indexA: number;
-  indexB: number;
+  indexA = -1;
+  indexB = -1;
 
   index: number;
 
@@ -20,16 +22,22 @@ export class Change<Type extends ChangeType = any> {
 
   constructor(
     public type: Type,
-    nodesInfo: { nodeAInfo: NewChangeInfo | undefined, nodeBInfo: NewChangeInfo | undefined },
-
+    nodeOne: Node | undefined,
+    nodeTwo?: Node,
     // More characters the change involved the more weight. TODO-NOW only for moves now
     public weight = 0,
   ) {
-    this.rangeA = nodesInfo.nodeAInfo?.range
-    this.rangeB = nodesInfo.nodeBInfo?.range
+    if (type & TypeMasks.DelOrMove) {
+      const { range, index } = getDataForChange(nodeOne!);
+      this.rangeA = range;
+      this.indexA = index;
+    }
 
-    this.indexA = nodesInfo.nodeAInfo?.index || -1;
-    this.indexB = nodesInfo.nodeBInfo?.index || -1;
+    if (type & TypeMasks.AddOrMove) {
+      const { range, index } = getDataForChange(nodeTwo!);
+      this.rangeB = range;
+      this.indexB = index;
+    }
 
     this.index = _context.matches.length;
 

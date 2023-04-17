@@ -1,5 +1,5 @@
 import { ChangeType, Side } from "./types";
-import { equals, getDataForChange, getSequence, mergeRanges, normalize, oppositeSide, range } from "./utils";
+import { equals, getSequence, mergeRanges, normalize, oppositeSide, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change, compactChanges } from "./change";
 import { _context } from "./index";
@@ -62,8 +62,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         iterB.mark(b.index, ChangeType.addition);
 
         changes.push(
-          new Change(ChangeType.deletion, getDataForChange(a)),
-          new Change(ChangeType.addition, getDataForChange(undefined, b)),
+          new Change(ChangeType.deletion, a),
+          new Change(ChangeType.addition, undefined, b),
         );
 
         // We need to ensure that we the closing one is matched as well. Also, a == b, so no need to check if b is an open node
@@ -197,10 +197,10 @@ function oneSidedIteration(
     /// Alignment: Addition / Deletion ///
     if (typeOfChange === ChangeType.addition) {
       // TODO: ALIGNMENT alignmentTable.add(Side.a, value.lineNumberStart, value.text.length);
-      changes.push(new Change(typeOfChange, getDataForChange(undefined, value)));
+      changes.push(new Change(typeOfChange, undefined, value));
     } else {
       // TODO: ALIGNMENT alignmentTable.add(Side.b, value.lineNumberStart, value.text.length);
-      changes.push(new Change(typeOfChange, getDataForChange(value)));
+      changes.push(new Change(typeOfChange, value));
     }
 
     iter.mark(value.index, typeOfChange, true);
@@ -316,10 +316,16 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   const trackChange = true; // a.index !== b.index;
 
   if (trackChange) {
+    // TODO-NOW
+    // deno-lint-ignore no-explicit-any
+    const dummyNodeA = { range: rangeA, index: indexA } as any as Node;
+    // deno-lint-ignore no-explicit-any
+    const dummyNodeB = { range: rangeB, index: indexB } as any as Node;
     matches.push(
       new Change(
         ChangeType.move,
-        getDataForChange({ range: rangeA, index: indexA }, { range: rangeB, index: indexB }),
+        dummyNodeA,
+        dummyNodeB,
         matchWeight,
       ),
     );
@@ -336,7 +342,7 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSRe
 
   // Report deletion if applicable
   if (candidateOppositeSide.length === 0) {
-    const changes = [new Change(ChangeType.deletion, getDataForChange(startNode))];
+    const changes = [new Change(ChangeType.deletion, startNode)];
     iterA.mark(startNode.index, ChangeType.deletion);
 
     // TODO: Maybe add the open/close here?
