@@ -385,6 +385,7 @@ describe("Properly report lines added", () => {
     `
   })
 
+  // Test the ignore matches in the process moves
   test({
     name: "Properly match closing paren 10",
     a: `
@@ -411,7 +412,35 @@ describe("Properly report lines added", () => {
     `
   })
 
+  // Also test the match ignoring logic, now inside the true branch on the alignment
 
+  test({
+    name: "Properly match closing paren 10",
+    a: `
+      {
+        ()
+        1
+      }
+    `,
+    b: `
+      x
+      {
+        (c)
+      }
+    `,
+    expA: `
+      {
+        ()
+        ➖1➖
+      }
+    `,
+    expB: `
+      ➕x➕
+      {
+        (➕c➕)
+      }
+    `
+  })
 
   // Testing single node matching
   test({

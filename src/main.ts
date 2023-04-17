@@ -133,6 +133,9 @@ function processMoves() {
     const canMoveBeAligned = moveOffsetTracker.moveCanGetAligned(indexA, indexB);
     // const canMoveBeAligned = moveOffsetTracker.moveCanGetAligned(offsettedAIndex, offsettedBIndex)
     if (canMoveBeAligned) {
+      if (match.indexesOfClosingMoves.length) {
+        matchesToIgnore.push(...match.indexesOfClosingMoves)
+      }
       // We need to add alignments to both sides, for example
       //
       // A)         B)
@@ -166,6 +169,12 @@ function processMoves() {
         moveOffsetTracker.add(sideToAlignEnd, i);
       }
     } else {
+      if (match.indexesOfClosingMoves.length) {
+        changes.push(...match.indexesOfClosingMoves.map(i => matches[i]))
+        matchesToIgnore.push(...match.indexesOfClosingMoves)
+
+      }
+
       changes.push(match);
     }
   }
