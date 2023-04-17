@@ -7,6 +7,9 @@ export class Change<Type extends ChangeType = any> {
   indexesA: number[] = [];
   indexesB: number[] = [];
 
+  index: number
+  indexesOfClosingMoves: number[] = []
+
   constructor(
     public type: Type,
     public rangeA: Range | undefined,
@@ -18,6 +21,7 @@ export class Change<Type extends ChangeType = any> {
     // More characters the change involved the more weight. TODO-NOW only for moves now
     public weight = 0,
   ) {
+    this.index = _context.matches.length
     if (typeof indexesA === "number") {
       this.indexesA = [indexesA];
     } else {

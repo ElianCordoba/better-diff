@@ -104,8 +104,13 @@ function processMoves() {
 
   const sortedMatched = matches.sort((a, b) => a.weight < b.weight ? 1 : -1)
 
+  const matchesToIgnore: number[] = []
+
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of sortedMatched) {
+    if (matchesToIgnore.includes(match.index)) {
+      continue
+    }
     assert(match.indexesA.length && match.indexesB.length);
 
     const _indexA = match.indexesA[0];
@@ -117,7 +122,10 @@ function processMoves() {
 
     // No index diff means no extra work needed
     if (indexA === indexB) {
-      // TODO-NOW also skip closing node move
+      // 
+      if (match.indexesOfClosingMoves.length) {
+        matchesToIgnore.push(...match.indexesOfClosingMoves)
+      }
       continue;
     }
 

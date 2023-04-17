@@ -59,6 +59,8 @@ export class OpenCloseVerifier {
     const changes: Change[] = [];
     const { matches } = _context;
 
+    let indexOfOpenNodeMatch = matches.length - 1
+
     for (const unmatchedOpeningNode of this.forEachRemainingNode()) {
       // Only calculate when needed, A is only involved in deletions, B only in additions. Moves require both nodes to be present
       const closingNodeForA = changeType & TypeMasks.DelOrMove ? this.iterA.findClosingNode(unmatchedOpeningNode, indexA) : undefined;
@@ -94,15 +96,18 @@ export class OpenCloseVerifier {
         this.iterB.mark(closingNodeForB.index, ChangeType.move);
 
         if (trackChange) {
-          matches.push(
-            new Change(
-              ChangeType.move,
-              closingNodeForA.getPosition(),
-              closingNodeForB.getPosition(),
-              closingNodeForA.index,
-              closingNodeForB.index,
-            ),
+          const c = new Change(
+            ChangeType.move,
+            closingNodeForA.getPosition(),
+            closingNodeForB.getPosition(),
+            closingNodeForA.index,
+            closingNodeForB.index,
           );
+          matches.push(
+            c
+          );
+
+          matches.at(indexOfOpenNodeMatch)!.indexesOfClosingMoves.push(c.index)
         }
       } else {
         // If one of the nodes is missing, it's a syntax error, the is a open node unclosed.

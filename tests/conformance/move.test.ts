@@ -399,10 +399,15 @@ describe("Properly report lines added", () => {
       }
     `,
     expA: `
-      ➖{➖
+      {
+        { ➖a,➖ ➖b,➖ x } = obj
+      }
     `,
     expB: `
-      ➕}{➕
+      {
+        { x } = obj
+        ➕z➕
+      }
     `
   })
 
