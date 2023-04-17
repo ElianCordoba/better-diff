@@ -3,12 +3,13 @@ import { colorFn, getSourceWithChange } from "./reporter";
 import { _context } from "./index";
 import { assert } from "./debug";
 
+// deno-lint-ignore no-explicit-any
 export class Change<Type extends ChangeType = any> {
   indexesA: number[] = [];
   indexesB: number[] = [];
 
-  index: number
-  indexesOfClosingMoves: number[] = []
+  index: number;
+  indexesOfClosingMoves: number[] = [];
 
   constructor(
     public type: Type,
@@ -21,7 +22,7 @@ export class Change<Type extends ChangeType = any> {
     // More characters the change involved the more weight. TODO-NOW only for moves now
     public weight = 0,
   ) {
-    this.index = _context.matches.length
+    this.index = _context.matches.length;
     if (typeof indexesA === "number") {
       this.indexesA = [indexesA];
     } else {

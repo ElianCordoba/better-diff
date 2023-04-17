@@ -62,7 +62,7 @@ export function applyChangesToSources(
   sourceA: string,
   sourceB: string,
   changes: Change[],
-  renderFn = asciiRenderFn
+  renderFn = asciiRenderFn,
 ) {
   let charsA = sourceA.split("");
   let charsB = sourceB.split("");

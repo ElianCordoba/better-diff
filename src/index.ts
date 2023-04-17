@@ -1,5 +1,5 @@
 import { getChanges } from "./main";
-import { applyChangesToSources, asciiRenderFn, DiffRendererFn, getAlignedSources, prettyRenderFn } from "./reporter";
+import { applyChangesToSources, getAlignedSources, prettyRenderFn } from "./reporter";
 import { serialize } from "./serializer";
 import { ChangeType, Mode, SerializedResponse, Side } from "./types";
 import { Node } from "./node";
@@ -118,7 +118,7 @@ export class LayoutShiftCandidate {
     // Value: Length of the string
     public a = new Map<number, number>(),
     public b = new Map<number, number>(),
-  ) { }
+  ) {}
 
   add(side: Side, at: number, length: number) {
     if (side === Side.a) {

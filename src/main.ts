@@ -102,14 +102,14 @@ function processMoves() {
 
   const moveOffsetTracker = new OffsetTracker();
 
-  const sortedMatched = matches.sort((a, b) => a.weight < b.weight ? 1 : -1)
+  const sortedMatched = matches.sort((a, b) => a.weight < b.weight ? 1 : -1);
 
-  const matchesToIgnore: number[] = []
+  const matchesToIgnore: number[] = [];
 
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of sortedMatched) {
     if (matchesToIgnore.includes(match.index)) {
-      continue
+      continue;
     }
     assert(match.indexesA.length && match.indexesB.length);
 
@@ -122,9 +122,9 @@ function processMoves() {
 
     // No index diff means no extra work needed
     if (indexA === indexB) {
-      // 
+      //
       if (match.indexesOfClosingMoves.length) {
-        matchesToIgnore.push(...match.indexesOfClosingMoves)
+        matchesToIgnore.push(...match.indexesOfClosingMoves);
       }
       continue;
     }
@@ -134,7 +134,7 @@ function processMoves() {
     // const canMoveBeAligned = moveOffsetTracker.moveCanGetAligned(offsettedAIndex, offsettedBIndex)
     if (canMoveBeAligned) {
       if (match.indexesOfClosingMoves.length) {
-        matchesToIgnore.push(...match.indexesOfClosingMoves)
+        matchesToIgnore.push(...match.indexesOfClosingMoves);
       }
       // We need to add alignments to both sides, for example
       //
@@ -170,9 +170,8 @@ function processMoves() {
       }
     } else {
       if (match.indexesOfClosingMoves.length) {
-        changes.push(...match.indexesOfClosingMoves.map(i => matches[i]))
-        matchesToIgnore.push(...match.indexesOfClosingMoves)
-
+        changes.push(...match.indexesOfClosingMoves.map((i) => matches[i]));
+        matchesToIgnore.push(...match.indexesOfClosingMoves);
       }
 
       changes.push(match);
