@@ -63,7 +63,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 
         changes.push(
           new Change(ChangeType.deletion, a),
-          new Change(ChangeType.addition, undefined, b),
+          new Change(ChangeType.addition, b),
         );
 
         // We need to ensure that we the closing one is matched as well. Also, a == b, so no need to check if b is an open node
@@ -197,7 +197,7 @@ function oneSidedIteration(
     /// Alignment: Addition / Deletion ///
     if (typeOfChange === ChangeType.addition) {
       // TODO: ALIGNMENT alignmentTable.add(Side.a, value.lineNumberStart, value.text.length);
-      changes.push(new Change(typeOfChange, undefined, value));
+      changes.push(new Change(typeOfChange, value));
     } else {
       // TODO: ALIGNMENT alignmentTable.add(Side.b, value.lineNumberStart, value.text.length);
       changes.push(new Change(typeOfChange, value));

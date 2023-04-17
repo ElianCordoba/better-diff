@@ -79,7 +79,7 @@ export class OpenCloseVerifier {
         if (closingNodeForB) {
           assert(!closingNodeForA, () => "Found a node on a side node even though we are in a addition");
           this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-          changes.push(new Change(ChangeType.addition, undefined, closingNodeForB));
+          changes.push(new Change(ChangeType.addition, closingNodeForB));
         }
 
         return changes;
@@ -120,7 +120,7 @@ export class OpenCloseVerifier {
           );
         } else {
           this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-          changes.push(new Change(ChangeType.addition, undefined, closingNodeForB));
+          changes.push(new Change(ChangeType.addition, closingNodeForB));
         }
       }
     }

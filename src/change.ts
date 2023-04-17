@@ -1,7 +1,7 @@
 import { ChangeType, Range, Side, TypeMasks } from "./types";
 import { colorFn, getSourceWithChange } from "./reporter";
 import { _context } from "./index";
-import { assert } from "./debug";
+import { assert, fail } from "./debug";
 import { getDataForChange } from "./utils";
 import { Node } from "./node";
 
@@ -27,50 +27,80 @@ export class Change<Type extends ChangeType = any> {
     // More characters the change involved the more weight. TODO-NOW only for moves now
     public weight = 0,
   ) {
-    if (type & TypeMasks.DelOrMove) {
-      const { range, index } = getDataForChange(nodeOne!);
-      this.rangeA = range;
-      this.indexA = index;
+    // This node is used both for addition and deletion, it's the only one passed to the constructor. Only in moves we use the node two
+    if (type & TypeMasks.AddOrDel) {
+      assert(nodeOne, () => "Node one was missing during change creation");
     }
 
-    if (type & TypeMasks.AddOrMove) {
-      const { range, index } = getDataForChange(nodeTwo!);
-      this.rangeB = range;
-      this.indexB = index;
+    if (type & ChangeType.move) {
+      assert(nodeTwo, () => "Node two was missing during change creation");
+    }
+
+    switch (type) {
+      case ChangeType.move: {
+        const a = getDataForChange(nodeOne!);
+        this.rangeA = a.range;
+        this.indexA = a.index;
+
+        const b = getDataForChange(nodeTwo!);
+        this.rangeB = b.range;
+        this.indexB = b.index;
+
+        // There is no alignment tracking for moves just yet, it happens in the "processMoves" fn
+        break;
+      }
+
+      case ChangeType.deletion: {
+        const { range, index } = getDataForChange(nodeOne!);
+        this.rangeA = range;
+        this.indexA = index;
+
+        // Alignment for deletions:
+        //
+        // A          B
+        // ------------
+        // 1          2
+        // 2
+        //
+        // With alignment
+        //
+        // A          B
+        // ------------
+        // 1          -
+        // 2          2
+        _context.offsetTracker.add(Side.b, index);
+        break;
+      }
+
+      case ChangeType.addition: {
+        const { range, index } = getDataForChange(nodeOne!);
+        this.rangeB = range;
+        this.indexB = index;
+
+        // Alignment for additions:
+        //
+        // A          B
+        // ------------
+        // y          x
+        //            y
+        //            z
+        // With alignment
+        //
+        // A          B
+        // ------------
+        // -          x
+        // y          y
+        // -          z
+        _context.offsetTracker.add(Side.a, index);
+        break;
+      }
+
+      default:
+        fail(`Unexpected change type ${type}`);
     }
 
     this.index = _context.matches.length;
-
-    if (type & TypeMasks.DelOrMove) {
-      assert(this.rangeA, () => "Range A was missing during change creation");
-    }
-
-    if (type & TypeMasks.AddOrMove) {
-      assert(this.rangeB, () => "Range B was missing during change creation");
-    }
-
-    // TODO-NOW
-    // Additions and removals needs to get tracked so that we can later on process the moves, more on this in the "processMoves" function
-    if (type & TypeMasks.AddOrDel) {
-      // We calculate the offset from all the index up to here
-      let index: number;
-      //
-      let sideToReadOffset: Side;
-
-      if (type === ChangeType.deletion) {
-        index = this.indexA;
-        sideToReadOffset = Side.b;
-      } else {
-        index = this.indexB;
-        sideToReadOffset = Side.a;
-      }
-
-      _context.offsetTracker.add(sideToReadOffset, index!);
-    } else {
-      // move
-
-      this.weight = weight || 0;
-    }
+    this.weight = weight || 0;
   }
 
   draw() {
