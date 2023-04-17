@@ -90,15 +90,16 @@ export function getChanges(codeA: string, codeB: string): Change[] {
   // TODO: Once we improve compaction to be on-demand, we will be able to remove this
   const deletions = changes.filter((x) => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start! - b.rangeA?.start!);
   const additions = changes.filter((x) => x.type === ChangeType.addition).sort((a, b) => a.rangeB?.start! - b.rangeB?.start!);
-  const moves = processMoves();
+
+  const { matches, offsetTracker } = _context;
+
+  const moves = processMoves(matches, offsetTracker);
 
   return compactChanges([...additions, ...deletions, ...moves]);
 }
 
-function processMoves() {
+function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
   const changes: Change[] = [];
-
-  const { matches, offsetTracker } = _context;
 
   const moveOffsetTracker = new OffsetTracker();
 
