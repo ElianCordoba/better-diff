@@ -1,12 +1,16 @@
-import { ChangeType, Range, Side, TypeMasks } from "./types";
+import { ChangeType, NewChangeInfo, Range, Side, TypeMasks } from "./types";
 import { colorFn, getSourceWithChange } from "./reporter";
 import { _context } from "./index";
 import { assert } from "./debug";
 
 // deno-lint-ignore no-explicit-any
 export class Change<Type extends ChangeType = any> {
-  indexA = -1;
-  indexB = -1;
+  rangeA: Range | undefined;
+  rangeB: Range | undefined;
+
+  indexA: number;
+  indexB: number;
+
   index: number;
 
   // This is used when processing matches, if a match contains opening nodes, it's necessary to process the closing counterpart in the same way.
@@ -16,18 +20,18 @@ export class Change<Type extends ChangeType = any> {
 
   constructor(
     public type: Type,
-    public rangeA: Range | undefined,
-    public rangeB: Range | undefined,
-    // List of all the indexes of nodes involved in the change
+    nodesInfo: { nodeAInfo: NewChangeInfo | undefined, nodeBInfo: NewChangeInfo | undefined },
 
-    indexA?: number,
-    indexB?: number,
     // More characters the change involved the more weight. TODO-NOW only for moves now
     public weight = 0,
   ) {
+    this.rangeA = nodesInfo.nodeAInfo?.range
+    this.rangeB = nodesInfo.nodeBInfo?.range
+
+    this.indexA = nodesInfo.nodeAInfo?.index || -1;
+    this.indexB = nodesInfo.nodeBInfo?.index || -1;
+
     this.index = _context.matches.length;
-    this.indexA = indexA!;
-    this.indexB = indexB!;
 
     if (type & TypeMasks.DelOrMove) {
       assert(this.rangeA, () => "Range A was missing during change creation");

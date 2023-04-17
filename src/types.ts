@@ -25,6 +25,11 @@ export const TypeMasks = {
   AddOrMove: ChangeType.addition | ChangeType.move,
 };
 
+export interface NewChangeInfo {
+  index: number;
+  range: Range;
+}
+
 export interface Range {
   start: number;
   end: number;

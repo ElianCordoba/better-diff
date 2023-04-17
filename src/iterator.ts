@@ -237,7 +237,7 @@ export class Iterator {
       return;
     }
 
-    const { start, end } = nodeToDraw.getPosition();
+    const { start, end } = nodeToDraw.getRange();
     const result = getSourceWithChange(chars, start, end, colorFn.magenta);
 
     console.log(result.join(""));

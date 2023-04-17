@@ -59,7 +59,7 @@ export class Node {
     this.lineNumberEnd = lineNumberEnd;
   }
 
-  getPosition(): Range {
+  getRange(): Range {
     return {
       start: this.start,
       end: this.end,

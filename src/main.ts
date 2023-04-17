@@ -1,5 +1,5 @@
 import { ChangeType, Side } from "./types";
-import { equals, getSequence, mergeRanges, normalize, oppositeSide, range } from "./utils";
+import { equals, getDataForChange, getSequence, mergeRanges, normalize, oppositeSide, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change, compactChanges } from "./change";
 import { _context } from "./index";
@@ -62,8 +62,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         iterB.mark(b.index, ChangeType.addition);
 
         changes.push(
-          new Change(ChangeType.deletion, a.getPosition(), undefined, a.index),
-          new Change(ChangeType.addition, undefined, b.getPosition(), undefined, b.index),
+          new Change(ChangeType.deletion, getDataForChange(a)),
+          new Change(ChangeType.addition, getDataForChange(undefined, b)),
         );
 
         // We need to ensure that we the closing one is matched as well. Also, a == b, so no need to check if b is an open node
@@ -197,10 +197,10 @@ function oneSidedIteration(
     /// Alignment: Addition / Deletion ///
     if (typeOfChange === ChangeType.addition) {
       // TODO: ALIGNMENT alignmentTable.add(Side.a, value.lineNumberStart, value.text.length);
-      changes.push(new Change(typeOfChange, undefined, value, undefined, value.index));
+      changes.push(new Change(typeOfChange, getDataForChange(undefined, value)));
     } else {
       // TODO: ALIGNMENT alignmentTable.add(Side.b, value.lineNumberStart, value.text.length);
-      changes.push(new Change(typeOfChange, value, undefined, value.index, undefined));
+      changes.push(new Change(typeOfChange, getDataForChange(value)));
     }
 
     iter.mark(value.index, typeOfChange, true);
@@ -219,8 +219,8 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   let a = iterA.next(indexA)!;
   let b = iterB.next(indexB)!;
 
-  let rangeA = a.getPosition();
-  let rangeB = b.getPosition();
+  let rangeA = a.getRange();
+  let rangeB = b.getRange();
 
   const startA = a.lineNumberStart;
   const startB = b.lineNumberStart;
@@ -295,8 +295,8 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     //   continue;
     // }
 
-    rangeA = mergeRanges(rangeA, a.getPosition());
-    rangeB = mergeRanges(rangeB, b.getPosition());
+    rangeA = mergeRanges(rangeA, a.getRange());
+    rangeB = mergeRanges(rangeB, b.getRange());
   }
 
   const endA = a.lineNumberEnd;
@@ -319,10 +319,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     matches.push(
       new Change(
         ChangeType.move,
-        rangeA,
-        rangeB,
-        indexA,
-        indexB,
+        getDataForChange({ range: rangeA, index: indexA }, { range: rangeB, index: indexB }),
         matchWeight,
       ),
     );
@@ -339,7 +336,7 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSRe
 
   // Report deletion if applicable
   if (candidateOppositeSide.length === 0) {
-    const changes = [new Change(ChangeType.deletion, startNode, undefined, startNode.index, undefined)];
+    const changes = [new Change(ChangeType.deletion, getDataForChange(startNode))];
     iterA.mark(startNode.index, ChangeType.deletion);
 
     // TODO: Maybe add the open/close here?
