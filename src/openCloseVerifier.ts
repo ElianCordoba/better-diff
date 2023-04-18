@@ -120,7 +120,7 @@ export class OpenCloseVerifier {
           );
         } else {
           this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-          changes.push(new Change(ChangeType.addition, closingNodeForB));
+          changes.push(new Change(ChangeType.addition, closingNodeForB!));
         }
       }
     }

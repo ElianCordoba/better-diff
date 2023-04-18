@@ -15,27 +15,17 @@ export class Change<Type extends ChangeType = any> {
 
   index: number;
 
-  // This is used when processing matches, if a match contains opening nodes, it's necessary to process the closing counterpart in the same way.
-  // For instance, a match resulting in an "(" being moved, the matching ")" should also be moved accordingly.
-  // Similarly, if the initial match is ignored, the corresponding closing node should also be ignored.
+  // This is used when processing matches, if the move contains an odd number of opening nodes, one or move closing nodes 
+  // moves will be created we store their indexes here. More information in the "processMoves" fn
   indexesOfClosingMoves: number[] = [];
 
   constructor(
     public type: Type,
-    nodeOne: Node | undefined,
+    nodeOne: Node,
     nodeTwo?: Node,
     // More characters the change involved the more weight. TODO-NOW only for moves now
     public weight = 0,
   ) {
-    // This node is used both for addition and deletion, it's the only one passed to the constructor. Only in moves we use the node two
-    if (type & TypeMasks.AddOrDel) {
-      assert(nodeOne, () => "Node one was missing during change creation");
-    }
-
-    if (type & ChangeType.move) {
-      assert(nodeTwo, () => "Node two was missing during change creation");
-    }
-
     switch (type) {
       case ChangeType.move: {
         const a = getDataForChange(nodeOne!);
@@ -99,8 +89,15 @@ export class Change<Type extends ChangeType = any> {
         fail(`Unexpected change type ${type}`);
     }
 
+    if (type & TypeMasks.DelOrMove) {
+      assert(this.rangeA, () => "Range A is not present on change creation");
+    }
+
+    if (type & TypeMasks.AddOrMove) {
+      assert(this.rangeB, () => "Range B is not present on change creation");
+    }
+
     this.index = _context.matches.length;
-    this.weight = weight || 0;
   }
 
   draw() {

@@ -98,35 +98,60 @@ export function getChanges(codeA: string, codeB: string): Change[] {
   return compactChanges([...additions, ...deletions, ...moves]);
 }
 
+// This function receives all the matches and iterate over them in descending order of weight (matches with more text involved go first)
+// For each, we try to aligned it, this means that we can put it side to side without breaking any other match, for example
+// 
+// A          B
+// ------------
+// aa         b
+// b          aa
+//
+// The most important match here is "aa", so we will aligned it as:
+// 
+// A          B
+// ------------
+// -          b
+// aa ◄─────► aa
+// b          -
+//
+// Aligning the remaining match will break the first one, so we report it as a move:
+//
+// A          B
+// ------------
+// -     ┌──► b
+// aa ◄──┼──► aa
+// b  ◄──┘    -
 function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
   const changes: Change[] = [];
 
   const moveOffsetTracker = new OffsetTracker();
 
-  const sortedMatched = matches.sort((a, b) => a.weight < b.weight ? 1 : -1);
+  const sortedMatches = matches.sort((a, b) => a.weight < b.weight ? 1 : -1);
 
+  // If a match contains opening nodes, it's necessary to process the closing counterpart in the same way.
+  // For instance, a match resulting in an "(" being moved, should have the matching ")" being reported as moved as well.
+  // Similarly, if the initial match is ignored because it can be aligned, the corresponding closing node should also be ignored.
   const matchesToIgnore: number[] = [];
 
   // Process matches starting with the most relevant ones, the ones with the most text involved
-  for (const match of sortedMatched) {
+  for (const match of sortedMatches) {
     if (matchesToIgnore.includes(match.index)) {
       continue;
     }
-    assert(match.indexA !== -1 && match.indexB !== -1);
+
+    if (match.indexesOfClosingMoves.length) {
+      matchesToIgnore.push(...match.indexesOfClosingMoves);
+    }
 
     const _indexA = match.indexA;
     const _indexB = match.indexB;
 
-    // TODO-NOW documentar los indexes flipleados
+    // TODO-NOW DOCUMENT
     const indexA = _indexA + offsetTracker.getOffset(Side.a, _indexA);
     const indexB = _indexB + offsetTracker.getOffset(Side.b, _indexB);
 
     // No index diff means no extra work needed
     if (indexA === indexB) {
-      //
-      if (match.indexesOfClosingMoves.length) {
-        matchesToIgnore.push(...match.indexesOfClosingMoves);
-      }
       continue;
     }
 
@@ -134,19 +159,21 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
     const canMoveBeAligned = moveOffsetTracker.moveCanGetAligned(indexA, indexB);
     // const canMoveBeAligned = moveOffsetTracker.moveCanGetAligned(offsettedAIndex, offsettedBIndex)
     if (canMoveBeAligned) {
-      if (match.indexesOfClosingMoves.length) {
-        matchesToIgnore.push(...match.indexesOfClosingMoves);
-      }
+      // if (match.indexesOfClosingMoves.length) {
+      //   matchesToIgnore.push(...match.indexesOfClosingMoves);
+      // }
       // We need to add alignments to both sides, for example
       //
-      // A)         B)
+      // A          B
+      // ------------
       // 1          2
       // 2          3
       // 3          1
       //
       // Results in:
       //
-      // A)         B)
+      // A          B
+      // ------------
       // 1          -
       // 2          2
       // 3          3
@@ -172,7 +199,6 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
     } else {
       if (match.indexesOfClosingMoves.length) {
         changes.push(...match.indexesOfClosingMoves.map((i) => matches[i]));
-        matchesToIgnore.push(...match.indexesOfClosingMoves);
       }
 
       changes.push(match);
