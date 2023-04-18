@@ -23,7 +23,7 @@ export class Change<Type extends ChangeType = any> {
     public type: Type,
     nodeOne: Node,
     nodeTwo?: Node,
-    // More characters the change involved the more weight. TODO-NOW only for moves now
+    // More characters the change involved the more weight
     public weight = 0,
   ) {
     switch (type) {

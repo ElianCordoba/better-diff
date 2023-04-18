@@ -149,7 +149,6 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
     const _indexA = match.indexA;
     const _indexB = match.indexB;
 
-    // TODO-NOW DOCUMENT
     const indexA = _indexA + offsetTracker.getOffset(Side.a, _indexA);
     const indexB = _indexB + offsetTracker.getOffset(Side.b, _indexB);
 
