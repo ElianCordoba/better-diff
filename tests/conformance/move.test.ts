@@ -5,40 +5,20 @@ describe("Properly report lines added", () => {
   test({
     name: "Simple move",
     a: `
-      a
+      aa
       b
     `,
     b: `
       b
-      a
+      aa
     `,
     expA: `
-      🔀a⏹️
+      aa
       🔀b⏹️
     `,
     expB: `
       🔀b⏹️
-      🔀a⏹️
-    `
-  })
-
-  test({
-    name: "Multi characters move",
-    a: `
       aa
-      bb
-    `,
-    b: `
-      bb
-      aa
-    `,
-    expA: `
-      🔀aa⏹️
-      🔀bb⏹️
-    `,
-    expB: `
-      🔀bb⏹️
-      🔀aa⏹️
     `
   })
 
@@ -55,14 +35,14 @@ describe("Properly report lines added", () => {
       let name = 'Elian'
     `,
     expA: `
-      🔀console.log()
-      let name = 'Elian'⏹️
+      console.log()
+      let name = 'Elian'
       🔀let age;⏹️
     `,
     expB: `
       🔀let age;⏹️
-      🔀console.log()
-      let name = 'Elian'⏹️
+      console.log()
+      let name = 'Elian'
     `
   })
 
@@ -82,17 +62,17 @@ describe("Properly report lines added", () => {
       3
     `,
     expA: `
-      🔀1
+      1
       2
-      3⏹️
+      3
     `,
     expB: `
       ➕1➕
       ➕2➕
       ➕'x'➕
-      🔀1
+      1
       2
-      3⏹️
+      3
     `
   })
 
@@ -116,7 +96,7 @@ describe("Properly report lines added", () => {
       'x'
       1
       2
-      🔀3⏹️
+      3
     `,
     expB: `
       'x'
@@ -124,7 +104,7 @@ describe("Properly report lines added", () => {
       2
       ➕1➕
       ➕2➕
-      🔀3⏹️
+      3
     `
   })
 
@@ -137,10 +117,10 @@ describe("Properly report lines added", () => {
       fn(console.log(2))
     `,
     expA: `
-      🔀console.log(⏹️🔀)⏹️ ➖&&➖ ➖3➖
+      console.log() ➖&&➖ ➖3➖
     `,
     expB: `
-      ➕fn(➕🔀console.log(⏹️➕2➕🔀)⏹️➕)➕
+      ➕fn(➕console.log(➕2➕)➕)➕
     `
   })
 
@@ -153,10 +133,10 @@ describe("Properly report lines added", () => {
       console.log(fn(1))
     `,
     expA: `
-      🔀fn(⏹️➖x➖🔀)⏹️
+      fn(➖x➖)
     `,
     expB: `
-      ➕console.log(➕🔀fn(⏹️➕1➕🔀)⏹️➕)➕
+      ➕console.log(➕fn(➕1➕)➕)➕
     `
   })
 
@@ -169,10 +149,10 @@ describe("Properly report lines added", () => {
       fn(console.log(2))
     `,
     expA: `
-      🔀console.log(⏹️🔀)⏹️ ➖&&➖ ➖3➖
+      console.log() ➖&&➖ ➖3➖
     `,
     expB: `
-      ➕fn(➕🔀console.log(⏹️➕2➕🔀)⏹️➕)➕
+      ➕fn(➕console.log(➕2➕)➕)➕
     `
   })
 
@@ -206,12 +186,12 @@ describe("Properly report lines added", () => {
     `,
     expA: `
       ➖if➖ ➖(true)➖ ➖{➖
-        🔀print(⏹️🔀)⏹️
+        print()
       ➖}➖
     `,
     expB: `
       ➕z➕
-      🔀print(⏹️➕123➕🔀)⏹️
+      print(➕123➕)
       ➕x➕
     `
   })
@@ -227,11 +207,11 @@ describe("Properly report lines added", () => {
       }
     `,
     expA: `
-      🔀console.log(⏹️🔀)⏹️ ➖&&➖ ➖3➖
+      console.log() ➖&&➖ ➖3➖
     `,
     expB: `
       ➕function➕ ➕asd➕ ➕()➕ ➕{➕
-        🔀console.log(⏹️➕"hi"➕🔀)⏹️
+        console.log(➕"hi"➕)
       ➕}➕
     `
   })
@@ -250,11 +230,11 @@ describe("Properly report lines added", () => {
     expA: `
       ➖321➖
       ➖if➖ ➖(true)➖ ➖{➖
-        🔀print(⏹️🔀)⏹️
+        print()
       ➖}➖
     `,
     expB: `
-      🔀print(⏹️➕123➕🔀)⏹️
+      print(➕123➕)
     `
   })
 
@@ -267,10 +247,10 @@ describe("Properly report lines added", () => {
       console.log(fn(1))
     `,
     expA: `
-      ➖)➖🔀fn(⏹️➖x➖🔀)⏹️
+      ➖)➖fn(➖x➖)
     `,
     expB: `
-      ➕console.log(➕🔀fn(⏹️➕1➕🔀)⏹️➕)➕
+      ➕console.log(➕fn(➕1➕)➕)➕
     `
   })
 
@@ -295,19 +275,19 @@ describe("Properly report lines added", () => {
     `,
     expA: `
       ➖x➖
-      ➖const➖ 🔀foo⏹️ ➖=➖ 🔀{
+      ➖const➖ foo ➖=➖ {
         a: 1
-      }⏹️
+      }
     `,
     expB: `
-      ➕function➕ 🔀foo⏹️➕()➕ ➕{➕
+      ➕function➕ foo➕()➕ ➕{➕
         ➕return➕ ➕z➕
       ➕}➕
     
       ➕function➕ ➕zor()➕ ➕{➕
-        ➕return➕ 🔀{
+        ➕return➕ {
           a: 1
-        }⏹️
+        }
       ➕}➕
     `
   })
@@ -327,13 +307,13 @@ describe("Properly report lines added", () => {
     `,
     expA: `
       ➖function*➖ ➖range()➖ ➖{➖
-        ➖while➖ ➖(i➖ ➖<➖ ➖end➖ ➖-➖ 🔀1⏹️➖)➖ ➖{➖
+        ➖while➖ ➖(i➖ ➖<➖ ➖end➖ ➖-➖ 1➖)➖ ➖{➖
           ➖yield➖ ➖i;➖
         ➖}➖
       ➖}➖
     `,
     expB: `
-      ➕console.log(➕🔀1⏹️➕)➕
+      ➕console.log(➕1➕)➕
     `
   })
 
@@ -385,6 +365,63 @@ describe("Properly report lines added", () => {
     `
   })
 
+  // Test the ignore matches in the process moves
+  test({
+    name: "Properly match closing paren 10",
+    a: `
+      {
+        { a, b, x } = obj
+      }
+    `,
+    b: `
+      {
+        { x } = obj
+        z
+      }
+    `,
+    expA: `
+      {
+        { ➖a,➖ ➖b,➖ x } = obj
+      }
+    `,
+    expB: `
+      {
+        { x } = obj
+        ➕z➕
+      }
+    `
+  })
+
+  // Also test the match ignoring logic, now inside the true branch on the alignment
+
+  test({
+    name: "Properly match closing paren 10",
+    a: `
+      {
+        ()
+        1
+      }
+    `,
+    b: `
+      x
+      {
+        (c)
+      }
+    `,
+    expA: `
+      {
+        ()
+        ➖1➖
+      }
+    `,
+    expB: `
+      ➕x➕
+      {
+        (➕c➕)
+      }
+    `
+  })
+
   // Testing single node matching
   test({
     name: "Noise reduction",
@@ -413,12 +450,29 @@ describe("Properly report lines added", () => {
         ➖return➖ ➖123➖
       ➖}➖
       
-      ➖let➖ 🔀var1 = foo()⏹️
-      ➖let➖ 🔀var2 = bar()⏹️
+      ➖let➖ var1 = foo()
+      ➖let➖ var2 = bar()
     `,
     expB: `
-      ➕const➕ 🔀var1 = foo()⏹️
-      ➕const➕ 🔀var2 = bar()⏹️
+      ➕const➕ var1 = foo()
+      ➕const➕ var2 = bar()
+    `
+  })
+
+  // This used to break the inverse
+  test({
+    name: "Simple alignment",
+    a: `
+      fn(-1)
+    `,
+    b: `
+      (1)
+    `,
+    expA: `
+      ➖fn(-➖1➖)➖
+    `,
+    expB: `
+      ➕(➕1➕)➕
     `
   })
 });

@@ -2,7 +2,7 @@ import { getNodeForPrinting, getOppositeNodeKind, getSequence } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
 import { Node } from "./node";
 import { ChangeType, KindTable, Side } from "./types";
-import { getContext } from ".";
+import { _context } from ".";
 import { OpenCloseStack } from "./openCloseVerifier";
 import { getNodesArray } from "./ts-util";
 
@@ -217,7 +217,7 @@ export class Iterator {
   }
 
   printRange(node: Node | undefined) {
-    const source = this.name === Side.a ? getContext().sourceA : getContext().sourceB;
+    const source = this.name === Side.a ? _context.sourceA : _context.sourceB;
     const chars = source.split("");
 
     let nodeToDraw: Node | undefined;
@@ -237,7 +237,7 @@ export class Iterator {
       return;
     }
 
-    const { start, end } = nodeToDraw.getPosition();
+    const { start, end } = nodeToDraw.getRange();
     const result = getSourceWithChange(chars, start, end, colorFn.magenta);
 
     console.log(result.join(""));

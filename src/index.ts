@@ -1,10 +1,10 @@
 import { getChanges } from "./main";
-import { applyChangesToSources, asciiRenderFn, DiffRendererFn, getAlignedSources } from "./reporter";
+import { applyChangesToSources, getAlignedSources, prettyRenderFn } from "./reporter";
 import { serialize } from "./serializer";
 import { ChangeType, Mode, SerializedResponse, Side } from "./types";
 import { Node } from "./node";
-import { AlignmentTable } from "./alignmentTable";
 import { fail } from "./debug";
+import { Context } from "./context";
 
 // These options have their own tests under the /tests/options folder
 export interface Options {
@@ -13,8 +13,6 @@ export interface Options {
   outputType?: OutputType;
 
   warnOnInvalidCode?: boolean;
-
-  renderFn?: DiffRendererFn;
 
   // For testing and debugging mostly
   alignmentText?: string;
@@ -25,6 +23,7 @@ export enum OutputType {
   serializedChunks,
   serializedAlignedChunks,
   text,
+  prettyText,
   alignedText,
   noop,
 }
@@ -33,6 +32,7 @@ interface ResultTypeMapper {
   [OutputType.serializedChunks]: SerializedResponse;
   [OutputType.serializedAlignedChunks]: SerializedResponse;
   [OutputType.text]: { sourceA: string; sourceB: string };
+  [OutputType.prettyText]: { sourceA: string; sourceB: string };
   [OutputType.alignedText]: { sourceA: string; sourceB: string };
   [OutputType.noop]: void;
 }
@@ -44,7 +44,8 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
 ): ResultTypeMapper[_OutputType] {
   // Set up globals
   _options = { ...defaultOptions, ...(options || {}) } as Required<Options>;
-  _context = { sourceA, sourceB, alignmentTable: new AlignmentTable(), alignmentsOfMoves: [] };
+
+  _context = new Context(sourceA, sourceB);
 
   const changes = getChanges(sourceA, sourceB);
 
@@ -63,6 +64,11 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
     case OutputType.text: {
       // deno-lint-ignore no-explicit-any
       return applyChangesToSources(sourceA, sourceB, changes) as any;
+    }
+
+    case OutputType.prettyText: {
+      // deno-lint-ignore no-explicit-any
+      return applyChangesToSources(sourceA, sourceB, changes, prettyRenderFn) as any;
     }
 
     case OutputType.alignedText: {
@@ -88,7 +94,6 @@ const defaultOptions: Options = {
   mode: Mode.debug,
   outputType: OutputType.text,
   warnOnInvalidCode: false,
-  renderFn: asciiRenderFn,
   alignmentText: "\n",
   includeDebugAlignmentInfo: false,
 };
@@ -168,14 +173,4 @@ export interface MoveAlignmentInfo {
   text: string;
 }
 
-interface Context {
-  sourceA: string;
-  sourceB: string;
-  alignmentTable: AlignmentTable;
-  alignmentsOfMoves: MoveAlignmentInfo[];
-}
-
-let _context: Context;
-export function getContext() {
-  return _context;
-}
+export let _context: Context;

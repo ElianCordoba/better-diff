@@ -27,11 +27,11 @@ describe("Properly report lines added and removed", () => {
       let name;
     `,
     expA: `
-      🔀let name;⏹️
+      let name;
     `,
     expB: `
       ➕let➕ ➕age;➕
-      🔀let name;⏹️
+      let name;
     `
   })
 
@@ -82,11 +82,11 @@ describe("Properly report lines added and removed", () => {
       }
     `,
     expA: `
-      🔀callFn()⏹️
+      callFn()
     `,
     expB: `
       ➕while➕ ➕(true)➕ ➕{➕
-        🔀callFn()⏹️
+        callFn()
       ➕}➕
     `
   })

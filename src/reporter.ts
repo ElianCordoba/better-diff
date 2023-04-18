@@ -1,4 +1,4 @@
-import { getContext, getOptions } from ".";
+import { _context, getOptions } from ".";
 import { ChangeType, Side } from "../src/types";
 import { AlignmentTable } from "./alignmentTable";
 import { Change } from "./change";
@@ -62,9 +62,8 @@ export function applyChangesToSources(
   sourceA: string,
   sourceB: string,
   changes: Change[],
+  renderFn = asciiRenderFn,
 ) {
-  const { renderFn } = getOptions();
-
   let charsA = sourceA.split("");
   let charsB = sourceB.split("");
 
@@ -74,7 +73,7 @@ export function applyChangesToSources(
   for (const { rangeA, rangeB, type } of changes) {
     switch (type) {
       case ChangeType.addition: {
-        const { start, end } = rangeB;
+        const { start, end } = rangeB!;
         charsB = getSourceWithChange(
           charsB,
           start,
@@ -85,7 +84,7 @@ export function applyChangesToSources(
       }
 
       case ChangeType.deletion: {
-        const { start, end } = rangeA;
+        const { start, end } = rangeA!;
         charsA = getSourceWithChange(
           charsA,
           start,
@@ -96,7 +95,7 @@ export function applyChangesToSources(
       }
 
       case ChangeType.move: {
-        const resultA = rangeA;
+        const resultA = rangeA!;
         charsA = getSourceWithChange(
           charsA,
           resultA.start,
@@ -104,7 +103,7 @@ export function applyChangesToSources(
           renderFn.move,
         );
 
-        const resultB = rangeB;
+        const resultB = rangeB!;
         charsB = getSourceWithChange(
           charsB,
           resultB.start,
@@ -216,7 +215,7 @@ export function getAlignedSources(
     return !alignmentTable[side].has(at);
   }
 
-  const { alignmentTable, alignmentsOfMoves } = getContext();
+  const { alignmentTable, alignmentsOfMoves } = _context;
 
   // First we apply the "simple" alignments, aka the ones we know are compatible and require no extra verification.
   // These are additions, deletions and formats

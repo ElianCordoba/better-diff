@@ -1,6 +1,6 @@
 import ts from "typescript";
 import { Node } from "./node";
-import { Range, Side } from "./types";
+import { NewChangeInfo, Range, Side } from "./types";
 import { fail } from "./debug";
 import { LCSResult } from "./sequence";
 import { Iterator } from "./iterator";
@@ -117,4 +117,15 @@ export function normalize(iter: Iterator, lcs: LCSResult): LCSResult {
 
 export function getSequence(iter: Iterator, from: number, length: number): Node[] {
   return iter.textNodes.slice(from, from + length);
+}
+
+export function getDataForChange(nodeOrInfo: Node | NewChangeInfo): NewChangeInfo {
+  if (nodeOrInfo instanceof Node) {
+    return {
+      index: nodeOrInfo.index,
+      range: nodeOrInfo.getRange(),
+    };
+  } else {
+    return nodeOrInfo;
+  }
 }

@@ -4,39 +4,19 @@ import { OutputType, getDiff } from "../../src";
 test('Case 1', () => {
   const a = `
     console.log() && 3
-  `
+  `.trim()
 
   const b = `
     fn(console.log(1))
-  `
+  `.trim()
 
   const expected = {
     chunksA: [
       [
-        {
-          text: "\n",
-          type: "default",
-          moveNumber: "",
-        },
       ],
       [
         {
-          text: "    ",
-          type: "default",
-          moveNumber: "",
-        },
-        {
-          text: "console.log(",
-          type: "move",
-          moveNumber: "4",
-        },
-        {
-          text: ")",
-          type: "move",
-          moveNumber: "5",
-        },
-        {
-          text: " ",
+          text: "console.log() ",
           type: "default",
           moveNumber: "",
         },
@@ -55,34 +35,12 @@ test('Case 1', () => {
           type: "deletion",
           moveNumber: "",
         },
-        {
-          text: "\n",
-          type: "default",
-          moveNumber: "",
-        },
-      ],
-      [
-        {
-          text: "  ",
-          type: "default",
-          moveNumber: "",
-        },
       ],
     ],
     chunksB: [
       [
-        {
-          text: "\n",
-          type: "default",
-          moveNumber: "",
-        },
       ],
       [
-        {
-          text: "    ",
-          type: "default",
-          moveNumber: "",
-        },
         {
           text: "fn(",
           type: "addition",
@@ -90,8 +48,8 @@ test('Case 1', () => {
         },
         {
           text: "console.log(",
-          type: "move",
-          moveNumber: "4",
+          type: "default",
+          moveNumber: "",
         },
         {
           text: "1",
@@ -100,24 +58,12 @@ test('Case 1', () => {
         },
         {
           text: ")",
-          type: "move",
-          moveNumber: "5",
+          type: "default",
+          moveNumber: "",
         },
         {
           text: ")",
           type: "addition",
-          moveNumber: "",
-        },
-        {
-          text: "\n",
-          type: "default",
-          moveNumber: "",
-        },
-      ],
-      [
-        {
-          text: "  ",
-          type: "default",
           moveNumber: "",
         },
       ],
@@ -134,29 +80,17 @@ test('Case 2', () => {
     if (true) {
       3; print
     }
-  `
+  `.trim()
 
   const b = `
     z
     print; 3
     x
-  `
+  `.trim()
 
   const expected = {
     chunksA: [
       [
-        {
-          text: "\n",
-          type: "default",
-          moveNumber: "",
-        },
-      ],
-      [
-        {
-          text: "    ",
-          type: "default",
-          moveNumber: "",
-        },
         {
           text: "if",
           type: "deletion",
@@ -197,7 +131,7 @@ test('Case 2', () => {
         {
           text: "3",
           type: "move",
-          moveNumber: "6",
+          moveNumber: "7",
         },
         {
           text: ";",
@@ -205,17 +139,7 @@ test('Case 2', () => {
           moveNumber: "",
         },
         {
-          text: " ",
-          type: "default",
-          moveNumber: "",
-        },
-        {
-          text: "print",
-          type: "move",
-          moveNumber: "8",
-        },
-        {
-          text: "\n",
+          text: " print\n",
           type: "default",
           moveNumber: "",
         },
@@ -231,34 +155,10 @@ test('Case 2', () => {
           type: "deletion",
           moveNumber: "",
         },
-        {
-          text: "\n",
-          type: "default",
-          moveNumber: "",
-        },
-      ],
-      [
-        {
-          text: "  ",
-          type: "default",
-          moveNumber: "",
-        },
       ],
     ],
     chunksB: [
       [
-        {
-          text: "\n",
-          type: "default",
-          moveNumber: "",
-        },
-      ],
-      [
-        {
-          text: "    ",
-          type: "default",
-          moveNumber: "",
-        },
         {
           text: "z",
           type: "addition",
@@ -272,14 +172,9 @@ test('Case 2', () => {
       ],
       [
         {
-          text: "    ",
+          text: "    print",
           type: "default",
           moveNumber: "",
-        },
-        {
-          text: "print",
-          type: "move",
-          moveNumber: "8",
         },
         {
           text: ";",
@@ -294,7 +189,7 @@ test('Case 2', () => {
         {
           text: "3",
           type: "move",
-          moveNumber: "6",
+          moveNumber: "7",
         },
         {
           text: "\n",
@@ -311,18 +206,6 @@ test('Case 2', () => {
         {
           text: "x",
           type: "addition",
-          moveNumber: "",
-        },
-        {
-          text: "\n",
-          type: "default",
-          moveNumber: "",
-        },
-      ],
-      [
-        {
-          text: "  ",
-          type: "default",
           moveNumber: "",
         },
       ],

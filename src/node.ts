@@ -1,6 +1,6 @@
 import { SyntaxKind } from "typescript";
 import { getNodeForPrinting } from "./utils";
-import { ChangeType, Mode } from "./types";
+import { ChangeType, Mode, Range } from "./types";
 
 interface NodeArgs {
   mode: Mode;
@@ -59,7 +59,7 @@ export class Node {
     this.lineNumberEnd = lineNumberEnd;
   }
 
-  getPosition() {
+  getRange(): Range {
     return {
       start: this.start,
       end: this.end,

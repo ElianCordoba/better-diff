@@ -4,6 +4,7 @@ import { ClosingNodeGroup, getClosingNodeGroup, getOppositeNodeKind, getPrettyKi
 import { assert } from "./debug";
 import { ChangeType, TypeMasks } from "./types";
 import { Change } from "./change";
+import { _context } from ".";
 
 export class OpenCloseStack {
   allowedKind: number[];
@@ -54,8 +55,11 @@ export class OpenCloseVerifier {
     return this;
   }
 
-  verify(changeType: ChangeType, trackChange = false, indexA?: number, indexB?: number) {
+  verify(changeType: ChangeType, indexA?: number, indexB?: number) {
     const changes: Change[] = [];
+    const { matches } = _context;
+
+    const indexOfOpenNodeMatch = matches.length - 1;
 
     for (const unmatchedOpeningNode of this.forEachRemainingNode()) {
       // Only calculate when needed, A is only involved in deletions, B only in additions. Moves require both nodes to be present
@@ -69,13 +73,13 @@ export class OpenCloseVerifier {
         if (closingNodeForA) {
           assert(!closingNodeForB, () => "Found a node on B side node even though we are in a deletion");
           this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
-          changes.push(new Change(ChangeType.deletion, closingNodeForA, undefined));
+          changes.push(new Change(ChangeType.deletion, closingNodeForA));
         }
 
         if (closingNodeForB) {
           assert(!closingNodeForA, () => "Found a node on a side node even though we are in a addition");
           this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-          changes.push(new Change(ChangeType.addition, undefined, closingNodeForB));
+          changes.push(new Change(ChangeType.addition, closingNodeForB));
         }
 
         return changes;
@@ -91,24 +95,29 @@ export class OpenCloseVerifier {
         this.iterA.mark(closingNodeForA.index, ChangeType.move);
         this.iterB.mark(closingNodeForB.index, ChangeType.move);
 
-        if (trackChange) {
-          changes.push(
-            new Change(
-              changeType,
-              closingNodeForA,
-              closingNodeForB,
-            ),
-          );
-        }
+        const _change = new Change(
+          ChangeType.move,
+          closingNodeForA,
+          closingNodeForB,
+        );
+
+        matches.push(_change);
+
+        matches.at(indexOfOpenNodeMatch)!.indexesOfClosingMoves.push(_change.index);
       } else {
         // If one of the nodes is missing, it's a syntax error, the is a open node unclosed.
         // We will still continue to processing the code by marking the found node as added / removed
         if (closingNodeForA) {
           this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
-          changes.push(new Change(ChangeType.deletion, closingNodeForA, undefined));
+          changes.push(
+            new Change(
+              ChangeType.deletion,
+              closingNodeForA,
+            ),
+          );
         } else {
           this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-          changes.push(new Change(ChangeType.addition, undefined, closingNodeForB));
+          changes.push(new Change(ChangeType.addition, closingNodeForB!));
         }
       }
     }
@@ -117,7 +126,7 @@ export class OpenCloseVerifier {
 
   // Simplified method for cases where we only need to check one node
   static verifySingle(changeType: ChangeType, node: Node, iterA: Iterator, iterB: Iterator) {
-    return new OpenCloseVerifier(iterA, iterB).track(node).verify(changeType, true);
+    return new OpenCloseVerifier(iterA, iterB).track(node).verify(changeType);
   }
 
   *forEachRemainingNode() {

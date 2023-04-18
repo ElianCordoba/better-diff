@@ -1,36 +1,107 @@
-import { ChangeType, Range, TypeMasks } from "./types";
+import { ChangeType, Range, Side, TypeMasks } from "./types";
 import { colorFn, getSourceWithChange } from "./reporter";
+import { _context } from "./index";
+import { assert, fail } from "./debug";
+import { getDataForChange } from "./utils";
 import { Node } from "./node";
-import { getContext } from "./index";
-import { assert } from "./debug";
 
-export class Change {
-  rangeA: Range;
-  rangeB: Range;
+// deno-lint-ignore no-explicit-any
+export class Change<Type extends ChangeType = any> {
+  rangeA: Range | undefined;
+  rangeB: Range | undefined;
+
+  indexA = -1;
+  indexB = -1;
+
+  index: number;
+
+  // This is used when processing matches, if the move contains an odd number of opening nodes, one or move closing nodes
+  // moves will be created we store their indexes here. More information in the "processMoves" fn
+  indexesOfClosingMoves: number[] = [];
 
   constructor(
-    public type: ChangeType,
-    public nodeA: Node | undefined,
-    public nodeB: Node | undefined,
-    // Changes on source
-    rangeA?: Range,
-    // Changes on revision
-    rangeB?: Range,
+    public type: Type,
+    nodeOne: Node,
+    nodeTwo?: Node,
+    // More characters the change involved the more weight
+    public weight = 0,
   ) {
+    switch (type) {
+      case ChangeType.move: {
+        const a = getDataForChange(nodeOne!);
+        this.rangeA = a.range;
+        this.indexA = a.index;
+
+        const b = getDataForChange(nodeTwo!);
+        this.rangeB = b.range;
+        this.indexB = b.index;
+
+        // There is no alignment tracking for moves just yet, it happens in the "processMoves" fn
+        break;
+      }
+
+      case ChangeType.deletion: {
+        const { range, index } = getDataForChange(nodeOne!);
+        this.rangeA = range;
+        this.indexA = index;
+
+        // Alignment for deletions:
+        //
+        // A          B
+        // ------------
+        // 1          2
+        // 2
+        //
+        // With alignment
+        //
+        // A          B
+        // ------------
+        // 1          -
+        // 2          2
+        _context.offsetTracker.add(Side.b, index);
+        break;
+      }
+
+      case ChangeType.addition: {
+        const { range, index } = getDataForChange(nodeOne!);
+        this.rangeB = range;
+        this.indexB = index;
+
+        // Alignment for additions:
+        //
+        // A          B
+        // ------------
+        // y          x
+        //            y
+        //            z
+        // With alignment
+        //
+        // A          B
+        // ------------
+        // -          x
+        // y          y
+        // -          z
+        _context.offsetTracker.add(Side.a, index);
+        break;
+      }
+
+      default:
+        fail(`Unexpected change type ${type}`);
+    }
+
     if (type & TypeMasks.DelOrMove) {
-      assert(nodeA, () => "A node was missing during new change creation");
+      assert(this.rangeA, () => "Range A is not present on change creation");
     }
 
     if (type & TypeMasks.AddOrMove) {
-      assert(nodeB, () => "B node was missing during new change creation");
+      assert(this.rangeB, () => "Range B is not present on change creation");
     }
 
-    this.rangeA = rangeA ?? nodeA?.getPosition()!;
-    this.rangeB = rangeB ?? nodeB?.getPosition()!;
+    this.index = _context.matches.length;
   }
 
   draw() {
-    const { sourceA, sourceB } = getContext();
+    const { sourceA, sourceB } = _context;
 
     const charsA = sourceA.split("");
     const charsB = sourceB.split("");
