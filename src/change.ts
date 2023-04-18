@@ -15,7 +15,7 @@ export class Change<Type extends ChangeType = any> {
 
   index: number;
 
-  // This is used when processing matches, if the move contains an odd number of opening nodes, one or move closing nodes 
+  // This is used when processing matches, if the move contains an odd number of opening nodes, one or move closing nodes
   // moves will be created we store their indexes here. More information in the "processMoves" fn
   indexesOfClosingMoves: number[] = [];
 

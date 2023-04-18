@@ -100,14 +100,14 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 
 // This function receives all the matches and iterate over them in descending order of weight (matches with more text involved go first)
 // For each, we try to aligned it, this means that we can put it side to side without breaking any other match, for example
-// 
+//
 // A          B
 // ------------
 // aa         b
 // b          aa
 //
 // The most important match here is "aa", so we will aligned it as:
-// 
+//
 // A          B
 // ------------
 // -          b
@@ -317,11 +317,6 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
     /// Alignment end ///
 
-    // If both iterators are in the same position means that the code is the same. Nothing to report we just mark the nodes along the way
-    // if (a?.index === b?.index) {
-    //   continue;
-    // }
-
     rangeA = mergeRanges(rangeA, a.getRange());
     rangeB = mergeRanges(rangeB, b.getRange());
   }
@@ -339,27 +334,21 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     });
   }
 
-  // If the nodes are not in the same position then it's a move
-  const trackChange = true; // a.index !== b.index;
-
-  if (trackChange) {
-    // TODO-NOW
-    // deno-lint-ignore no-explicit-any
-    const dummyNodeA = { range: rangeA, index: indexA } as any as Node;
-    // deno-lint-ignore no-explicit-any
-    const dummyNodeB = { range: rangeB, index: indexB } as any as Node;
-    matches.push(
-      new Change(
-        ChangeType.move,
-        dummyNodeA,
-        dummyNodeB,
-        matchWeight,
-      ),
-    );
-  }
+  // deno-lint-ignore no-explicit-any
+  const dummyNodeA = { range: rangeA, index: indexA } as any as Node;
+  // deno-lint-ignore no-explicit-any
+  const dummyNodeB = { range: rangeB, index: indexB } as any as Node;
+  matches.push(
+    new Change(
+      ChangeType.move,
+      dummyNodeA,
+      dummyNodeB,
+      matchWeight,
+    ),
+  );
 
   // Ensure open-close node correctness, may push a change if nodes are missing
-  changes.push(...verifier.verify(ChangeType.move, trackChange, indexA, indexB));
+  changes.push(...verifier.verify(ChangeType.move, indexA, indexB));
 
   return changes;
 }

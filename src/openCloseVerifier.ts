@@ -55,7 +55,7 @@ export class OpenCloseVerifier {
     return this;
   }
 
-  verify(changeType: ChangeType, trackChange = false, indexA?: number, indexB?: number) {
+  verify(changeType: ChangeType, indexA?: number, indexB?: number) {
     const changes: Change[] = [];
     const { matches } = _context;
 
@@ -95,18 +95,15 @@ export class OpenCloseVerifier {
         this.iterA.mark(closingNodeForA.index, ChangeType.move);
         this.iterB.mark(closingNodeForB.index, ChangeType.move);
 
-        if (trackChange) {
-          const c = new Change(
-            ChangeType.move,
-            closingNodeForA,
-            closingNodeForB,
-          );
-          matches.push(
-            c,
-          );
+        const _change = new Change(
+          ChangeType.move,
+          closingNodeForA,
+          closingNodeForB,
+        );
 
-          matches.at(indexOfOpenNodeMatch)!.indexesOfClosingMoves.push(c.index);
-        }
+        matches.push(_change);
+
+        matches.at(indexOfOpenNodeMatch)!.indexesOfClosingMoves.push(_change.index);
       } else {
         // If one of the nodes is missing, it's a syntax error, the is a open node unclosed.
         // We will still continue to processing the code by marking the found node as added / removed
@@ -129,7 +126,7 @@ export class OpenCloseVerifier {
 
   // Simplified method for cases where we only need to check one node
   static verifySingle(changeType: ChangeType, node: Node, iterA: Iterator, iterB: Iterator) {
-    return new OpenCloseVerifier(iterA, iterB).track(node).verify(changeType, true);
+    return new OpenCloseVerifier(iterA, iterB).track(node).verify(changeType);
   }
 
   *forEachRemainingNode() {
