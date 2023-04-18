@@ -36,7 +36,7 @@ export class OffsetTracker {
 
   moveCanGetAligned(indexA: number, indexB: number): boolean {
     // Fast-path
-    if (this.offsetsA.size === 0 && this.offsetsB.size === 0) {
+    if (this.isEmpty()) {
       return true;
     }
 
