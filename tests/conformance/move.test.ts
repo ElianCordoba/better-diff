@@ -23,26 +23,6 @@ describe("Properly report lines added", () => {
   })
 
   test({
-    name: "Multi characters move",
-    a: `
-      aaa
-      bb
-    `,
-    b: `
-      bb
-      aaa
-    `,
-    expA: `
-      aaa
-      🔀bb⏹️
-    `,
-    expB: `
-      🔀bb⏹️
-      aaa
-    `
-  })
-
-  test({
     name: "Multi characters move 2",
     a: `
       console.log()

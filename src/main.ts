@@ -124,6 +124,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
   const changes: Change[] = [];
 
+  // We create a new offset tracker so that the alignments of additions and deletions don't interfere, we only report a movements
+  // if we cross an alignment from a move, not from a addition or deletion
   const moveOffsetTracker = new OffsetTracker();
 
   const sortedMatches = matches.sort((a, b) => a.weight < b.weight ? 1 : -1);
@@ -139,6 +141,7 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
       continue;
     }
 
+    // Track matches to ignore
     if (match.indexesOfClosingMoves.length) {
       matchesToIgnore.push(...match.indexesOfClosingMoves);
     }
@@ -150,18 +153,16 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
     const indexA = _indexA + offsetTracker.getOffset(Side.a, _indexA);
     const indexB = _indexB + offsetTracker.getOffset(Side.b, _indexB);
 
-    // No index diff means no extra work needed
+    // If the nodes are aligned after calculating the offset means that there is no extra work needed
     if (indexA === indexB) {
       continue;
     }
 
-    // There are two possibilities, if the match can be aligned then it be aligned, otherwise a move will be created
+    // There are two outcomes, if the match can be aligned, we add the corresponding aligments and move on.
+    // If it can't be aligned then we report a move
     const canMoveBeAligned = moveOffsetTracker.moveCanGetAligned(indexA, indexB);
-    // const canMoveBeAligned = moveOffsetTracker.moveCanGetAligned(offsettedAIndex, offsettedBIndex)
+
     if (canMoveBeAligned) {
-      // if (match.indexesOfClosingMoves.length) {
-      //   matchesToIgnore.push(...match.indexesOfClosingMoves);
-      // }
       // We need to add alignments to both sides, for example
       //
       // A          B
@@ -170,7 +171,7 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
       // 2          3
       // 3          1
       //
-      // Results in:
+      // LCS is "2 3", so it results in:
       //
       // A          B
       // ------------

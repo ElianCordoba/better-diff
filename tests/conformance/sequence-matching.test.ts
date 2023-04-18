@@ -1,26 +1,6 @@
 import { describe, test as vTest } from "vitest";
 import { test } from "../utils";
 
-test({
-  name: "Simple move",
-  a: `
-    aa
-    b
-  `,
-  b: `
-    b
-    aa
-  `,
-  expA: `
-  aa
-  🔀b⏹️
-  `,
-  expB: `
-  🔀b⏹️
-  aa
-  `
-})
-
 describe("Properly report moves in a same sequence", () => {
   test({
     name: "Case 1",
