@@ -218,7 +218,7 @@ function oneSidedIteration(
 
   let value = iter.next(startFrom);
 
-  // TODO: ALIGNMENT const { alignmentTable } = _context;
+  // ALIGNMENT const { alignmentTable } = _context;
 
   // TODO: Compact
   while (value) {
