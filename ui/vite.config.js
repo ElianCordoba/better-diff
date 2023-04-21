@@ -5,7 +5,7 @@ const prefix = `monaco-editor/esm/vs`;
 export default defineConfig({
 	plugins: [sveltekit()],
 	server: {
-		port: 3000
+		port: 4000
 	},
 	build: {
 		rollupOptions: {

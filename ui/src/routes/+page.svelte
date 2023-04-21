@@ -4,18 +4,19 @@
 	import { SimpleGrid, Button } from '@svelteuidev/core';
 	import CodeInput from './codeInput.svelte';
 	import Diff from '../components/diff.svelte';
+	import Editor from '../components/editor.svelte'
 
 	import type { SerializedResponse } from '../../../src/types';
 	import { StoreKey, type Store } from '../stores';
 
 	let a = `
-    x
-    console.log(0)
+x
+console.log(0)
   `;
 	let b = `
-    console.log(1)
-    x
-    z
+console.log(1)
+x
+z
   `;
 
 	let sourceChunks: SerializedResponse | undefined;
@@ -54,9 +55,24 @@
 
 <Button on:click={() => updateDiff()} fullSize mt={20}>Process</Button>
 
-<SimpleGrid cols={2} spacing="xs">
+<!-- <SimpleGrid cols={2} spacing="xs">
 	<CodeInput bind:code={a} />
 	<CodeInput bind:code={b} />
-</SimpleGrid>
+</SimpleGrid> -->
+
+<div class="editor-container">
+	<Editor elementId='editor-1' bind:value={a}/>
+  <Editor elementId='editor-2' bind:value={b}/>
+</div>
+
 
 <Diff {sourceChunks} />
+
+<style>
+	.editor-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 250px;
+  }
+</style>
