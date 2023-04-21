@@ -32,6 +32,7 @@
 		"@svelteuidev/composables": "^0.7.7",
 		"@svelteuidev/core": "^0.7.7",
 		"@svelteuidev/prism": "^0.7.7",
+		"monaco-editor": "^0.37.1",
 		"prismjs": "^1.29.0"
 	}
 }

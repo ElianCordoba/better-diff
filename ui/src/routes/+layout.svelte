@@ -25,7 +25,7 @@
 </script>
 
 <SvelteUIProvider ssr withGlobalStyles themeObserver={isDark ? 'dark' : 'light'}>
-	<Switch on:change={toggleTheme} />
+	<!-- <Switch on:change={toggleTheme} /> -->
 	<slot />
 	{#if _displayErrorAlert}
 		<Alert title="Server error" color="red" radius="md" withCloseButton>

@@ -1,11 +1,25 @@
 import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vite';
 
-/** @type {import('vite').UserConfig} */
-const config = {
+const prefix = `monaco-editor/esm/vs`;
+export default defineConfig({
 	plugins: [sveltekit()],
-	ssr: {
-		optimizeDeps: { needsInterop: true, include: '../src' }
-	}
-};
+	server: {
+		port: 4000
+	},
+	build: {
+		rollupOptions: {
+			output: {
+				manualChunks: {
+					jsonWorker: [`${prefix}/language/json/json.worker`],
+					cssWorker: [`${prefix}/language/css/css.worker`],
+					htmlWorker: [`${prefix}/language/html/html.worker`],
+					tsWorker: [`${prefix}/language/typescript/ts.worker`],
+					editorWorker: [`${prefix}/editor/editor.worker`],
+				},
+			},
+		},
+	},
+});
 
-export default config;
+

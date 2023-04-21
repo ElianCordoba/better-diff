@@ -31,8 +31,10 @@
 
 	function getStyles(type: RenderInstruction) {
 		const baseStyles = {
+			fontFamily: 'monospace',
 			height: LINE_HEIGHT,
-			padding: '0px'
+			padding: '0px',
+			fontSize: 12
 		};
 
 		return { ...baseStyles, ...changeStyles[type] };
@@ -55,18 +57,20 @@
 </script>
 
 <div class="line {side === 'a' ? 'colA' : 'colB'}" style={`grid-row: ${lineNumber}`}>
-	<div class="flex">
-		<Button
+	<div class="line-height flex">
+		<!-- <Button
 			color="gray"
 			override={{
 				height: LINE_HEIGHT,
 				'min-width': '50px',
-				borderRadius: 0
+				borderRadius: 0,
+				backgroundColor: "#252525",
+				border: "#000 1px solid"
 			}}
 		>
 			{lineNumber}
-		</Button>
-
+		</Button> -->
+		<div class="lineNumber">{lineNumber}</div>
 		{#each chunks as chunk}
 			{@const isMove = chunk.type === RenderInstruction.move}
 			{@const id = isMove ? chunk.moveNumber : ''}
@@ -93,6 +97,9 @@
 <div class="invisible moveHighlight" />
 
 <style>
+	.line-height {
+		height: 27px;;
+	}
 	.line {
 		background-color: #141517;
 	}
@@ -118,5 +125,14 @@
 	.invisible {
 		height: 0;
 		display: none;
+	}
+
+	.lineNumber {
+		background-color: #272727;
+		min-width: 20px;
+		padding-right: 2px;
+		font-size: 12px;
+		font-family: monospace;
+		text-align: center;
 	}
 </style>
