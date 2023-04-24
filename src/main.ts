@@ -124,10 +124,6 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
   const changes: Change[] = [];
 
-  // We create a new offset tracker so that the alignments of additions and deletions don't interfere, we only report a movements
-  // if we cross an alignment from a move, not from a addition or deletion
-  const moveOffsetTracker = new OffsetTracker();
-
   const sortedMatches = matches.sort((a, b) => a.weight < b.weight ? 1 : -1);
 
   // If a match contains opening nodes, it's necessary to process the closing counterpart in the same way.
@@ -159,7 +155,7 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
 
     // There are two outcomes, if the match can be aligned, we add the corresponding aligments and move on.
     // If it can't be aligned then we report a move
-    const canMoveBeAligned = moveOffsetTracker.moveCanGetAligned(indexA, indexB);
+    const canMoveBeAligned = offsetTracker.moveCanGetAligned(indexA, indexB);
 
     if (canMoveBeAligned) {
       // We need to add alignments to both sides, for example
@@ -185,16 +181,14 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
       const indexDiff = Math.abs(indexA - indexB);
 
       for (const i of range(startIndex, startIndex + indexDiff)) {
-        offsetTracker.add(sideToAlignStart, i);
-        moveOffsetTracker.add(sideToAlignStart, i);
+        offsetTracker.add(sideToAlignStart, { type: ChangeType.move, index: i, numberOfNewLines: 0 });
       }
 
       const sideToAlignEnd = oppositeSide(sideToAlignStart);
       const endIndex = (sideToAlignEnd === Side.a ? indexA : indexB) + 1;
 
       for (const i of range(endIndex, endIndex + indexDiff)) {
-        offsetTracker.add(sideToAlignEnd, i);
-        moveOffsetTracker.add(sideToAlignEnd, i);
+        offsetTracker.add(sideToAlignEnd, { type: ChangeType.move, index: i, numberOfNewLines: 0 });
       }
     } else {
       if (match.indexesOfClosingMoves.length) {

@@ -58,7 +58,7 @@ export class Change<Type extends ChangeType = any> {
         // ------------
         // 1          -
         // 2          2
-        _context.offsetTracker.add(Side.b, index);
+        _context.offsetTracker.add(Side.b, { type: ChangeType.deletion, index, numberOfNewLines: nodeOne.numberOfNewlines });
         break;
       }
 
@@ -81,7 +81,7 @@ export class Change<Type extends ChangeType = any> {
         // -          x
         // y          y
         // -          z
-        _context.offsetTracker.add(Side.a, index);
+        _context.offsetTracker.add(Side.a, { type: ChangeType.addition, index, numberOfNewLines: nodeOne.numberOfNewlines });
         break;
       }
 

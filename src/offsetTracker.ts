@@ -1,16 +1,23 @@
 import { _context } from ".";
 import { assert } from "./debug";
-import { Side } from "./types";
+import { ChangeType, Side } from "./types";
 import { range } from "./utils";
+
+interface Offset {
+  index: number;
+  type: ChangeType;
+  numberOfNewLines: number;
+}
 
 export class OffsetTracker {
   // number = index
-  offsetsA = new Set<number>();
-  offsetsB = new Set<number>();
+  offsetsA = new Map<number, Offset>();
+  offsetsB = new Map<number, Offset>();
 
-  add(side: Side, index: number) {
-    assert(typeof index === "number", () => `Expected number when storing offset but received ${typeof index}`);
-    this.getSide(side).add(index);
+  add(side: Side, offset: Offset) {
+    assert(typeof offset.index === "number", () => `Expected number when storing offset but received ${typeof offset.index}`);
+
+    this.getSide(side).set(offset.index, offset)
   }
 
   getOffset(side: Side, targetIndex: number) {
@@ -19,7 +26,7 @@ export class OffsetTracker {
     let offset = 0;
     // TODO: Use and array with insertion sort
     // The offset is unsorted, so we need to order the indexes first before processing it
-    for (const index of [..._side.values()].sort((a, b) => a > b ? 1 : -1)) {
+    for (const index of [..._side.keys()].sort((a, b) => a > b ? 1 : -1)) {
       if (index < targetIndex) {
         // We increase the target index so that if we are inside an alignment (example bellow) we can read the offsets properly, for example:
         //
@@ -72,10 +79,16 @@ export class OffsetTracker {
     let valid = true;
     // +1 so it includes the last index
     for (const i of range(startIndex, startIndex + indexDiff + 1)) {
-      if (offsetsToCheck.has(i)) {
-        valid = false;
-        break;
+      const offset = offsetsToCheck.get(i)
+
+      // The offset trackers contains allegement from all the change types, but when it comes to movement alignment
+      //  we are only interested in the ones coming from`moves`
+      if (!offset || offset.type !== ChangeType.move) {
+        continue
       }
+
+      valid = false;
+      break;
     }
 
     return valid;
