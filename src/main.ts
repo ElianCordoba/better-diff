@@ -153,7 +153,7 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
       continue;
     }
 
-    // There are two outcomes, if the match can be aligned, we add the corresponding aligments and move on.
+    // There are two outcomes, if the match can be aligned, we add the corresponding alignments and move on.
     // If it can't be aligned then we report a move
     const canMoveBeAligned = offsetTracker.moveCanGetAligned(indexA, indexB);
 
