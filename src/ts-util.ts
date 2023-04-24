@@ -21,8 +21,6 @@ export function getNodesArray(source: string): { nodes: Node[]; kindTable: KindT
   }
 
   const nodes: Node[] = [];
-  let depth = 0;
-
   function walk(node: TSNode) {
     const isReservedWord = node.kind >= ts.SyntaxKind.FirstKeyword && node.kind <= ts.SyntaxKind.LastKeyword;
     const isPunctuation = node.kind >= ts.SyntaxKind.FirstPunctuation && node.kind <= ts.SyntaxKind.LastPunctuation;
@@ -44,8 +42,10 @@ export function getNodesArray(source: string): { nodes: Node[]; kindTable: KindT
     // const leadingTriviaHasNewLine = node.getFullText().split("\n").length > 1;
     const triviaLinesAbove = 0; //leadingTriviaHasNewLine ? getTriviaLinesAbove(source, lineNumberStart) : 0;
 
-    const newNode = new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove, mode });
-    newNode.expressionNumber = depth;
+
+    const numberOfNewlines = node.getFullText().match(/\n/g)?.length || 0
+
+    const newNode = new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove, mode, numberOfNewlines });
 
     const isClosingNode = node.kind === ts.SyntaxKind.CloseBraceToken ||
       node.kind === ts.SyntaxKind.CloseBracketToken ||
@@ -71,9 +71,7 @@ export function getNodesArray(source: string): { nodes: Node[]; kindTable: KindT
       nodes.push(newNode);
     }
 
-    depth++;
     node.getChildren().forEach((x) => walk(x as TSNode));
-    depth--;
   }
 
   sourceFile.getChildren().forEach((x) => walk(x as TSNode));

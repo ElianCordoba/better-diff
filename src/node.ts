@@ -9,6 +9,7 @@ interface NodeArgs {
   end: number;
   kind: SyntaxKind;
   text: string;
+  numberOfNewlines: number
   triviaLinesAbove: number;
   lineNumberStart: number;
   lineNumberEnd: number;
@@ -22,11 +23,12 @@ export class Node {
   kind: SyntaxKind;
   text: string;
   prettyKind: string;
+  // How many new lines characters does the trivia of this node holds?
+  numberOfNewlines: number
   triviaLinesAbove: number;
   lineNumberStart: number;
   lineNumberEnd: number;
   index = -1;
-  expressionNumber = -1;
   matched = false;
   matchNumber = 0;
   canBeMatchedAlone = false;
@@ -37,7 +39,7 @@ export class Node {
   // For printing proposes
   markedAs?: ChangeType;
   constructor(args: NodeArgs) {
-    const { fullStart, start, end, kind, triviaLinesAbove, lineNumberStart, lineNumberEnd, text, mode } = args;
+    const { fullStart, start, end, kind, triviaLinesAbove, lineNumberStart, lineNumberEnd, text, mode, numberOfNewlines } = args;
 
     this.fullStart = fullStart;
     this.start = start;
@@ -57,6 +59,7 @@ export class Node {
     this.triviaLinesAbove = triviaLinesAbove;
     this.lineNumberStart = lineNumberStart;
     this.lineNumberEnd = lineNumberEnd;
+    this.numberOfNewlines = numberOfNewlines
   }
 
   getRange(): Range {

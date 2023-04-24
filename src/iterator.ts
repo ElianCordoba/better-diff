@@ -169,7 +169,7 @@ export class Iterator {
 
   printList(nodesToPrint?: Node[]) {
     console.log(`----------- SIDE ${this.name} -----------`);
-    console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("exp n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
+    console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("\/n n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
     const list: string[] = [];
 
@@ -198,13 +198,13 @@ export class Iterator {
       const index = String(node.index).padStart(3).padEnd(6);
 
       const matchNumber = String(node.matchNumber).padStart(5).padEnd(10);
-      const expressionNumber = String(node.expressionNumber ?? "-").padStart(5).padEnd(8);
 
       const { kind, text } = getNodeForPrinting(node.kind, node.text);
       const _kind = kind.padStart(5).padEnd(25);
       const _text = ` ${text}`;
+      const newLines = node.numberOfNewlines
 
-      const row = `${index}|${matchNumber}|${expressionNumber}|${colorFn(_kind)}|${_text}`;
+      const row = `${index}|${matchNumber}|${newLines}|${colorFn(_kind)}|${_text}`;
 
       if (node.index === this.indexOfLastItem) {
         colorFn = k.yellow;
@@ -241,18 +241,6 @@ export class Iterator {
     const result = getSourceWithChange(chars, start, end, colorFn.magenta);
 
     console.log(result.join(""));
-  }
-
-  printDepth() {
-    let res = "";
-    for (const node of this.textNodes) {
-      const _colorFn = colorFn.grey;
-
-      res += `
-      (${node.expressionNumber + 1})${new Array(node.expressionNumber + 1).join("-")}${_colorFn(node.prettyKind)}`;
-    }
-
-    return res;
   }
 
   printPositionInfo() {
