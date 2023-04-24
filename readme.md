@@ -1,4 +1,4 @@
-## BetterDiff
+## BetterDiff 🔀
 
 This is a _heavily experimental_ tool designed as an alternative to `git diff`, a program used to compare two text files a see the differences between them. 
 The tool generates an output that details the differences between the files, which can be viewed either through the included frontend or as text by running it in the CLI. 
