@@ -3,7 +3,7 @@ import { ChangeType, Range, RenderInstruction, SerializedResponse, SourceChunk }
 import { range } from "./utils";
 import { getLineMap } from "./ts-util";
 import { fail } from "./debug";
-import { _context } from ".";
+import { _context } from "./index";
 
 export function serialize(
   a: string,

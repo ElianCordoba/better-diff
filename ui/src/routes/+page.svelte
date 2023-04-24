@@ -53,7 +53,7 @@ z
 	});
 </script>
 
-<Button on:click={() => updateDiff()} fullSize mt={20}>Process</Button>
+<Button on:click={() => updateDiff()} fullSize override={{ marginBottom: 20, marginTop: 20 }}>Process</Button>
 
 <!-- <SimpleGrid cols={2} spacing="xs">
 	<CodeInput bind:code={a} />

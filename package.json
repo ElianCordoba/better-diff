@@ -1,4 +1,12 @@
 {
+  "name": "better-diff",
+  "description": "Aiming to be the next-gen `git diff`",
+  "version": "0.0.1",
+  "license": "MIT",
+  "repository": "ElianCordoba/better-diff",
+  "author": {
+    "name": "Elian Cordoba"
+  },
   "scripts": {
     "test": "vitest --dir ./tests",
     "build": "tsc --watch",
@@ -7,6 +15,7 @@
     "lint": "deno lint --ignore=node_modules,diff,internal,dist,tests,ui,scripts",
     "startServer": "tsx src/server.ts",
     "start": "node dist/src/server.js",
+    "ui": "npm run  dev --prefix ./ui",
     "bench": "node ./dist/bench/bench.js",
     "debug": "node --inspect-brk dist/src/server.js",
     "profile": "pprof-it ./dist/scripts/test.js",
