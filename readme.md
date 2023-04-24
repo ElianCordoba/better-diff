@@ -16,7 +16,7 @@ Ignoring trivia:
 ![Example of trivia changes being ignored](assets/trivia-no-diff.png)
 
 Reporting moves
-![Example of a moved change](assets/move-diff.mp4)
+![Example of a moved change](assets/move-diff.gif)
 
 More complex change
 ![Example of a bigger diff](assets/long-diff.png)
