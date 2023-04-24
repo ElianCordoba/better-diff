@@ -1,2 +1,0 @@
-- Trivia needs to be owned by the preceden node
-- Lines are splited before the new line, so the \n ends up being the first character. (Unsure if this is required)
