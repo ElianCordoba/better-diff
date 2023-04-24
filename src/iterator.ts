@@ -168,7 +168,7 @@ export class Iterator {
   }
 
   printList(nodesToPrint?: Node[]) {
-    console.log(`----------- SIDE ${this.name} -----------`);
+    console.log(`----------- SIDE ${this.name.toUpperCase()} -----------`);
     console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("\/n n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
     const list: string[] = [];
@@ -202,7 +202,7 @@ export class Iterator {
       const { kind, text } = getNodeForPrinting(node.kind, node.text);
       const _kind = kind.padStart(5).padEnd(25);
       const _text = ` ${text}`;
-      const newLines = node.numberOfNewlines
+      const newLines = String(node.numberOfNewlines).padStart(4).padEnd(7);
 
       const row = `${index}|${matchNumber}|${newLines}|${colorFn(_kind)}|${_text}`;
 
