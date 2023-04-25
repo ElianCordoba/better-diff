@@ -16,7 +16,8 @@ interface TestInfo {
   expB?: string;
 }
 
-export function getTestFn(testFn: TestFn, testOptions: Options = { outputType: OutputType.text }) {
+export function getTestFn(testFn: TestFn, testOptions: Options = {}) {
+  const options = { outputType: OutputType.text, ...testOptions }
   return function test(testInfo: TestInfo) {
     const { a = '', b = '', expA, expB, name = "anonymous" } = testInfo;
 
@@ -28,7 +29,7 @@ export function getTestFn(testFn: TestFn, testOptions: Options = { outputType: O
 
     if (!skipStandardTest) {
       vTest(`Test ${name}`, () => {
-        const { sourceA: resultA, sourceB: resultB } = testFn(a, b, { outputType: testOptions.outputType } as Options)
+        const { sourceA: resultA, sourceB: resultB } = testFn(a, b, options)
 
         validateDiff(expA || a, expB || b, resultA, resultB);
       });
@@ -38,7 +39,7 @@ export function getTestFn(testFn: TestFn, testOptions: Options = { outputType: O
 
     if (!skipInversedTest) {
       vTest(`Test ${name} inverse`, () => {
-        const { sourceA: resultA, sourceB: resultB } = testFn(b, a, { outputType: testOptions.outputType } as Options)
+        const { sourceA: resultA, sourceB: resultB } = testFn(b, a, options)
 
         const inversedExpectedA = getInversedExpectedResult(expB || b);
         const inversedExpectedB = getInversedExpectedResult(expA || a)

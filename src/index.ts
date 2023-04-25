@@ -1,5 +1,5 @@
 import { getChanges } from "./main";
-import { applyChangesToSources, getAlignedSources, prettyRenderFn } from "./reporter";
+import { applyAlignments, applyChangesToSources, getAlignedSources, prettyRenderFn } from "./reporter";
 import { serialize } from "./serializer";
 import { ChangeType, Mode, SerializedResponse, Side } from "./types";
 import { Node } from "./node";
@@ -56,9 +56,9 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
     }
 
     case OutputType.serializedAlignedChunks: {
-      const alignedSources = getAlignedSources(sourceA, sourceB);
+      const alignedResult = applyAlignments(sourceA, sourceB, changes, _context.offsetTracker)
       // deno-lint-ignore no-explicit-any
-      return serialize(alignedSources.sourceA, alignedSources.sourceB, changes) as any;
+      return serialize(alignedResult.sourceA, alignedResult.sourceB, alignedResult.changes) as any;
     }
 
     case OutputType.text: {
@@ -66,14 +66,21 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
       return applyChangesToSources(sourceA, sourceB, changes) as any;
     }
 
+    // case OutputType.prettyText: {
+    //   // deno-lint-ignore no-explicit-any
+    //   return applyChangesToSources(sourceA, sourceB, changes, prettyRenderFn) as any;
+    // }
+
     case OutputType.prettyText: {
+      const alignedResult = applyAlignments(sourceA, sourceB, changes, _context.offsetTracker)
       // deno-lint-ignore no-explicit-any
-      return applyChangesToSources(sourceA, sourceB, changes, prettyRenderFn) as any;
+      return applyChangesToSources(alignedResult.sourceA, alignedResult.sourceB, alignedResult.changes, prettyRenderFn) as any;
     }
 
     case OutputType.alignedText: {
+      const alignedResult = applyAlignments(sourceA, sourceB, changes, _context.offsetTracker)
       // deno-lint-ignore no-explicit-any
-      return getAlignedSources(sourceA, sourceB) as any;
+      return applyChangesToSources(alignedResult.sourceA, alignedResult.sourceB, alignedResult.changes) as any;
     }
 
     // Used mainly for benchmarking the core algorithm on it's own. Without this the total execution time of the `getDiff`
@@ -118,7 +125,7 @@ export class LayoutShiftCandidate {
     // Value: Length of the string
     public a = new Map<number, number>(),
     public b = new Map<number, number>(),
-  ) {}
+  ) { }
 
   add(side: Side, at: number, length: number) {
     if (side === Side.a) {

@@ -13,8 +13,8 @@ import { OffsetTracker } from "./offsetTracker";
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
 
-  const iterA = new Iterator({ source: codeA, name: Side.a });
-  const iterB = new Iterator({ source: codeB, name: Side.b });
+  const iterA = new Iterator({ side: Side.a, source: codeA, name: Side.a });
+  const iterB = new Iterator({ side: Side.a, source: codeB, name: Side.b });
 
   _context.iterA = iterA;
   _context.iterB = iterB;
@@ -249,6 +249,9 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   let textMatched = "";
   let matchWeight = 0;
 
+  const ogIndexA = a.index
+  const ogIndexB = b.index
+
   const { alignmentTable } = _context;
   const localAlignmentTable = new AlignmentTable();
 
@@ -329,9 +332,9 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   }
 
   // deno-lint-ignore no-explicit-any
-  const dummyNodeA = { range: rangeA, index: indexA } as any as Node;
+  const dummyNodeA = { range: rangeA, index: ogIndexA } as any as Node;
   // deno-lint-ignore no-explicit-any
-  const dummyNodeB = { range: rangeB, index: indexB } as any as Node;
+  const dummyNodeB = { range: rangeB, index: ogIndexB } as any as Node;
   matches.push(
     new Change(
       ChangeType.move,

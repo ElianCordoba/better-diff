@@ -1,8 +1,10 @@
 import { SyntaxKind } from "typescript";
 import { getNodeForPrinting } from "./utils";
-import { ChangeType, Mode, Range } from "./types";
+import { ChangeType, Mode, Range, Side } from "./types";
+import { _context } from ".";
 
 interface NodeArgs {
+  side: Side
   mode: Mode;
   fullStart: number;
   start: number;
@@ -17,6 +19,7 @@ interface NodeArgs {
 }
 
 export class Node {
+  side: Side;
   fullStart: number;
   start: number;
   end: number;
@@ -39,8 +42,9 @@ export class Node {
   // For printing proposes
   markedAs?: ChangeType;
   constructor(args: NodeArgs) {
-    const { fullStart, start, end, kind, triviaLinesAbove, lineNumberStart, lineNumberEnd, text, mode, numberOfNewlines } = args;
+    const { side, fullStart, start, end, kind, triviaLinesAbove, lineNumberStart, lineNumberEnd, text, mode, numberOfNewlines } = args;
 
+    this.side = side
     this.fullStart = fullStart;
     this.start = start;
     this.end = end;
@@ -67,5 +71,11 @@ export class Node {
       start: this.start,
       end: this.end,
     };
+  }
+
+  draw() {
+    const iter = _context[this.side === Side.a ? 'iterA' : 'iterB']
+
+    iter.printRange(this)
   }
 }

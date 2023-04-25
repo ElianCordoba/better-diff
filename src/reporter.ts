@@ -1,9 +1,11 @@
 import { _context, getOptions } from ".";
-import { ChangeType, Side } from "../src/types";
+import { ChangeType, Side, TypeMasks } from "../src/types";
 import { AlignmentTable } from "./alignmentTable";
 import { Change } from "./change";
 import { assert, fail } from "./debug";
+import { OffsetTracker } from "./offsetTracker";
 import { range } from "./utils";
+import { Iterator } from './iterator'
 
 //@ts-ignore TODO: Importing normally doesn't work with vitest
 export const k = require("kleur");
@@ -307,4 +309,138 @@ function compactAlignments(alignmentTable: AlignmentTable, _linesA: string[], _l
     linesA,
     linesB,
   };
+}
+
+export function applyAlignments(sourceA: string, sourceB: string, changes: Change[], offsets: OffsetTracker): { sourceA: string, sourceB: string, changes: Change[] } {
+  const { iterA, iterB } = _context
+  const alignmentText = getOptions().alignmentText
+
+  const offsettedIndexesA = new Set<number>()
+  const offsettedIndexesB = new Set<number>()
+
+  for (const node of iterA.textNodes) {
+    offsettedIndexesA.add(node.index + offsets.getOffset(Side.a, node.index))
+  }
+
+  for (const node of iterB.textNodes) {
+    offsettedIndexesB.add(node.index + offsets.getOffset(Side.b, node.index))
+  }
+
+  // for (const change of changes) {
+  //   let indexA = change.indexA
+  //   if (change.type & TypeMasks.DelOrMove) {
+  //     indexA = indexA + offsets.getOffset(Side.a, indexA);
+  //   }
+
+  //   let indexB = change.indexB
+  //   if (change.type & TypeMasks.AddOrMove) {
+  //     indexB = indexB + offsets.getOffset(Side.b, indexB);
+  //   }
+
+  //   offsettedIndexesA.add(indexA)
+  //   offsettedIndexesB.add(indexB)
+  // }
+
+  console.log()
+
+
+
+
+
+  function findPreviousNode(iter: Iterator, targetIndex: number): number {
+    while (true) {
+      const node = iter.textNodes[targetIndex]
+
+      if (node) {
+        return node.index
+      }
+
+      if (targetIndex === 0) {
+        return 0
+      }
+
+      targetIndex--
+    }
+  }
+
+
+  function updateChanges(side: Side, index: number) {
+
+    const changesToInclude = side === Side.a ? TypeMasks.DelOrMove : TypeMasks.AddOrMove
+
+    for (const change of changes) {
+      if (change.type & ~changesToInclude) {
+        continue
+      }
+
+      if (change.index <= index) {
+        continue
+      }
+      // usar type mask
+      switch (change.type) {
+        case ChangeType.deletion: {
+          changes[change.index].rangeA!.start += alignmentText.length
+          changes[change.index].rangeA!.end += alignmentText.length
+          continue
+        }
+        case ChangeType.addition: {
+          changes[change.index].rangeB!.start += alignmentText.length
+          changes[change.index].rangeB!.end += alignmentText.length
+          continue
+        }
+        case ChangeType.move: {
+          changes[change.index].rangeA!.start += alignmentText.length
+          changes[change.index].rangeA!.end += alignmentText.length
+          changes[change.index].rangeB!.start += alignmentText.length
+          changes[change.index].rangeB!.end += alignmentText.length
+          continue
+        }
+      }
+    }
+  }
+
+  function insertAlignments(side: Side): string {
+    const _offsets = side === Side.a ? offsets.offsetsA : offsets.offsetsB
+    let source = side === Side.a ? sourceA : sourceB
+
+    if (_offsets.size === 0) {
+      return source
+    }
+
+    const oppositeIter = side === Side.a ? iterB : iterA
+    const iter = side === Side.a ? iterA : iterB
+
+    for (const offset of _offsets.values()) {
+      if (offset.numberOfNewLines === 0) {
+        continue
+      }
+
+      const isFirstNode = offset.index === 0
+
+      // const prevIndex = findPreviousNode(iter, offset.index)
+      const prevIndex = isFirstNode ? 0 : offset.index - 1
+
+      updateChanges(side, prevIndex)
+
+      assert(typeof prevIndex === 'number' && prevIndex >= 0)
+
+      const prevNode = iter.textNodes[prevIndex]
+
+      const insertAt = prevNode.end
+
+      // Falta considerar el ofset 
+      source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
+    }
+
+    return source
+  }
+
+  sourceA = insertAlignments(Side.a)
+  sourceB = insertAlignments(Side.b)
+
+  return {
+    sourceA,
+    sourceB,
+    changes
+  }
 }

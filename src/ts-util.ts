@@ -3,11 +3,11 @@ import { Node } from "./node";
 import { assert } from "./debug";
 import { k } from "./reporter";
 import { getOptions } from ".";
-import { KindTable } from "./types";
+import { KindTable, Side } from "./types";
 
 type TSNode = ts.Node & { text: string };
 
-export function getNodesArray(source: string): { nodes: Node[]; kindTable: KindTable } {
+export function getNodesArray(side: Side, source: string): { nodes: Node[]; kindTable: KindTable } {
   const sourceFile = getSourceFile(source);
 
   const { warnOnInvalidCode, mode } = getOptions();
@@ -45,7 +45,7 @@ export function getNodesArray(source: string): { nodes: Node[]; kindTable: KindT
 
     const numberOfNewlines = node.getFullText().match(/\n/g)?.length || 0
 
-    const newNode = new Node({ fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove, mode, numberOfNewlines });
+    const newNode = new Node({ side, fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove, mode, numberOfNewlines });
 
     const isClosingNode = node.kind === ts.SyntaxKind.CloseBraceToken ||
       node.kind === ts.SyntaxKind.CloseBracketToken ||

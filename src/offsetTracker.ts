@@ -27,7 +27,10 @@ export class OffsetTracker {
     // TODO: Use and array with insertion sort
     // The offset is unsorted, so we need to order the indexes first before processing it
     for (const index of [..._side.keys()].sort((a, b) => a > b ? 1 : -1)) {
-      if (index < targetIndex) {
+      // if (index === targetIndex) {
+
+      // }
+      if (index <= targetIndex) {
         // We increase the target index so that if we are inside an alignment (example bellow) we can read the offsets properly, for example:
         //
         // A          B

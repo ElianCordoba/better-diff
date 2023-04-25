@@ -6,7 +6,7 @@ import { getDataForChange } from "./utils";
 import { Node } from "./node";
 
 // deno-lint-ignore no-explicit-any
-export class Change<Type extends ChangeType = any> {
+export class Change<Type extends ChangeType = ChangeType> {
   rangeA: Range | undefined;
   rangeB: Range | undefined;
 

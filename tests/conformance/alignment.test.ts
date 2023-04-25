@@ -1,10 +1,53 @@
-import { OutputType, getDiff } from "../src";
-import { getTestFn, test } from "./utils";
+import { describe } from "vitest";
+import { getTestFn } from "../utils";
+import { OutputType, getDiff } from "../../src";
 
-// Dummy test so that the file doesn't error
-test({})
+const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: "\n<<Alignment>>" })
 
-// TODO: Re-enable all tests
+describe.only("Properly align code", () => {
+  test({
+    a: `
+      1
+      2
+      3
+    `,
+    b: `
+      1
+      3
+    `,
+    expA: `
+      1
+      ➖2➖
+      3
+    `,
+    expB: `
+      1
+      <<Alignment>>
+      3
+    `
+  })
+
+  test({
+    a: `
+      1
+      2
+      3
+    `,
+    b: `
+      3
+    `,
+    expA: `
+      ➖1➖
+      ➖2➖
+      3
+    `,
+    expB: `
+      <<Alignment>>
+      <<Alignment>>
+      3
+    `
+  })
+})
 
 // const test = getTestFn(getDiff, { outputType: OutputType.alignedText, other: { alignmentText: "   <<Alignment>>" } })
 

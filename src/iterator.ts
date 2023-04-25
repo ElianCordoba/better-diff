@@ -7,6 +7,7 @@ import { OpenCloseStack } from "./openCloseVerifier";
 import { getNodesArray } from "./ts-util";
 
 interface IteratorOptions {
+  side: Side
   name: string;
   source: string;
 }
@@ -21,8 +22,8 @@ export class Iterator {
   // Only read when printing nodes
   private indexOfLastItem = 0;
 
-  constructor({ source, name }: IteratorOptions) {
-    const { nodes, kindTable } = getNodesArray(source);
+  constructor({ side, source, name }: IteratorOptions) {
+    const { nodes, kindTable } = getNodesArray(side, source);
     this.textNodes = nodes;
     this.kindTable = kindTable;
     this.name = name;
