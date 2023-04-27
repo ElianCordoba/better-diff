@@ -347,19 +347,20 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
 
 
 
-  function findPreviousNode(asd: number[], targetIndex: number): number {
+  function findPreviousNode(offsettedIndexes: number[], targetIndex: number): { index: number, firstNode?: boolean } {
+    let currIndex = targetIndex
     while (true) {
-      if (targetIndex === 0) {
-        return 0
+      if (currIndex < 0) {
+        return { index: 0, firstNode: true }
       }
 
-      const found = asd.includes(targetIndex)
+      const found = offsettedIndexes.includes(currIndex)
 
       if (found) {
-        return targetIndex
+        return { index: currIndex }
       }
 
-      targetIndex--
+      currIndex--
     }
   }
 
@@ -376,25 +377,15 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
       if (change.index <= index) {
         continue
       }
-      // usar type mask
-      switch (change.type) {
-        case ChangeType.deletion: {
-          changes[change.index].rangeA!.start += alignmentText.length
-          changes[change.index].rangeA!.end += alignmentText.length
-          continue
-        }
-        case ChangeType.addition: {
-          changes[change.index].rangeB!.start += alignmentText.length
-          changes[change.index].rangeB!.end += alignmentText.length
-          continue
-        }
-        case ChangeType.move: {
-          changes[change.index].rangeA!.start += alignmentText.length
-          changes[change.index].rangeA!.end += alignmentText.length
-          changes[change.index].rangeB!.start += alignmentText.length
-          changes[change.index].rangeB!.end += alignmentText.length
-          continue
-        }
+
+      if (change.type & TypeMasks.DelOrMove) {
+        changes[change.index].rangeA!.start += alignmentText.length
+        changes[change.index].rangeA!.end += alignmentText.length
+      }
+
+      if (change.type & TypeMasks.AddOrMove) {
+        changes[change.index].rangeB!.start += alignmentText.length
+        changes[change.index].rangeB!.end += alignmentText.length
       }
     }
   }
@@ -415,15 +406,15 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
         continue
       }
 
-      const prevIndex = findPreviousNode(offsettedIndexes, offset.index)
+      const { index, firstNode } = findPreviousNode(offsettedIndexes, offset.index)
 
-      updateChanges(side, prevIndex)
+      updateChanges(side, index)
 
-      assert(typeof prevIndex === 'number' && prevIndex >= 0)
+      assert(typeof index === 'number' && index >= 0)
 
-      const prevNode = iter.textNodes[prevIndex]
+      const prevNode = iter.textNodes[index]
 
-      const insertAt = prevNode.start
+      const insertAt = firstNode ? 0 : prevNode.end
 
       // Falta considerar el ofset 
       source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);

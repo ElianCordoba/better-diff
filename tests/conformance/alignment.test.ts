@@ -2,10 +2,56 @@ import { describe } from "vitest";
 import { getTestFn } from "../utils";
 import { OutputType, getDiff } from "../../src";
 
-const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: "\n<<Alignment>>" })
+const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: "\n    <<Alignment>>" })
 
 describe.only("Properly align code", () => {
   test({
+    name: 'Basic case 1',
+    a: `
+      1
+      2
+      3
+    `,
+    b: `
+      1
+    `,
+    expA: `
+      1
+      ➖2➖
+      ➖3➖
+    `,
+    expB: `
+      1
+      <<Alignment>>
+      <<Alignment>>
+    `
+  })
+
+  test({
+    name: 'Basic case 2',
+    a: `
+      1
+      2
+      3
+    `,
+    b: `
+      1
+      2
+    `,
+    expA: `
+      1
+      2
+      ➖3➖
+    `,
+    expB: `
+      1
+      2
+      <<Alignment>>
+    `
+  })
+
+  test({
+    name: 'Basic case 3',
     a: `
       1
       2
@@ -28,6 +74,7 @@ describe.only("Properly align code", () => {
   })
 
   test({
+    name: 'Basic case 4',
     a: `
       1
       2
@@ -45,6 +92,53 @@ describe.only("Properly align code", () => {
       <<Alignment>>
       <<Alignment>>
       3
+    `
+  })
+
+  test({
+    name: 'Basic case 5',
+    a: `
+      1
+      2
+      3
+    `,
+    b: `
+      3
+    `,
+    expA: `
+      ➖1➖
+      ➖2➖
+      3
+    `,
+    expB: `
+      <<Alignment>>
+      <<Alignment>>
+      3
+    `
+  })
+
+  test({
+    name: 'Other 1',
+    a: `
+      console.log()
+    `,
+    b: `
+      1
+      2
+      3
+      console.log()
+    `,
+    expA: `
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>>
+      console.log()
+    `,
+    expB: `
+      ➕1➕
+      ➕2➕
+      ➕3➕
+      console.log()
     `
   })
 })
