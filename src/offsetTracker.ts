@@ -1,4 +1,5 @@
 import { _context } from ".";
+import { Change } from "./change";
 import { assert } from "./debug";
 import { ChangeType, Side } from "./types";
 import { range } from "./utils";
@@ -7,6 +8,7 @@ interface Offset {
   index: number;
   type: ChangeType;
   numberOfNewLines: number;
+  change?: Change
 }
 
 export class OffsetTracker {
@@ -101,6 +103,18 @@ export class OffsetTracker {
     return this.offsetsA.size === 0 && this.offsetsB.size === 0;
   }
 
+  getOffsettedIndexes(side: Side) {
+    const indexes: number[] = []
+
+    const iter = side === Side.a ? _context.iterA : _context.iterB
+    for (const node of iter.textNodes) {
+      indexes.push(node.index + this.getOffset(side, node.index))
+    }
+
+    return indexes
+  }
+
+  // TODO-NOW improve this
   print() {
     console.log("A offset tracker");
     console.table(this.offsetsA);

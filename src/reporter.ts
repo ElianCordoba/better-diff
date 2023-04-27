@@ -12,12 +12,7 @@ export const k = require("kleur");
 
 type RenderFn = (text: string) => string;
 
-export interface DiffRendererFn {
-  addition: RenderFn;
-  removal: RenderFn;
-  change: RenderFn;
-  move: RenderFn;
-}
+export type DiffRendererFn = Record<ChangeType, RenderFn>
 
 type Colors =
   | "blue"
@@ -46,18 +41,16 @@ export const colorFn: ColorFns = {
 
 // Pretty print. Human readable
 export const prettyRenderFn: DiffRendererFn = {
-  addition: colorFn.green,
-  removal: colorFn.red,
-  change: colorFn.yellow,
-  move: (text) => k.blue().underline(text),
+  [ChangeType.deletion]: colorFn.red,
+  [ChangeType.addition]: colorFn.green,
+  [ChangeType.move]: (text) => k.blue().underline(text),
 };
 
 // Testing friendly
 export const asciiRenderFn: DiffRendererFn = {
-  addition: (text) => `➕${text}➕`,
-  removal: (text) => `➖${text}➖`,
-  change: (text) => `✏️${text}✏️`,
-  move: (text) => `🔀${text}⏹️`,
+  [ChangeType.deletion]: (text) => `➖${text}➖`,
+  [ChangeType.addition]: (text) => `➕${text}➕`,
+  [ChangeType.move]: (text) => `🔀${text}⏹️`,
 };
 
 export function applyChangesToSources(
@@ -80,7 +73,7 @@ export function applyChangesToSources(
           charsB,
           start,
           end,
-          renderFn.addition,
+          renderFn[ChangeType.addition],
         );
         break;
       }
@@ -91,7 +84,7 @@ export function applyChangesToSources(
           charsA,
           start,
           end,
-          renderFn.removal,
+          renderFn[ChangeType.deletion],
         );
         break;
       }
@@ -102,7 +95,7 @@ export function applyChangesToSources(
           charsA,
           resultA.start,
           resultA.end,
-          renderFn.move,
+          renderFn[ChangeType.move],
         );
 
         const resultB = rangeB!;
@@ -110,7 +103,7 @@ export function applyChangesToSources(
           charsB,
           resultB.start,
           resultB.end,
-          renderFn.move,
+          renderFn[ChangeType.move],
         );
 
         moveCounter++;
@@ -315,37 +308,8 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
   const { iterA, iterB } = _context
   const alignmentText = getOptions().alignmentText
 
-  const offsettedIndexesA: number[] = []
-  const offsettedIndexesB: number[] = []
-
-  for (const node of iterA.textNodes) {
-    offsettedIndexesA.push(node.index + offsets.getOffset(Side.a, node.index))
-  }
-
-  for (const node of iterB.textNodes) {
-    offsettedIndexesB.push(node.index + offsets.getOffset(Side.b, node.index))
-  }
-
-  // for (const change of changes) {
-  //   let indexA = change.indexA
-  //   if (change.type & TypeMasks.DelOrMove) {
-  //     indexA = indexA + offsets.getOffset(Side.a, indexA);
-  //   }
-
-  //   let indexB = change.indexB
-  //   if (change.type & TypeMasks.AddOrMove) {
-  //     indexB = indexB + offsets.getOffset(Side.b, indexB);
-  //   }
-
-  //   offsettedIndexesA.add(indexA)
-  //   offsettedIndexesB.add(indexB)
-  // }
-
-  console.log()
-
-
-
-
+  const offsettedIndexesA = offsets.getOffsettedIndexes(Side.a)
+  const offsettedIndexesB = offsets.getOffsettedIndexes(Side.b)
 
   function findPreviousNode(offsettedIndexes: number[], targetIndex: number): { index: number, firstNode?: boolean } {
     let currIndex = targetIndex
@@ -365,27 +329,32 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
   }
 
 
-  function updateChanges(side: Side, index: number) {
+  // Iterate for each change
+  // Only take the ones with the proper range
+  // Only take the ones that happen after the start pos
+  function updateChanges(sideToUpdate: Side, startPosition: number) {
 
-    const changesToInclude = side === Side.a ? TypeMasks.DelOrMove : TypeMasks.AddOrMove
+    // Side where the alignment happened, thus the side we need to recalculate the ranges of the changes
+    const changesToInclude = sideToUpdate === Side.a ? TypeMasks.DelOrMove : TypeMasks.AddOrMove
 
     for (const change of changes) {
+      // Skip type of changes we don't want
       if (change.type & ~changesToInclude) {
         continue
       }
 
-      if (change.index <= index) {
-        continue
-      }
-
       if (change.type & TypeMasks.DelOrMove) {
-        changes[change.index].rangeA!.start += alignmentText.length
-        changes[change.index].rangeA!.end += alignmentText.length
+        if (changes[change.index].rangeA!.start >= startPosition) {
+          changes[change.index].rangeA!.start += alignmentText.length
+          changes[change.index].rangeA!.end += alignmentText.length
+        }
       }
 
       if (change.type & TypeMasks.AddOrMove) {
-        changes[change.index].rangeB!.start += alignmentText.length
-        changes[change.index].rangeB!.end += alignmentText.length
+        if (changes[change.index].rangeB!.start >= startPosition) {
+          changes[change.index].rangeB!.start += alignmentText.length
+          changes[change.index].rangeB!.end += alignmentText.length
+        }
       }
     }
   }
@@ -408,8 +377,6 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
 
       const { index, firstNode } = findPreviousNode(offsettedIndexes, offset.index)
 
-      updateChanges(side, index)
-
       assert(typeof index === 'number' && index >= 0)
 
       const prevNode = iter.textNodes[index]
@@ -418,6 +385,8 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
 
       // Falta considerar el ofset 
       source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
+
+      updateChanges(side, insertAt)
     }
 
     return source

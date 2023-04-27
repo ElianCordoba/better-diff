@@ -2,7 +2,7 @@ import { ChangeType, Range, Side, TypeMasks } from "./types";
 import { colorFn, getSourceWithChange } from "./reporter";
 import { _context } from "./index";
 import { assert, fail } from "./debug";
-import { getDataForChange } from "./utils";
+import { getDataForChange, getPrettyChangeType } from "./utils";
 import { Node } from "./node";
 
 // deno-lint-ignore no-explicit-any
@@ -58,7 +58,7 @@ export class Change<Type extends ChangeType = ChangeType> {
         // ------------
         // 1          -
         // 2          2
-        _context.offsetTracker.add(Side.b, { type: ChangeType.deletion, index, numberOfNewLines: nodeOne.numberOfNewlines });
+        _context.offsetTracker.add(Side.b, { type: ChangeType.deletion, index, numberOfNewLines: nodeOne.numberOfNewlines, change: this });
         break;
       }
 
@@ -81,7 +81,7 @@ export class Change<Type extends ChangeType = ChangeType> {
         // -          x
         // y          y
         // -          z
-        _context.offsetTracker.add(Side.a, { type: ChangeType.addition, index, numberOfNewLines: nodeOne.numberOfNewlines });
+        _context.offsetTracker.add(Side.a, { type: ChangeType.addition, index, numberOfNewLines: nodeOne.numberOfNewlines, change: this });
         break;
       }
 
@@ -106,6 +106,10 @@ export class Change<Type extends ChangeType = ChangeType> {
     const charsA = sourceA.split("");
     const charsB = sourceB.split("");
 
+    const changeType = getPrettyChangeType(this.type, true)
+
+    console.log(`${changeType}`);
+
     if (this.rangeA) {
       console.log("----A----");
       console.log(
@@ -113,7 +117,7 @@ export class Change<Type extends ChangeType = ChangeType> {
           charsA,
           this.rangeA.start,
           this.rangeA.end,
-          colorFn.green,
+          colorFn.red,
         ).join(""),
       );
       console.log("\n");

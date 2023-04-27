@@ -1,9 +1,19 @@
 import ts from "typescript";
 import { Node } from "./node";
-import { NewChangeInfo, Range, Side } from "./types";
+import { ChangeType, NewChangeInfo, Range, Side } from "./types";
 import { fail } from "./debug";
 import { LCSResult } from "./sequence";
 import { Iterator } from "./iterator";
+import { prettyRenderFn } from "./reporter";
+
+export function getPrettyChangeType(type: ChangeType, withColor = false): string {
+  const renderFn = withColor ? prettyRenderFn[type] : (i: string) => i
+  switch (type) {
+    case ChangeType.deletion: return renderFn('Deletion')
+    case ChangeType.addition: return renderFn('Addition')
+    case ChangeType.move: return renderFn('Move')
+  }
+}
 
 export function getPrettyKind(kind: number): string {
   // deno-lint-ignore no-explicit-any
