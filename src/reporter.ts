@@ -315,15 +315,15 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
   const { iterA, iterB } = _context
   const alignmentText = getOptions().alignmentText
 
-  const offsettedIndexesA = new Set<number>()
-  const offsettedIndexesB = new Set<number>()
+  const offsettedIndexesA: number[] = []
+  const offsettedIndexesB: number[] = []
 
   for (const node of iterA.textNodes) {
-    offsettedIndexesA.add(node.index + offsets.getOffset(Side.a, node.index))
+    offsettedIndexesA.push(node.index + offsets.getOffset(Side.a, node.index))
   }
 
   for (const node of iterB.textNodes) {
-    offsettedIndexesB.add(node.index + offsets.getOffset(Side.b, node.index))
+    offsettedIndexesB.push(node.index + offsets.getOffset(Side.b, node.index))
   }
 
   // for (const change of changes) {
@@ -347,16 +347,16 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
 
 
 
-  function findPreviousNode(iter: Iterator, targetIndex: number): number {
+  function findPreviousNode(asd: number[], targetIndex: number): number {
     while (true) {
-      const node = iter.textNodes[targetIndex]
-
-      if (node) {
-        return node.index
-      }
-
       if (targetIndex === 0) {
         return 0
+      }
+
+      const found = asd.includes(targetIndex)
+
+      if (found) {
+        return targetIndex
       }
 
       targetIndex--
@@ -407,18 +407,15 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
       return source
     }
 
-    const oppositeIter = side === Side.a ? iterB : iterA
     const iter = side === Side.a ? iterA : iterB
+    const offsettedIndexes = side === Side.a ? offsettedIndexesA : offsettedIndexesB
 
     for (const offset of _offsets.values()) {
       if (offset.numberOfNewLines === 0) {
         continue
       }
 
-      const isFirstNode = offset.index === 0
-
-      // const prevIndex = findPreviousNode(iter, offset.index)
-      const prevIndex = isFirstNode ? 0 : offset.index - 1
+      const prevIndex = findPreviousNode(offsettedIndexes, offset.index)
 
       updateChanges(side, prevIndex)
 
@@ -426,7 +423,7 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
 
       const prevNode = iter.textNodes[prevIndex]
 
-      const insertAt = prevNode.end
+      const insertAt = prevNode.start
 
       // Falta considerar el ofset 
       source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
