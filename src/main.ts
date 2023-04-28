@@ -95,10 +95,6 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 
   const moves = processMoves(matches, offsetTracker);
 
-  // const finalOffsets = getFinalOffsets(_context)
-
-  _context.offsetTracker
-
   return compactChanges([...additions, ...deletions, ...moves]);
 }
 
