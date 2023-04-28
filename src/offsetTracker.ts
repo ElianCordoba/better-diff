@@ -30,46 +30,54 @@ export class OffsetTracker {
     this.getSide(side).set(offset.index, offset)
   }
 
-  getOffsetFINAL(side: Side, targetIndex: number, offsetList: number[]) {
-    let ogIndex = targetIndex
-    const _side = this.getSide(side);
-
-    let offset = 0;
-    // TODO: Use and array with insertion sort
-    // The offset is unsorted, so we need to order the indexes first before processing it
-    for (const index of offsetList.sort((a, b) => a > b ? 1 : -1)) {
-      // if (index === targetIndex) {
-
-      // }
-      if (index <= targetIndex) {
-        // We increase the target index so that if we are inside an alignment (example bellow) we can read the offsets properly, for example:
-        //
-        // A          B
-        // ------------
-        // 1          1
-        // 2          2
-        // 3          1
-        //            2
-        //            3
-        //
-        // A          B
-        // ------------
-        // -          1
-        // -          2
-        // 1          1
-        // 2          2
-        // 3          3
-        //
-        // Alignments are [0, 1] in "offsetA", the "1" in A side has index 0, so if we don't do anything special only the first alignment will be included
-        targetIndex++;
-        offset++;
-      } else {
-        break;
-      }
+  set(side: Side, offsets: OffsetsMap) {
+    if (side === Side.a) {
+      this.offsetsA = offsets
+    } else {
+      this.offsetsB = offsets
     }
-
-    return ogIndex + offset;
   }
+
+  // getOffsetFINAL(side: Side, targetIndex: number, offsetList: number[]) {
+  //   let ogIndex = targetIndex
+  //   const _side = this.getSide(side);
+
+  //   let offset = 0;
+  //   // TODO: Use and array with insertion sort
+  //   // The offset is unsorted, so we need to order the indexes first before processing it
+  //   for (const index of offsetList.sort((a, b) => a > b ? 1 : -1)) {
+  //     // if (index === targetIndex) {
+
+  //     // }
+  //     if (index <= targetIndex) {
+  //       // We increase the target index so that if we are inside an alignment (example bellow) we can read the offsets properly, for example:
+  //       //
+  //       // A          B
+  //       // ------------
+  //       // 1          1
+  //       // 2          2
+  //       // 3          1
+  //       //            2
+  //       //            3
+  //       //
+  //       // A          B
+  //       // ------------
+  //       // -          1
+  //       // -          2
+  //       // 1          1
+  //       // 2          2
+  //       // 3          3
+  //       //
+  //       // Alignments are [0, 1] in "offsetA", the "1" in A side has index 0, so if we don't do anything special only the first alignment will be included
+  //       targetIndex++;
+  //       offset++;
+  //     } else {
+  //       break;
+  //     }
+  //   }
+
+  //   return ogIndex + offset;
+  // }
 
   getOffset(side: Side, targetIndex: number, offsets?: OffsetsMap) {
     let ogIndex = targetIndex

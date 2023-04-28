@@ -134,6 +134,9 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
   const finalOffsetsA = offsetTracker.getFinalOffsets(Side.a)
   const finalOffsetsB = offsetTracker.getFinalOffsets(Side.b)
 
+  offsetTracker.set(Side.a, finalOffsetsA)
+  offsetTracker.set(Side.b, finalOffsetsB)
+
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of sortedMatches) {
     if (matchesToIgnore.includes(match.index)) {
@@ -145,8 +148,8 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
       matchesToIgnore.push(...match.indexesOfClosingMoves);
     }
 
-    const indexA = offsetTracker.getOffsetFINAL(Side.a, match.indexA, [...finalOffsetsA.keys()]);
-    const indexB = offsetTracker.getOffsetFINAL(Side.b, match.indexB, [...finalOffsetsB.keys()]);
+    const indexA = offsetTracker.getOffset(Side.a, match.indexA);
+    const indexB = offsetTracker.getOffset(Side.b, match.indexB);
 
     // If the nodes are aligned after calculating the offset means that there is no extra work needed
     if (indexA === indexB) {
