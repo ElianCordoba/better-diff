@@ -112,12 +112,15 @@ export class Change<Type extends ChangeType = ChangeType> {
 
     if (this.rangeA) {
       console.log("----A----");
+
+      const renderFn = this.type === ChangeType.move ? colorFn.yellow : colorFn.red
+
       console.log(
         getSourceWithChange(
           charsA,
           this.rangeA.start,
           this.rangeA.end,
-          colorFn.red,
+          renderFn,
         ).join(""),
       );
       console.log("\n");
@@ -125,12 +128,15 @@ export class Change<Type extends ChangeType = ChangeType> {
 
     if (this.rangeB) {
       console.log("----B----");
+
+      const renderFn = this.type === ChangeType.move ? colorFn.yellow : colorFn.green
+
       console.log(
         getSourceWithChange(
           charsB,
           this.rangeB.start,
           this.rangeB.end,
-          colorFn.green,
+          renderFn,
         ).join(""),
       );
       console.log("\n");

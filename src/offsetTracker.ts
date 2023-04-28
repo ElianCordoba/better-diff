@@ -2,7 +2,7 @@ import { _context } from ".";
 import { Change } from "./change";
 import { assert } from "./debug";
 import { ChangeType, Side } from "./types";
-import { range } from "./utils";
+import { oppositeSide, range } from "./utils";
 
 interface Offset {
   index: number;
@@ -11,19 +11,69 @@ interface Offset {
   change?: Change
 }
 
+// number = index
+export type OffsetsMap = Map<number, Offset>
+
 export class OffsetTracker {
-  // number = index
-  offsetsA = new Map<number, Offset>();
-  offsetsB = new Map<number, Offset>();
+
+  offsetsA: OffsetsMap = new Map();
+  offsetsB: OffsetsMap = new Map();
 
   add(side: Side, offset: Offset) {
     assert(typeof offset.index === "number", () => `Expected number when storing offset but received ${typeof offset.index}`);
 
+
+
+    // const i = offset.index + this.getOffset((side), offset.index)
+
+    // this.getSide(side).set(i, { ...offset, index: i })
     this.getSide(side).set(offset.index, offset)
   }
 
-  getOffset(side: Side, targetIndex: number) {
+  getOffsetFINAL(side: Side, targetIndex: number, offsetList: number[]) {
+    let ogIndex = targetIndex
     const _side = this.getSide(side);
+
+    let offset = 0;
+    // TODO: Use and array with insertion sort
+    // The offset is unsorted, so we need to order the indexes first before processing it
+    for (const index of offsetList.sort((a, b) => a > b ? 1 : -1)) {
+      // if (index === targetIndex) {
+
+      // }
+      if (index <= targetIndex) {
+        // We increase the target index so that if we are inside an alignment (example bellow) we can read the offsets properly, for example:
+        //
+        // A          B
+        // ------------
+        // 1          1
+        // 2          2
+        // 3          1
+        //            2
+        //            3
+        //
+        // A          B
+        // ------------
+        // -          1
+        // -          2
+        // 1          1
+        // 2          2
+        // 3          3
+        //
+        // Alignments are [0, 1] in "offsetA", the "1" in A side has index 0, so if we don't do anything special only the first alignment will be included
+        targetIndex++;
+        offset++;
+      } else {
+        break;
+      }
+    }
+
+    return ogIndex + offset;
+  }
+
+  getOffset(side: Side, targetIndex: number, offsets?: OffsetsMap) {
+    let ogIndex = targetIndex
+    const _side = offsets ? offsets : this.getSide(side);
 
     let offset = 0;
     // TODO: Use and array with insertion sort
@@ -59,7 +109,7 @@ export class OffsetTracker {
       }
     }
 
-    return offset;
+    return ogIndex + offset;
   }
 
   getSide(side: Side) {
@@ -103,15 +153,34 @@ export class OffsetTracker {
     return this.offsetsA.size === 0 && this.offsetsB.size === 0;
   }
 
-  getOffsettedIndexes(side: Side) {
+  getFilledOffsettedIndexes(side: Side, offsets: OffsetsMap) {
     const indexes: number[] = []
 
     const iter = side === Side.a ? _context.iterA : _context.iterB
     for (const node of iter.textNodes) {
-      indexes.push(node.index + this.getOffset(side, node.index))
+      indexes.push(this.getOffset(side, node.index, offsets))
     }
 
     return indexes
+  }
+
+
+
+  getFinalOffsets(side: Side): OffsetsMap {
+    const finalOffsets: OffsetsMap = new Map()
+
+    const offsets = side === Side.a ? this.offsetsA : this.offsetsB
+
+    const otherSide = oppositeSide(side)
+
+    for (const offset of offsets.values()) {
+      const newIndex = this.getOffset(otherSide, offset.index)
+
+      finalOffsets.set(newIndex, { ...offset, index: newIndex })
+    }
+    // TODO-NOW Sort?
+
+    return finalOffsets
   }
 
   // TODO-NOW improve this

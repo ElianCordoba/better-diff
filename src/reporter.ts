@@ -3,7 +3,7 @@ import { ChangeType, Side, TypeMasks } from "../src/types";
 import { AlignmentTable } from "./alignmentTable";
 import { Change } from "./change";
 import { assert, fail } from "./debug";
-import { OffsetTracker } from "./offsetTracker";
+import { OffsetsMap, OffsetTracker } from "./offsetTracker";
 import { range } from "./utils";
 import { Iterator } from './iterator'
 
@@ -305,95 +305,11 @@ function compactAlignments(alignmentTable: AlignmentTable, _linesA: string[], _l
 }
 
 export function applyAlignments(sourceA: string, sourceB: string, changes: Change[], offsets: OffsetTracker): { sourceA: string, sourceB: string, changes: Change[] } {
-  const { iterA, iterB } = _context
-  const alignmentText = getOptions().alignmentText
+  const offsettedIndexesA = offsets.getFinalOffsets(Side.a)
+  const offsettedIndexesB = offsets.getFinalOffsets(Side.b)
 
-  const offsettedIndexesA = offsets.getOffsettedIndexes(Side.a)
-  const offsettedIndexesB = offsets.getOffsettedIndexes(Side.b)
-
-  function findPreviousNode(offsettedIndexes: number[], targetIndex: number): { index: number, firstNode?: boolean } {
-    let currIndex = targetIndex
-    while (true) {
-      if (currIndex < 0) {
-        return { index: 0, firstNode: true }
-      }
-
-      const found = offsettedIndexes.includes(currIndex)
-
-      if (found) {
-        return { index: currIndex }
-      }
-
-      currIndex--
-    }
-  }
-
-
-  // Iterate for each change
-  // Only take the ones with the proper range
-  // Only take the ones that happen after the start pos
-  function updateChanges(sideToUpdate: Side, startPosition: number) {
-
-    // Side where the alignment happened, thus the side we need to recalculate the ranges of the changes
-    const changesToInclude = sideToUpdate === Side.a ? TypeMasks.DelOrMove : TypeMasks.AddOrMove
-
-    for (const change of changes) {
-      // Skip type of changes we don't want
-      if (change.type & ~changesToInclude) {
-        continue
-      }
-
-      if (change.type & TypeMasks.DelOrMove) {
-        if (changes[change.index].rangeA!.start >= startPosition) {
-          changes[change.index].rangeA!.start += alignmentText.length
-          changes[change.index].rangeA!.end += alignmentText.length
-        }
-      }
-
-      if (change.type & TypeMasks.AddOrMove) {
-        if (changes[change.index].rangeB!.start >= startPosition) {
-          changes[change.index].rangeB!.start += alignmentText.length
-          changes[change.index].rangeB!.end += alignmentText.length
-        }
-      }
-    }
-  }
-
-  function insertAlignments(side: Side): string {
-    const _offsets = side === Side.a ? offsets.offsetsA : offsets.offsetsB
-    let source = side === Side.a ? sourceA : sourceB
-
-    if (_offsets.size === 0) {
-      return source
-    }
-
-    const iter = side === Side.a ? iterA : iterB
-    const offsettedIndexes = side === Side.a ? offsettedIndexesA : offsettedIndexesB
-
-    for (const offset of _offsets.values()) {
-      if (offset.numberOfNewLines === 0) {
-        continue
-      }
-
-      const { index, firstNode } = findPreviousNode(offsettedIndexes, offset.index)
-
-      assert(typeof index === 'number' && index >= 0)
-
-      const prevNode = iter.textNodes[index]
-
-      const insertAt = firstNode ? 0 : prevNode.end
-
-      // Falta considerar el ofset 
-      source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
-
-      updateChanges(side, insertAt)
-    }
-
-    return source
-  }
-
-  sourceA = insertAlignments(Side.a)
-  sourceB = insertAlignments(Side.b)
+  sourceA = insertAlignments(Side.a, changes, offsettedIndexesA, sourceA, _context.iterA)
+  sourceB = insertAlignments(Side.b, changes, offsettedIndexesB, sourceB, _context.iterB)
 
   return {
     sourceA,
@@ -401,3 +317,88 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
     changes
   }
 }
+
+function insertAlignments(side: Side, changes: Change[], offsets: OffsetsMap, source: string, iter: Iterator): string {
+  if (offsets.size === 0) {
+    return source
+  }
+
+  const alignmentText = getOptions().alignmentText
+
+  for (const offset of offsets.values()) {
+    // TODO: DOn't add them in the first place
+    if (offset.numberOfNewLines === 0) {
+      continue
+    }
+
+    const _offsetsFilled = _context.offsetTracker.getFilledOffsettedIndexes(side, offsets)
+
+    const { index, firstNode } = findPreviousNode(_offsetsFilled, offset.index)
+
+    assert(typeof index === 'number' && index >= 0)
+
+    const prevNode = iter.textNodes[index]
+
+    assert(prevNode)
+
+    const insertAt = firstNode ? 0 : prevNode.end
+
+    source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
+
+    updateChanges(changes, side, insertAt)
+  }
+
+  return source
+}
+
+function findPreviousNode(offsettedIndexes: number[], targetIndex: number): { index: number, firstNode?: boolean } {
+  let currIndex = targetIndex
+  while (true) {
+    if (currIndex < 0) {
+      return { index: 0, firstNode: true }
+    }
+
+    const found = offsettedIndexes.includes(currIndex)
+
+    if (found) {
+      return { index: currIndex }
+    }
+
+    currIndex--
+  }
+}
+
+// Iterate for each change
+// Only take the ones with the proper range
+// Only take the ones that happen after the start pos
+function updateChanges(changes: Change[], sideToUpdate: Side, startPosition: number) {
+  const alignmentText = getOptions().alignmentText
+
+  // Side where the alignment happened, thus the side we need to recalculate the ranges of the changes
+  const changesToSkip = sideToUpdate === Side.a ? ChangeType.addition : ChangeType.deletion
+
+  for (let i = 0; i < changes.length; i++) {
+    const change = changes[i]
+    // Skip type of changes we don't want
+    if (change.type === changesToSkip) {
+      continue
+    }
+
+    if (change.type & TypeMasks.DelOrMove) {
+      if (change.rangeA!.start >= startPosition) {
+        change.rangeA!.start += alignmentText.length
+        change.rangeA!.end += alignmentText.length
+      }
+    }
+
+    if (change.type & TypeMasks.AddOrMove) {
+      if (change.rangeB!.start >= startPosition) {
+        change.rangeB!.start += alignmentText.length
+        change.rangeB!.end += alignmentText.length
+      }
+    }
+
+    changes[i] = change
+  }
+}
+

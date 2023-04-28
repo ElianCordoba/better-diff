@@ -95,6 +95,10 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 
   const moves = processMoves(matches, offsetTracker);
 
+  // const finalOffsets = getFinalOffsets(_context)
+
+  _context.offsetTracker
+
   return compactChanges([...additions, ...deletions, ...moves]);
 }
 
@@ -131,6 +135,9 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
   // Similarly, if the initial match is ignored because it can be aligned, the corresponding closing node should also be ignored.
   const matchesToIgnore: number[] = [];
 
+  const finalOffsetsA = offsetTracker.getFinalOffsets(Side.a)
+  const finalOffsetsB = offsetTracker.getFinalOffsets(Side.b)
+
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of sortedMatches) {
     if (matchesToIgnore.includes(match.index)) {
@@ -142,11 +149,8 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
       matchesToIgnore.push(...match.indexesOfClosingMoves);
     }
 
-    const _indexA = match.indexA;
-    const _indexB = match.indexB;
-
-    const indexA = _indexA + offsetTracker.getOffset(Side.a, _indexA);
-    const indexB = _indexB + offsetTracker.getOffset(Side.b, _indexB);
+    const indexA = offsetTracker.getOffsetFINAL(Side.a, match.indexA, [...finalOffsetsA.keys()]);
+    const indexB = offsetTracker.getOffsetFINAL(Side.b, match.indexB, [...finalOffsetsB.keys()]);
 
     // If the nodes are aligned after calculating the offset means that there is no extra work needed
     if (indexA === indexB) {
