@@ -333,11 +333,13 @@ function insertAlignments(side: Side, changes: Change[], offsets: OffsetsMap, so
 
     const _offsetsFilled = _context.offsetTracker.getFilledOffsettedIndexes(side, offsets)
 
-    const { index, firstNode } = findPreviousNode(_offsetsFilled, offset.index)
+    const { index, firstNode } = findPreviousNode([..._offsetsFilled.keys()], offset.index)
 
     assert(typeof index === 'number' && index >= 0)
 
-    const prevNode = iter.textNodes[index]
+    const realIndex = _offsetsFilled.get(index)!
+
+    const prevNode = iter.textNodes[realIndex]
 
     assert(prevNode)
 

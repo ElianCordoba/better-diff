@@ -184,14 +184,14 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
       const indexDiff = Math.abs(indexA - indexB);
 
       for (const i of range(startIndex, startIndex + indexDiff)) {
-        offsetTracker.add(sideToAlignStart, { type: ChangeType.move, index: i, numberOfNewLines: 0 });
+        offsetTracker.add(sideToAlignStart, { type: ChangeType.move, index: i, numberOfNewLines: 1 });
       }
 
       const sideToAlignEnd = oppositeSide(sideToAlignStart);
       const endIndex = (sideToAlignEnd === Side.a ? indexA : indexB) + 1;
 
       for (const i of range(endIndex, endIndex + indexDiff)) {
-        offsetTracker.add(sideToAlignEnd, { type: ChangeType.move, index: i, numberOfNewLines: 0 });
+        offsetTracker.add(sideToAlignEnd, { type: ChangeType.move, index: i, numberOfNewLines: 1 });
       }
     } else {
       if (match.indexesOfClosingMoves.length) {

@@ -162,11 +162,12 @@ export class OffsetTracker {
   }
 
   getFilledOffsettedIndexes(side: Side, offsets: OffsetsMap) {
-    const indexes: number[] = []
+    // Offseted index -> real node index
+    const indexes: Map<number, number> = new Map()
 
     const iter = side === Side.a ? _context.iterA : _context.iterB
     for (const node of iter.textNodes) {
-      indexes.push(this.getOffset(side, node.index, offsets))
+      indexes.set(this.getOffset(side, node.index, offsets), node.index)
     }
 
     return indexes
