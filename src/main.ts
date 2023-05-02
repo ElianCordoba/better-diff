@@ -131,12 +131,6 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
   // Similarly, if the initial match is ignored because it can be aligned, the corresponding closing node should also be ignored.
   const matchesToIgnore: number[] = [];
 
-  const finalOffsetsA = offsetTracker.getFinalOffsets(Side.a)
-  const finalOffsetsB = offsetTracker.getFinalOffsets(Side.b)
-
-  offsetTracker.set(Side.a, finalOffsetsA)
-  offsetTracker.set(Side.b, finalOffsetsB)
-
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of sortedMatches) {
     if (matchesToIgnore.includes(match.index)) {

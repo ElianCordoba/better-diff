@@ -1,6 +1,7 @@
 import { _context } from ".";
 import { Change } from "./change";
 import { assert } from "./debug";
+import { SortedMap } from "./sortedMap";
 import { ChangeType, Side } from "./types";
 import { oppositeSide, range } from "./utils";
 
@@ -19,6 +20,9 @@ export class OffsetTracker {
   offsetsA: OffsetsMap = new Map();
   offsetsB: OffsetsMap = new Map();
 
+  // 1- Get offsetted index by looking at offsets above
+  // 2- Update, if applicable, offsets bellow
+  // 3- Sort 
   add(side: Side, offset: Offset) {
     assert(typeof offset.index === "number", () => `Expected number when storing offset but received ${typeof offset.index}`);
 
@@ -28,14 +32,6 @@ export class OffsetTracker {
 
     // this.getSide(side).set(i, { ...offset, index: i })
     this.getSide(side).set(offset.index, offset)
-  }
-
-  set(side: Side, offsets: OffsetsMap) {
-    if (side === Side.a) {
-      this.offsetsA = offsets
-    } else {
-      this.offsetsB = offsets
-    }
   }
 
   // getOffsetFINAL(side: Side, targetIndex: number, offsetList: number[]) {
@@ -171,25 +167,6 @@ export class OffsetTracker {
     }
 
     return indexes
-  }
-
-
-
-  getFinalOffsets(side: Side): OffsetsMap {
-    const finalOffsets: OffsetsMap = new Map()
-
-    const offsets = side === Side.a ? this.offsetsA : this.offsetsB
-
-    const otherSide = oppositeSide(side)
-
-    for (const offset of offsets.values()) {
-      const newIndex = this.getOffset(otherSide, offset.index)
-
-      finalOffsets.set(newIndex, { ...offset, index: newIndex })
-    }
-    // TODO-NOW Sort?
-
-    return finalOffsets
   }
 
   // TODO-NOW improve this

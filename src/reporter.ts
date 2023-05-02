@@ -305,8 +305,8 @@ function compactAlignments(alignmentTable: AlignmentTable, _linesA: string[], _l
 }
 
 export function applyAlignments(sourceA: string, sourceB: string, changes: Change[], offsets: OffsetTracker): { sourceA: string, sourceB: string, changes: Change[] } {
-  const offsettedIndexesA = offsets.getFinalOffsets(Side.a)
-  const offsettedIndexesB = offsets.getFinalOffsets(Side.b)
+  const offsettedIndexesA = offsets.offsetsA
+  const offsettedIndexesB = offsets.offsetsB
 
   sourceA = insertAlignments(Side.a, changes, offsettedIndexesA, sourceA, _context.iterA)
   sourceB = insertAlignments(Side.b, changes, offsettedIndexesB, sourceB, _context.iterB)
