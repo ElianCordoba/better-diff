@@ -118,6 +118,74 @@ describe.only("Properly align code", () => {
   })
 
   test({
+    name: 'Basic case a',
+    a: `
+      123
+      A
+    `,
+    b: `
+      B
+      123
+    `,
+    expA: `
+      <<Alignment>>
+      123
+      ➖A➖
+    `,
+    expB: `
+      ➕B➕
+      123
+      <<Alignment>>
+    `
+  })
+
+  // TODO-NOW Compaction case
+  test({
+    only: 'standard',
+    name: 'Basic case b',
+    a: `
+      A
+      123
+    `,
+    b: `
+      B
+      123
+    `,
+    expA: `
+      ➖A➖
+      <<Alignment>>
+      123
+    `,
+    expB: `
+      <<Alignment>>
+      ➕B➕
+      123
+    `
+  })
+
+  test({
+    name: 'Basic case c',
+    a: `
+      x
+      123
+    `,
+    b: `
+      123
+      x
+    `,
+    expA: `
+      🔀x⏹️
+      123
+      <<Alignment>>
+    `,
+    expB: `
+      <<Alignment>>  
+      123
+      🔀x⏹️
+    `
+  })
+
+  test({
     name: 'Other 1',
     a: `
       console.log()

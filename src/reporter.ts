@@ -372,6 +372,7 @@ function updateChanges(changes: Change[], sideToUpdate: Side, startPosition: num
 
   // Side where the alignment happened, thus the side we need to recalculate the ranges of the changes
   const changesToSkip = sideToUpdate === Side.a ? ChangeType.addition : ChangeType.deletion
+  const rangeToUpdate = sideToUpdate === Side.a ? 'rangeA' : 'rangeB'
 
   for (let i = 0; i < changes.length; i++) {
     const change = changes[i]
@@ -380,18 +381,9 @@ function updateChanges(changes: Change[], sideToUpdate: Side, startPosition: num
       continue
     }
 
-    if (change.type & TypeMasks.DelOrMove) {
-      if (change.rangeA!.start >= startPosition) {
-        change.rangeA!.start += alignmentText.length
-        change.rangeA!.end += alignmentText.length
-      }
-    }
-
-    if (change.type & TypeMasks.AddOrMove) {
-      if (change.rangeB!.start >= startPosition) {
-        change.rangeB!.start += alignmentText.length
-        change.rangeB!.end += alignmentText.length
-      }
+    if (change[rangeToUpdate]!.start >= startPosition) {
+      change[rangeToUpdate]!.start += alignmentText.length
+      change[rangeToUpdate]!.end += alignmentText.length
     }
 
     changes[i] = change
