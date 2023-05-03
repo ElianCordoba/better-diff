@@ -91,11 +91,21 @@ export function getChanges(codeA: string, codeB: string): Change[] {
   const deletions = changes.filter((x) => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start! - b.rangeA?.start!);
   const additions = changes.filter((x) => x.type === ChangeType.addition).sort((a, b) => a.rangeB?.start! - b.rangeB?.start!);
 
+  processAddAndDel(deletions, additions)
+
   const { matches, offsetTracker } = _context;
 
   const moves = processMoves(matches, offsetTracker);
 
   return compactChanges([...additions, ...deletions, ...moves]);
+}
+
+function processAddAndDel(additions: Change[], deletions: Change[]) {
+  const unifiedList = [...additions, ...deletions].sort((a, b) => (a.indexA || a.indexB) < (b.indexA || b.indexB) ? -1 : 1)
+
+  for (const change of unifiedList) {
+    change.applyOffset()
+  }
 }
 
 // This function receives all the matches and iterate over them in descending order of weight (matches with more text involved go first)

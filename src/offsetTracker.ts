@@ -1,6 +1,7 @@
 import { _context } from ".";
 import { Change } from "./change";
 import { assert } from "./debug";
+import { Node } from "./node";
 import { SortedMap } from "./sortedMap";
 import { ChangeType, Side } from "./types";
 import { oppositeSide, range } from "./utils";
@@ -157,16 +158,22 @@ export class OffsetTracker {
     return this.offsetsA.size === 0 && this.offsetsB.size === 0;
   }
 
-  getFilledOffsettedIndexes(side: Side, offsets: OffsetsMap) {
-    // Offseted index -> real node index
-    const indexes: Map<number, number> = new Map()
-
+  getFilledOffsettedIndexes(side: Side) {
     const iter = side === Side.a ? _context.iterA : _context.iterB
-    for (const node of iter.textNodes) {
-      indexes.set(this.getOffset(side, node.index, offsets), node.index)
+
+    const nodes: (Node | undefined)[] = iter.textNodes
+
+    const offsets = this.getSide(side)
+
+    for (const offset of offsets.values()) {
+      if (offset.numberOfNewLines === 0) {
+        continue
+      }
+
+      nodes.splice(offset.index, 0, undefined)
     }
 
-    return indexes
+    return nodes
   }
 
   // TODO-NOW improve this

@@ -6,6 +6,7 @@ import { assert, fail } from "./debug";
 import { OffsetsMap, OffsetTracker } from "./offsetTracker";
 import { range } from "./utils";
 import { Iterator } from './iterator'
+import { Node } from "./node";
 
 //@ts-ignore TODO: Importing normally doesn't work with vitest
 export const k = require("kleur");
@@ -331,20 +332,12 @@ function insertAlignments(side: Side, changes: Change[], offsets: OffsetsMap, so
       continue
     }
 
-    const _offsetsFilled = _context.offsetTracker.getFilledOffsettedIndexes(side, offsets)
 
-    const { index, firstNode } = findPreviousNode([..._offsetsFilled.keys()], offset.index)
+    const _offsetsFilled = _context.offsetTracker.getFilledOffsettedIndexes(side)
 
-    assert(typeof index === 'number' && index >= 0)
+    const insertAt = findPointToInsertAlignment(iter, _offsetsFilled, offset.index)
 
-    const realIndex = _offsetsFilled.get(index)!
-
-    const prevNode = iter.textNodes[realIndex]
-
-    assert(prevNode)
-
-    const insertAt = firstNode ? 0 : prevNode.end
-
+    // TODO-NOW usar splice
     source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
 
     updateChanges(changes, side, insertAt)
@@ -353,20 +346,21 @@ function insertAlignments(side: Side, changes: Change[], offsets: OffsetsMap, so
   return source
 }
 
-function findPreviousNode(offsettedIndexes: number[], targetIndex: number): { index: number, firstNode?: boolean } {
-  let currIndex = targetIndex
+function findPointToInsertAlignment(iter: Iterator, offsettedIndexes: (Node | undefined)[], targetIndex: number): number {
+  let currentIndex = targetIndex
+
   while (true) {
-    if (currIndex < 0) {
-      return { index: 0, firstNode: true }
+    if (currentIndex < 0) {
+      return 0
     }
 
-    const found = offsettedIndexes.includes(currIndex)
+    const current = offsettedIndexes[currentIndex]
 
-    if (found) {
-      return { index: currIndex }
+    if (current) {
+      return iter.textNodes[currentIndex].end
     }
 
-    currIndex--
+    currentIndex--
   }
 }
 

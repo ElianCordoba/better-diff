@@ -14,6 +14,7 @@ export class Change<Type extends ChangeType = ChangeType> {
   indexB = -1;
 
   index: number;
+  numberOfNewLinesAlignment = 0
 
   // This is used when processing matches, if the move contains an odd number of opening nodes, one or move closing nodes
   // moves will be created we store their indexes here. More information in the "processMoves" fn
@@ -45,6 +46,8 @@ export class Change<Type extends ChangeType = ChangeType> {
         this.rangeA = range;
         this.indexA = index;
 
+        this.numberOfNewLinesAlignment = nodeOne.numberOfNewlines
+
         // Alignment for deletions:
         //
         // A          B
@@ -58,7 +61,7 @@ export class Change<Type extends ChangeType = ChangeType> {
         // ------------
         // 1          -
         // 2          2
-        _context.offsetTracker.add(Side.b, { type: ChangeType.deletion, index, numberOfNewLines: nodeOne.numberOfNewlines, change: this });
+        // _context.offsetTracker.add(Side.b, { type: ChangeType.deletion, index, numberOfNewLines: nodeOne.numberOfNewlines, change: this });
         break;
       }
 
@@ -66,6 +69,8 @@ export class Change<Type extends ChangeType = ChangeType> {
         const { range, index } = getDataForChange(nodeOne!);
         this.rangeB = range;
         this.indexB = index;
+
+        this.numberOfNewLinesAlignment = nodeOne.numberOfNewlines
 
         // Alignment for additions:
         //
@@ -81,7 +86,7 @@ export class Change<Type extends ChangeType = ChangeType> {
         // -          x
         // y          y
         // -          z
-        _context.offsetTracker.add(Side.a, { type: ChangeType.addition, index, numberOfNewLines: nodeOne.numberOfNewlines, change: this });
+        // _context.offsetTracker.add(Side.a, { type: ChangeType.addition, index, numberOfNewLines: nodeOne.numberOfNewlines, change: this });
         break;
       }
 
@@ -97,7 +102,17 @@ export class Change<Type extends ChangeType = ChangeType> {
       assert(this.rangeB, () => "Range B is not present on change creation");
     }
 
+    // TODO-NOW adds and dels will have the same index if no move is in between
     this.index = _context.matches.length;
+  }
+
+  applyOffset() {
+    const { offsetTracker } = _context
+    if (this.type === ChangeType.deletion) {
+      _context.offsetTracker.add(Side.b, { type: ChangeType.deletion, index: offsetTracker.getOffset(Side.a, this.indexA), numberOfNewLines: this.numberOfNewLinesAlignment, change: this });
+    } else {
+      _context.offsetTracker.add(Side.a, { type: ChangeType.addition, index: offsetTracker.getOffset(Side.b, this.indexB), numberOfNewLines: this.numberOfNewLinesAlignment, change: this });
+    }
   }
 
   draw() {
