@@ -139,3 +139,7 @@ export function getDataForChange(nodeOrInfo: Node | NewChangeInfo): NewChangeInf
     return nodeOrInfo;
   }
 }
+
+export function arraySum(array: number[]): number {
+  return array.reduce((a, b) => a + b, 0)
+}

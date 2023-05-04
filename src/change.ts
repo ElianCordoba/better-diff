@@ -2,17 +2,16 @@ import { ChangeType, Range, Side, TypeMasks } from "./types";
 import { colorFn, getSourceWithChange } from "./reporter";
 import { _context } from "./index";
 import { assert, fail } from "./debug";
-import { getDataForChange, getPrettyChangeType } from "./utils";
-import { Node } from "./node";
+import { arraySum, getDataForChange, getPrettyChangeType } from "./utils";
+import { Iterator, } from "./iterator";
 
 // deno-lint-ignore no-explicit-any
 export class Change<Type extends ChangeType = ChangeType> {
   rangeA: Range | undefined;
   rangeB: Range | undefined;
 
-  indexA = -1;
-  indexB = -1;
-
+  public indexesA: number[] = [];
+  public indexesB: number[] = [];
   index: number;
 
   // This is used when processing matches, if the move contains an odd number of opening nodes, one or move closing nodes
@@ -21,97 +20,93 @@ export class Change<Type extends ChangeType = ChangeType> {
 
   constructor(
     public type: Type,
-    nodeOne: Node,
-    nodeTwo?: Node,
-    // More characters the change involved the more weight
-    public weight = 0,
-    public numberOfNewLines = 0
+    indexesOne: number[],
+    indexesTwo?: number[]
   ) {
-    switch (type) {
-      case ChangeType.move: {
-        const a = getDataForChange(nodeOne!);
-        this.rangeA = a.range;
-        this.indexA = a.index;
-
-        const b = getDataForChange(nodeTwo!);
-        this.rangeB = b.range;
-        this.indexB = b.index;
-
-        // There is no alignment tracking for moves just yet, it happens in the "processMoves" fn
-        break;
-      }
-
-      case ChangeType.deletion: {
-        const { range, index } = getDataForChange(nodeOne!);
-        this.rangeA = range;
-        this.indexA = index;
-
-        this.numberOfNewLines = nodeOne.numberOfNewlines
-
-        // Alignment for deletions:
-        //
-        // A          B
-        // ------------
-        // 1          2
-        // 2
-        //
-        // With alignment
-        //
-        // A          B
-        // ------------
-        // 1          -
-        // 2          2
-        // _context.offsetTracker.add(Side.b, { type: ChangeType.deletion, index, numberOfNewLines: nodeOne.numberOfNewlines, change: this });
-        break;
-      }
-
-      case ChangeType.addition: {
-        const { range, index } = getDataForChange(nodeOne!);
-        this.rangeB = range;
-        this.indexB = index;
-
-        this.numberOfNewLines = nodeOne.numberOfNewlines
-
-        // Alignment for additions:
-        //
-        // A          B
-        // ------------
-        // y          x
-        //            y
-        //            z
-        // With alignment
-        //
-        // A          B
-        // ------------
-        // -          x
-        // y          y
-        // -          z
-        // _context.offsetTracker.add(Side.a, { type: ChangeType.addition, index, numberOfNewLines: nodeOne.numberOfNewlines, change: this });
-        break;
-      }
-
-      default:
-        fail(`Unexpected change type ${type}`);
+    if (type === ChangeType.move) {
+      this.indexesA = indexesOne
+      this.indexesB = indexesTwo!
+    } else if (type === ChangeType.deletion) {
+      this.indexesA = indexesOne
+    } else {
+      this.indexesB = indexesOne
     }
 
+    const { iterA, iterB } = _context
+
     if (type & TypeMasks.DelOrMove) {
-      assert(this.rangeA, () => "Range A is not present on change creation");
+      assert(this.indexesA.length)
+      this.rangeA = getRange(iterA, this.indexesA)
     }
 
     if (type & TypeMasks.AddOrMove) {
-      assert(this.rangeB, () => "Range B is not present on change creation");
+      assert(this.indexesB.length)
+      this.rangeB = getRange(iterB, this.indexesB)
+
     }
 
     // TODO-NOW adds and dels will have the same index if no move is in between
     this.index = _context.matches.length;
   }
 
+  // TODO-NOW Duplicated code
+
+  getWeight(): number {
+    const side = this.indexesA?.length ? Side.a : Side.b
+    const indexes = side === Side.a ? this.indexesA : this.indexesB
+    const iter = side === Side.a ? _context.iterA : _context.iterB
+
+    return arraySum(indexes!.map(i => iter.textNodes[i].text.length))
+  }
+
+  // TODO-NOW Duplicated code
+
+  getNewLines(): number {
+    const side = this.indexesA?.length ? Side.a : Side.b
+    const indexes = side === Side.a ? this.indexesA : this.indexesB
+    const iter = side === Side.a ? _context.iterA : _context.iterB
+
+    return arraySum(indexes!.map(i => iter.textNodes[i].numberOfNewlines))
+  }
+
   applyOffset() {
     const { offsetTracker } = _context
     if (this.type === ChangeType.deletion) {
-      _context.offsetTracker.add(Side.b, { type: ChangeType.deletion, index: offsetTracker.getOffset(Side.a, this.indexA), numberOfNewLines: this.numberOfNewLines, change: this });
+      // Alignment for deletions:
+      //
+      // A          B
+      // ------------
+      // 1          2
+      // 2
+      //
+      // With alignment
+      //
+      // A          B
+      // ------------
+      // 1          -
+      // 2          2
+      this.indexesA!.map(index => {
+        _context.offsetTracker.add(Side.b, { type: ChangeType.deletion, index: offsetTracker.getOffset(Side.a, index), numberOfNewLines: this.getNewLines(), change: this });
+      })
+
     } else {
-      _context.offsetTracker.add(Side.a, { type: ChangeType.addition, index: offsetTracker.getOffset(Side.b, this.indexB), numberOfNewLines: this.numberOfNewLines, change: this });
+      // Alignment for additions:
+      //
+      // A          B
+      // ------------
+      // y          x
+      //            y
+      //            z
+      // With alignment
+      //
+      // A          B
+      // ------------
+      // -          x
+      // y          y
+      // -          z
+      this.indexesB!.map(index => {
+        _context.offsetTracker.add(Side.a, { type: ChangeType.addition, index: offsetTracker.getOffset(Side.b, index), numberOfNewLines: this.getNewLines(), change: this });
+      })
     }
   }
 
@@ -241,5 +236,15 @@ export function tryMergeRanges(
       start: newStart,
       end: newEnd,
     };
+  }
+}
+
+function getRange(iter: Iterator, indexes: number[]): Range {
+  const startIndex = indexes.at(0)!
+  const endIndex = indexes.at(-1)!
+
+  return {
+    start: iter.textNodes[startIndex].start,
+    end: iter.textNodes[endIndex].end,
   }
 }

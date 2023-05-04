@@ -66,15 +66,9 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
       return applyChangesToSources(sourceA, sourceB, changes) as any;
     }
 
-    // case OutputType.prettyText: {
-    //   // deno-lint-ignore no-explicit-any
-    //   return applyChangesToSources(sourceA, sourceB, changes, prettyRenderFn) as any;
-    // }
-
     case OutputType.prettyText: {
-      const alignedResult = applyAlignments(sourceA, sourceB, changes, _context.offsetTracker)
       // deno-lint-ignore no-explicit-any
-      return applyChangesToSources(alignedResult.sourceA, alignedResult.sourceB, alignedResult.changes, prettyRenderFn) as any;
+      return applyChangesToSources(sourceA, sourceB, changes, prettyRenderFn) as any;
     }
 
     case OutputType.alignedText: {

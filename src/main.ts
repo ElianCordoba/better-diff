@@ -5,7 +5,6 @@ import { Change, compactChanges } from "./change";
 import { _context } from "./index";
 import { Node } from "./node";
 import { assert } from "./debug";
-import { AlignmentTable } from "./alignmentTable";
 import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from "./sequence";
 import { OpenCloseVerifier } from "./openCloseVerifier";
 import { OffsetTracker } from "./offsetTracker";
@@ -62,8 +61,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         iterB.mark(b.index, ChangeType.addition);
 
         changes.push(
-          new Change(ChangeType.deletion, a),
-          new Change(ChangeType.addition, b),
+          new Change(ChangeType.deletion, [a.index]),
+          new Change(ChangeType.addition, [b.index]),
         );
 
         // We need to ensure that we the closing one is matched as well. Also, a == b, so no need to check if b is an open node
@@ -101,7 +100,12 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 }
 
 function processAddAndDel(additions: Change[], deletions: Change[]) {
-  const unifiedList = [...additions, ...deletions].sort((a, b) => (a.indexA || a.indexB) < (b.indexA || b.indexB) ? -1 : 1)
+  const unifiedList = [...additions, ...deletions].sort((a, b) => {
+    const indexA = (a.indexesA?.[0] || a.indexesB?.[0])!
+    const indexB = (b.indexesA?.[0] || b.indexesB?.[0])!
+
+    return indexA < indexB ? -1 : 1
+  })
 
   for (const change of unifiedList) {
     change.applyOffset()
@@ -134,7 +138,7 @@ function processAddAndDel(additions: Change[], deletions: Change[]) {
 function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
   const changes: Change[] = [];
 
-  const sortedMatches = matches.sort((a, b) => a.weight < b.weight ? 1 : -1);
+  const sortedMatches = matches.sort((a, b) => a.getWeight() < b.getWeight() ? 1 : -1);
 
   // If a match contains opening nodes, it's necessary to process the closing counterpart in the same way.
   // For instance, a match resulting in an "(" being moved, should have the matching ")" being reported as moved as well.
@@ -152,8 +156,8 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
       matchesToIgnore.push(...match.indexesOfClosingMoves);
     }
 
-    const indexA = offsetTracker.getOffset(Side.a, match.indexA);
-    const indexB = offsetTracker.getOffset(Side.b, match.indexB);
+    const indexA = offsetTracker.getOffset(Side.a, match.indexesA![0]);
+    const indexB = offsetTracker.getOffset(Side.b, match.indexesB![0]);
 
     // If the nodes are aligned after calculating the offset means that there is no extra work needed
     if (indexA === indexB) {
@@ -188,14 +192,14 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
       const indexDiff = Math.abs(indexA - indexB);
 
       for (const i of range(startIndex, startIndex + indexDiff)) {
-        offsetTracker.add(sideToAlignStart, { type: ChangeType.move, index: i, numberOfNewLines: match.numberOfNewLines });
+        offsetTracker.add(sideToAlignStart, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
       }
 
       const sideToAlignEnd = oppositeSide(sideToAlignStart);
       const endIndex = (sideToAlignEnd === Side.a ? indexA : indexB) + 1;
 
       for (const i of range(endIndex, endIndex + indexDiff)) {
-        offsetTracker.add(sideToAlignEnd, { type: ChangeType.move, index: i, numberOfNewLines: match.numberOfNewLines });
+        offsetTracker.add(sideToAlignEnd, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
       }
     } else {
       if (match.indexesOfClosingMoves.length) {
@@ -221,9 +225,9 @@ function oneSidedIteration(
   // TODO: Compact
   while (value) {
     if (typeOfChange === ChangeType.addition) {
-      changes.push(new Change(typeOfChange, value));
+      changes.push(new Change(typeOfChange, [value.index]));
     } else {
-      changes.push(new Change(typeOfChange, value));
+      changes.push(new Change(typeOfChange, [value.index]));
     }
 
     iter.mark(value.index, typeOfChange, true);
@@ -294,17 +298,11 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     });
   }
 
-  // deno-lint-ignore no-explicit-any
-  const dummyNodeA = { range: rangeA, index: ogIndexA } as any as Node;
-  // deno-lint-ignore no-explicit-any
-  const dummyNodeB = { range: rangeB, index: ogIndexB } as any as Node;
   matches.push(
     new Change(
       ChangeType.move,
-      dummyNodeA,
-      dummyNodeB,
-      matchWeight,
-      numberOfNewLines
+      [ogIndexA],
+      [ogIndexB],
     ),
   );
 
@@ -319,7 +317,7 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSRe
 
   // Report deletion if applicable
   if (candidateOppositeSide.length === 0) {
-    const changes = [new Change(ChangeType.deletion, startNode)];
+    const changes = [new Change(ChangeType.deletion, [startNode.index])];
     iterA.mark(startNode.index, ChangeType.deletion);
 
     // TODO: Maybe add the open/close here?
