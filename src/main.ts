@@ -218,16 +218,11 @@ function oneSidedIteration(
 
   let value = iter.next(startFrom);
 
-  // ALIGNMENT const { alignmentTable } = _context;
-
   // TODO: Compact
   while (value) {
-    /// Alignment: Addition / Deletion ///
     if (typeOfChange === ChangeType.addition) {
-      // TODO: ALIGNMENT alignmentTable.add(Side.a, value.lineNumberStart, value.text.length);
       changes.push(new Change(typeOfChange, value));
     } else {
-      // TODO: ALIGNMENT alignmentTable.add(Side.b, value.lineNumberStart, value.text.length);
       changes.push(new Change(typeOfChange, value));
     }
 
@@ -260,9 +255,6 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   const ogIndexA = a.index
   const ogIndexB = b.index
 
-  const { alignmentTable } = _context;
-  const localAlignmentTable = new AlignmentTable();
-
   const verifier = new OpenCloseVerifier(iterA, iterB);
 
   let i = 0;
@@ -284,44 +276,6 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
     // Used for the open-close node correctness
     verifier.track(a);
-
-    /// Alignment: Move ///
-
-    textMatched += a.text;
-
-    const _startA = a.lineNumberStart - startA;
-    const _startB = b.lineNumberStart - startB;
-
-    let alignmentHappened = false;
-
-    const linesDiff = Math.abs(_startA - _startB);
-    if (linesDiff !== 0) {
-      alignmentHappened = true;
-
-      // It's a guarantee that both "a" and "b" text are of the same length here
-      const length = a.text.length;
-
-      if (_startA < _startB) {
-        localAlignmentTable.add(Side.a, b.lineNumberStart, length);
-      } else {
-        localAlignmentTable.add(Side.b, a.lineNumberStart, length);
-      }
-    }
-
-    const triviaLinesDiff = Math.abs(a.triviaLinesAbove - b.triviaLinesAbove);
-    if (!alignmentHappened && triviaLinesDiff !== 0) {
-      if (a.triviaLinesAbove < b.triviaLinesAbove) {
-        for (const i of range(a.lineNumberStart, a.lineNumberStart + triviaLinesDiff)) {
-          alignmentTable.add(Side.a, i);
-        }
-      } else {
-        for (const i of range(b.lineNumberStart, b.lineNumberStart + triviaLinesDiff)) {
-          alignmentTable.add(Side.b, i);
-        }
-      }
-    }
-
-    /// Alignment end ///
 
     rangeA = mergeRanges(rangeA, a.getRange());
     rangeB = mergeRanges(rangeB, b.getRange());

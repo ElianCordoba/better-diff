@@ -2,7 +2,6 @@ import { _context } from ".";
 import { Change } from "./change";
 import { assert } from "./debug";
 import { Node } from "./node";
-import { SortedMap } from "./sortedMap";
 import { ChangeType, Side } from "./types";
 import { oppositeSide, range } from "./utils";
 
