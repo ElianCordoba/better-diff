@@ -85,13 +85,11 @@ export class Change<Type extends ChangeType = ChangeType> {
   }
 
   getFirstIndex(side?: Side) {
-    const _side = side ? side : this.type === ChangeType.deletion ? Side.a : Side.b
-    return this.getIndex(_side, 0)
+    return this.getIndex(this.getSide(side), 0)
   }
 
   getLastIndex(side?: Side) {
-    const _side = side ? side : this.type === ChangeType.deletion ? Side.a : Side.b
-    return this.getIndex(_side, -1)
+    return this.getIndex(this.getSide(side), -1)
   }
 
   private getIndex(side: Side, position: number): number {
@@ -100,8 +98,12 @@ export class Change<Type extends ChangeType = ChangeType> {
     return indexes.at(position)!
   }
 
-  private getSide(): Side {
-    return this.indexesA.length ? Side.a : Side.b
+  private getSide(passedInSide?: Side): Side {
+    if (passedInSide) {
+      return passedInSide
+    } else {
+      return this.type === ChangeType.deletion ? Side.a : Side.b
+    }
   }
 
   applyOffset() {
