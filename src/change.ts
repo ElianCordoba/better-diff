@@ -26,6 +26,8 @@ export class Change<Type extends ChangeType = ChangeType> {
     if (type === ChangeType.move) {
       this.indexesA = indexesOne
       this.indexesB = indexesTwo!
+
+      assert(this.indexesA.length === this.indexesB.length)
     } else if (type === ChangeType.deletion) {
       this.indexesA = indexesOne
     } else {
@@ -42,7 +44,6 @@ export class Change<Type extends ChangeType = ChangeType> {
     if (type & TypeMasks.AddOrMove) {
       assert(this.indexesB.length)
       this.rangeB = getRange(iterB, this.indexesB)
-
     }
 
     // TODO-NOW adds and dels will have the same index if no move is in between

@@ -147,6 +147,10 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
 
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of sortedMatches) {
+    if (!areNewLinesIdentical(match.indexesA, match.indexesB)) {
+      console.log('WIP')
+    }
+
     if (matchesToIgnore.includes(match.index)) {
       continue;
     }
@@ -211,6 +215,23 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
   }
 
   return changes;
+}
+
+function areNewLinesIdentical(indexesA: number[], indexesB: number[]): boolean {
+  const { iterA, iterB } = _context
+  for (let i = 0; i < indexesA.length; i++) {
+    const indexA = indexesA[i]
+    const indexB = indexesB[i]
+
+    const nodeA = iterA.textNodes.at(indexA)!
+    const nodeB = iterB.textNodes.at(indexB)!
+
+    if (nodeA.numberOfNewlines !== nodeB.numberOfNewlines) {
+      return false
+    }
+  }
+
+  return true
 }
 
 function oneSidedIteration(
