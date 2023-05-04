@@ -246,11 +246,8 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   let a = iterA.next(indexA)!;
   let b = iterB.next(indexB)!;
 
-  let rangeA = a.getRange();
-  let rangeB = b.getRange();
-
-  const ogIndexA = a.index
-  const ogIndexB = b.index
+  const indexesA: number[] = []
+  const indexesB: number[] = []
 
   const verifier = new OpenCloseVerifier(iterA, iterB);
 
@@ -266,20 +263,20 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     indexA++;
     indexB++;
 
+    indexesA.push(a.index)
+    indexesB.push(b.index)
+
     assert(equals(a, b), () => `Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
 
     // Used for the open-close node correctness
     verifier.track(a);
-
-    rangeA = mergeRanges(rangeA, a.getRange());
-    rangeB = mergeRanges(rangeB, b.getRange());
   }
 
   matches.push(
     new Change(
       ChangeType.move,
-      [ogIndexA],
-      [ogIndexB],
+      indexesA,
+      indexesB,
     ),
   );
 
