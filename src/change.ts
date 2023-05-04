@@ -14,7 +14,6 @@ export class Change<Type extends ChangeType = ChangeType> {
   indexB = -1;
 
   index: number;
-  numberOfNewLinesAlignment = 0
 
   // This is used when processing matches, if the move contains an odd number of opening nodes, one or move closing nodes
   // moves will be created we store their indexes here. More information in the "processMoves" fn
@@ -26,6 +25,7 @@ export class Change<Type extends ChangeType = ChangeType> {
     nodeTwo?: Node,
     // More characters the change involved the more weight
     public weight = 0,
+    public numberOfNewLines = 0
   ) {
     switch (type) {
       case ChangeType.move: {
@@ -46,7 +46,7 @@ export class Change<Type extends ChangeType = ChangeType> {
         this.rangeA = range;
         this.indexA = index;
 
-        this.numberOfNewLinesAlignment = nodeOne.numberOfNewlines
+        this.numberOfNewLines = nodeOne.numberOfNewlines
 
         // Alignment for deletions:
         //
@@ -70,7 +70,7 @@ export class Change<Type extends ChangeType = ChangeType> {
         this.rangeB = range;
         this.indexB = index;
 
-        this.numberOfNewLinesAlignment = nodeOne.numberOfNewlines
+        this.numberOfNewLines = nodeOne.numberOfNewlines
 
         // Alignment for additions:
         //
@@ -109,9 +109,9 @@ export class Change<Type extends ChangeType = ChangeType> {
   applyOffset() {
     const { offsetTracker } = _context
     if (this.type === ChangeType.deletion) {
-      _context.offsetTracker.add(Side.b, { type: ChangeType.deletion, index: offsetTracker.getOffset(Side.a, this.indexA), numberOfNewLines: this.numberOfNewLinesAlignment, change: this });
+      _context.offsetTracker.add(Side.b, { type: ChangeType.deletion, index: offsetTracker.getOffset(Side.a, this.indexA), numberOfNewLines: this.numberOfNewLines, change: this });
     } else {
-      _context.offsetTracker.add(Side.a, { type: ChangeType.addition, index: offsetTracker.getOffset(Side.b, this.indexB), numberOfNewLines: this.numberOfNewLinesAlignment, change: this });
+      _context.offsetTracker.add(Side.a, { type: ChangeType.addition, index: offsetTracker.getOffset(Side.b, this.indexB), numberOfNewLines: this.numberOfNewLines, change: this });
     }
   }
 

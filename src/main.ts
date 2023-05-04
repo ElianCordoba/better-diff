@@ -188,14 +188,14 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
       const indexDiff = Math.abs(indexA - indexB);
 
       for (const i of range(startIndex, startIndex + indexDiff)) {
-        offsetTracker.add(sideToAlignStart, { type: ChangeType.move, index: i, numberOfNewLines: 1 });
+        offsetTracker.add(sideToAlignStart, { type: ChangeType.move, index: i, numberOfNewLines: match.numberOfNewLines });
       }
 
       const sideToAlignEnd = oppositeSide(sideToAlignStart);
       const endIndex = (sideToAlignEnd === Side.a ? indexA : indexB) + 1;
 
       for (const i of range(endIndex, endIndex + indexDiff)) {
-        offsetTracker.add(sideToAlignEnd, { type: ChangeType.move, index: i, numberOfNewLines: 1 });
+        offsetTracker.add(sideToAlignEnd, { type: ChangeType.move, index: i, numberOfNewLines: match.numberOfNewLines });
       }
     } else {
       if (match.indexesOfClosingMoves.length) {
@@ -255,6 +255,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
   let textMatched = "";
   let matchWeight = 0;
+  let numberOfNewLines = 0
 
   const ogIndexA = a.index
   const ogIndexB = b.index
@@ -277,6 +278,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     indexB++;
 
     matchWeight += a.text.length;
+    numberOfNewLines += a.numberOfNewlines
 
     assert(equals(a, b), () => `Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
 
@@ -348,6 +350,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
       dummyNodeA,
       dummyNodeB,
       matchWeight,
+      numberOfNewLines
     ),
   );
 
