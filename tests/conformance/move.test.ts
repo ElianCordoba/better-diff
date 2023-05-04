@@ -23,6 +23,26 @@ describe("Properly report lines added", () => {
   })
 
   test({
+    name: "Simple move 2",
+    a: `
+      1 2
+      1
+    `,
+    b: `
+      1
+      1 2
+    `,
+    expA: `
+      1 2
+      🔀1⏹️
+    `,
+    expB: `
+      🔀1⏹️
+      1 2
+    `
+  })
+
+  test({
     name: "Multi characters move 2",
     a: `
       console.log()
