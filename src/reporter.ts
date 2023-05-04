@@ -340,7 +340,7 @@ function insertAlignments(side: Side, changes: Change[], offsets: OffsetsMap, so
     // TODO-NOW usar splice
     source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
 
-    updateChanges(changes, side, insertAt)
+    updateChanges(changes, offset.change?.index!, side, insertAt)
   }
 
   return source
@@ -367,7 +367,7 @@ function findPointToInsertAlignment(iter: Iterator, offsettedIndexes: (Node | un
 // Iterate for each change
 // Only take the ones with the proper range
 // Only take the ones that happen after the start pos
-function updateChanges(changes: Change[], sideToUpdate: Side, startPosition: number) {
+function updateChanges(changes: Change[], currentChange: number, sideToUpdate: Side, startPosition: number) {
   const alignmentText = getOptions().alignmentText
 
   // Side where the alignment happened, thus the side we need to recalculate the ranges of the changes
@@ -375,6 +375,10 @@ function updateChanges(changes: Change[], sideToUpdate: Side, startPosition: num
   const rangeToUpdate = sideToUpdate === Side.a ? 'rangeA' : 'rangeB'
 
   for (let i = 0; i < changes.length; i++) {
+    // Don't update the change we just applied
+    if (i === currentChange) {
+      continue
+    }
     const change = changes[i]
     // Skip type of changes we don't want
     if (change.type === changesToSkip) {
