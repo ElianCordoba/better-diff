@@ -101,8 +101,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 
 function processAddAndDel(additions: Change[], deletions: Change[]) {
   const unifiedList = [...additions, ...deletions].sort((a, b) => {
-    const indexA = (a.indexesA?.[0] || a.indexesB?.[0])!
-    const indexB = (b.indexesA?.[0] || b.indexesB?.[0])!
+    const indexA = a.getFirstIndex()
+    const indexB = b.getFirstIndex()
 
     return indexA < indexB ? -1 : 1
   })
@@ -156,8 +156,8 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
       matchesToIgnore.push(...match.indexesOfClosingMoves);
     }
 
-    const indexA = offsetTracker.getOffset(Side.a, match.indexesA![0]);
-    const indexB = offsetTracker.getOffset(Side.b, match.indexesB![0]);
+    const indexA = offsetTracker.getOffset(Side.a, match.getLastIndex(Side.a));
+    const indexB = offsetTracker.getOffset(Side.b, match.getLastIndex(Side.b));
 
     // If the nodes are aligned after calculating the offset means that there is no extra work needed
     if (indexA === indexB) {

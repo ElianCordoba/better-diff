@@ -51,22 +51,57 @@ export class Change<Type extends ChangeType = ChangeType> {
 
   // TODO-NOW Duplicated code
 
+  _weight!: number;
   getWeight(): number {
-    const side = this.indexesA?.length ? Side.a : Side.b
+    if (this._weight) {
+      return this._weight
+    }
+
+    const side = this.getSide()
     const indexes = side === Side.a ? this.indexesA : this.indexesB
     const iter = side === Side.a ? _context.iterA : _context.iterB
 
-    return arraySum(indexes!.map(i => iter.textNodes[i].text.length))
+    this._weight = arraySum(indexes!.map(i => iter.textNodes[i].text.length))
+
+    return this._weight
+
   }
 
   // TODO-NOW Duplicated code
 
+  _newLines!: number;
   getNewLines(): number {
-    const side = this.indexesA?.length ? Side.a : Side.b
+    if (this._newLines) {
+      return this._newLines
+    }
+
+    const side = this.getSide()
     const indexes = side === Side.a ? this.indexesA : this.indexesB
     const iter = side === Side.a ? _context.iterA : _context.iterB
 
-    return arraySum(indexes!.map(i => iter.textNodes[i].numberOfNewlines))
+    this._newLines = arraySum(indexes!.map(i => iter.textNodes[i].numberOfNewlines))
+
+    return this._newLines
+  }
+
+  getFirstIndex(side?: Side) {
+    const _side = side ? side : this.type === ChangeType.deletion ? Side.a : Side.b
+    return this.getIndex(_side, 0)
+  }
+
+  getLastIndex(side?: Side) {
+    const _side = side ? side : this.type === ChangeType.deletion ? Side.a : Side.b
+    return this.getIndex(_side, -1)
+  }
+
+  private getIndex(side: Side, position: number): number {
+    const indexes = side === Side.a ? this.indexesA : this.indexesB
+
+    return indexes.at(position)!
+  }
+
+  private getSide(): Side {
+    return this.indexesA.length ? Side.a : Side.b
   }
 
   applyOffset() {
