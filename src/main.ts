@@ -156,8 +156,8 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
       matchesToIgnore.push(...match.indexesOfClosingMoves);
     }
 
-    const indexA = offsetTracker.getOffset(Side.a, match.getLastIndex(Side.a));
-    const indexB = offsetTracker.getOffset(Side.b, match.getLastIndex(Side.b));
+    const indexA = offsetTracker.getOffset(Side.a, match.getFirstIndex(Side.a));
+    const indexB = offsetTracker.getOffset(Side.b, match.getFirstIndex(Side.b));
 
     // If the nodes are aligned after calculating the offset means that there is no extra work needed
     if (indexA === indexB) {
@@ -249,13 +249,6 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   let rangeA = a.getRange();
   let rangeB = b.getRange();
 
-  const startA = a.lineNumberStart;
-  const startB = b.lineNumberStart;
-
-  let textMatched = "";
-  let matchWeight = 0;
-  let numberOfNewLines = 0
-
   const ogIndexA = a.index
   const ogIndexB = b.index
 
@@ -273,9 +266,6 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     indexA++;
     indexB++;
 
-    matchWeight += a.text.length;
-    numberOfNewLines += a.numberOfNewlines
-
     assert(equals(a, b), () => `Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
 
     // Used for the open-close node correctness
@@ -283,19 +273,6 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
     rangeA = mergeRanges(rangeA, a.getRange());
     rangeB = mergeRanges(rangeB, b.getRange());
-  }
-
-  const endA = a.lineNumberEnd;
-  const endB = b.lineNumberEnd;
-
-  if (startA !== startB || endA !== endB) {
-    _context.alignmentsOfMoves.push({
-      startA,
-      startB,
-      endA,
-      endB,
-      text: textMatched,
-    });
   }
 
   matches.push(
