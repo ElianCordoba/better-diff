@@ -1,5 +1,5 @@
 import { ChangeType, Side } from "./types";
-import { equals, getSequence, mergeRanges, normalize, oppositeSide, range } from "./utils";
+import { equals, getSequence, getSideFromType, mergeRanges, normalize, oppositeSide, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change, compactChanges } from "./change";
 import { _context } from "./index";
@@ -7,13 +7,13 @@ import { Node } from "./node";
 import { assert } from "./debug";
 import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from "./sequence";
 import { OpenCloseVerifier } from "./openCloseVerifier";
-import { OffsetTracker } from "./offsetTracker";
+import { OffsetTracker, Offset } from "./offsetTracker";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
 
-  const iterA = new Iterator({ side: Side.a, source: codeA, name: Side.a });
-  const iterB = new Iterator({ side: Side.a, source: codeB, name: Side.b });
+  const iterA = new Iterator({ side: Side.a, source: codeA });
+  const iterB = new Iterator({ side: Side.b, source: codeB });
 
   _context.iterA = iterA;
   _context.iterB = iterB;
@@ -147,8 +147,16 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
 
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of sortedMatches) {
-    if (!areNewLinesIdentical(match.indexesA, match.indexesB)) {
-      console.log('WIP')
+    const identicalNewLines = getNewLinesDifferences(match)
+    if (identicalNewLines.length) {
+      // TODO-NOW: It's hardcoded that we will insert the alignment bellow the node, this should see which parts has the most weight
+
+      for (const discrepancy of identicalNewLines) {
+        const side = getSideFromType(discrepancy.type)
+        // TODO-SUPER-NOW: Recalc offsets??? si agrego arriba de uno recalcular pa abajo
+        offsetTracker.add(side, discrepancy)
+      }
+
     }
 
     if (matchesToIgnore.includes(match.index)) {
@@ -217,8 +225,14 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
   return changes;
 }
 
-function areNewLinesIdentical(indexesA: number[], indexesB: number[]): boolean {
+function getNewLinesDifferences(match: Change): Offset[] {
+  const { indexesA, indexesB } = match
   const { iterA, iterB } = _context
+
+  let insertionPointA = indexesA.at(-1)!
+  let insertionPointB = indexesB.at(-1)!
+
+  const discrepancies: Offset[] = []
   for (let i = 0; i < indexesA.length; i++) {
     const indexA = indexesA[i]
     const indexB = indexesB[i]
@@ -227,11 +241,32 @@ function areNewLinesIdentical(indexesA: number[], indexesB: number[]): boolean {
     const nodeB = iterB.textNodes.at(indexB)!
 
     if (nodeA.numberOfNewlines !== nodeB.numberOfNewlines) {
-      return false
+      const difference = Math.abs(nodeA.numberOfNewlines - nodeB.numberOfNewlines)
+      let index: number;
+      let type: ChangeType;
+
+      // We insert alignments on the side with the least new lines
+      if (nodeA.numberOfNewlines < nodeB.numberOfNewlines) {
+        insertionPointA++
+        index = insertionPointA
+
+        type = ChangeType.deletion
+      } else {
+        insertionPointB++
+        index = insertionPointB
+        type = ChangeType.addition
+      }
+
+      discrepancies.push({
+        index,
+        type,
+        numberOfNewLines: difference,
+        change: match
+      })
     }
   }
 
-  return true
+  return discrepancies
 }
 
 function oneSidedIteration(

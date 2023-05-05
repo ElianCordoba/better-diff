@@ -337,8 +337,9 @@ function insertAlignments(side: Side, changes: Change[], offsets: OffsetsMap, so
 
     const insertAt = findPointToInsertAlignment(iter, _offsetsFilled, offset.index)
 
-    // TODO-NOW usar splice
-    source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
+    for (const _ of range(0, offset.numberOfNewLines)) {
+      source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
+    }
 
     // updateChanges(changes, offset.change?.index!, side, insertAt)
     updateChanges(changes, side, insertAt)
