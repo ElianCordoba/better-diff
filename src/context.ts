@@ -14,9 +14,6 @@ interface ContextValues {
 
   matches: Change[];
   offsetTracker: OffsetTracker;
-
-  alignmentTable: AlignmentTable;
-  alignmentsOfMoves: MoveAlignmentInfo[];
 }
 
 export class Context implements ContextValues {
@@ -26,8 +23,6 @@ export class Context implements ContextValues {
 
   matches: Change<ChangeType.move>[];
   offsetTracker: OffsetTracker;
-  alignmentTable: AlignmentTable;
-  alignmentsOfMoves: MoveAlignmentInfo[];
 
   constructor(
     public sourceA: string,
@@ -35,7 +30,5 @@ export class Context implements ContextValues {
   ) {
     this.offsetTracker = new OffsetTracker();
     this.matches = [];
-    this.alignmentTable = new AlignmentTable();
-    this.alignmentsOfMoves = [];
   }
 }
