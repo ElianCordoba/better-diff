@@ -38,14 +38,20 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
     const lineNumberStart = 0; // TODO ALIGNMENT = getLineNumber(sourceFile, start);
     const lineNumberEnd = 0; // TODO ALIGNMENT = getLineNumber(sourceFile, node.end);
 
-    // TODO: This was disabled because it was too expensive, enable when we work on the code-alignment algo again
-    // const leadingTriviaHasNewLine = node.getFullText().split("\n").length > 1;
-    const triviaLinesAbove = 0; //leadingTriviaHasNewLine ? getTriviaLinesAbove(source, lineNumberStart) : 0;
-
-
     const numberOfNewlines = node.getFullText().match(/\n/g)?.length || 0
 
-    const newNode = new Node({ side, fullStart: node.pos, start, end: node.end, kind: node.kind, text: node.getText(), lineNumberStart, lineNumberEnd, triviaLinesAbove, mode, numberOfNewlines });
+    const newNode = new Node({
+      mode,
+      side,
+      fullStart: node.pos,
+      start,
+      end: node.end,
+      kind: node.kind,
+      text: node.getText(),
+      lineNumberStart,
+      lineNumberEnd,
+      numberOfNewlines
+    });
 
     const isClosingNode = node.kind === ts.SyntaxKind.CloseBraceToken ||
       node.kind === ts.SyntaxKind.CloseBracketToken ||

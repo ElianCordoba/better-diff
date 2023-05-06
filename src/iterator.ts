@@ -243,7 +243,7 @@ export class Iterator {
   }
 
   printPositionInfo() {
-    console.log(`${colorFn.blue("index")} | ${colorFn.green("line")} | ${colorFn.white("trivia")} |  ${colorFn.magenta("pos")}  | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
+    console.log(`${colorFn.blue("index")} | ${colorFn.green("line")} |  ${colorFn.magenta("pos")}  | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
     const list: string[] = [];
 
@@ -254,7 +254,6 @@ export class Iterator {
 
       const lineStart = node.lineNumberStart;
       const lineEnd = node.lineNumberEnd;
-      const triviaLines = String(node.triviaLinesAbove).padStart(5).padEnd(8);
 
       const line = `${lineStart}-${lineEnd} `.padStart(5).padEnd(6);
 
@@ -264,7 +263,7 @@ export class Iterator {
       const _kind = kind.padStart(5).padEnd(25);
       const _text = ` ${text}`;
 
-      const row = `${index}|${line}|${triviaLines}|${pos}|${colorFn(_kind)}|${_text}`;
+      const row = `${index}|${line}|${pos}|${colorFn(_kind)}|${_text}`;
 
       if (node.index === this.indexOfLastItem) {
         colorFn = k.cyan;
