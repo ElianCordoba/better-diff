@@ -223,7 +223,10 @@ function findPointToInsertAlignment(iter: Iterator, offsettedIndexes: (Node | un
     const current = offsettedIndexes[currentIndex]
 
     if (current) {
-      return iter.textNodes[currentIndex].end
+      const node = iter.textNodes[currentIndex];
+      const lineToInsert = node.lineNumberStart === 0 ? 0 : node.lineNumberStart
+      const startOfLine = _context.lineMapNodeTable[iter.side].get(lineToInsert)!
+      return startOfLine
     }
 
     currentIndex--

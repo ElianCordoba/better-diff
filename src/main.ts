@@ -226,6 +226,7 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
 }
 
 function getNewLinesDifferences(match: Change): Offset[] {
+  return []
   const { indexesA, indexesB } = match
   const { iterA, iterB } = _context
 
@@ -248,11 +249,13 @@ function getNewLinesDifferences(match: Change): Offset[] {
       // We insert alignments on the side with the least new lines
       if (nodeA.numberOfNewlines < nodeB.numberOfNewlines) {
         insertionPointA++
+        // index = lineMapNodeTable[Side.a].get(nodeA.lineNumberStart)!
         index = insertionPointA
 
         type = ChangeType.deletion
       } else {
         insertionPointB++
+        // index = lineMapNodeTable[Side.b].get(nodeB.lineNumberStart)!
         index = insertionPointB
         type = ChangeType.addition
       }

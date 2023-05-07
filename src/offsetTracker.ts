@@ -160,7 +160,7 @@ export class OffsetTracker {
   getFilledOffsettedIndexes(side: Side) {
     const iter = side === Side.a ? _context.iterA : _context.iterB
 
-    const nodes: (Node | undefined)[] = iter.textNodes
+    const nodes: (Node | undefined)[] = [...iter.textNodes]
 
     const offsets = this.getSide(side)
 

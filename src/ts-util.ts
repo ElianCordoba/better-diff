@@ -2,7 +2,7 @@ import ts, { SourceFile } from "typescript";
 import { Node } from "./node";
 import { assert } from "./debug";
 import { k } from "./reporter";
-import { getOptions } from ".";
+import { _context, getOptions } from ".";
 import { KindTable, Side } from "./types";
 
 type TSNode = ts.Node & { text: string };
@@ -35,7 +35,7 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
     // value of the node starts and not where the trivia starts
     const start = node.pos + node.getLeadingTriviaWidth();
 
-    const lineNumberStart = 0; // TODO ALIGNMENT = getLineNumber(sourceFile, start);
+    const lineNumberStart = getLineNumber(sourceFile, start);
     const lineNumberEnd = 0; // TODO ALIGNMENT = getLineNumber(sourceFile, node.end);
 
     const numberOfNewlines = node.getFullText().match(/\n/g)?.length || 0
@@ -84,6 +84,15 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
 
   const kindTable: KindTable = new Map();
 
+  const { lineMapNodeTable } = _context
+  // const lineMap = getLineMap(source)
+
+  // let lineNumber = 1
+  // for (const startOfLine of lineMap) {
+  //   lineMapNodeTable[side].set(lineNumber, startOfLine)
+  //   lineNumber++
+  // }
+
   // TODO(Perf): Maybe do this inside the walk.
   // Before returning the result we need process the data one last time.
   let i = 0;
@@ -96,6 +105,10 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
       currentValue.add(i);
     } else {
       kindTable.set(node.kind, new Set([i]));
+    }
+
+    if (!lineMapNodeTable[side].has(node.lineNumberStart)) {
+      lineMapNodeTable[side].set(node.lineNumberStart, node.end)
     }
 
     i++;
@@ -116,54 +129,6 @@ function getSourceFile(source: string): SourceFile {
   );
 }
 
-function _getTriviaLinesAbove(source: string, startAt: number) {
-  const lines = getArrayOrLines(source);
-
-  // -1 because line numbers are 1-indexed
-  // -1 because we need to start from the previous line
-  let i = startAt - 1 - 1;
-
-  let triviaLines = 0;
-
-  // Iterate until there are positions to go back or we exit early
-  while (i >= 0) {
-    const prev = lines.at(i);
-
-    if (prev?.trim() !== "") {
-      break;
-    }
-
-    triviaLines++;
-
-    // Go back further to keep checking previous lines
-    i--;
-  }
-
-  return triviaLines;
-}
-
-// Returns an array of lines of code
-function getArrayOrLines(source: string) {
-  const lineMap = getLineMap(source);
-
-  const lines: string[] = [];
-
-  // For each line, we cut the slice we need
-  for (let i = 0; i < lineMap.length; i++) {
-    // Cut starts where the line map indicates, including that position
-    const lineStart = lineMap[i];
-    // Cut ends either where the next line start, non inclusive or, if we are in the last line, we take the end of the string
-    const lineEnd = lineMap[i + 1] || source.length + 1;
-
-    const slice = source.slice(lineStart, lineEnd);
-    lines.push(slice);
-  }
-
-  assert(lines.length === lineMap.length, () => "Line number and line map length didn't match");
-
-  return lines;
-}
-
 // All the bellow defined functions are wrappers of TS functions. This is because the underling TS is marked as internal thus there is no type information available
 
 // An array of the positions (of characters) at which the lines in the source code start, for example:
@@ -175,7 +140,7 @@ export function getLineMap(source: string): number[] {
 }
 
 // Get the line number (1-indexed) of a given character
-function _getLineNumber(sourceFile: ts.SourceFile, pos: number) {
+function getLineNumber(sourceFile: ts.SourceFile, pos: number) {
   // deno-lint-ignore no-explicit-any
   return (ts as any).getLineAndCharacterOfPosition(sourceFile, pos).line + 1;
 }
