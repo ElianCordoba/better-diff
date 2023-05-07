@@ -85,13 +85,7 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
   const kindTable: KindTable = new Map();
 
   const { lineMapNodeTable } = _context
-  // const lineMap = getLineMap(source)
 
-  // let lineNumber = 1
-  // for (const startOfLine of lineMap) {
-  //   lineMapNodeTable[side].set(lineNumber, startOfLine)
-  //   lineNumber++
-  // }
 
   // TODO(Perf): Maybe do this inside the walk.
   // Before returning the result we need process the data one last time.
@@ -113,6 +107,19 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
 
     i++;
   }
+
+  const lineMap = getLineMap(source)
+
+  let lineNumber = 1
+  for (const startOfLine of lineMap) {
+    if (!lineMapNodeTable[side].has(lineNumber)) {
+      lineMapNodeTable[side].set(lineNumber, startOfLine)
+    }
+
+    lineNumber++
+  }
+
+  lineMapNodeTable[side] = new Map([...lineMapNodeTable[side]].sort())
 
   return {
     nodes,

@@ -172,6 +172,14 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
   const offsettedIndexesA = offsets.offsetsA
   const offsettedIndexesB = offsets.offsetsB
 
+  // for (const ofA of offsettedIndexesA.values()) {
+  //   const ofB = offsettedIndexesB.get(ofA.index)
+  //   if (ofB?.numberOfNewLines === ofA.numberOfNewLines) {
+  //     offsettedIndexesA.delete(ofA.index)
+  //     offsettedIndexesB.delete(ofA.index)
+  //   }
+  // }
+
   sourceA = insertAlignments(Side.a, changes, offsettedIndexesA, sourceA, _context.iterA)
   sourceB = insertAlignments(Side.b, changes, offsettedIndexesB, sourceB, _context.iterB)
 
@@ -200,6 +208,8 @@ function insertAlignments(side: Side, changes: Change[], offsets: OffsetsMap, so
 
     const insertAt = findPointToInsertAlignment(iter, _offsetsFilled, offset.index)
 
+    assert(insertAt !== undefined)
+
     for (const _ of range(0, offset.numberOfNewLines)) {
       source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
     }
@@ -223,10 +233,11 @@ function findPointToInsertAlignment(iter: Iterator, offsettedIndexes: (Node | un
     const current = offsettedIndexes[currentIndex]
 
     if (current) {
-      const node = iter.textNodes[currentIndex];
-      const lineToInsert = node.lineNumberStart === 0 ? 0 : node.lineNumberStart
-      const startOfLine = _context.lineMapNodeTable[iter.side].get(lineToInsert)!
-      return startOfLine
+      // const node = iter.textNodes[currentIndex];
+      // const lineToInsert = node.lineNumberStart === 0 ? 0 : node.lineNumberStart - 1
+      // const startOfLine = _context.lineMapNodeTable[iter.side].get(lineToInsert)!
+      // return startOfLine
+      return iter.textNodes[currentIndex].end
     }
 
     currentIndex--

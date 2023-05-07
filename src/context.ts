@@ -5,22 +5,15 @@ import { Iterator } from "./iterator";
 import { OffsetTracker } from "./offsetTracker";
 import { ChangeType } from "./types";
 
-interface ContextValues {
-  sourceA: string;
-  sourceB: string;
+// line number (1 based) -> node end
+type LineMapTable = Map<number, number>
 
-  iterA: Iterator;
-  iterB: Iterator;
-
-  matches: Change[];
-  offsetTracker: OffsetTracker;
-}
-
-export class Context implements ContextValues {
+export class Context {
   // Iterators will get stored once they are initialize, which happens later on the execution
   iterA!: Iterator;
   iterB!: Iterator;
 
+  lineMapNodeTable: { a: LineMapTable, b: LineMapTable } = { a: new Map(), b: new Map() }
   matches: Change<ChangeType.move>[];
   offsetTracker: OffsetTracker;
 

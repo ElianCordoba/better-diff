@@ -226,7 +226,6 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
 }
 
 function getNewLinesDifferences(match: Change): Offset[] {
-  return []
   const { indexesA, indexesB } = match
   const { iterA, iterB } = _context
 
