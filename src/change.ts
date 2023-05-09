@@ -1,11 +1,9 @@
 import { ChangeType, Range, Side, TypeMasks } from "./types";
 import { colorFn, getSourceWithChange } from "./reporter";
 import { _context } from "./index";
-import { assert, fail } from "./debug";
-import { arraySum, getDataForChange, getPrettyChangeType } from "./utils";
+import { assert } from "./debug";
+import { arraySum, getPrettyChangeType } from "./utils";
 import { Iterator, } from "./iterator";
-
-// deno-lint-ignore no-explicit-any
 export class Change<Type extends ChangeType = ChangeType> {
   rangeA: Range | undefined;
   rangeB: Range | undefined;

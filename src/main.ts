@@ -1,5 +1,5 @@
 import { ChangeType, Side } from "./types";
-import { equals, getSequence, getSideFromType, mergeRanges, normalize, oppositeSide, range } from "./utils";
+import { equals, getSequence, getSideFromType, normalize, oppositeSide, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change, compactChanges } from "./change";
 import { _context } from "./index";

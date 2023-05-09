@@ -1,6 +1,5 @@
 import ts, { SourceFile } from "typescript";
 import { Node } from "./node";
-import { assert } from "./debug";
 import { k } from "./reporter";
 import { _context, getOptions } from ".";
 import { KindTable, Side } from "./types";

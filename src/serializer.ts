@@ -35,7 +35,7 @@ export function serialize(
       }
 
       case ChangeType.move: {
-        const moveNumber = _context.iterA.textNodes[indexesA!?.at(0)!].matchNumber;
+        const moveNumber = _context.iterA.textNodes[indexesA?.at(0)!].matchNumber;
         markChars(RenderInstruction.move, rangeA!, charsA, moveNumber);
         markChars(RenderInstruction.move, rangeB!, charsB, moveNumber);
         break;
