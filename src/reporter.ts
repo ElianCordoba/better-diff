@@ -1,6 +1,5 @@
 import { _context, getOptions } from ".";
-import { ChangeType, Side, TypeMasks } from "../src/types";
-import { AlignmentTable } from "./alignmentTable";
+import { ChangeType, Side } from "../src/types";
 import { Change } from "./change";
 import { assert, fail } from "./debug";
 import { OffsetsMap, OffsetTracker } from "./offsetTracker";
@@ -149,23 +148,6 @@ export function getComplimentArray(length: number, fillInCharacter = ""): string
   assert(length >= 0, () => `Length of compliment array invalid. Got ${length}`);
 
   return new Array(length).fill(fillInCharacter);
-}
-
-function compactAlignments(alignmentTable: AlignmentTable, _linesA: string[], _linesB: string[]) {
-  const linesA = [..._linesA];
-  const linesB = [..._linesB];
-
-  for (const i of alignmentTable.a.keys()) {
-    if (alignmentTable.b.has(i)) {
-      linesA.splice(i - 1, 1);
-      linesB.splice(i - 1, 1);
-    }
-  }
-
-  return {
-    linesA,
-    linesB,
-  };
 }
 
 export function applyAlignments(sourceA: string, sourceB: string, changes: Change[], offsets: OffsetTracker): { sourceA: string, sourceB: string, changes: Change[] } {

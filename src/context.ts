@@ -1,5 +1,3 @@
-import { MoveAlignmentInfo } from ".";
-import { AlignmentTable } from "./alignmentTable";
 import { Change } from "./change";
 import { Iterator } from "./iterator";
 import { OffsetTracker } from "./offsetTracker";
