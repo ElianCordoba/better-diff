@@ -8,13 +8,11 @@ import { getNodesArray } from "./ts-util";
 
 interface IteratorOptions {
   side: Side
-  name: string;
   source: string;
 }
 
 export class Iterator {
-  name: string;
-
+  side: Side;
   matchNumber = 0;
   textNodes: Node[];
   kindTable: KindTable;
@@ -22,11 +20,11 @@ export class Iterator {
   // Only read when printing nodes
   private indexOfLastItem = 0;
 
-  constructor({ side, source, name }: IteratorOptions) {
+  constructor({ side, source }: IteratorOptions) {
     const { nodes, kindTable } = getNodesArray(side, source);
+    this.side = side
     this.textNodes = nodes;
     this.kindTable = kindTable;
-    this.name = name;
   }
 
   // Get the next unmatched node in the iterator, optionally after a given index
@@ -169,7 +167,7 @@ export class Iterator {
   }
 
   printList(nodesToPrint?: Node[]) {
-    console.log(`----------- SIDE ${this.name.toUpperCase()} -----------`);
+    console.log(`----------- SIDE ${this.side.toUpperCase()} -----------`);
     console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("\/n n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
     const list: string[] = [];
@@ -218,7 +216,7 @@ export class Iterator {
   }
 
   printRange(node: Node | undefined) {
-    const source = this.name === Side.a ? _context.sourceA : _context.sourceB;
+    const source = this.side === Side.a ? _context.sourceA : _context.sourceB;
     const chars = source.split("");
 
     let nodeToDraw: Node | undefined;
@@ -245,7 +243,7 @@ export class Iterator {
   }
 
   printPositionInfo() {
-    console.log(`${colorFn.blue("index")} | ${colorFn.green("line")} | ${colorFn.white("trivia")} |  ${colorFn.magenta("pos")}  | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
+    console.log(`${colorFn.blue("index")} | ${colorFn.green("line")} |  ${colorFn.magenta("pos")}  | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
     const list: string[] = [];
 
@@ -256,7 +254,6 @@ export class Iterator {
 
       const lineStart = node.lineNumberStart;
       const lineEnd = node.lineNumberEnd;
-      const triviaLines = String(node.triviaLinesAbove).padStart(5).padEnd(8);
 
       const line = `${lineStart}-${lineEnd} `.padStart(5).padEnd(6);
 
@@ -266,7 +263,7 @@ export class Iterator {
       const _kind = kind.padStart(5).padEnd(25);
       const _text = ` ${text}`;
 
-      const row = `${index}|${line}|${triviaLines}|${pos}|${colorFn(_kind)}|${_text}`;
+      const row = `${index}|${line}|${pos}|${colorFn(_kind)}|${_text}`;
 
       if (node.index === this.indexOfLastItem) {
         colorFn = k.cyan;

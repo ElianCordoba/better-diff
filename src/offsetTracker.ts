@@ -2,11 +2,10 @@ import { _context } from ".";
 import { Change } from "./change";
 import { assert } from "./debug";
 import { Node } from "./node";
-import { SortedMap } from "./sortedMap";
 import { ChangeType, Side } from "./types";
-import { oppositeSide, range } from "./utils";
+import { range } from "./utils";
 
-interface Offset {
+export interface Offset {
   index: number;
   type: ChangeType;
   numberOfNewLines: number;
@@ -161,7 +160,7 @@ export class OffsetTracker {
   getFilledOffsettedIndexes(side: Side) {
     const iter = side === Side.a ? _context.iterA : _context.iterB
 
-    const nodes: (Node | undefined)[] = iter.textNodes
+    const nodes: (Node | undefined)[] = [...iter.textNodes]
 
     const offsets = this.getSide(side)
 

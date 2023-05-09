@@ -116,7 +116,7 @@ export function getOppositeNodeKind({ kind, prettyKind }: Node): number {
 }
 
 export function normalize(iter: Iterator, lcs: LCSResult): LCSResult {
-  const perspective = iter.name === Side.a ? Side.a : Side.b;
+  const perspective = iter.side === Side.a ? Side.a : Side.b;
 
   return {
     bestSequence: lcs.bestSequence,
@@ -138,4 +138,17 @@ export function getDataForChange(nodeOrInfo: Node | NewChangeInfo): NewChangeInf
   } else {
     return nodeOrInfo;
   }
+}
+
+export function arraySum(array: number[]): number {
+  return array.reduce((a, b) => a + b, 0)
+}
+
+export function getSideFromType(type: ChangeType): Side {
+  switch (type) {
+    case ChangeType.deletion: return Side.a;
+    case ChangeType.addition: return Side.b;
+    default: fail()
+  }
+
 }

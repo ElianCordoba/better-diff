@@ -209,42 +209,79 @@ describe.only("Properly align code", () => {
       console.log()
     `
   })
+
+  test({
+    name: 'Format 1',
+    a: `
+      console.log()
+    `,
+    b: `
+      console.log(
+      )
+    `,
+    expA: `
+      console.log()
+      <<Alignment>>
+    `,
+    expB: `
+      console.log(
+      )
+    `
+  })
+
+  test({
+    name: 'Format 2',
+    a: `
+      console.log()
+    `,
+    b: `
+      console
+      .log
+      (
+      )
+    `,
+    expA: `
+      console.log()
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>>
+    `
+  })
+
+  test({
+    name: 'Format 3',
+    a: `
+      {}
+    `,
+    b: `
+      {
+
+      }
+    `,
+    expA: `
+      {}
+      <<Alignment>>
+      <<Alignment>>
+    `
+  })
+
+  // test({
+  //   name: 'Format 4',
+  //   a: `
+  //     x
+  //     1 2
+  //   `,
+  //   b: `
+  //     1 2 x
+  //   `,
+  //   expB: `
+  //     1 2 x
+  //     <<Alignment>>      
+  //   `
+  // })
+
+
 })
-
-// const test = getTestFn(getDiff, { outputType: OutputType.alignedText, other: { alignmentText: "   <<Alignment>>" } })
-
-// test({
-//   a: `
-//     console.log()
-//   `,
-//   b: `
-//     console.log(
-//     )
-//   `,
-//   expA: `
-//     console.log()
-//     <<Alignment>>
-//   `
-// })
-
-// test({
-//   name: 2,
-//   a: `
-//     console.log()
-//   `,
-//   b: `
-//     console
-//     .log
-//     (
-//     )
-//   `,
-//   expA: `
-//     console.log()
-//     <<Alignment>>
-//     <<Alignment>>
-//     <<Alignment>>
-//   `
-// })
 
 // test({
 //   name: 3,

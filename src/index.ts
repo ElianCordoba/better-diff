@@ -1,5 +1,5 @@
 import { getChanges } from "./main";
-import { applyAlignments, applyChangesToSources, getAlignedSources, prettyRenderFn } from "./reporter";
+import { applyAlignments, applyChangesToSources, prettyRenderFn } from "./reporter";
 import { serialize } from "./serializer";
 import { ChangeType, Mode, SerializedResponse, Side } from "./types";
 import { Node } from "./node";
@@ -66,15 +66,9 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
       return applyChangesToSources(sourceA, sourceB, changes) as any;
     }
 
-    // case OutputType.prettyText: {
-    //   // deno-lint-ignore no-explicit-any
-    //   return applyChangesToSources(sourceA, sourceB, changes, prettyRenderFn) as any;
-    // }
-
     case OutputType.prettyText: {
-      const alignedResult = applyAlignments(sourceA, sourceB, changes, _context.offsetTracker)
       // deno-lint-ignore no-explicit-any
-      return applyChangesToSources(alignedResult.sourceA, alignedResult.sourceB, alignedResult.changes, prettyRenderFn) as any;
+      return applyChangesToSources(sourceA, sourceB, changes, prettyRenderFn) as any;
     }
 
     case OutputType.alignedText: {

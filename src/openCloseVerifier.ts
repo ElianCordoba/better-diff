@@ -73,13 +73,13 @@ export class OpenCloseVerifier {
         if (closingNodeForA) {
           assert(!closingNodeForB, () => "Found a node on B side node even though we are in a deletion");
           this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
-          changes.push(new Change(ChangeType.deletion, closingNodeForA));
+          changes.push(new Change(ChangeType.deletion, [closingNodeForA.index]));
         }
 
         if (closingNodeForB) {
           assert(!closingNodeForA, () => "Found a node on a side node even though we are in a addition");
           this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-          changes.push(new Change(ChangeType.addition, closingNodeForB));
+          changes.push(new Change(ChangeType.addition, [closingNodeForB.index]));
         }
 
         return changes;
@@ -97,8 +97,8 @@ export class OpenCloseVerifier {
 
         const _change = new Change(
           ChangeType.move,
-          closingNodeForA,
-          closingNodeForB,
+          [closingNodeForA.index],
+          [closingNodeForB.index],
         );
 
         matches.push(_change);
@@ -112,12 +112,12 @@ export class OpenCloseVerifier {
           changes.push(
             new Change(
               ChangeType.deletion,
-              closingNodeForA,
+              [closingNodeForA.index],
             ),
           );
         } else {
           this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-          changes.push(new Change(ChangeType.addition, closingNodeForB!));
+          changes.push(new Change(ChangeType.addition, [closingNodeForB!.index]));
         }
       }
     }
