@@ -12,14 +12,11 @@ export class Context {
   iterB!: Iterator;
 
   lineMapNodeTable: { a: LineMapTable, b: LineMapTable } = { a: new Map(), b: new Map() }
-  matches: Change<ChangeType.move>[];
-  offsetTracker: OffsetTracker;
+  matches: Change<ChangeType.move>[] = [];
+  offsetTracker: OffsetTracker = new OffsetTracker();
 
   constructor(
     public sourceA: string,
     public sourceB: string,
-  ) {
-    this.offsetTracker = new OffsetTracker();
-    this.matches = [];
-  }
+  ) { }
 }
