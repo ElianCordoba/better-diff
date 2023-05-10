@@ -280,16 +280,10 @@ function oneSidedIteration(
 
   let value = iter.next(startFrom);
 
-  // TODO: Compact
   while (value) {
-    if (typeOfChange === ChangeType.addition) {
-      changes.push(new Change(typeOfChange, [value.index]));
-    } else {
-      changes.push(new Change(typeOfChange, [value.index]));
-    }
+    changes.push(new Change(typeOfChange, [value.index]));
 
     iter.mark(value.index, typeOfChange, true);
-
     value = iter.next(value.index + 1);
   }
 
