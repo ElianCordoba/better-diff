@@ -295,11 +295,11 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   const changes: Change[] = [];
   const { matches } = _context;
 
-  let a = iterA.next(indexA)!;
-  let b = iterB.next(indexB)!;
-
   const indexesA: number[] = []
   const indexesB: number[] = []
+
+  let a: Node;
+  let b: Node;
 
   const verifier = new OpenCloseVerifier(iterA, iterB);
 
