@@ -4,7 +4,7 @@ import { Change } from "./change";
 import { assert, fail } from "./debug";
 import { OffsetsMap, OffsetTracker } from "./offsetTracker";
 import { range } from "./utils";
-import { Iterator } from './iterator'
+import { Iterator } from "./iterator";
 import { Node } from "./node";
 
 //@ts-ignore TODO: Importing normally doesn't work with vitest
@@ -12,7 +12,7 @@ export const k = require("kleur");
 
 type RenderFn = (text: string) => string;
 
-export type DiffRendererFn = Record<ChangeType, RenderFn>
+export type DiffRendererFn = Record<ChangeType, RenderFn>;
 
 type Colors =
   | "blue"
@@ -150,9 +150,9 @@ export function getComplimentArray(length: number, fillInCharacter = ""): string
   return new Array(length).fill(fillInCharacter);
 }
 
-export function applyAlignments(sourceA: string, sourceB: string, changes: Change[], offsets: OffsetTracker): { sourceA: string, sourceB: string, changes: Change[] } {
-  const offsettedIndexesA = offsets.offsetsA
-  const offsettedIndexesB = offsets.offsetsB
+export function applyAlignments(sourceA: string, sourceB: string, changes: Change[], offsets: OffsetTracker): { sourceA: string; sourceB: string; changes: Change[] } {
+  const offsettedIndexesA = offsets.offsetsA;
+  const offsettedIndexesB = offsets.offsetsB;
 
   // TODO: Compact alignments
   // for (const ofA of offsettedIndexesA.values()) {
@@ -163,67 +163,66 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
   //   }
   // }
 
-  sourceA = insertAlignments(Side.a, changes, offsettedIndexesA, sourceA, _context.iterA)
-  sourceB = insertAlignments(Side.b, changes, offsettedIndexesB, sourceB, _context.iterB)
+  sourceA = insertAlignments(Side.a, changes, offsettedIndexesA, sourceA, _context.iterA);
+  sourceB = insertAlignments(Side.b, changes, offsettedIndexesB, sourceB, _context.iterB);
 
   return {
     sourceA,
     sourceB,
-    changes
-  }
+    changes,
+  };
 }
 
 function insertAlignments(side: Side, changes: Change[], offsets: OffsetsMap, source: string, iter: Iterator): string {
   if (offsets.size === 0) {
-    return source
+    return source;
   }
 
-  const alignmentText = getOptions().alignmentText
+  const alignmentText = getOptions().alignmentText;
 
   for (const offset of offsets.values()) {
     // TODO: DOn't add them in the first place
     if (offset.numberOfNewLines === 0) {
-      continue
+      continue;
     }
 
+    const _offsetsFilled = _context.offsetTracker.getFilledOffsettedIndexes(side);
 
-    const _offsetsFilled = _context.offsetTracker.getFilledOffsettedIndexes(side)
+    const insertAt = findPointToInsertAlignment(iter, _offsetsFilled, offset.index);
 
-    const insertAt = findPointToInsertAlignment(iter, _offsetsFilled, offset.index)
-
-    assert(insertAt !== undefined)
+    assert(insertAt !== undefined);
 
     for (const _ of range(0, offset.numberOfNewLines)) {
       source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
     }
 
     // updateChanges(changes, offset.change?.index!, side, insertAt)
-    updateChanges(changes, side, insertAt)
+    updateChanges(changes, side, insertAt);
   }
 
-  return source
+  return source;
 }
 
 function findPointToInsertAlignment(iter: Iterator, offsettedIndexes: (Node | undefined)[], targetIndex: number): number {
   // We know that targetIndex is the alignment position, so that wont be our anchor
-  let currentIndex = targetIndex - 1
+  let currentIndex = targetIndex - 1;
 
   while (true) {
     if (currentIndex < 0) {
-      return 0
+      return 0;
     }
 
-    const current = offsettedIndexes[currentIndex]
+    const current = offsettedIndexes[currentIndex];
 
     if (current) {
       // const node = iter.textNodes[currentIndex];
       // const lineToInsert = node.lineNumberStart === 0 ? 0 : node.lineNumberStart - 1
       // const startOfLine = _context.lineMapNodeTable[iter.side].get(lineToInsert)!
       // return startOfLine
-      return iter.textNodes[currentIndex].end
+      return iter.textNodes[currentIndex].end;
     }
 
-    currentIndex--
+    currentIndex--;
   }
 }
 
@@ -231,11 +230,11 @@ function findPointToInsertAlignment(iter: Iterator, offsettedIndexes: (Node | un
 // Only take the ones with the proper range
 // Only take the ones that happen after the start pos
 function updateChanges(changes: Change[], sideToUpdate: Side, startPosition: number) {
-  const alignmentText = getOptions().alignmentText
+  const alignmentText = getOptions().alignmentText;
 
   // Side where the alignment happened, thus the side we need to recalculate the ranges of the changes
-  const changesToSkip = sideToUpdate === Side.a ? ChangeType.addition : ChangeType.deletion
-  const rangeToUpdate = sideToUpdate === Side.a ? 'rangeA' : 'rangeB'
+  const changesToSkip = sideToUpdate === Side.a ? ChangeType.addition : ChangeType.deletion;
+  const rangeToUpdate = sideToUpdate === Side.a ? "rangeA" : "rangeB";
 
   for (let i = 0; i < changes.length; i++) {
     // TODO-NOW
@@ -243,18 +242,17 @@ function updateChanges(changes: Change[], sideToUpdate: Side, startPosition: num
     // if (i === currentChange) {
     //   continue
     // }
-    const change = changes[i]
+    const change = changes[i];
     // Skip type of changes we don't want
     if (change.type === changesToSkip) {
-      continue
+      continue;
     }
 
     if (change[rangeToUpdate]!.start >= startPosition) {
-      change[rangeToUpdate]!.start += alignmentText.length
-      change[rangeToUpdate]!.end += alignmentText.length
+      change[rangeToUpdate]!.start += alignmentText.length;
+      change[rangeToUpdate]!.end += alignmentText.length;
     }
 
-    changes[i] = change
+    changes[i] = change;
   }
 }
-

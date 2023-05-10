@@ -7,11 +7,14 @@ import { Iterator } from "./iterator";
 import { prettyRenderFn } from "./reporter";
 
 export function getPrettyChangeType(type: ChangeType, withColor = false): string {
-  const renderFn = withColor ? prettyRenderFn[type] : (i: string) => i
+  const renderFn = withColor ? prettyRenderFn[type] : (i: string) => i;
   switch (type) {
-    case ChangeType.deletion: return renderFn('Deletion')
-    case ChangeType.addition: return renderFn('Addition')
-    case ChangeType.move: return renderFn('Move')
+    case ChangeType.deletion:
+      return renderFn("Deletion");
+    case ChangeType.addition:
+      return renderFn("Addition");
+    case ChangeType.move:
+      return renderFn("Move");
   }
 }
 
@@ -141,14 +144,16 @@ export function getDataForChange(nodeOrInfo: Node | NewChangeInfo): NewChangeInf
 }
 
 export function arraySum(array: number[]): number {
-  return array.reduce((a, b) => a + b, 0)
+  return array.reduce((a, b) => a + b, 0);
 }
 
 export function getSideFromType(type: ChangeType): Side {
   switch (type) {
-    case ChangeType.deletion: return Side.a;
-    case ChangeType.addition: return Side.b;
-    default: fail()
+    case ChangeType.deletion:
+      return Side.a;
+    case ChangeType.addition:
+      return Side.b;
+    default:
+      fail();
   }
-
 }

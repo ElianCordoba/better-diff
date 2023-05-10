@@ -7,7 +7,7 @@ import { OpenCloseStack } from "./openCloseVerifier";
 import { getNodesArray } from "./ts-util";
 
 interface IteratorOptions {
-  side: Side
+  side: Side;
   source: string;
 }
 
@@ -22,7 +22,7 @@ export class Iterator {
 
   constructor({ side, source }: IteratorOptions) {
     const { nodes, kindTable } = getNodesArray(side, source);
-    this.side = side
+    this.side = side;
     this.textNodes = nodes;
     this.kindTable = kindTable;
   }

@@ -1,8 +1,7 @@
 import { getChanges } from "./main";
 import { applyAlignments, applyChangesToSources, prettyRenderFn } from "./reporter";
 import { serialize } from "./serializer";
-import { ChangeType, Mode, SerializedResponse, Side } from "./types";
-import { Node } from "./node";
+import { Mode, SerializedResponse } from "./types";
 import { fail } from "./debug";
 import { Context } from "./context";
 
@@ -55,7 +54,7 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
     }
 
     case OutputType.serializedAlignedChunks: {
-      const alignedResult = applyAlignments(sourceA, sourceB, changes, _context.offsetTracker)
+      const alignedResult = applyAlignments(sourceA, sourceB, changes, _context.offsetTracker);
       // deno-lint-ignore no-explicit-any
       return serialize(alignedResult.sourceA, alignedResult.sourceB, alignedResult.changes) as any;
     }
@@ -71,7 +70,7 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
     }
 
     case OutputType.alignedText: {
-      const alignedResult = applyAlignments(sourceA, sourceB, changes, _context.offsetTracker)
+      const alignedResult = applyAlignments(sourceA, sourceB, changes, _context.offsetTracker);
       // deno-lint-ignore no-explicit-any
       return applyChangesToSources(alignedResult.sourceA, alignedResult.sourceB, alignedResult.changes) as any;
     }

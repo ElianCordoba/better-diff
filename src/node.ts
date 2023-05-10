@@ -4,14 +4,14 @@ import { ChangeType, Mode, Range, Side } from "./types";
 import { _context } from ".";
 
 interface NodeArgs {
-  side: Side
+  side: Side;
   mode: Mode;
   fullStart: number;
   start: number;
   end: number;
   kind: SyntaxKind;
   text: string;
-  numberOfNewlines: number
+  numberOfNewlines: number;
   lineNumberStart: number;
   lineNumberEnd: number;
   index?: number;
@@ -26,7 +26,7 @@ export class Node {
   text: string;
   prettyKind: string;
   // How many new lines characters does the trivia of this node holds?
-  numberOfNewlines: number
+  numberOfNewlines: number;
   lineNumberStart: number;
   lineNumberEnd: number;
   index = -1;
@@ -42,7 +42,7 @@ export class Node {
   constructor(args: NodeArgs) {
     const { side, fullStart, start, end, kind, lineNumberStart, lineNumberEnd, text, mode, numberOfNewlines } = args;
 
-    this.side = side
+    this.side = side;
     this.fullStart = fullStart;
     this.start = start;
     this.end = end;
@@ -59,7 +59,7 @@ export class Node {
     this.text = text;
     this.lineNumberStart = lineNumberStart;
     this.lineNumberEnd = lineNumberEnd;
-    this.numberOfNewlines = numberOfNewlines
+    this.numberOfNewlines = numberOfNewlines;
   }
 
   getRange(): Range {
@@ -70,8 +70,8 @@ export class Node {
   }
 
   draw() {
-    const iter = _context[this.side === Side.a ? 'iterA' : 'iterB']
+    const iter = _context[this.side === Side.a ? "iterA" : "iterB"];
 
-    iter.printRange(this)
+    iter.printRange(this);
   }
 }

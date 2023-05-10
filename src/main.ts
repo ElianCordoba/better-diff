@@ -7,7 +7,7 @@ import { Node } from "./node";
 import { assert } from "./debug";
 import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from "./sequence";
 import { OpenCloseVerifier } from "./openCloseVerifier";
-import { OffsetTracker, Offset } from "./offsetTracker";
+import { Offset, OffsetTracker } from "./offsetTracker";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -90,7 +90,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
   const deletions = changes.filter((x) => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start! - b.rangeA?.start!);
   const additions = changes.filter((x) => x.type === ChangeType.addition).sort((a, b) => a.rangeB?.start! - b.rangeB?.start!);
 
-  processAddAndDel(deletions, additions)
+  processAddAndDel(deletions, additions);
 
   const { matches, offsetTracker } = _context;
 
@@ -101,14 +101,14 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 
 function processAddAndDel(additions: Change[], deletions: Change[]) {
   const unifiedList = [...additions, ...deletions].sort((a, b) => {
-    const indexA = a.getFirstIndex()
-    const indexB = b.getFirstIndex()
+    const indexA = a.getFirstIndex();
+    const indexB = b.getFirstIndex();
 
-    return indexA < indexB ? -1 : 1
-  })
+    return indexA < indexB ? -1 : 1;
+  });
 
   for (const change of unifiedList) {
-    change.applyOffset()
+    change.applyOffset();
   }
 }
 
@@ -147,16 +147,15 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
 
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of sortedMatches) {
-    const identicalNewLines = getNewLinesDifferences(match)
+    const identicalNewLines = getNewLinesDifferences(match);
     if (identicalNewLines.length) {
       // TODO-NOW: It's hardcoded that we will insert the alignment bellow the node, this should see which parts has the most weight
 
       for (const discrepancy of identicalNewLines) {
-        const side = getSideFromType(discrepancy.type)
+        const side = getSideFromType(discrepancy.type);
         // TODO-SUPER-NOW: Recalc offsets??? si agrego arriba de uno recalcular pa abajo
-        offsetTracker.add(side, discrepancy)
+        offsetTracker.add(side, discrepancy);
       }
-
     }
 
     if (matchesToIgnore.includes(match.index)) {
@@ -226,49 +225,49 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
 }
 
 function getNewLinesDifferences(match: Change): Offset[] {
-  const { indexesA, indexesB } = match
-  const { iterA, iterB } = _context
+  const { indexesA, indexesB } = match;
+  const { iterA, iterB } = _context;
 
-  let insertionPointA = indexesA.at(-1)!
-  let insertionPointB = indexesB.at(-1)!
+  let insertionPointA = indexesA.at(-1)!;
+  let insertionPointB = indexesB.at(-1)!;
 
-  const discrepancies: Offset[] = []
+  const discrepancies: Offset[] = [];
   for (let i = 0; i < indexesA.length; i++) {
-    const indexA = indexesA[i]
-    const indexB = indexesB[i]
+    const indexA = indexesA[i];
+    const indexB = indexesB[i];
 
-    const nodeA = iterA.textNodes.at(indexA)!
-    const nodeB = iterB.textNodes.at(indexB)!
+    const nodeA = iterA.textNodes.at(indexA)!;
+    const nodeB = iterB.textNodes.at(indexB)!;
 
     if (nodeA.numberOfNewlines !== nodeB.numberOfNewlines) {
-      const difference = Math.abs(nodeA.numberOfNewlines - nodeB.numberOfNewlines)
+      const difference = Math.abs(nodeA.numberOfNewlines - nodeB.numberOfNewlines);
       let index: number;
       let type: ChangeType;
 
       // We insert alignments on the side with the least new lines
       if (nodeA.numberOfNewlines < nodeB.numberOfNewlines) {
-        insertionPointA++
+        insertionPointA++;
         // index = lineMapNodeTable[Side.a].get(nodeA.lineNumberStart)!
-        index = insertionPointA
+        index = insertionPointA;
 
-        type = ChangeType.deletion
+        type = ChangeType.deletion;
       } else {
-        insertionPointB++
+        insertionPointB++;
         // index = lineMapNodeTable[Side.b].get(nodeB.lineNumberStart)!
-        index = insertionPointB
-        type = ChangeType.addition
+        index = insertionPointB;
+        type = ChangeType.addition;
       }
 
       discrepancies.push({
         index,
         type,
         numberOfNewLines: difference,
-        change: match
-      })
+        change: match,
+      });
     }
   }
 
-  return discrepancies
+  return discrepancies;
 }
 
 function oneSidedIteration(
@@ -295,8 +294,8 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   const changes: Change[] = [];
   const { matches } = _context;
 
-  const indexesA: number[] = []
-  const indexesB: number[] = []
+  const indexesA: number[] = [];
+  const indexesB: number[] = [];
 
   let a: Node;
   let b: Node;
@@ -315,8 +314,8 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     indexA++;
     indexB++;
 
-    indexesA.push(a.index)
-    indexesB.push(b.index)
+    indexesA.push(a.index);
+    indexesB.push(b.index);
 
     assert(equals(a, b), () => `Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
 

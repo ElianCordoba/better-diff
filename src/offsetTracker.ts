@@ -9,29 +9,26 @@ export interface Offset {
   index: number;
   type: ChangeType;
   numberOfNewLines: number;
-  change?: Change
+  change?: Change;
 }
 
 // number = index
-export type OffsetsMap = Map<number, Offset>
+export type OffsetsMap = Map<number, Offset>;
 
 export class OffsetTracker {
-
   offsetsA: OffsetsMap = new Map();
   offsetsB: OffsetsMap = new Map();
 
   // 1- Get offsetted index by looking at offsets above
   // 2- Update, if applicable, offsets bellow
-  // 3- Sort 
+  // 3- Sort
   add(side: Side, offset: Offset) {
     assert(typeof offset.index === "number", () => `Expected number when storing offset but received ${typeof offset.index}`);
-
-
 
     // const i = offset.index + this.getOffset((side), offset.index)
 
     // this.getSide(side).set(i, { ...offset, index: i })
-    this.getSide(side).set(offset.index, offset)
+    this.getSide(side).set(offset.index, offset);
   }
 
   // getOffsetFINAL(side: Side, targetIndex: number, offsetList: number[]) {
@@ -76,7 +73,7 @@ export class OffsetTracker {
   // }
 
   getOffset(side: Side, targetIndex: number, offsets?: OffsetsMap) {
-    let ogIndex = targetIndex
+    const ogIndex = targetIndex;
     const _side = offsets ? offsets : this.getSide(side);
 
     let offset = 0;
@@ -138,12 +135,12 @@ export class OffsetTracker {
     let valid = true;
     // +1 so it includes the last index
     for (const i of range(startIndex, startIndex + indexDiff + 1)) {
-      const offset = offsetsToCheck.get(i)
+      const offset = offsetsToCheck.get(i);
 
       // The offset trackers contains allegement from all the change types, but when it comes to movement alignment
       //  we are only interested in the ones coming from`moves`
       if (!offset || offset.type !== ChangeType.move) {
-        continue
+        continue;
       }
 
       valid = false;
@@ -158,21 +155,21 @@ export class OffsetTracker {
   }
 
   getFilledOffsettedIndexes(side: Side) {
-    const iter = side === Side.a ? _context.iterA : _context.iterB
+    const iter = side === Side.a ? _context.iterA : _context.iterB;
 
-    const nodes: (Node | undefined)[] = [...iter.textNodes]
+    const nodes: (Node | undefined)[] = [...iter.textNodes];
 
-    const offsets = this.getSide(side)
+    const offsets = this.getSide(side);
 
     for (const offset of offsets.values()) {
       if (offset.numberOfNewLines === 0) {
-        continue
+        continue;
       }
 
-      nodes.splice(offset.index, 0, undefined)
+      nodes.splice(offset.index, 0, undefined);
     }
 
-    return nodes
+    return nodes;
   }
 
   // TODO-NOW improve this

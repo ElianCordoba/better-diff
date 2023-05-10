@@ -37,7 +37,7 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
     const lineNumberStart = getLineNumber(sourceFile, start);
     const lineNumberEnd = 0; // TODO ALIGNMENT = getLineNumber(sourceFile, node.end);
 
-    const numberOfNewlines = node.getFullText().match(/\n/g)?.length || 0
+    const numberOfNewlines = node.getFullText().match(/\n/g)?.length || 0;
 
     const newNode = new Node({
       mode,
@@ -49,7 +49,7 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
       text: node.getText(),
       lineNumberStart,
       lineNumberEnd,
-      numberOfNewlines
+      numberOfNewlines,
     });
 
     const isClosingNode = node.kind === ts.SyntaxKind.CloseBraceToken ||
@@ -83,8 +83,7 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
 
   const kindTable: KindTable = new Map();
 
-  const { lineMapNodeTable } = _context
-
+  const { lineMapNodeTable } = _context;
 
   // TODO(Perf): Maybe do this inside the walk.
   // Before returning the result we need process the data one last time.
@@ -101,24 +100,24 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
     }
 
     if (!lineMapNodeTable[side].has(node.lineNumberStart)) {
-      lineMapNodeTable[side].set(node.lineNumberStart, node.end)
+      lineMapNodeTable[side].set(node.lineNumberStart, node.end);
     }
 
     i++;
   }
 
-  const lineMap = getLineMap(source)
+  const lineMap = getLineMap(source);
 
-  let lineNumber = 1
+  let lineNumber = 1;
   for (const startOfLine of lineMap) {
     if (!lineMapNodeTable[side].has(lineNumber)) {
-      lineMapNodeTable[side].set(lineNumber, startOfLine)
+      lineMapNodeTable[side].set(lineNumber, startOfLine);
     }
 
-    lineNumber++
+    lineNumber++;
   }
 
-  lineMapNodeTable[side] = new Map([...lineMapNodeTable[side]].sort())
+  lineMapNodeTable[side] = new Map([...lineMapNodeTable[side]].sort());
 
   return {
     nodes,

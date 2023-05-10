@@ -3,7 +3,7 @@ import { colorFn, getSourceWithChange } from "./reporter";
 import { _context } from "./index";
 import { assert } from "./debug";
 import { arraySum, getPrettyChangeType } from "./utils";
-import { Iterator, } from "./iterator";
+import { Iterator } from "./iterator";
 export class Change<Type extends ChangeType = ChangeType> {
   rangeA: Range | undefined;
   rangeB: Range | undefined;
@@ -19,29 +19,29 @@ export class Change<Type extends ChangeType = ChangeType> {
   constructor(
     public type: Type,
     indexesOne: number[],
-    indexesTwo?: number[]
+    indexesTwo?: number[],
   ) {
     if (type === ChangeType.move) {
-      this.indexesA = indexesOne
-      this.indexesB = indexesTwo!
+      this.indexesA = indexesOne;
+      this.indexesB = indexesTwo!;
 
-      assert(this.indexesA.length === this.indexesB.length)
+      assert(this.indexesA.length === this.indexesB.length);
     } else if (type === ChangeType.deletion) {
-      this.indexesA = indexesOne
+      this.indexesA = indexesOne;
     } else {
-      this.indexesB = indexesOne
+      this.indexesB = indexesOne;
     }
 
-    const { iterA, iterB } = _context
+    const { iterA, iterB } = _context;
 
     if (type & TypeMasks.DelOrMove) {
-      assert(this.indexesA.length)
-      this.rangeA = getRange(iterA, this.indexesA)
+      assert(this.indexesA.length);
+      this.rangeA = getRange(iterA, this.indexesA);
     }
 
     if (type & TypeMasks.AddOrMove) {
-      assert(this.indexesB.length)
-      this.rangeB = getRange(iterB, this.indexesB)
+      assert(this.indexesB.length);
+      this.rangeB = getRange(iterB, this.indexesB);
     }
 
     // TODO-NOW adds and dels will have the same index if no move is in between
@@ -53,17 +53,16 @@ export class Change<Type extends ChangeType = ChangeType> {
   _weight!: number;
   getWeight(): number {
     if (this._weight) {
-      return this._weight
+      return this._weight;
     }
 
-    const side = this.getSide()
-    const indexes = side === Side.a ? this.indexesA : this.indexesB
-    const iter = side === Side.a ? _context.iterA : _context.iterB
+    const side = this.getSide();
+    const indexes = side === Side.a ? this.indexesA : this.indexesB;
+    const iter = side === Side.a ? _context.iterA : _context.iterB;
 
-    this._weight = arraySum(indexes!.map(i => iter.textNodes[i].text.length))
+    this._weight = arraySum(indexes!.map((i) => iter.textNodes[i].text.length));
 
-    return this._weight
-
+    return this._weight;
   }
 
   // TODO-NOW Duplicated code
@@ -71,42 +70,42 @@ export class Change<Type extends ChangeType = ChangeType> {
   _newLines!: number;
   getNewLines(): number {
     if (this._newLines) {
-      return this._newLines
+      return this._newLines;
     }
 
-    const side = this.getSide()
-    const indexes = side === Side.a ? this.indexesA : this.indexesB
-    const iter = side === Side.a ? _context.iterA : _context.iterB
+    const side = this.getSide();
+    const indexes = side === Side.a ? this.indexesA : this.indexesB;
+    const iter = side === Side.a ? _context.iterA : _context.iterB;
 
-    this._newLines = arraySum(indexes!.map(i => iter.textNodes[i].numberOfNewlines))
+    this._newLines = arraySum(indexes!.map((i) => iter.textNodes[i].numberOfNewlines));
 
-    return this._newLines
+    return this._newLines;
   }
 
   getFirstIndex(side?: Side) {
-    return this.getIndex(this.getSide(side), 0)
+    return this.getIndex(this.getSide(side), 0);
   }
 
   getLastIndex(side?: Side) {
-    return this.getIndex(this.getSide(side), -1)
+    return this.getIndex(this.getSide(side), -1);
   }
 
   private getIndex(side: Side, position: number): number {
-    const indexes = side === Side.a ? this.indexesA : this.indexesB
+    const indexes = side === Side.a ? this.indexesA : this.indexesB;
 
-    return indexes.at(position)!
+    return indexes.at(position)!;
   }
 
   private getSide(passedInSide?: Side): Side {
     if (passedInSide) {
-      return passedInSide
+      return passedInSide;
     } else {
-      return this.type === ChangeType.deletion ? Side.a : Side.b
+      return this.type === ChangeType.deletion ? Side.a : Side.b;
     }
   }
 
   applyOffset() {
-    const { offsetTracker } = _context
+    const { offsetTracker } = _context;
     if (this.type === ChangeType.deletion) {
       // Alignment for deletions:
       //
@@ -121,10 +120,9 @@ export class Change<Type extends ChangeType = ChangeType> {
       // ------------
       // 1          -
       // 2          2
-      this.indexesA!.map(index => {
+      this.indexesA!.map((index) => {
         _context.offsetTracker.add(Side.b, { type: ChangeType.deletion, index: offsetTracker.getOffset(Side.a, index), numberOfNewLines: this.getNewLines(), change: this });
-      })
-
+      });
     } else {
       // Alignment for additions:
       //
@@ -140,9 +138,9 @@ export class Change<Type extends ChangeType = ChangeType> {
       // -          x
       // y          y
       // -          z
-      this.indexesB!.map(index => {
+      this.indexesB!.map((index) => {
         _context.offsetTracker.add(Side.a, { type: ChangeType.addition, index: offsetTracker.getOffset(Side.b, index), numberOfNewLines: this.getNewLines(), change: this });
-      })
+      });
     }
   }
 
@@ -152,14 +150,14 @@ export class Change<Type extends ChangeType = ChangeType> {
     const charsA = sourceA.split("");
     const charsB = sourceB.split("");
 
-    const changeType = getPrettyChangeType(this.type, true)
+    const changeType = getPrettyChangeType(this.type, true);
 
     console.log(`${changeType}`);
 
     if (this.rangeA) {
       console.log("----A----");
 
-      const renderFn = this.type === ChangeType.move ? colorFn.yellow : colorFn.red
+      const renderFn = this.type === ChangeType.move ? colorFn.yellow : colorFn.red;
 
       console.log(
         getSourceWithChange(
@@ -175,7 +173,7 @@ export class Change<Type extends ChangeType = ChangeType> {
     if (this.rangeB) {
       console.log("----B----");
 
-      const renderFn = this.type === ChangeType.move ? colorFn.yellow : colorFn.green
+      const renderFn = this.type === ChangeType.move ? colorFn.yellow : colorFn.green;
 
       console.log(
         getSourceWithChange(
@@ -276,11 +274,11 @@ export function tryMergeRanges(
 }
 
 function getRange(iter: Iterator, indexes: number[]): Range {
-  const startIndex = indexes.at(0)!
-  const endIndex = indexes.at(-1)!
+  const startIndex = indexes.at(0)!;
+  const endIndex = indexes.at(-1)!;
 
   return {
     start: iter.textNodes[startIndex].start,
     end: iter.textNodes[endIndex].end,
-  }
+  };
 }
