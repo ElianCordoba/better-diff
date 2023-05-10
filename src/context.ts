@@ -3,7 +3,7 @@ import { Iterator } from "./iterator";
 import { OffsetTracker } from "./offsetTracker";
 import { ChangeType } from "./types";
 
-// line number (1 based) -> node end
+// line number (one-based) -> line start position
 type LineMapTable = Map<number, number>;
 
 export class Context {
@@ -18,5 +18,5 @@ export class Context {
   constructor(
     public sourceA: string,
     public sourceB: string,
-  ) {}
+  ) { }
 }
