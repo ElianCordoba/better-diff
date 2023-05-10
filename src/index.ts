@@ -16,7 +16,6 @@ export interface Options {
 
   // For testing and debugging mostly
   alignmentText?: string;
-  includeDebugAlignmentInfo?: boolean;
 }
 
 export enum OutputType {
@@ -96,82 +95,11 @@ const defaultOptions: Options = {
   outputType: OutputType.text,
   warnOnInvalidCode: false,
   alignmentText: "\n",
-  includeDebugAlignmentInfo: false,
 };
 
 let _options: Required<Options>;
 export function getOptions(): Required<Options> {
   return _options || {};
-}
-
-export interface LayoutShift {
-  producedBy: ChangeType;
-  a: Map<number, number>;
-  b: Map<number, number>;
-  lcs: number;
-  nodeA: Node;
-  nodeB: Node;
-}
-
-export class LayoutShiftCandidate {
-  constructor(
-    // Key: Number on lines to insert on each side
-    // Value: Length of the string
-    public a = new Map<number, number>(),
-    public b = new Map<number, number>(),
-  ) { }
-
-  add(side: Side, at: number, length: number) {
-    if (side === Side.a) {
-      if (this.a.has(at)) {
-        const currentValue = this.a.get(at)!;
-
-        this.a.set(at, currentValue + length);
-      } else {
-        this.a.set(at, length);
-      }
-    } else {
-      if (this.b.has(at)) {
-        const currentValue = this.b.get(at)!;
-
-        this.b.set(at, currentValue + length);
-      } else {
-        this.b.set(at, length);
-      }
-    }
-  }
-
-  getLcs(side: Side) {
-    const _side = side === Side.a ? this.a : this.b;
-
-    let tot = 0;
-    _side.forEach((x) => tot += x);
-
-    return tot;
-  }
-
-  getShift(type: ChangeType, a: Node, b: Node): LayoutShift {
-    return {
-      producedBy: type,
-      a: this.a,
-      b: this.b,
-      lcs: this.getLcs(Side.a) + this.getLcs(Side.b),
-      nodeA: a,
-      nodeB: b,
-    };
-  }
-
-  isEmpty() {
-    return this.a.size === 0 && this.b.size === 0;
-  }
-}
-
-export interface MoveAlignmentInfo {
-  startA: number;
-  startB: number;
-  endA: number;
-  endB: number;
-  text: string;
 }
 
 export let _context: Context;

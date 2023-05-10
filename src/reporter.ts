@@ -154,6 +154,7 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
   const offsettedIndexesA = offsets.offsetsA
   const offsettedIndexesB = offsets.offsetsB
 
+  // TODO: Compact alignments
   // for (const ofA of offsettedIndexesA.values()) {
   //   const ofB = offsettedIndexesB.get(ofA.index)
   //   if (ofB?.numberOfNewLines === ofA.numberOfNewLines) {
