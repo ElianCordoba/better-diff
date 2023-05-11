@@ -163,8 +163,8 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
   //   }
   // }
 
-  sourceA = insertAlignments(Side.a, changes, offsettedIndexesA, sourceA);
-  sourceB = insertAlignments(Side.b, changes, offsettedIndexesB, sourceB);
+  sourceA = insertAlignments(Side.a, changes, sourceA);
+  sourceB = insertAlignments(Side.b, changes, sourceB);
 
   return {
     sourceA,
@@ -173,15 +173,18 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
   };
 }
 
-function insertAlignments(side: Side, changes: Change[], offsets: OffsetsMap, source: string): string {
-  if (offsets.size === 0) {
+function insertAlignments(side: Side, changes: Change[], source: string): string {
+  const { lineAlignmentTracker } = _context
+  const lineOffsets = lineAlignmentTracker[side === Side.a ? 'offsetsA' : 'offsetsB']
+
+  if (lineOffsets.size === 0) {
     return source;
   }
 
   const alignmentText = getOptions().alignmentText;
-  const _offsetsFilled = offsets.getFilledOffsettedIndexes(side);
+  const _offsetsFilled = lineAlignmentTracker.getFilledOffsettedIndexes(side);
 
-  for (const offset of offsets.values()) {
+  for (const offset of lineOffsets.values()) {
     // TODO: DOn't add them in the first place
     if (offset.numberOfNewLines === 0) {
       continue;
@@ -218,13 +221,14 @@ function findPointToInsertAlignment(side: Side, offsettedIndexes: (Node | undefi
     const current = offsettedIndexes[currentIndex];
 
     if (current) {
-      //const lineToInsert = current.lineNumberStart === 0 ? 0 : current.lineNumberStart - 1
-      const lineToInsert = current.lineNumberStart
-      const startOfLine = lineMapNodeTable[side].get(lineToInsert)!
-      return startOfLine + 1
+      // const lineToInsert = current.lineNumberStart === 1 ? 1 : current.lineNumberStart - 1
+      // const lineToInsert = current.lineNumberStart
+      // const startOfLine = lineMapNodeTable[side].get(lineToInsert)!
+      // return startOfLine + 1
+      // return startOfLine
 
       // WORKS
-      // return current.end;
+      return current.end;
     }
 
     currentIndex--;
