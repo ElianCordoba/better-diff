@@ -151,8 +151,8 @@ export function getComplimentArray(length: number, fillInCharacter = ""): string
 }
 
 export function applyAlignments(sourceA: string, sourceB: string, changes: Change[], offsets: OffsetTracker): { sourceA: string; sourceB: string; changes: Change[] } {
-  const offsettedIndexesA = offsets.offsetsA;
-  const offsettedIndexesB = offsets.offsetsB;
+  const offsettedIndexesA = _context.lineAlignmentTracker.offsetsA;
+  const offsettedIndexesB = _context.lineAlignmentTracker.offsetsB;
 
   // TODO: Compact alignments
   // for (const ofA of offsettedIndexesA.values()) {
@@ -163,8 +163,8 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
   //   }
   // }
 
-  sourceA = insertAlignments(Side.a, changes, offsettedIndexesA, sourceA, _context.iterA);
-  sourceB = insertAlignments(Side.b, changes, offsettedIndexesB, sourceB, _context.iterB);
+  sourceA = insertAlignments(Side.a, changes, offsettedIndexesA, sourceA);
+  sourceB = insertAlignments(Side.b, changes, offsettedIndexesB, sourceB);
 
   return {
     sourceA,
@@ -173,12 +173,13 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
   };
 }
 
-function insertAlignments(side: Side, changes: Change[], offsets: OffsetsMap, source: string, iter: Iterator): string {
+function insertAlignments(side: Side, changes: Change[], offsets: OffsetsMap, source: string): string {
   if (offsets.size === 0) {
     return source;
   }
 
   const alignmentText = getOptions().alignmentText;
+  const _offsetsFilled = offsets.getFilledOffsettedIndexes(side);
 
   for (const offset of offsets.values()) {
     // TODO: DOn't add them in the first place
@@ -186,9 +187,9 @@ function insertAlignments(side: Side, changes: Change[], offsets: OffsetsMap, so
       continue;
     }
 
-    const _offsetsFilled = _context.offsetTracker.getFilledOffsettedIndexes(side);
 
-    const insertAt = findPointToInsertAlignment(iter, _offsetsFilled, offset.index);
+
+    const insertAt = findPointToInsertAlignment(side, _offsetsFilled, offset.index);
 
     assert(insertAt !== undefined);
 
@@ -203,23 +204,27 @@ function insertAlignments(side: Side, changes: Change[], offsets: OffsetsMap, so
   return source;
 }
 
-function findPointToInsertAlignment(iter: Iterator, offsettedIndexes: (Node | undefined)[], targetIndex: number): number {
+function findPointToInsertAlignment(side: Side, offsettedIndexes: (Node | undefined)[], targetIndex: number): number {
+  const { lineMapNodeTable } = _context
   // We know that targetIndex is the alignment position, so that wont be our anchor
   let currentIndex = targetIndex - 1;
 
   while (true) {
     if (currentIndex < 0) {
-      return 0;
+      const startOfLine = _context.lineMapNodeTable[side].get(1)!
+      return startOfLine
     }
 
     const current = offsettedIndexes[currentIndex];
 
     if (current) {
-      // const node = iter.textNodes[currentIndex];
-      // const lineToInsert = node.lineNumberStart === 0 ? 0 : node.lineNumberStart - 1
-      // const startOfLine = _context.lineMapNodeTable[iter.side].get(lineToInsert)!
-      // return startOfLine
-      return iter.textNodes[currentIndex].end;
+      //const lineToInsert = current.lineNumberStart === 0 ? 0 : current.lineNumberStart - 1
+      const lineToInsert = current.lineNumberStart
+      const startOfLine = lineMapNodeTable[side].get(lineToInsert)!
+      return startOfLine + 1
+
+      // WORKS
+      // return current.end;
     }
 
     currentIndex--;

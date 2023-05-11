@@ -14,6 +14,7 @@ export class Context {
   lineMapNodeTable: { a: LineMapTable; b: LineMapTable } = { a: new Map(), b: new Map() };
   matches: Change<ChangeType.move>[] = [];
   offsetTracker: OffsetTracker = new OffsetTracker();
+  lineAlignmentTracker: OffsetTracker = new OffsetTracker();
 
   constructor(
     public sourceA: string,

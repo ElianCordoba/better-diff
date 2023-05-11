@@ -99,8 +99,9 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
       kindTable.set(node.kind, new Set([i]));
     }
 
+    // ya vienen ordenados por range start por suerte, porque lo que queremos es el primer nodo de cada linea
     if (!lineMapNodeTable[side].has(node.lineNumberStart)) {
-      lineMapNodeTable[side].set(node.lineNumberStart, node.end);
+      lineMapNodeTable[side].set(node.lineNumberStart, node.start);
     }
 
     i++;
@@ -110,6 +111,12 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
 
   let lineNumber = 1;
   for (const startOfLine of lineMap) {
+    // tenemos que insertart los line start de las lineas que no tienen nodos, por ejemplo
+    //
+    // 1 | a
+    // 2 |
+    // 3 | c
+    // Con el approach de arriba solamente tendriamos las lineas 1 y 3 
     if (!lineMapNodeTable[side].has(lineNumber)) {
       lineMapNodeTable[side].set(lineNumber, startOfLine);
     }

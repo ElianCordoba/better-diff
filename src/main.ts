@@ -154,7 +154,7 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
       for (const discrepancy of identicalNewLines) {
         const side = getSideFromType(discrepancy.type);
         // TODO-SUPER-NOW: Recalc offsets??? si agrego arriba de uno recalcular pa abajo
-        offsetTracker.add(side, discrepancy);
+        _context.lineAlignmentTracker.add(side, discrepancy);
       }
     }
 
@@ -204,6 +204,7 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
 
       for (const i of range(startIndex, startIndex + indexDiff)) {
         offsetTracker.add(sideToAlignStart, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
+        _context.lineAlignmentTracker.add(sideToAlignStart, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
       }
 
       const sideToAlignEnd = oppositeSide(sideToAlignStart);
@@ -211,6 +212,7 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
 
       for (const i of range(endIndex, endIndex + indexDiff)) {
         offsetTracker.add(sideToAlignEnd, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
+        _context.lineAlignmentTracker.add(sideToAlignEnd, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
       }
     } else {
       if (match.indexesOfClosingMoves.length) {

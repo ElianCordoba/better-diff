@@ -121,7 +121,18 @@ export class Change<Type extends ChangeType = ChangeType> {
       // 1          -
       // 2          2
       this.indexesA!.map((index) => {
-        _context.offsetTracker.add(Side.b, { type: ChangeType.deletion, index: offsetTracker.getOffset(Side.a, index), numberOfNewLines: this.getNewLines(), change: this });
+        _context.offsetTracker.add(Side.b, {
+          type: ChangeType.deletion,
+          index: offsetTracker.getOffset(Side.a, index),
+          numberOfNewLines: this.getNewLines(),
+          change: this
+        });
+        _context.lineAlignmentTracker.add(Side.b, {
+          type: ChangeType.deletion,
+          index: offsetTracker.getOffset(Side.a, index),
+          numberOfNewLines: this.getNewLines(),
+          change: this
+        });
       });
     } else {
       // Alignment for additions:
@@ -139,7 +150,18 @@ export class Change<Type extends ChangeType = ChangeType> {
       // y          y
       // -          z
       this.indexesB!.map((index) => {
-        _context.offsetTracker.add(Side.a, { type: ChangeType.addition, index: offsetTracker.getOffset(Side.b, index), numberOfNewLines: this.getNewLines(), change: this });
+        _context.offsetTracker.add(Side.a, {
+          type: ChangeType.addition,
+          index: offsetTracker.getOffset(Side.b, index),
+          numberOfNewLines: this.getNewLines(),
+          change: this
+        });
+        _context.lineAlignmentTracker.add(Side.a, {
+          type: ChangeType.addition,
+          index: offsetTracker.getOffset(Side.b, index),
+          numberOfNewLines: this.getNewLines(),
+          change: this
+        });
       });
     }
   }

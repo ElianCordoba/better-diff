@@ -265,20 +265,59 @@ describe.only("Properly align code", () => {
     `
   })
 
-  // test({
-  //   name: 'Format 4',
-  //   a: `
-  //     x
-  //     1 2
-  //   `,
-  //   b: `
-  //     1 2 x
-  //   `,
-  //   expB: `
-  //     1 2 x
-  //     <<Alignment>>      
-  //   `
-  // })
+  test({
+    name: 'Format 4',
+    a: `
+      ()
+      x
+    `,
+    b: `
+      (
+
+      )
+      x
+    `,
+    expA: `
+      ()
+      x
+      <<Alignment>>
+      <<Alignment>>
+    `
+  })
+
+  test({
+    name: 'Format 5',
+    a: `
+      1 2
+      x
+    `,
+    b: `
+      1 2 x
+    `,
+    expB: `
+      1 2 x
+      <<Alignment>>
+    `
+  })
+
+  // TODO: Another example of compression
+  test({
+    name: 'Format 6',
+    a: `
+      ()
+    `,
+    b: `
+      (x)
+    `,
+    expA: `
+      <<Alignment>>
+      ➖()➖
+    `,
+    expB: `
+      <<Alignment>>
+      ➕(x)➕  
+    `
+  })
 
 
 })
