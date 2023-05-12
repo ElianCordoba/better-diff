@@ -171,7 +171,7 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
 }
 
 function insertAlignments(side: Side, changes: Change[], source: string): string {
-  const { lineAlignmentTracker, lineMapNodeTable } = _context
+  const { textAligner: lineAlignmentTracker, lineMapNodeTable } = _context
   const lineOffsets = lineAlignmentTracker[side]
 
   if (lineOffsets.size === 0) {

@@ -1,6 +1,6 @@
 import { Side } from "./types";
 
-export class LineAlignments {
+export class TextAligner {
   a = new Set<number>()
   b = new Set<number>()
 

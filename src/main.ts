@@ -207,7 +207,7 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
         offsetTracker.add(sideToAlignStart, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
 
         const node = startIter.textNodes[i]
-        _context.lineAlignmentTracker.add(sideToAlignStart, node.lineNumberStart);
+        _context.textAligner.add(sideToAlignStart, node.lineNumberStart);
       }
 
       const sideToAlignEnd = oppositeSide(sideToAlignStart);
@@ -218,7 +218,7 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
         offsetTracker.add(sideToAlignEnd, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
 
         const node = endIter.textNodes[i]
-        _context.lineAlignmentTracker.add(sideToAlignEnd, node.lineNumberStart);
+        _context.textAligner.add(sideToAlignEnd, node.lineNumberStart);
       }
     } else {
       if (match.indexesOfClosingMoves.length) {

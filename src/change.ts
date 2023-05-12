@@ -128,7 +128,7 @@ export class Change<Type extends ChangeType = ChangeType> {
           change: this
         });
         const node = _context.iterA.textNodes[index]
-        _context.lineAlignmentTracker.add(Side.b, node.lineNumberStart);
+        _context.textAligner.add(Side.b, node.lineNumberStart);
       });
     } else {
       // Alignment for additions:
@@ -153,7 +153,7 @@ export class Change<Type extends ChangeType = ChangeType> {
           change: this
         });
         const node = _context.iterB.textNodes[index]
-        _context.lineAlignmentTracker.add(Side.a, node.lineNumberStart);
+        _context.textAligner.add(Side.a, node.lineNumberStart);
       });
     }
   }
