@@ -127,12 +127,8 @@ export class Change<Type extends ChangeType = ChangeType> {
           numberOfNewLines: this.getNewLines(),
           change: this
         });
-        _context.lineAlignmentTracker.add(Side.b, {
-          type: ChangeType.deletion,
-          index: offsetTracker.getOffset(Side.a, index),
-          numberOfNewLines: this.getNewLines(),
-          change: this
-        });
+        const node = _context.iterA.textNodes[index]
+        _context.lineAlignmentTracker.add(Side.b, node.lineNumberStart);
       });
     } else {
       // Alignment for additions:
@@ -156,12 +152,8 @@ export class Change<Type extends ChangeType = ChangeType> {
           numberOfNewLines: this.getNewLines(),
           change: this
         });
-        _context.lineAlignmentTracker.add(Side.a, {
-          type: ChangeType.addition,
-          index: offsetTracker.getOffset(Side.b, index),
-          numberOfNewLines: this.getNewLines(),
-          change: this
-        });
+        const node = _context.iterB.textNodes[index]
+        _context.lineAlignmentTracker.add(Side.a, node.lineNumberStart);
       });
     }
   }

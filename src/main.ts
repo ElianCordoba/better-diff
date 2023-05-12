@@ -1,5 +1,5 @@
 import { ChangeType, Side } from "./types";
-import { equals, getSequence, getSideFromType, normalize, oppositeSide, range } from "./utils";
+import { equals, getIterFromSide, getSequence, getSideFromType, normalize, oppositeSide, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change, compactChanges } from "./change";
 import { _context } from "./index";
@@ -147,16 +147,16 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
 
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of sortedMatches) {
-    const identicalNewLines = getNewLinesDifferences(match);
-    if (identicalNewLines.length) {
-      // TODO-NOW: It's hardcoded that we will insert the alignment bellow the node, this should see which parts has the most weight
+    // const identicalNewLines = getNewLinesDifferences(match);
+    // if (identicalNewLines.length) {
+    //   // TODO-NOW: It's hardcoded that we will insert the alignment bellow the node, this should see which parts has the most weight
 
-      for (const discrepancy of identicalNewLines) {
-        const side = getSideFromType(discrepancy.type);
-        // TODO-SUPER-NOW: Recalc offsets??? si agrego arriba de uno recalcular pa abajo
-        _context.lineAlignmentTracker.add(side, discrepancy);
-      }
-    }
+    //   for (const discrepancy of identicalNewLines) {
+    //     const side = getSideFromType(discrepancy.type);
+    //     // TODO-SUPER-NOW: Recalc offsets??? si agrego arriba de uno recalcular pa abajo
+    //     _context.lineAlignmentTracker.add(side, discrepancy);
+    //   }
+    // }
 
     if (matchesToIgnore.includes(match.index)) {
       continue;
@@ -199,20 +199,26 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
 
       const sideToAlignStart = indexA < indexB ? Side.a : Side.b;
       const startIndex = sideToAlignStart === Side.a ? indexA : indexB;
+      const startIter = getIterFromSide(sideToAlignStart)
 
       const indexDiff = Math.abs(indexA - indexB);
 
       for (const i of range(startIndex, startIndex + indexDiff)) {
         offsetTracker.add(sideToAlignStart, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
-        _context.lineAlignmentTracker.add(sideToAlignStart, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
+
+        const node = startIter.textNodes[i]
+        _context.lineAlignmentTracker.add(sideToAlignStart, node.lineNumberStart);
       }
 
       const sideToAlignEnd = oppositeSide(sideToAlignStart);
       const endIndex = (sideToAlignEnd === Side.a ? indexA : indexB) + 1;
+      const endIter = getIterFromSide(sideToAlignEnd)
 
       for (const i of range(endIndex, endIndex + indexDiff)) {
         offsetTracker.add(sideToAlignEnd, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
-        _context.lineAlignmentTracker.add(sideToAlignEnd, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
+
+        const node = endIter.textNodes[i]
+        _context.lineAlignmentTracker.add(sideToAlignEnd, node.lineNumberStart);
       }
     } else {
       if (match.indexesOfClosingMoves.length) {

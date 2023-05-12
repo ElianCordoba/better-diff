@@ -5,6 +5,7 @@ import { fail } from "./debug";
 import { LCSResult } from "./sequence";
 import { Iterator } from "./iterator";
 import { prettyRenderFn } from "./reporter";
+import { _context } from ".";
 
 export function getPrettyChangeType(type: ChangeType, withColor = false): string {
   const renderFn = withColor ? prettyRenderFn[type] : (i: string) => i;
@@ -156,4 +157,8 @@ export function getSideFromType(type: ChangeType): Side {
     default:
       fail();
   }
+}
+
+export function getIterFromSide(side: Side): Iterator {
+  return side === Side.a ? _context.iterA : _context.iterB
 }

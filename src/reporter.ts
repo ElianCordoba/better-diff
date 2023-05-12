@@ -150,10 +150,7 @@ export function getComplimentArray(length: number, fillInCharacter = ""): string
   return new Array(length).fill(fillInCharacter);
 }
 
-export function applyAlignments(sourceA: string, sourceB: string, changes: Change[], offsets: OffsetTracker): { sourceA: string; sourceB: string; changes: Change[] } {
-  const offsettedIndexesA = _context.lineAlignmentTracker.offsetsA;
-  const offsettedIndexesB = _context.lineAlignmentTracker.offsetsB;
-
+export function applyAlignments(sourceA: string, sourceB: string, changes: Change[]): { sourceA: string; sourceB: string; changes: Change[] } {
   // TODO: Compact alignments
   // for (const ofA of offsettedIndexesA.values()) {
   //   const ofB = offsettedIndexesB.get(ofA.index)
@@ -174,31 +171,26 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
 }
 
 function insertAlignments(side: Side, changes: Change[], source: string): string {
-  const { lineAlignmentTracker } = _context
-  const lineOffsets = lineAlignmentTracker[side === Side.a ? 'offsetsA' : 'offsetsB']
+  const { lineAlignmentTracker, lineMapNodeTable } = _context
+  const lineOffsets = lineAlignmentTracker[side]
 
   if (lineOffsets.size === 0) {
     return source;
   }
 
   const alignmentText = getOptions().alignmentText;
-  const _offsetsFilled = lineAlignmentTracker.getFilledOffsettedIndexes(side);
 
-  for (const offset of lineOffsets.values()) {
-    // TODO: DOn't add them in the first place
-    if (offset.numberOfNewLines === 0) {
-      continue;
+  for (const lineAlignment of lineOffsets.values()) {
+    let insertAt = lineMapNodeTable[side].get(lineAlignment)!
+
+    if (!insertAt) {
+      insertAt = [...lineMapNodeTable[side].values()].sort().at(-1)!
     }
-
-
-
-    const insertAt = findPointToInsertAlignment(side, _offsetsFilled, offset.index);
 
     assert(insertAt !== undefined);
 
-    for (const _ of range(0, offset.numberOfNewLines)) {
-      source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
-    }
+    source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
+
 
     // updateChanges(changes, offset.change?.index!, side, insertAt)
     updateChanges(changes, side, insertAt);

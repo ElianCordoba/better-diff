@@ -1,5 +1,6 @@
 import { Change } from "./change";
 import { Iterator } from "./iterator";
+import { LineAlignments } from "./lineAlignments";
 import { OffsetTracker } from "./offsetTracker";
 import { ChangeType } from "./types";
 
@@ -13,8 +14,8 @@ export class Context {
 
   lineMapNodeTable: { a: LineMapTable; b: LineMapTable } = { a: new Map(), b: new Map() };
   matches: Change<ChangeType.move>[] = [];
-  offsetTracker: OffsetTracker = new OffsetTracker();
-  lineAlignmentTracker: OffsetTracker = new OffsetTracker();
+  offsetTracker = new OffsetTracker();
+  lineAlignmentTracker = new LineAlignments();
 
   constructor(
     public sourceA: string,
