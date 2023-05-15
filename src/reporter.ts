@@ -171,8 +171,8 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
 }
 
 function insertAlignments(side: Side, changes: Change[], source: string): string {
-  const { textAligner: lineAlignmentTracker, lineMapNodeTable } = _context
-  const lineOffsets = lineAlignmentTracker[side]
+  const { textAligner } = _context
+  const lineOffsets = textAligner[side]
 
   if (lineOffsets.size === 0) {
     return source;
@@ -181,16 +181,17 @@ function insertAlignments(side: Side, changes: Change[], source: string): string
   const alignmentText = getOptions().alignmentText;
 
   for (const lineAlignment of lineOffsets.values()) {
-    let insertAt = lineMapNodeTable[side].get(lineAlignment)!
+    const realLineNumber = textAligner.getOffsettedLineNumber(side, lineAlignment)
 
-    if (!insertAt) {
-      insertAt = [...lineMapNodeTable[side].values()].sort().at(-1)!
+    let insertAt = textAligner.getLineMap(side).get(realLineNumber)!
+
+    if (insertAt === undefined) {
+      insertAt = [...textAligner.getLineMap(side).values()].sort().at(-1)!
     }
-
-    assert(insertAt !== undefined);
 
     source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
 
+    textAligner.updateLineMap(side, source)
 
     // updateChanges(changes, offset.change?.index!, side, insertAt)
     updateChanges(changes, side, insertAt);
@@ -200,13 +201,13 @@ function insertAlignments(side: Side, changes: Change[], source: string): string
 }
 
 function findPointToInsertAlignment(side: Side, offsettedIndexes: (Node | undefined)[], targetIndex: number): number {
-  const { lineMapNodeTable } = _context
+  const { textAligner } = _context
   // We know that targetIndex is the alignment position, so that wont be our anchor
   let currentIndex = targetIndex - 1;
 
   while (true) {
     if (currentIndex < 0) {
-      const startOfLine = _context.lineMapNodeTable[side].get(1)!
+      const startOfLine = textAligner.getLineMap(side).get(1)!
       return startOfLine
     }
 

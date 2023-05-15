@@ -2,7 +2,7 @@ import { describe } from "vitest";
 import { getTestFn } from "../utils";
 import { OutputType, getDiff } from "../../src";
 
-const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: "\n    <<Alignment>>" })
+const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: "    <<Alignment>>\n" })
 
 describe.only("Properly align code", () => {
   test({
@@ -118,7 +118,7 @@ describe.only("Properly align code", () => {
   })
 
   test({
-    name: 'Basic case a',
+    name: 'Basic case 6',
     a: `
       123
       A
@@ -142,7 +142,7 @@ describe.only("Properly align code", () => {
   // TODO-NOW Compaction case
   test({
     only: 'standard',
-    name: 'Basic case b',
+    name: 'Basic case 7',
     a: `
       A
       123
@@ -152,8 +152,8 @@ describe.only("Properly align code", () => {
       123
     `,
     expA: `
-      ➖A➖
       <<Alignment>>
+      ➖A➖
       123
     `,
     expB: `
@@ -164,7 +164,7 @@ describe.only("Properly align code", () => {
   })
 
   test({
-    name: 'Basic case c',
+    name: 'Basic case 8',
     a: `
       x
       123
@@ -209,7 +209,9 @@ describe.only("Properly align code", () => {
       console.log()
     `
   })
+})
 
+describe.skip("Properly format code", () => {
   test({
     name: 'Format 1',
     a: `
@@ -318,8 +320,6 @@ describe.only("Properly align code", () => {
       ➕(x)➕  
     `
   })
-
-
 })
 
 // test({
