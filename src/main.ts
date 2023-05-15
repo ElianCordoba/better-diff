@@ -184,52 +184,7 @@ function processMoves(matches: Change[]) {
     const canMoveBeAligned = offsetTracker.moveCanGetAligned(indexA, indexB);
 
     if (canMoveBeAligned) {
-      // We need to add alignments to both sides, for example
-      //
-      // A          B
-      // ------------
-      // 1          2
-      // 2          3
-      // 3          1
-      //
-      // LCS is "2 3", so it results in:
-      //
-      // A          B
-      // ------------
-      // 1          -
-      // 2          2
-      // 3          3
-      // -          1
-
-      const sideToAlignStart = indexA < indexB ? Side.a : Side.b;
-      const startIndex = sideToAlignStart === Side.a ? indexA : indexB;
-      const startIter = getIterFromSide(sideToAlignStart)
-      const ogIndexStart = sideToAlignStart === Side.a ? ogIndexA : ogIndexB
-
-      let insertLineAlignmentAt = startIter.textNodes.at(ogIndexStart)?.lineNumberStart!
-
-      const indexDiff = Math.abs(indexA - indexB);
-
-      for (const i of range(startIndex, startIndex + indexDiff)) {
-        offsetTracker.add(sideToAlignStart, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
-
-        _context.textAligner.add(sideToAlignStart, insertLineAlignmentAt);
-        insertLineAlignmentAt++
-      }
-
-      const sideToAlignEnd = oppositeSide(sideToAlignStart);
-      const endIndex = (sideToAlignEnd === Side.a ? indexA : indexB)//  + 1; TODO-NOW
-      const endIter = getIterFromSide(sideToAlignEnd)
-      const ogIndexEnd = sideToAlignEnd === Side.a ? ogIndexA : ogIndexB
-
-      insertLineAlignmentAt = endIter.textNodes.at(ogIndexEnd)?.lineNumberStart!
-
-      for (const i of range(endIndex, endIndex + indexDiff)) {
-        offsetTracker.add(sideToAlignEnd, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
-
-        _context.textAligner.add(sideToAlignEnd, insertLineAlignmentAt);
-        insertLineAlignmentAt++
-      }
+      insertAlignmentsForMatch(match)
     } else {
       if (match.indexesOfClosingMoves.length) {
         changes.push(...match.indexesOfClosingMoves.map((i) => matches[i]));
@@ -494,4 +449,38 @@ function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
   } else {
     return lcs;
   }
+}
+
+// We need to add alignments to both sides, for example
+//
+// A          B
+// ------------
+// 1          2
+// 2          3
+// 3          1
+//
+// LCS is "2 3", so it results in:
+//
+// A          B
+// ------------
+// 1          -
+// 2          2
+// 3          3
+// -          1
+function insertAlignmentsForMatch(match: Change) {
+  const { iterA, iterB, offsetTracker } = _context
+  const { indexA, indexB, offsettedIndexA, offsettedIndexB } = offsetTracker.getOffsettedInfo(match)
+  const indexDiff = Math.abs(offsettedIndexA - offsettedIndexB);
+
+  function apply(side: Side, index: number, lineNumberStart: number) {
+    for (const i of range(index, index + indexDiff)) {
+      offsetTracker.add(side, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
+
+      _context.textAligner.add(side, lineNumberStart);
+      lineNumberStart++
+    }
+  }
+
+  apply(Side.a, offsettedIndexA, iterA.getLineNumber(indexA))
+  apply(Side.b, offsettedIndexB, iterB.getLineNumber(indexB))
 }

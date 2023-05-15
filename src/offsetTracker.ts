@@ -72,6 +72,21 @@ export class OffsetTracker {
     return ogIndex + offset;
   }
 
+  getOffsettedInfo(match: Change) {
+    const indexA = match.getFirstIndex(Side.a)
+    const indexB = match.getFirstIndex(Side.b)
+
+    const offsettedIndexA = this.getOffset(Side.a, indexA)
+    const offsettedIndexB = this.getOffset(Side.b, indexB)
+
+    return {
+      indexA,
+      indexB,
+      offsettedIndexA,
+      offsettedIndexB
+    }
+  }
+
   getSide(side: Side) {
     return side === Side.a ? this.offsetsA : this.offsetsB;
   }
