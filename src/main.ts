@@ -168,23 +168,23 @@ function processMoves(matches: Change[]) {
       matchesToIgnore.push(...match.indexesOfClosingMoves);
     }
 
-    const ogIndexA = match.getFirstIndex(Side.a)
-    const ogIndexB = match.getFirstIndex(Side.b)
+    const indexA = match.getFirstIndex(Side.a)
+    const indexB = match.getFirstIndex(Side.b)
 
-    const indexA = offsetTracker.getOffset(Side.a, ogIndexA);
-    const indexB = offsetTracker.getOffset(Side.b, ogIndexB);
+    const offsettedIndexA = offsetTracker.getOffset(Side.a, indexA);
+    const offsettedIndexB = offsetTracker.getOffset(Side.b, indexB);
 
     // If the nodes are aligned after calculating the offset means that there is no extra work needed
-    if (indexA === indexB) {
+    if (offsettedIndexA === offsettedIndexB) {
       continue;
     }
 
     // There are two outcomes, if the match can be aligned, we add the corresponding alignments and move on.
     // If it can't be aligned then we report a move
-    const canMoveBeAligned = offsetTracker.moveCanGetAligned(indexA, indexB);
+    const canMoveBeAligned = offsetTracker.moveCanGetAligned(offsettedIndexA, offsettedIndexB);
 
     if (canMoveBeAligned) {
-      insertAlignmentsForMatch(match)
+      insertAlignmentsForMatch(indexA, indexB, offsettedIndexA, offsettedIndexB)
     } else {
       if (match.indexesOfClosingMoves.length) {
         changes.push(...match.indexesOfClosingMoves.map((i) => matches[i]));
@@ -467,14 +467,13 @@ function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
 // 2          2
 // 3          3
 // -          1
-function insertAlignmentsForMatch(match: Change) {
+function insertAlignmentsForMatch(indexA: number, indexB: number, offsettedIndexA: number, offsettedIndexB: number) {
   const { iterA, iterB, offsetTracker } = _context
-  const { indexA, indexB, offsettedIndexA, offsettedIndexB } = offsetTracker.getOffsettedInfo(match)
   const indexDiff = Math.abs(offsettedIndexA - offsettedIndexB);
 
   function apply(side: Side, index: number, lineNumberStart: number) {
     for (const i of range(index, index + indexDiff)) {
-      offsetTracker.add(side, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
+      offsetTracker.add(side, { type: ChangeType.move, index: i, numberOfNewLines: 0 });
 
       _context.textAligner.add(side, lineNumberStart);
       lineNumberStart++

@@ -72,21 +72,6 @@ export class OffsetTracker {
     return ogIndex + offset;
   }
 
-  getOffsettedInfo(match: Change) {
-    const indexA = match.getFirstIndex(Side.a)
-    const indexB = match.getFirstIndex(Side.b)
-
-    const offsettedIndexA = this.getOffset(Side.a, indexA)
-    const offsettedIndexB = this.getOffset(Side.b, indexB)
-
-    return {
-      indexA,
-      indexB,
-      offsettedIndexA,
-      offsettedIndexB
-    }
-  }
-
   getSide(side: Side) {
     return side === Side.a ? this.offsetsA : this.offsetsB;
   }
@@ -126,24 +111,6 @@ export class OffsetTracker {
 
   isEmpty() {
     return this.offsetsA.size === 0 && this.offsetsB.size === 0;
-  }
-
-  getFilledOffsettedIndexes(side: Side) {
-    const iter = side === Side.a ? _context.iterA : _context.iterB;
-
-    const nodes: (Node | undefined)[] = [...iter.textNodes];
-
-    const offsets = this.getSide(side);
-
-    for (const offset of offsets.values()) {
-      if (offset.numberOfNewLines === 0) {
-        continue;
-      }
-
-      nodes.splice(offset.index, 0, undefined);
-    }
-
-    return nodes;
   }
 
   // TODO-NOW improve this
