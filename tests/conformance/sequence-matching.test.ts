@@ -370,4 +370,27 @@ describe("Recursive matching", () => {
       3
     `
   })
+
+  // Used to crash when inserting new line alignments in "processMoves" when aligning two moves
+  test({
+    name: "Random 3",
+    a: `
+      1
+      22
+    `,
+    b: `
+      22
+      x
+      1
+    `,
+    expA: `
+      🔀1⏹️
+      22
+    `,
+    expB: `
+      22
+      ➕x➕
+      🔀1⏹️
+    `
+  })
 })

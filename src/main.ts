@@ -92,9 +92,9 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 
   processAddAndDel(deletions, additions);
 
-  const { matches, offsetTracker } = _context;
+  const { matches } = _context;
 
-  const moves = processMoves(matches, offsetTracker);
+  const moves = processMoves(matches);
 
   return compactChanges([...additions, ...deletions, ...moves]);
 }
@@ -135,8 +135,9 @@ function processAddAndDel(additions: Change[], deletions: Change[]) {
 // -     ┌──► b
 // aa ◄──┼──► aa
 // b  ◄──┘    -
-function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
+function processMoves(matches: Change[]) {
   const changes: Change[] = [];
+  const { offsetTracker } = _context
 
   const sortedMatches = matches.sort((a, b) => a.getWeight() < b.getWeight() ? 1 : -1);
 
@@ -167,8 +168,11 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
       matchesToIgnore.push(...match.indexesOfClosingMoves);
     }
 
-    const indexA = offsetTracker.getOffset(Side.a, match.getFirstIndex(Side.a));
-    const indexB = offsetTracker.getOffset(Side.b, match.getFirstIndex(Side.b));
+    const ogIndexA = match.getFirstIndex(Side.a)
+    const ogIndexB = match.getFirstIndex(Side.b)
+
+    const indexA = offsetTracker.getOffset(Side.a, ogIndexA);
+    const indexB = offsetTracker.getOffset(Side.b, ogIndexB);
 
     // If the nodes are aligned after calculating the offset means that there is no extra work needed
     if (indexA === indexB) {
@@ -200,25 +204,31 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
       const sideToAlignStart = indexA < indexB ? Side.a : Side.b;
       const startIndex = sideToAlignStart === Side.a ? indexA : indexB;
       const startIter = getIterFromSide(sideToAlignStart)
+      const ogIndexStart = sideToAlignStart === Side.a ? ogIndexA : ogIndexB
+
+      let insertLineAlignmentAt = startIter.textNodes.at(ogIndexStart)?.lineNumberStart!
 
       const indexDiff = Math.abs(indexA - indexB);
 
       for (const i of range(startIndex, startIndex + indexDiff)) {
         offsetTracker.add(sideToAlignStart, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
 
-        const node = startIter.textNodes[i]
-        _context.textAligner.add(sideToAlignStart, node.lineNumberStart);
+        _context.textAligner.add(sideToAlignStart, insertLineAlignmentAt);
+        insertLineAlignmentAt++
       }
 
       const sideToAlignEnd = oppositeSide(sideToAlignStart);
-      const endIndex = (sideToAlignEnd === Side.a ? indexA : indexB) + 1;
+      const endIndex = (sideToAlignEnd === Side.a ? indexA : indexB)//  + 1; TODO-NOW
       const endIter = getIterFromSide(sideToAlignEnd)
+      const ogIndexEnd = sideToAlignEnd === Side.a ? ogIndexA : ogIndexB
+
+      insertLineAlignmentAt = endIter.textNodes.at(ogIndexEnd)?.lineNumberStart!
 
       for (const i of range(endIndex, endIndex + indexDiff)) {
         offsetTracker.add(sideToAlignEnd, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
 
-        const node = endIter.textNodes[i]
-        _context.textAligner.add(sideToAlignEnd, node.lineNumberStart);
+        _context.textAligner.add(sideToAlignEnd, insertLineAlignmentAt);
+        insertLineAlignmentAt++
       }
     } else {
       if (match.indexesOfClosingMoves.length) {
