@@ -1,5 +1,5 @@
 import { ChangeType, Side } from "./types";
-import { equals, getIterFromSide, getSequence, getSideFromType, normalize, oppositeSide, range } from "./utils";
+import { equals, getSequence, normalize, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change, compactChanges } from "./change";
 import { _context } from "./index";
@@ -7,7 +7,6 @@ import { Node } from "./node";
 import { assert } from "./debug";
 import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from "./sequence";
 import { OpenCloseVerifier } from "./openCloseVerifier";
-import { Offset, OffsetTracker } from "./offsetTracker";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -148,16 +147,7 @@ function processMoves(matches: Change[]) {
 
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of sortedMatches) {
-    // const identicalNewLines = getNewLinesDifferences(match);
-    // if (identicalNewLines.length) {
-    //   // TODO-NOW: It's hardcoded that we will insert the alignment bellow the node, this should see which parts has the most weight
-
-    //   for (const discrepancy of identicalNewLines) {
-    //     const side = getSideFromType(discrepancy.type);
-    //     // TODO-SUPER-NOW: Recalc offsets??? si agrego arriba de uno recalcular pa abajo
-    //     _context.lineAlignmentTracker.add(side, discrepancy);
-    //   }
-    // }
+    applyFormatAlignments(match)
 
     if (matchesToIgnore.includes(match.index)) {
       continue;
@@ -197,14 +187,10 @@ function processMoves(matches: Change[]) {
   return changes;
 }
 
-function getNewLinesDifferences(match: Change): Offset[] {
+function applyFormatAlignments(match: Change) {
   const { indexesA, indexesB } = match;
-  const { iterA, iterB } = _context;
+  const { iterA, iterB, textAligner } = _context;
 
-  let insertionPointA = indexesA.at(-1)!;
-  let insertionPointB = indexesB.at(-1)!;
-
-  const discrepancies: Offset[] = [];
   for (let i = 0; i < indexesA.length; i++) {
     const indexA = indexesA[i];
     const indexB = indexesB[i];
@@ -213,34 +199,15 @@ function getNewLinesDifferences(match: Change): Offset[] {
     const nodeB = iterB.textNodes.at(indexB)!;
 
     if (nodeA.numberOfNewlines !== nodeB.numberOfNewlines) {
-      const difference = Math.abs(nodeA.numberOfNewlines - nodeB.numberOfNewlines);
-      let index: number;
-      let type: ChangeType;
+      const linesToInsert = Math.abs(nodeA.numberOfNewlines - nodeB.numberOfNewlines);
+      const sideToInsertAlignment = nodeA.numberOfNewlines < nodeB.numberOfNewlines ? Side.a : Side.b
+      const insertAlignmentAt = (sideToInsertAlignment === Side.a ? nodeA.lineNumberStart : nodeB.lineNumberStart) + 1
 
-      // We insert alignments on the side with the least new lines
-      if (nodeA.numberOfNewlines < nodeB.numberOfNewlines) {
-        insertionPointA++;
-        // index = lineMapNodeTable[Side.a].get(nodeA.lineNumberStart)!
-        index = insertionPointA;
-
-        type = ChangeType.deletion;
-      } else {
-        insertionPointB++;
-        // index = lineMapNodeTable[Side.b].get(nodeB.lineNumberStart)!
-        index = insertionPointB;
-        type = ChangeType.addition;
+      for (const i of range(insertAlignmentAt, insertAlignmentAt + linesToInsert)) {
+        textAligner.add(sideToInsertAlignment, i)
       }
-
-      discrepancies.push({
-        index,
-        type,
-        numberOfNewLines: difference,
-        change: match,
-      });
     }
   }
-
-  return discrepancies;
 }
 
 function oneSidedIteration(
@@ -483,3 +450,16 @@ function insertAlignmentsForMatch(indexA: number, indexB: number, offsettedIndex
   apply(Side.a, offsettedIndexA, iterA.getLineNumber(indexA))
   apply(Side.b, offsettedIndexB, iterB.getLineNumber(indexB))
 }
+
+// function applyFormatAlignments(match: Change) {
+//   const anyFormatChanges = getNewLinesDifferences(match);
+//   if (anyFormatChanges.length) {
+//     // TODO-NOW: It's hardcoded that we will insert the alignment bellow the node, this should see which parts has the most weight
+
+//     for (const discrepancy of anyFormatChanges) {
+//       const side = getSideFromType(discrepancy.type);
+//       // TODO-SUPER-NOW: Recalc offsets??? si agrego arriba de uno recalcular pa abajo
+//       _context.textAligner.add(side, discrepancy);
+//     }
+//   }
+// }

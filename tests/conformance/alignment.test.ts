@@ -4,7 +4,7 @@ import { OutputType, getDiff } from "../../src";
 
 const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: "    <<Alignment>>\n" })
 
-describe.only("Properly align code", () => {
+describe("Properly align code", () => {
   test({
     name: 'Basic case 1',
     a: `
@@ -211,7 +211,7 @@ describe.only("Properly align code", () => {
   })
 })
 
-describe.skip("Properly format code", () => {
+describe("Properly format code", () => {
   test({
     name: 'Format 1',
     a: `

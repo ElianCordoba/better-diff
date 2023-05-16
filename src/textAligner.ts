@@ -15,7 +15,9 @@ export class TextAligner {
   b = new Set<number>()
 
   add(side: Side, lineNumber: number) {
-    this[side].add(lineNumber)
+    const insertAtLine = this.findInsertionPoint(side, lineNumber)
+
+    this[side].add(insertAtLine)
   }
 
   updateLineMap(side: Side, source: string) {
@@ -77,5 +79,16 @@ export class TextAligner {
 
   isEmpty() {
     return this.a.size === 0 && this.b.size === 0;
+  }
+
+  findInsertionPoint(side: Side, lineNumber: number) {
+    let currentLine = lineNumber
+    while (true) {
+      if (!this[side].has(currentLine)) {
+        return currentLine
+      }
+
+      currentLine++
+    }
   }
 }
