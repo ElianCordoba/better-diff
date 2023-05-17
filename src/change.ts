@@ -2,7 +2,7 @@ import { ChangeType, Range, Side, TypeMasks } from "./types";
 import { colorFn, getSourceWithChange } from "./reporter";
 import { _context } from "./index";
 import { assert } from "./debug";
-import { arraySum, getPrettyChangeType } from "./utils";
+import { arraySum, getIterFromSide, getPrettyChangeType, oppositeSide } from "./utils";
 import { Iterator } from "./iterator";
 export class Change<Type extends ChangeType = ChangeType> {
   rangeA: Range | undefined;
@@ -322,8 +322,20 @@ function insertAlignmentIfNeeded(change: Change) {
   // This function should only be called with additions or deletions
   assert(change.type & TypeMasks.AddOrDel, () => "Tried to insert alignment in a change that wasn't a addition or deletion")
 
-  const indexes = change.type === ChangeType.deletion ? change.indexesA : change.indexesB
-  const iter = change.type === ChangeType.deletion ? _context.iterA : _context.iterB
+  let indexes: number[];
+  let iter: Iterator;
+  // It's the opposite side of where the change happened
+  let sideToInsertAlignment: Side;
+
+  if (change.type === ChangeType.deletion) {
+    sideToInsertAlignment = Side.b
+    indexes = change.indexesA
+    iter = _context.iterA
+  } else {
+    sideToInsertAlignment = Side.a
+    indexes = change.indexesB
+    iter = _context.iterB
+  }
 
   const nodesPerLine: Map<number, Set<number>> = new Map()
 
@@ -341,14 +353,11 @@ function insertAlignmentIfNeeded(change: Change) {
     }
   }
 
-  // Oposite side
-  const side = change.type === ChangeType.deletion ? Side.b : Side.a
-
   const name = change.type === ChangeType.deletion ? 'nodesPerLineA' : 'nodesPerLineB'
   for (const [lineNumber, nodes] of nodesPerLine) {
     // se borro toda la linea
     if (nodes.size === _context.textAligner[name].get(lineNumber)) {
-      _context.textAligner.add(side, lineNumber);
+      _context.textAligner.add(sideToInsertAlignment, lineNumber);
     }
 
   }
