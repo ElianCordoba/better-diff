@@ -152,12 +152,10 @@ describe("Properly align code", () => {
       123
     `,
     expA: `
-      <<Alignment>>
       ➖A➖
       123
     `,
     expB: `
-      <<Alignment>>
       ➕B➕
       123
     `
@@ -200,12 +198,10 @@ describe("Properly align code", () => {
       <<Alignment>>
       123
       🔀x⏹️
-      <<Alignment>>
     `,
     expB: `
       🔀x⏹️
       123
-      <<Alignment>>
       ➕z➕
     `
   })
@@ -227,20 +223,40 @@ describe("Properly align code", () => {
       <<Alignment>>
       123
       🔀x⏹️
-      <<Alignment>>
       5
     `,
     expB: `
       🔀x⏹️
       123
-      <<Alignment>>
       ➕z➕
       5
     `
   })
 
   test({
-    name: 'Other 1',
+    name: 'Basic case 11',
+    a: `
+      x y
+      123
+    `,
+    b: `
+      123
+      x
+    `,
+    expA: `
+      🔀x⏹️ ➖y➖
+      123
+      <<Alignment>>
+    `,
+    expB: `
+      <<Alignment>>
+      123
+      🔀x⏹️
+    `
+  })
+
+  test({
+    name: 'Basic case 12',
     a: `
       console.log()
     `,

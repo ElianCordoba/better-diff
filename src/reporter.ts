@@ -148,15 +148,6 @@ export function getComplimentArray(length: number, fillInCharacter = ""): string
 }
 
 export function applyAlignments(sourceA: string, sourceB: string, changes: Change[]): { sourceA: string; sourceB: string; changes: Change[] } {
-  // TODO: Compact alignments
-  // for (const ofA of offsettedIndexesA.values()) {
-  //   const ofB = offsettedIndexesB.get(ofA.index)
-  //   if (ofB?.numberOfNewLines === ofA.numberOfNewLines) {
-  //     offsettedIndexesA.delete(ofA.index)
-  //     offsettedIndexesB.delete(ofA.index)
-  //   }
-  // }
-
   sourceA = insertAlignments(Side.a, changes, sourceA);
   sourceB = insertAlignments(Side.b, changes, sourceB);
 

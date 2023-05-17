@@ -95,6 +95,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 
   const moves = processMoves(matches);
 
+  compactAlignments()
+
   return compactChanges([...additions, ...deletions, ...moves]);
 }
 
@@ -437,12 +439,17 @@ function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
 function insertAlignmentsForMatch(indexA: number, indexB: number, offsettedIndexA: number, offsettedIndexB: number) {
   const { iterA, iterB, offsetTracker } = _context
   const indexDiff = Math.abs(offsettedIndexA - offsettedIndexB);
+  const linesDiff = Math.abs(iterA.textNodes[indexA].lineNumberStart - iterB.textNodes[indexB].lineNumberStart)
 
   function apply(side: Side, index: number, lineNumberStart: number) {
+    // Apply semantic offset
     for (const i of range(index, index + indexDiff)) {
       offsetTracker.add(side, { type: ChangeType.move, index: i, numberOfNewLines: 0 });
+    }
 
-      _context.textAligner.add(side, lineNumberStart);
+    // Apply text offset
+    for (const i of range(lineNumberStart, lineNumberStart + linesDiff)) {
+      _context.textAligner.add(side, i);
       lineNumberStart++
     }
   }
@@ -473,4 +480,35 @@ function insertAlignmentsForMatch(indexA: number, indexB: number, offsettedIndex
 
   apply(Side.a, offsettedIndexA, insertionPointA)
   apply(Side.b, offsettedIndexB, insertionPointB)
+}
+
+// Remove alignments in the same line, for example
+// A          B
+// ------------
+// x          y
+// z          2
+// 2          
+//
+// Fully aligned would be:
+// A          B
+// ------------
+// -          -
+// x          y
+// z          _
+// 2          2
+//
+// After the compaction:
+// A          B
+// ------------
+// x          y
+// z          _
+// 2          2
+function compactAlignments() {
+  const { a, b } = _context.textAligner
+  for (const alignmentAt of a) {
+    if (b.has(alignmentAt)) {
+      a.delete(alignmentAt)
+      b.delete(alignmentAt)
+    }
+  }
 }
