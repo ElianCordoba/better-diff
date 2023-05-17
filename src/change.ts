@@ -202,12 +202,16 @@ export class Change<Type extends ChangeType = ChangeType> {
   }
 }
 
-// TODO: Compact at the moment when we push new changes to the array. Mainly to save memory since we will avoid having a big array before the moment of compaction
-export function compactChanges(changes: (Change & { seen?: boolean })[]) {
-  const newChanges: Change[] = [];
+export function compactChanges(type: ChangeType.deletion | ChangeType.addition, _changes: (Change & { seen?: boolean })[]) {
+  assert(type & TypeMasks.AddOrDel)
+
+  const rangeToRead = type === ChangeType.deletion ? 'rangeA' : 'rangeB'
+  const sortedChanges = _changes.sort((a, b) => a[rangeToRead]!.start - b[rangeToRead]!.start);
+
+  const finalChanges: Change[] = [];
 
   let currentChangeIndex = -1;
-  for (const change of changes) {
+  for (const change of sortedChanges) {
     const candidate = change;
 
     currentChangeIndex++;
@@ -216,17 +220,12 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
       continue;
     }
 
-    if (change.type === ChangeType.move) {
-      newChanges.push(change);
-      continue;
-    }
-
     // We start from the current position since we known that above changes wont be compatible
     let nextIndex = currentChangeIndex + 1;
 
     innerLoop:
-    while (nextIndex < changes.length) {
-      const next = changes[nextIndex];
+    while (nextIndex < sortedChanges.length) {
+      const next = sortedChanges[nextIndex];
 
       if (next.seen) {
         nextIndex++;
@@ -238,10 +237,8 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
         continue;
       }
 
-      const readFrom = change!.type === ChangeType.deletion ? "rangeA" : "rangeB";
-
-      const currentRange = change![readFrom]!;
-      const nextRange = next[readFrom]!;
+      const currentRange = change![rangeToRead]!;
+      const nextRange = next[rangeToRead]!;
 
       const compatible = tryMergeRanges(currentRange, nextRange);
 
@@ -251,18 +248,18 @@ export function compactChanges(changes: (Change & { seen?: boolean })[]) {
         break innerLoop;
       }
 
-      changes[nextIndex].seen = true;
+      sortedChanges[nextIndex].seen = true;
 
-      candidate[readFrom] = compatible;
+      candidate[rangeToRead] = compatible;
 
       nextIndex++;
       continue;
     }
 
-    newChanges.push(candidate);
+    finalChanges.push(candidate);
   }
 
-  return newChanges;
+  return finalChanges;
 }
 
 export function tryMergeRanges(

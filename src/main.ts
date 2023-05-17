@@ -86,6 +86,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
   loop();
 
   // TODO: Once we improve compaction to be on-demand, we will be able to remove this
+  // const deletions = compactChanges(ChangeType.deletion, changes.filter((x) => x.type === ChangeType.deletion))
+  // const additions = compactChanges(ChangeType.addition, changes.filter((x) => x.type === ChangeType.addition))
   const deletions = changes.filter((x) => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start! - b.rangeA?.start!);
   const additions = changes.filter((x) => x.type === ChangeType.addition).sort((a, b) => a.rangeB?.start! - b.rangeB?.start!);
 
@@ -97,7 +99,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 
   compactAlignments();
 
-  return compactChanges([...additions, ...deletions, ...moves]);
+  // return [...additions, ...deletions, ...moves];
+  return [...compactChanges(ChangeType.addition, additions), ...compactChanges(ChangeType.deletion, deletions), ...moves];
 }
 
 function processAddAndDel(additions: Change[], deletions: Change[]) {
