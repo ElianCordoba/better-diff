@@ -95,4 +95,13 @@ export class TextAligner {
       currentLine++
     }
   }
+
+  // Returns true if all the nodes in a given line are involved in a change, for example:
+  // In line 5 you have 3 nodes, if a deletion comes in, we will read the "indexesA" prop, the length of the array 
+  // must be 3 in order to conclude that the whole line is deleted.
+  // This also is used for additions
+  wholeLineAffected(side: Side, lineNumber: number, numberOfNodesAffected: number) {
+    const readFrom = side === Side.a ? 'nodesPerLineA' : 'nodesPerLineB'
+    return this[readFrom].get(lineNumber) === numberOfNodesAffected
+  }
 }

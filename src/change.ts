@@ -2,7 +2,7 @@ import { ChangeType, Range, Side, TypeMasks } from "./types";
 import { colorFn, getSourceWithChange } from "./reporter";
 import { _context } from "./index";
 import { assert } from "./debug";
-import { arraySum, getIterFromSide, getPrettyChangeType, oppositeSide } from "./utils";
+import { arraySum, getIterFromSide, getPrettyChangeType, getSideFromChangeType, oppositeSide } from "./utils";
 import { Iterator } from "./iterator";
 export class Change<Type extends ChangeType = ChangeType> {
   rangeA: Range | undefined;
@@ -352,13 +352,11 @@ function insertAlignmentIfNeeded(change: Change) {
       nodesPerLine.set(line, new Set([node.index]))
     }
   }
-
-  const name = change.type === ChangeType.deletion ? 'nodesPerLineA' : 'nodesPerLineB'
+  const { textAligner } = _context
+  const side = getSideFromChangeType(change.type)
   for (const [lineNumber, nodes] of nodesPerLine) {
-    // se borro toda la linea
-    if (nodes.size === _context.textAligner[name].get(lineNumber)) {
-      _context.textAligner.add(sideToInsertAlignment, lineNumber);
+    if (textAligner.wholeLineAffected(side, lineNumber, nodes.size)) {
+      textAligner.add(sideToInsertAlignment, lineNumber);
     }
-
   }
 }
