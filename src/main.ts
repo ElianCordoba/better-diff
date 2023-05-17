@@ -474,16 +474,3 @@ function insertAlignmentsForMatch(indexA: number, indexB: number, offsettedIndex
   apply(Side.a, offsettedIndexA, insertionPointA)
   apply(Side.b, offsettedIndexB, insertionPointB)
 }
-
-// function applyFormatAlignments(match: Change) {
-//   const anyFormatChanges = getNewLinesDifferences(match);
-//   if (anyFormatChanges.length) {
-//     // TODO-NOW: It's hardcoded that we will insert the alignment bellow the node, this should see which parts has the most weight
-
-//     for (const discrepancy of anyFormatChanges) {
-//       const side = getSideFromType(discrepancy.type);
-//       // TODO-SUPER-NOW: Recalc offsets??? si agrego arriba de uno recalcular pa abajo
-//       _context.textAligner.add(side, discrepancy);
-//     }
-//   }
-// }
