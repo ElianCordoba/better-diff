@@ -85,7 +85,7 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
 
   const lineMap = _context.textAligner.getLineMap(side);
 
-  const nodesPerLine: Map<number, Set<number>> = new Map()
+  const nodesPerLine: Map<number, Set<number>> = new Map();
 
   // TODO(Perf): Maybe do this inside the walk.
   // Before returning the result we need process the data one last time.
@@ -103,12 +103,12 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
 
     //
 
-    const line = node.lineNumberStart
+    const line = node.lineNumberStart;
 
     if (nodesPerLine.has(line)) {
-      nodesPerLine.get(line)!.add(node.index)
+      nodesPerLine.get(line)!.add(node.index);
     } else {
-      nodesPerLine.set(line, new Set([node.index]))
+      nodesPerLine.set(line, new Set([node.index]));
     }
 
     //
@@ -116,9 +116,9 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
     i++;
   }
 
-  const name = side === Side.a ? 'nodesPerLineA' : 'nodesPerLineB'
+  const name = side === Side.a ? "nodesPerLineA" : "nodesPerLineB";
   for (const [lineNumber, nodes] of nodesPerLine) {
-    _context.textAligner[name].set(lineNumber, nodes.size)
+    _context.textAligner[name].set(lineNumber, nodes.size);
   }
 
   const fullLineMap = getLineMap(source);
@@ -128,7 +128,6 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
     if (!lineMap.has(lineNumber)) {
       lineMap.set(lineNumber, startOfLine);
     }
-
 
     lineNumber++;
   }

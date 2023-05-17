@@ -2,7 +2,7 @@ import { ChangeType, Range, Side, TypeMasks } from "./types";
 import { colorFn, getSourceWithChange } from "./reporter";
 import { _context } from "./index";
 import { assert } from "./debug";
-import { arraySum, getIterFromSide, getPrettyChangeType, getSideFromChangeType, oppositeSide } from "./utils";
+import { arraySum, getPrettyChangeType, getSideFromChangeType } from "./utils";
 import { Iterator } from "./iterator";
 export class Change<Type extends ChangeType = ChangeType> {
   rangeA: Range | undefined;
@@ -125,9 +125,8 @@ export class Change<Type extends ChangeType = ChangeType> {
           type: ChangeType.deletion,
           index: offsetTracker.getOffset(Side.a, index),
           numberOfNewLines: this.getNewLines(),
-          change: this
+          change: this,
         });
-
       });
 
       insertAlignmentIfNeeded(this);
@@ -151,7 +150,7 @@ export class Change<Type extends ChangeType = ChangeType> {
           type: ChangeType.addition,
           index: offsetTracker.getOffset(Side.b, index),
           numberOfNewLines: this.getNewLines(),
-          change: this
+          change: this,
         });
       });
 
@@ -302,7 +301,7 @@ function getRange(iter: Iterator, indexes: number[]): Range {
 //
 // A          B
 // ------------
-// x           
+// x
 //
 // Results in:
 //
@@ -320,7 +319,7 @@ function getRange(iter: Iterator, indexes: number[]): Range {
 
 function insertAlignmentIfNeeded(change: Change) {
   // This function should only be called with additions or deletions
-  assert(change.type & TypeMasks.AddOrDel, () => "Tried to insert alignment in a change that wasn't a addition or deletion")
+  assert(change.type & TypeMasks.AddOrDel, () => "Tried to insert alignment in a change that wasn't a addition or deletion");
 
   let indexes: number[];
   let iter: Iterator;
@@ -328,32 +327,32 @@ function insertAlignmentIfNeeded(change: Change) {
   let sideToInsertAlignment: Side;
 
   if (change.type === ChangeType.deletion) {
-    sideToInsertAlignment = Side.b
-    indexes = change.indexesA
-    iter = _context.iterA
+    sideToInsertAlignment = Side.b;
+    indexes = change.indexesA;
+    iter = _context.iterA;
   } else {
-    sideToInsertAlignment = Side.a
-    indexes = change.indexesB
-    iter = _context.iterB
+    sideToInsertAlignment = Side.a;
+    indexes = change.indexesB;
+    iter = _context.iterB;
   }
 
-  const nodesPerLine: Map<number, Set<number>> = new Map()
+  const nodesPerLine: Map<number, Set<number>> = new Map();
 
   for (const i of indexes) {
-    const node = iter.textNodes[i]
+    const node = iter.textNodes[i];
 
-    assert(node)
+    assert(node);
 
-    const line = node.lineNumberStart
+    const line = node.lineNumberStart;
 
     if (nodesPerLine.has(line)) {
-      nodesPerLine.get(line)!.add(node.index)
+      nodesPerLine.get(line)!.add(node.index);
     } else {
-      nodesPerLine.set(line, new Set([node.index]))
+      nodesPerLine.set(line, new Set([node.index]));
     }
   }
-  const { textAligner } = _context
-  const side = getSideFromChangeType(change.type)
+  const { textAligner } = _context;
+  const side = getSideFromChangeType(change.type);
   for (const [lineNumber, nodes] of nodesPerLine) {
     if (textAligner.wholeLineAffected(side, lineNumber, nodes.size)) {
       textAligner.add(sideToInsertAlignment, lineNumber);

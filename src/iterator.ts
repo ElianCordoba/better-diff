@@ -168,7 +168,7 @@ export class Iterator {
 
   getLineNumber(index: number) {
     // TODO: Contemplate lineNumberStart !== lineNumberEnd
-    return this.textNodes[index].lineNumberStart
+    return this.textNodes[index].lineNumberStart;
   }
 
   printList(nodesToPrint?: Node[]) {

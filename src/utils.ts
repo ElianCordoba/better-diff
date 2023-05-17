@@ -160,5 +160,5 @@ export function getSideFromChangeType(type: ChangeType): Side {
 }
 
 export function getIterFromSide(side: Side): Iterator {
-  return side === Side.a ? _context.iterA : _context.iterB
+  return side === Side.a ? _context.iterA : _context.iterB;
 }

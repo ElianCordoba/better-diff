@@ -1,7 +1,6 @@
 import { _context } from ".";
 import { Change } from "./change";
 import { assert } from "./debug";
-import { Node } from "./node";
 import { ChangeType, Side } from "./types";
 import { range } from "./utils";
 

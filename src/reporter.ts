@@ -2,7 +2,6 @@ import { _context, getOptions } from ".";
 import { ChangeType, Side } from "../src/types";
 import { Change } from "./change";
 import { assert, fail } from "./debug";
-import { Node } from "./node";
 
 //@ts-ignore TODO: Importing normally doesn't work with vitest
 export const k = require("kleur");
@@ -159,8 +158,8 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
 }
 
 function insertAlignments(side: Side, changes: Change[], source: string): string {
-  const { textAligner } = _context
-  const lineOffsets = textAligner[side]
+  const { textAligner } = _context;
+  const lineOffsets = textAligner[side];
 
   if (lineOffsets.size === 0) {
     return source;
@@ -169,19 +168,19 @@ function insertAlignments(side: Side, changes: Change[], source: string): string
   const alignmentText = getOptions().alignmentText;
 
   for (const lineAlignment of lineOffsets.values()) {
-    const realLineNumber = textAligner.getOffsettedLineNumber(side, lineAlignment)
+    const realLineNumber = textAligner.getOffsettedLineNumber(side, lineAlignment);
 
-    let insertAt = textAligner.getLineMap(side).get(realLineNumber)!
+    let insertAt = textAligner.getLineMap(side).get(realLineNumber)!;
 
     // Insert at will be undefined if the line we are tring to insert to is not present on the other side, for example
     // If you try to insert line 5 but the other source only has 3 line, we will append it at the end
     if (insertAt === undefined) {
-      insertAt = textAligner.getLastLineStart(side)
+      insertAt = textAligner.getLastLineStart(side);
     }
 
     source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
 
-    textAligner.updateLineMap(side, source)
+    textAligner.updateLineMap(side, source);
 
     // updateChanges(changes, offset.change?.index!, side, insertAt)
     updateChanges(changes, side, insertAt);

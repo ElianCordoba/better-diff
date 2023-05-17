@@ -95,7 +95,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 
   const moves = processMoves(matches);
 
-  compactAlignments()
+  compactAlignments();
 
   return compactChanges([...additions, ...deletions, ...moves]);
 }
@@ -138,7 +138,7 @@ function processAddAndDel(additions: Change[], deletions: Change[]) {
 // b  ◄──┘    -
 function processMoves(matches: Change[]) {
   const changes: Change[] = [];
-  const { offsetTracker } = _context
+  const { offsetTracker } = _context;
 
   const sortedMatches = matches.sort((a, b) => a.getWeight() < b.getWeight() ? 1 : -1);
 
@@ -149,7 +149,7 @@ function processMoves(matches: Change[]) {
 
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of sortedMatches) {
-    applyFormatAlignments(match)
+    applyFormatAlignments(match);
 
     if (matchesToIgnore.includes(match.index)) {
       continue;
@@ -160,8 +160,8 @@ function processMoves(matches: Change[]) {
       matchesToIgnore.push(...match.indexesOfClosingMoves);
     }
 
-    const indexA = match.getFirstIndex(Side.a)
-    const indexB = match.getFirstIndex(Side.b)
+    const indexA = match.getFirstIndex(Side.a);
+    const indexB = match.getFirstIndex(Side.b);
 
     const offsettedIndexA = offsetTracker.getOffset(Side.a, indexA);
     const offsettedIndexB = offsetTracker.getOffset(Side.b, indexB);
@@ -176,7 +176,7 @@ function processMoves(matches: Change[]) {
     const canMoveBeAligned = offsetTracker.moveCanGetAligned(offsettedIndexA, offsettedIndexB);
 
     if (canMoveBeAligned) {
-      insertAlignmentsForMatch(indexA, indexB, offsettedIndexA, offsettedIndexB)
+      insertAlignmentsForMatch(indexA, indexB, offsettedIndexA, offsettedIndexB);
     } else {
       if (match.indexesOfClosingMoves.length) {
         changes.push(...match.indexesOfClosingMoves.map((i) => matches[i]));
@@ -202,11 +202,11 @@ function applyFormatAlignments(match: Change) {
 
     if (nodeA.numberOfNewlines !== nodeB.numberOfNewlines) {
       const linesToInsert = Math.abs(nodeA.numberOfNewlines - nodeB.numberOfNewlines);
-      const sideToInsertAlignment = nodeA.numberOfNewlines < nodeB.numberOfNewlines ? Side.a : Side.b
-      const insertAlignmentAt = (sideToInsertAlignment === Side.a ? nodeA.lineNumberStart : nodeB.lineNumberStart) + 1
+      const sideToInsertAlignment = nodeA.numberOfNewlines < nodeB.numberOfNewlines ? Side.a : Side.b;
+      const insertAlignmentAt = (sideToInsertAlignment === Side.a ? nodeA.lineNumberStart : nodeB.lineNumberStart) + 1;
 
       for (const i of range(insertAlignmentAt, insertAlignmentAt + linesToInsert)) {
-        textAligner.add(sideToInsertAlignment, i)
+        textAligner.add(sideToInsertAlignment, i);
       }
     }
   }
@@ -437,9 +437,9 @@ function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
 // 3          3
 // -          1
 function insertAlignmentsForMatch(indexA: number, indexB: number, offsettedIndexA: number, offsettedIndexB: number) {
-  const { iterA, iterB, offsetTracker } = _context
+  const { iterA, iterB, offsetTracker } = _context;
   const indexDiff = Math.abs(offsettedIndexA - offsettedIndexB);
-  const linesDiff = Math.abs(iterA.textNodes[indexA].lineNumberStart - iterB.textNodes[indexB].lineNumberStart)
+  const linesDiff = Math.abs(iterA.textNodes[indexA].lineNumberStart - iterB.textNodes[indexB].lineNumberStart);
 
   function apply(side: Side, index: number, lineNumberStart: number) {
     // Apply semantic offset
@@ -450,12 +450,12 @@ function insertAlignmentsForMatch(indexA: number, indexB: number, offsettedIndex
     // Apply text offset
     for (const i of range(lineNumberStart, lineNumberStart + linesDiff)) {
       _context.textAligner.add(side, i);
-      lineNumberStart++
+      lineNumberStart++;
     }
   }
 
-  let insertionPointA = iterA.getLineNumber(indexA)
-  let insertionPointB = iterB.getLineNumber(indexB)
+  let insertionPointA = iterA.getLineNumber(indexA);
+  let insertionPointB = iterB.getLineNumber(indexB);
 
   // Add one extra to the alignment of side we align at the end, so it looks like this
   //
@@ -473,13 +473,13 @@ function insertAlignmentsForMatch(indexA: number, indexB: number, offsettedIndex
   // b          -    <- Align at the end on B, inserting _after_
   //
   if (offsettedIndexA > offsettedIndexB) {
-    insertionPointA++
+    insertionPointA++;
   } else {
-    insertionPointB++
+    insertionPointB++;
   }
 
-  apply(Side.a, offsettedIndexA, insertionPointA)
-  apply(Side.b, offsettedIndexB, insertionPointB)
+  apply(Side.a, offsettedIndexA, insertionPointA);
+  apply(Side.b, offsettedIndexB, insertionPointB);
 }
 
 // Remove alignments in the same line, for example
@@ -487,7 +487,7 @@ function insertAlignmentsForMatch(indexA: number, indexB: number, offsettedIndex
 // ------------
 // x          y
 // z          2
-// 2          
+// 2
 //
 // Fully aligned would be:
 // A          B
@@ -504,11 +504,11 @@ function insertAlignmentsForMatch(indexA: number, indexB: number, offsettedIndex
 // z          _
 // 2          2
 function compactAlignments() {
-  const { a, b } = _context.textAligner
+  const { a, b } = _context.textAligner;
   for (const alignmentAt of a) {
     if (b.has(alignmentAt)) {
-      a.delete(alignmentAt)
-      b.delete(alignmentAt)
+      a.delete(alignmentAt);
+      b.delete(alignmentAt);
     }
   }
 }
