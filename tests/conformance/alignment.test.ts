@@ -345,6 +345,7 @@ describe("Properly align code", () => {
 
   test({
     name: 'Basic case 16',
+    only: 'standard',
     a: `
       xx
       1
@@ -377,6 +378,83 @@ describe("Properly align code", () => {
     `,
 
   })
+
+  test({
+    name: 'Basic case 17',
+    a: `
+      1
+      print(true) {}
+    `,
+    b: `
+      print(
+        true
+      ) {
+
+      }
+    `,
+    expA: `
+      ➖1➖
+      print(true) {}
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>> 
+      <<Alignment>>
+    `,
+    expB: `
+      <<Alignment>>
+      print(
+        true
+      ) {
+
+      }
+    `,
+  });
+
+  test({
+    name: 'Basic case 18',
+    a: `
+      x
+      z
+    `,
+    b: `
+      x
+      1
+      2
+      z
+    `,
+    expA: `
+      x
+      <<Alignment>>
+      <<Alignment>>
+      z
+    `,
+    expB: `
+      x
+      ➕1➕
+      ➕2➕
+      z
+    `,
+  })
+
+  test({
+    name: 'Basic case 19',
+    a: `
+      x z
+      1 2
+      3
+    `,
+    b: `
+      x
+      3
+    `,
+    expB: `
+      x 
+      z
+      <<Alignment>>
+    `
+  })
+
+
 })
 
 describe("Properly format code", () => {
@@ -611,89 +689,6 @@ describe('Properly ignore alignments', () => {
 
 
 // test({
-//   name: 7,
-//   a: `
-//     xx
-//     zz
-//     1
-//     2
-//     3
-//     4
-//   `,
-//   b: `
-//     1
-//     2
-//     xx
-//     3
-//     4
-//     zz
-//   `,
-//   expB: `
-//     1
-//     2
-//     xx
-//     <<Alignment>>
-//     3
-//     4
-//     zz
-//   `
-// })
-
-// test({
-//   name: 8,
-//   a: `
-//     x
-//     a
-//   `,
-//   b: `
-//     x
-//   `,
-//   expB: `
-//     x
-//     <<Alignment>>
-//   `
-// })
-
-// test({
-//   name: 9,
-//   a: `
-//     x
-//     z
-//   `,
-//   b: `
-//     x
-//     1
-//     2
-//     z
-//   `,
-//   expA: `
-//     x
-//     <<Alignment>>
-//     <<Alignment>>
-//     z
-//   `
-// })
-
-// test({
-//   name: 10,
-//   a: `
-//     x
-//     1
-//     2
-//   `,
-//   b: `
-//     x
-//     z
-//   `,
-//   expB: `
-//     x 
-//     z
-//     <<Alignment>>
-//   `
-// })
-
-
-// test({
 //   name: 12,
 //   a: `
 //     x
@@ -902,36 +897,6 @@ describe('Properly ignore alignments', () => {
 //   `,
 // });
 
-// test({
-//   name: 23,
-//   a: `
-//     1
-//     print(true) {}
-//   `,
-//   b: `
-//     print(
-//       true
-//     ) {
-
-//     }
-//   `,
-//   expA: `
-//     1
-//     print(true) {}
-//     <<Alignment>>
-//     <<Alignment>>
-//     <<Alignment>>
-//     <<Alignment>>
-//   `,
-//   expB: `
-//     <<Alignment>>
-//     print(
-//       true
-//     ) {
-
-//     }
-//   `,
-// });
 
 // test({
 //   name: 24,
