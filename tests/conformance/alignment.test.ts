@@ -279,6 +279,104 @@ describe("Properly align code", () => {
       console.log()
     `
   })
+
+  // Test insertion into "lastA" and "lastB"
+  test({
+    name: 'Basic case 13',
+    a: "xx\n1",
+    b: "1\nxx",
+    expA: "<<Alignment>>\nxx\n🔀1⏹️",
+    expB: "🔀1⏹️\n<<Alignment>>\nxx"
+  })
+
+  test({
+    name: 'Basic case 14',
+    a: `
+      1
+      2
+      3
+      console.log()
+    `,
+    b: `
+      4
+      5
+      console
+      .log()
+    `,
+    expA: `
+      ➖1➖
+      ➖2➖
+      ➖3➖
+      console.log()
+      <<Alignment>>
+    `,
+    expB: `
+      ➕4➕
+      ➕5➕
+      <<Alignment>>
+      console.log()
+    `
+  })
+
+  test({
+    name: 'Basic case 15',
+    a: `
+      x
+      if (true) {}
+      z
+    `,
+    b: `
+      x
+      if (
+        true
+      ) { 
+      }
+      z
+    `,
+    expA: `
+      x
+      if (true) {}
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>>
+      z 
+    `,
+  })
+
+  test({
+    name: 'Basic case 16',
+    a: `
+      xx
+      1
+      2
+      3
+      4
+    `,
+    b: `
+      1
+      2
+      xx
+      3
+      4
+    `,
+    expA: `
+      🔀xx⏹️
+      1
+      2
+      <<Alignment>>
+      3
+      4
+    `,
+    expB: `
+      <<Alignment>>
+      1
+      2
+      🔀xx⏹️
+      3
+      4
+    `,
+
+  })
 })
 
 describe("Properly format code", () => {
@@ -406,6 +504,71 @@ describe("Properly format code", () => {
     `,
   })
 
+  test({
+    name: 'Format 8',
+    a: `
+      x
+      if (true) {}
+      z
+    `,
+    b: `
+      x
+      if (
+        true
+      ) { 
+      }
+      z
+    `,
+    expA: `
+      x
+      if (true) {}
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>>
+      z
+    `,
+  })
+
+  test({
+    name: 'Format 9',
+    a: `
+      x
+      if (true) {}
+      z
+    `,
+    b: `
+      x
+      if (
+        true
+      ) { 
+      }
+      z
+    `,
+    expA: `
+      x
+      if (true) {}
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>>
+      z
+    `,
+  })
+
+  test({
+    name: 'Format 10',
+    a: `
+      console.log()
+      1
+    `,
+    b: `
+      console.
+      log()
+    `,
+    expA: `
+      console.log()
+      ➖1➖
+    `,
+  })
 })
 
 describe('Properly ignore alignments', () => {
@@ -442,118 +605,10 @@ describe('Properly ignore alignments', () => {
   })
 })
 
-// test({
-//   name: 3,
-//   a: `
-//     1
-//     console.log()
-//   `,
-//   b: `
-//     console.
-//     log()
-//   `,
-//   expA: `
-//     1
-//     console.log()
-//     <<Alignment>>
-//   `,
-//   expB: `
-//     <<Alignment>>
-//     console.
-//     log()
-//   `
-// })
 
-// test({
-//   name: 4,
-//   a: `
-//     1
-//     2
-//     3
-//     console.log()
-//   `,
-//   b: `
-//     4
-//     5
-//     console.log()
-//   `,
-//   expA: `
-//     1
-//     2
-//     3
-//     console.log()
-//   `,
-//   expB: `
-//     4
-//     5
-//     <<Alignment>>
-//     console.log()
-//   `
-// })
 
-// test({
-//   name: 5,
-//   a: `
-//     1
-//     2
-//     3
-//     console.log()
-//   `,
-//   b: `
-//     4
-//     5
-//     console
-//     .log()
-//   `,
-//   expA: `
-//     1
-//     2
-//     3
-//     console.log()
-//     <<Alignment>>
-//   `,
-//   expB: `
-//     4
-//     5
-//     <<Alignment>>
-//     console
-//     .log()
-//   `
-// })
 
-// test({
-//   name: 6,
-//   a: `
-//     xx
-//     1
-//     2
-//     3
-//     4
-//   `,
-//   b: `
-//     1
-//     2
-//     xx
-//     3
-//     4
-//   `,
-//   expA: `
-//     xx
-//     <<Alignment>>
-//     1
-//     2
-//     3
-//     4
-//   `,
-//   expB: `
-//     1
-//     2
-//     <<Alignment>>
-//     xx
-//     3
-//     4
-//   `,
-// })
+
 
 // test({
 //   name: 7,
@@ -637,31 +692,6 @@ describe('Properly ignore alignments', () => {
 //   `
 // })
 
-// // TODO(Improve) Este deberia ser dividido en partes, la del if deberia ser alineado por su cuenta
-// test({
-//   name: 11,
-//   a: `
-//     x
-//     if (true) {}
-//     z
-//   `,
-//   b: `
-//     x
-//     if (
-//       true
-//     ) {
-//     }
-//     z
-//   `,
-//   expA: `
-//     x 
-//     if (true) {}
-//     z
-//     <<Alignment>>
-//     <<Alignment>>
-//     <<Alignment>>
-//   `
-// })
 
 // test({
 //   name: 12,
