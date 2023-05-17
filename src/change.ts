@@ -127,9 +127,10 @@ export class Change<Type extends ChangeType = ChangeType> {
           numberOfNewLines: this.getNewLines(),
           change: this
         });
-        const node = _context.iterA.textNodes[index]
-        _context.textAligner.add(Side.b, node.lineNumberStart);
+
       });
+
+      insertAlignmentIfNeeded(this);
     } else {
       // Alignment for additions:
       //
@@ -152,9 +153,9 @@ export class Change<Type extends ChangeType = ChangeType> {
           numberOfNewLines: this.getNewLines(),
           change: this
         });
-        const node = _context.iterB.textNodes[index]
-        _context.textAligner.add(Side.a, node.lineNumberStart);
       });
+
+      insertAlignmentIfNeeded(this);
     }
   }
 
@@ -295,4 +296,60 @@ function getRange(iter: Iterator, indexes: number[]): Range {
     start: iter.textNodes[startIndex].start,
     end: iter.textNodes[endIndex].end,
   };
+}
+
+// We want to insert a text alignment if the full line is deleted
+//
+// A          B
+// ------------
+// x           
+//
+// Results in:
+//
+// A          B
+// ------------
+// x         \n
+//
+// But, if the whole line is _not_ deleted / added, then we don't insert it
+//
+// A          B
+// ------------
+// 1 2        2
+//
+// Results in the same format
+
+function insertAlignmentIfNeeded(change: Change) {
+  // This function should only be called with additions or deletions
+  assert(change.type & TypeMasks.AddOrDel, () => "Tried to insert alignment in a change that wasn't a addition or deletion")
+
+  const indexes = change.type === ChangeType.deletion ? change.indexesA : change.indexesB
+  const iter = change.type === ChangeType.deletion ? _context.iterA : _context.iterB
+
+  const nodesPerLine: Map<number, Set<number>> = new Map()
+
+  for (const i of indexes) {
+    const node = iter.textNodes[i]
+
+    assert(node)
+
+    const line = node.lineNumberStart
+
+    if (nodesPerLine.has(line)) {
+      nodesPerLine.get(line)!.add(node.index)
+    } else {
+      nodesPerLine.set(line, new Set([node.index]))
+    }
+  }
+
+  // Oposite side
+  const side = change.type === ChangeType.deletion ? Side.b : Side.a
+
+  const name = change.type === ChangeType.deletion ? 'nodesPerLineA' : 'nodesPerLineB'
+  for (const [lineNumber, nodes] of nodesPerLine) {
+    // se borro toda la linea
+    if (nodes.size === _context.textAligner[name].get(lineNumber)) {
+      _context.textAligner.add(side, lineNumber);
+    }
+
+  }
 }

@@ -85,6 +85,8 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
 
   const lineMap = _context.textAligner.getLineMap(side);
 
+  const nodesPerLine: Map<number, Set<number>> = new Map()
+
   // TODO(Perf): Maybe do this inside the walk.
   // Before returning the result we need process the data one last time.
   let i = 0;
@@ -99,37 +101,37 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
       kindTable.set(node.kind, new Set([i]));
     }
 
-    // ya vienen ordenados por range start por suerte, porque lo que queremos es el primer nodo de cada linea
-    // if (!lineMap.has(node.lineNumberStart)) {
-    //   lineMap.set(node.lineNumberStart, node.start);
-    // }
+    //
+
+    const line = node.lineNumberStart
+
+    if (nodesPerLine.has(line)) {
+      nodesPerLine.get(line)!.add(node.index)
+    } else {
+      nodesPerLine.set(line, new Set([node.index]))
+    }
+
+    //
 
     i++;
+  }
+
+  const name = side === Side.a ? 'nodesPerLineA' : 'nodesPerLineB'
+  for (const [lineNumber, nodes] of nodesPerLine) {
+    _context.textAligner[name].set(lineNumber, nodes.size)
   }
 
   const fullLineMap = getLineMap(source);
 
   let lineNumber = 1;
   for (const startOfLine of fullLineMap) {
-    // tenemos que insertart los line start de las lineas que no tienen nodos, por ejemplo
-    //
-    // 1 | a
-    // 2 |
-    // 3 | c
-    // Con el approach de arriba solamente tendriamos las lineas 1 y 3 
     if (!lineMap.has(lineNumber)) {
       lineMap.set(lineNumber, startOfLine);
     }
 
+
     lineNumber++;
   }
-
-  // const sorted = new Map([...lineMap].sort());
-  // lineMap.clear()
-
-  // for (const [key, val] of sorted) {
-  //   lineMap.set(key, val)
-  // }
 
   _context.textAligner.sortLineMap(side);
 

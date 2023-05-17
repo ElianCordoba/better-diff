@@ -281,9 +281,9 @@ describe("Properly format code", () => {
     `,
     expA: `
       ()
+      <<Alignment>>
+      <<Alignment>>
       x
-      <<Alignment>>
-      <<Alignment>>
     `
   })
 
@@ -312,13 +312,42 @@ describe("Properly format code", () => {
       (x)
     `,
     expA: `
-      <<Alignment>>
       ➖()➖
     `,
     expB: `
-      <<Alignment>>
       ➕(x)➕  
     `
+  })
+
+  test({
+    name: 'Format 7',
+    a: `
+      1 2 3
+    `,
+    b: `
+      1
+      2
+      3
+    `,
+    expA: `
+      1 2 3
+      <<Alignment>>
+      <<Alignment>>
+    `,
+  })
+
+  // Example of ignoring alignment due to not being needed
+  test({
+    name: 'Format 8',
+    a: `
+      1 2
+    `,
+    b: `
+      1
+    `,
+    expA: `
+      1 ➖2➖
+    `,
   })
 })
 

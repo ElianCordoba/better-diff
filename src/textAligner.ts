@@ -7,8 +7,12 @@ import { oppositeSide } from "./utils";
 type LineMapTable = Map<number, number>;
 
 export class TextAligner {
-  lineMapA: LineMapTable = new Map()
+  lineMapA: LineMapTable = new Map();
   lineMapB: LineMapTable = new Map();
+
+  // line number -> number of nodes per line
+  nodesPerLineA = new Map<number, number>();
+  nodesPerLineB = new Map<number, number>();
 
   // In which lines the \nl are inserted
   a = new Set<number>()
