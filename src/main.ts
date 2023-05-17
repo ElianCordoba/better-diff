@@ -447,8 +447,32 @@ function insertAlignmentsForMatch(indexA: number, indexB: number, offsettedIndex
     }
   }
 
-  apply(Side.a, offsettedIndexA, iterA.getLineNumber(indexA))
-  apply(Side.b, offsettedIndexB, iterB.getLineNumber(indexB))
+  let insertionPointA = iterA.getLineNumber(indexA)
+  let insertionPointB = iterB.getLineNumber(indexB)
+
+  // Add one extra to the alignment of side we align at the end, so it looks like this
+  //
+  // A          B
+  // ------------
+  // aa         b
+  // b          aa
+  //
+  // Into this:
+  //
+  // A          B
+  // ------------
+  // -          b    <- Align at the start on A, inserting _before_
+  // aa         aa
+  // b          -    <- Align at the end on B, inserting _after_
+  //
+  if (offsettedIndexA > offsettedIndexB) {
+    insertionPointA++
+  } else {
+    insertionPointB++
+  }
+
+  apply(Side.a, offsettedIndexA, insertionPointA)
+  apply(Side.b, offsettedIndexB, insertionPointB)
 }
 
 // function applyFormatAlignments(match: Change) {

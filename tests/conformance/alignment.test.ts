@@ -186,6 +186,60 @@ describe("Properly align code", () => {
   })
 
   test({
+    name: 'Basic case 9',
+    a: `
+      123
+      x
+    `,
+    b: `
+      x
+      123
+      z
+    `,
+    expA: `
+      <<Alignment>>
+      123
+      🔀x⏹️
+      <<Alignment>>
+    `,
+    expB: `
+      🔀x⏹️
+      123
+      <<Alignment>>
+      ➕z➕
+    `
+  })
+
+  test({
+    name: 'Basic case 10',
+    a: `
+      123
+      x
+      5
+    `,
+    b: `
+      x
+      123
+      z
+      5
+    `,
+    expA: `
+      <<Alignment>>
+      123
+      🔀x⏹️
+      <<Alignment>>
+      5
+    `,
+    expB: `
+      🔀x⏹️
+      123
+      <<Alignment>>
+      ➕z➕
+      5
+    `
+  })
+
+  test({
     name: 'Other 1',
     a: `
       console.log()
@@ -336,9 +390,11 @@ describe("Properly format code", () => {
     `,
   })
 
-  // Example of ignoring alignment due to not being needed
+})
+
+describe('Properly ignore alignments', () => {
   test({
-    name: 'Format 8',
+    name: 'Ignore alignment 1',
     a: `
       1 2
     `,
@@ -348,6 +404,25 @@ describe("Properly format code", () => {
     expA: `
       1 ➖2➖
     `,
+  })
+
+  test({
+    name: 'Ignore alignment 2',
+    a: `
+      x
+      1 2
+    `,
+    b: `
+      1
+    `,
+    expA: `
+    ➖x➖
+      1 ➖2➖
+    `,
+    expB: `
+      <<Alignment>>
+      1
+    `
   })
 })
 

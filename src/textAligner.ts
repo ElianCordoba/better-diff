@@ -85,6 +85,10 @@ export class TextAligner {
     return this.a.size === 0 && this.b.size === 0;
   }
 
+  getLastLineStart(side: Side) {
+    return [...this.getLineMap(side).values()].sort((a, b) => a < b ? -1 : 1).at(-1)!
+  }
+
   findInsertionPoint(side: Side, lineNumber: number) {
     let currentLine = lineNumber
     while (true) {

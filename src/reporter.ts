@@ -2,9 +2,6 @@ import { _context, getOptions } from ".";
 import { ChangeType, Side } from "../src/types";
 import { Change } from "./change";
 import { assert, fail } from "./debug";
-import { OffsetsMap, OffsetTracker } from "./offsetTracker";
-import { range } from "./utils";
-import { Iterator } from "./iterator";
 import { Node } from "./node";
 
 //@ts-ignore TODO: Importing normally doesn't work with vitest
@@ -185,8 +182,10 @@ function insertAlignments(side: Side, changes: Change[], source: string): string
 
     let insertAt = textAligner.getLineMap(side).get(realLineNumber)!
 
+    // Insert at will be undefined if the line we are tring to insert to is not present on the other side, for example
+    // If you try to insert line 5 but the other source only has 3 line, we will append it at the end
     if (insertAt === undefined) {
-      insertAt = [...textAligner.getLineMap(side).values()].sort().at(-1)!
+      insertAt = textAligner.getLastLineStart(side)
     }
 
     source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
@@ -198,34 +197,6 @@ function insertAlignments(side: Side, changes: Change[], source: string): string
   }
 
   return source;
-}
-
-function findPointToInsertAlignment(side: Side, offsettedIndexes: (Node | undefined)[], targetIndex: number): number {
-  const { textAligner } = _context
-  // We know that targetIndex is the alignment position, so that wont be our anchor
-  let currentIndex = targetIndex - 1;
-
-  while (true) {
-    if (currentIndex < 0) {
-      const startOfLine = textAligner.getLineMap(side).get(1)!
-      return startOfLine
-    }
-
-    const current = offsettedIndexes[currentIndex];
-
-    if (current) {
-      // const lineToInsert = current.lineNumberStart === 1 ? 1 : current.lineNumberStart - 1
-      // const lineToInsert = current.lineNumberStart
-      // const startOfLine = lineMapNodeTable[side].get(lineToInsert)!
-      // return startOfLine + 1
-      // return startOfLine
-
-      // WORKS
-      return current.end;
-    }
-
-    currentIndex--;
-  }
 }
 
 // Iterate for each change
