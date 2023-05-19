@@ -43,10 +43,10 @@ describe("Properly report line changed", () => {
       let firstName = "elian"
     `,
     expA: `
-      ➖let➖ ➖name➖ = "elian"
+      ➖let name➖ = "elian"
     `,
     expB: `
-      ➕let➕ ➕firstName➕ = "elian"
+      ➕let firstName➕ = "elian"
     `
   })
 
@@ -92,10 +92,10 @@ describe("Properly report line changed", () => {
       let firstName = "eliam"
     `,
     expA: `
-      ➖let➖ ➖name➖ ➖=➖ ➖"elian"➖
+      ➖let name = "elian"➖
     `,
     expB: `
-      ➕let➕ ➕firstName➕ ➕=➕ ➕"eliam"➕
+      ➕let firstName = "eliam"➕
     `
   })
 });

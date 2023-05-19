@@ -17,8 +17,8 @@ describe("Properly align code", () => {
     `,
     expA: `
       1
-      ➖2➖
-      ➖3➖
+      ➖2
+      3➖
     `,
     expB: `
       1
@@ -84,8 +84,8 @@ describe("Properly align code", () => {
       3
     `,
     expA: `
-      ➖1➖
-      ➖2➖
+      ➖1
+      2➖
       3
     `,
     expB: `
@@ -106,8 +106,8 @@ describe("Properly align code", () => {
       3
     `,
     expA: `
-      ➖1➖
-      ➖2➖
+      ➖1
+      2➖
       3
     `,
     expB: `
@@ -273,9 +273,9 @@ describe("Properly align code", () => {
       console.log()
     `,
     expB: `
-      ➕1➕
-      ➕2➕
-      ➕3➕
+      ➕1
+      2
+      3➕
       console.log()
     `
   })
@@ -304,15 +304,15 @@ describe("Properly align code", () => {
       .log()
     `,
     expA: `
-      ➖1➖
-      ➖2➖
-      ➖3➖
+      ➖1
+      2
+      3➖
       console.log()
       <<Alignment>>
     `,
     expB: `
-      ➕4➕
-      ➕5➕
+      ➕4
+      5➕
       <<Alignment>>
       console.log()
     `
@@ -430,8 +430,8 @@ describe("Properly align code", () => {
     `,
     expB: `
       x
-      ➕1➕
-      ➕2➕
+      ➕1
+      2➕
       z
     `,
   })
@@ -447,14 +447,59 @@ describe("Properly align code", () => {
       x
       3
     `,
+    expA: `
+      x ➖z
+      1 2➖
+      3
+    `,
     expB: `
-      x 
-      z
+      x
       <<Alignment>>
+      3
     `
   })
 
+  test({
+    name: 'Basic case 20',
+    a: `
+      x
+      console.log(0)
+    `,
+    b: `
+      console.log(1)
+      x
+      z
+    `,
+    expA: `
+      🔀x⏹️
+      console.log(➖0➖)
+      <<Alignment>>
+      <<Alignment>>
+    `,
+    expB: `
+      <<Alignment>>
+      console.log(➕1➕)
+      🔀x⏹️
+      ➕z➕
+    `
+  })
 
+  test({
+    disabled: true,
+    name: 'Basic case 21',
+    a: `
+      fn(x)
+    `,
+    b: `
+      console.log(fn(1))
+    `,
+    expA: `
+      fn(➖x➖)
+    `,
+    expB: `
+      ➕console.log(➕fn(➕1➕)➕)➕
+    `
+  })
 })
 
 describe("Properly format code", () => {

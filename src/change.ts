@@ -202,61 +202,97 @@ export class Change<Type extends ChangeType = ChangeType> {
   }
 }
 
+// Changes are compatible to merge if their indexes are sequential, for example
+// [ 1, 2 ] & [ 3, 4 ] are compatible
+// [ 5 ] & [ 7 ] aren't compatible
+function indexesCompatible(a: number[], b: number[]): boolean {
+  const lastA = a.at(-1)!
+  const firstB = b.at(0)!
+
+  if (lastA + 1 === firstB) {
+    return true
+  } else {
+    return false
+  }
+}
+
 export function compactChanges(type: ChangeType.deletion | ChangeType.addition, _changes: (Change & { seen?: boolean })[]) {
+  if (!_changes.length) {
+    return []
+  }
+
   assert(type & TypeMasks.AddOrDel)
 
-  const rangeToRead = type === ChangeType.deletion ? 'rangeA' : 'rangeB'
-  const sortedChanges = _changes.sort((a, b) => a[rangeToRead]!.start - b[rangeToRead]!.start);
+  const indexesProp = type === ChangeType.deletion ? 'indexesA' : 'indexesB'
+  const sortedChanges = _changes.sort((a, b) => {
+    const indexA = a.getFirstIndex();
+    const indexB = b.getFirstIndex();
+
+    return indexA < indexB ? -1 : 1;
+  });
 
   const finalChanges: Change[] = [];
 
-  let currentChangeIndex = -1;
-  for (const change of sortedChanges) {
-    const candidate = change;
+  for (let index = 0; index < sortedChanges.length; index++) {
+    let current = sortedChanges[index];
+    let next = sortedChanges[index + 1];
 
-    currentChangeIndex++;
-
-    if (change.seen) {
-      continue;
+    if (!next) {
+      finalChanges.push(current)
+      break
     }
 
-    // We start from the current position since we known that above changes wont be compatible
-    let nextIndex = currentChangeIndex + 1;
+    let currentIndexes = current[indexesProp]
+    let nextIndexes = next[indexesProp]
 
-    innerLoop:
-    while (nextIndex < sortedChanges.length) {
-      const next = sortedChanges[nextIndex];
+    if (!indexesCompatible(currentIndexes, nextIndexes)) {
+      finalChanges.push(current)
+      continue
+    }
 
-      if (next.seen) {
-        nextIndex++;
-        continue;
+    // We have a compatibility, start the inner loop to see if there are more compatible nodes ahead
+
+    let innerCursor = index + 1
+
+    // Values to accumulate
+    const indexes = [...currentIndexes, ...nextIndexes] // Skip first two entries since we know they are compatible
+    const closingNodeIndexes: number[] = []
+
+
+    innerLoop: while (true) {
+      const _current = sortedChanges[innerCursor]
+      const _next = sortedChanges[innerCursor + 1]
+
+      if (!_next) {
+        break innerLoop
       }
 
-      if (change.type !== next.type) {
-        nextIndex++;
-        continue;
-      }
+      const _indexesCurrent = _current[indexesProp]
+      const _indexesNext = _next[indexesProp]
 
-      const currentRange = change![rangeToRead]!;
-      const nextRange = next[rangeToRead]!;
-
-      const compatible = tryMergeRanges(currentRange, nextRange);
-
-      if (!compatible) {
-        nextIndex++;
-        // No compatibility at i means that we can break early, there will be no compatibility at i + n because ranges keep moving on
+      if (!indexesCompatible(_indexesCurrent, _indexesNext)) {
         break innerLoop;
       }
 
-      sortedChanges[nextIndex].seen = true;
+      indexes.push(..._indexesNext)
+      closingNodeIndexes.push(..._current.indexesOfClosingMoves, ..._next.indexesOfClosingMoves)
 
-      candidate[rangeToRead] = compatible;
-
-      nextIndex++;
-      continue;
+      innerCursor++
     }
 
-    finalChanges.push(candidate);
+    const newChange = new Change(
+      type,
+      indexes,
+    )
+
+    // TODO-NOW replace indexesOfClosingMoves with ids
+    //newChange.indexesOfClosingMoves
+
+    finalChanges.push(
+      newChange
+    )
+
+    index = innerCursor
   }
 
   return finalChanges;

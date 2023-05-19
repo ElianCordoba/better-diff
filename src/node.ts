@@ -6,7 +6,6 @@ import { _context } from ".";
 interface NodeArgs {
   side: Side;
   mode: Mode;
-  fullStart: number;
   start: number;
   end: number;
   kind: SyntaxKind;
@@ -19,7 +18,6 @@ interface NodeArgs {
 
 export class Node {
   side: Side;
-  fullStart: number;
   start: number;
   end: number;
   kind: SyntaxKind;
@@ -40,10 +38,9 @@ export class Node {
   // For printing proposes
   markedAs?: ChangeType;
   constructor(args: NodeArgs) {
-    const { side, fullStart, start, end, kind, lineNumberStart, lineNumberEnd, text, mode, numberOfNewlines } = args;
+    const { side, start, end, kind, lineNumberStart, lineNumberEnd, text, mode, numberOfNewlines } = args;
 
     this.side = side;
-    this.fullStart = fullStart;
     this.start = start;
     this.end = end;
     this.kind = kind;

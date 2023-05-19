@@ -87,9 +87,9 @@ describe("Properly report lines added", () => {
       3
     `,
     expB: `
-      ➕1➕
-      ➕2➕
-      ➕'x'➕
+      ➕1
+      2
+      'x'➕
       1
       2
       3
@@ -122,8 +122,8 @@ describe("Properly report lines added", () => {
       'x'
       1
       2
-      ➕1➕
-      ➕2➕
+      ➕1
+      2➕
       3
     `
   })
@@ -137,7 +137,7 @@ describe("Properly report lines added", () => {
       fn(console.log(2))
     `,
     expA: `
-      console.log() ➖&&➖ ➖3➖
+      console.log() ➖&& 3➖
     `,
     expB: `
       ➕fn(➕console.log(➕2➕)➕)➕
@@ -169,7 +169,7 @@ describe("Properly report lines added", () => {
       fn(console.log(2))
     `,
     expA: `
-      console.log() ➖&&➖ ➖3➖
+      console.log() ➖&& 3➖
     `,
     expB: `
       ➕fn(➕console.log(➕2➕)➕)➕
@@ -205,7 +205,7 @@ describe("Properly report lines added", () => {
       x
     `,
     expA: `
-      ➖if➖ ➖(true)➖ ➖{➖
+      ➖if (true) {➖
         print()
       ➖}➖
     `,
@@ -227,10 +227,10 @@ describe("Properly report lines added", () => {
       }
     `,
     expA: `
-      console.log() ➖&&➖ ➖3➖
+      console.log() ➖&& 3➖
     `,
     expB: `
-      ➕function➕ ➕asd➕ ➕()➕ ➕{➕
+      ➕function asd () {➕
         console.log(➕"hi"➕)
       ➕}➕
     `
@@ -248,8 +248,8 @@ describe("Properly report lines added", () => {
       print(123)
     `,
     expA: `
-      ➖321➖
-      ➖if➖ ➖(true)➖ ➖{➖
+      ➖321 
+      if (true) {➖
         print()
       ➖}➖
     `,
@@ -294,18 +294,18 @@ describe("Properly report lines added", () => {
       }
     `,
     expA: `
-      ➖x➖
-      ➖const➖ foo ➖=➖ {
+      ➖x
+      const➖ foo ➖=➖ {
         a: 1
       }
     `,
     expB: `
-      ➕function➕ foo➕()➕ ➕{➕
-        ➕return➕ ➕z➕
-      ➕}➕
+      ➕function➕ foo➕() {
+        return z
+      }
     
-      ➕function➕ ➕zor()➕ ➕{➕
-        ➕return➕ {
+      function zor() {
+        return➕ {
           a: 1
         }
       ➕}➕
@@ -326,11 +326,11 @@ describe("Properly report lines added", () => {
       console.log(1)
     `,
     expA: `
-      ➖function*➖ ➖range()➖ ➖{➖
-        ➖while➖ ➖(i➖ ➖<➖ ➖end➖ ➖-➖ 1➖)➖ ➖{➖
-          ➖yield➖ ➖i;➖
-        ➖}➖
-      ➖}➖
+      ➖function* range() {
+        while (i < end -➖ 1➖) {
+          yield i;
+        }
+      }➖
     `,
     expB: `
       ➕console.log(➕1➕)➕
@@ -357,8 +357,8 @@ describe("Properly report lines added", () => {
       function asd() {
         123
         123
-        ➖x➖
-      ➖}➖
+        ➖x
+      }➖
     `,
     expB: `
       function asd() {
@@ -401,7 +401,7 @@ describe("Properly report lines added", () => {
     `,
     expA: `
       {
-        { ➖a,➖ ➖b,➖ x } = obj
+        { ➖a, b,➖ x } = obj
       }
     `,
     expB: `
@@ -415,7 +415,7 @@ describe("Properly report lines added", () => {
   // Also test the match ignoring logic, now inside the true branch on the alignment
 
   test({
-    name: "Properly match closing paren 10",
+    name: "Properly match closing paren 11",
     a: `
       {
         ()
@@ -462,15 +462,15 @@ describe("Properly report lines added", () => {
       const var2 = bar()
     `,
     expA: `
-      ➖function➖ ➖foo()➖ ➖{➖
-        ➖const➖ ➖name➖ ➖=➖ ➖123;➖
-      ➖}➖
+      ➖function foo() {
+        const name = 123;
+      }
         
-      ➖function➖ ➖bar()➖ ➖{➖
-        ➖return➖ ➖123➖
-      ➖}➖
+      function bar() {
+        return 123
+      }
       
-      ➖let➖ var1 = foo()
+      let➖ var1 = foo()
       ➖let➖ var2 = bar()
     `,
     expB: `

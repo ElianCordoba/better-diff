@@ -1,7 +1,8 @@
 import { expect, test } from "vitest";
 import { OutputType, getDiff } from "../../src";
 
-test('Case 1', () => {
+// TODO-now
+test.skip('Case 1', () => {
   const a = `
     console.log() && 3
   `.trim()

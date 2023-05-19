@@ -42,7 +42,6 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
     const newNode = new Node({
       mode,
       side,
-      fullStart: node.pos,
       start,
       end: node.end,
       kind: node.kind,

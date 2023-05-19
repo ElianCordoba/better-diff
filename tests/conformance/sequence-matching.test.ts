@@ -108,12 +108,12 @@ describe("Properly report moves in a same sequence", () => {
       let down;
     `,
     expA: `
-      ➖let➖ ➖up;➖
+      ➖let up;➖
       let middle;
     `,
     expB: `
       let middle;
-      ➕let➕ ➕down;➕
+      ➕let down;➕
     `
   })
 });
@@ -130,7 +130,7 @@ describe("Recursive matching", () => {
       import { bar } from "bar";
     `,
     expA: `
-      ➖import➖ ➖{➖ ➖foo➖ ➖}➖ ➖from➖ ➖"foo";➖
+      ➖import { foo } from "foo";➖
       import { bar } from "bar";
     `,
     expB: `
@@ -159,10 +159,10 @@ describe("Recursive matching", () => {
     `,
     expB: `
       1 2
-      ➕0➕
-      ➕1➕ 
-      ➕0➕
-      ➕0➕
+      ➕0
+      1 
+      0
+      0➕
       1 2 3 4
     `
   })
@@ -191,8 +191,8 @@ describe("Recursive matching", () => {
       12 34 56
       ➕0➕
       🔀12⏹️
-      ➕0➕
-      ➕0➕
+      ➕0
+      0➕
       🔀12 34⏹️
     `
   })
@@ -221,8 +221,8 @@ describe("Recursive matching", () => {
       12 34 56
       ➕0➕
       🔀12⏹️
-      ➕0➕
-      ➕0➕
+      ➕0
+      0➕
       🔀12 34⏹️
     `
   })
@@ -249,7 +249,7 @@ describe("Recursive matching", () => {
       }
     `,
     expA: `
-      ➖let➖ ➖start➖
+      ➖let start➖
 
       export function bar(range) {
         return {
@@ -258,7 +258,7 @@ describe("Recursive matching", () => {
       }
     `,
     expB: `
-      ➕function➕ ➕foo()➕ ➕{➕ ➕}➕
+      ➕function foo() { }➕
 
       export function bar(range) {
         return {
@@ -282,7 +282,7 @@ describe("Recursive matching", () => {
     `,
     expA: `
       1
-      ➖import➖ ➖{➖ ➖Y➖ ➖}➖ ➖from➖ ➖"./y";➖
+      ➖import { Y } from "./y";➖
       import { X } from "./x";
     `,
     expB: `
@@ -319,7 +319,7 @@ describe("Recursive matching", () => {
   // this is why I had to create the cases separated
   test({
     only: 'standard',
-    name: "Random 2",
+    name: "Random 2 standard",
     a: `
       1
       2
@@ -332,8 +332,8 @@ describe("Recursive matching", () => {
       3
     `,
     expA: `
-      ➖1➖
-      ➖2➖
+      ➖1
+      2➖
       🔀3⏹️
       4
     `,
@@ -359,8 +359,8 @@ describe("Recursive matching", () => {
       3
     `,
     expA: `
-      ➖1➖
-      ➖2➖
+      ➖1
+      2➖
       3
       🔀4⏹️
     `,
