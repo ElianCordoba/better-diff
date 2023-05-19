@@ -491,6 +491,33 @@ describe("Properly align code", () => {
     expA: "fn(➖x➖)",
     expB: "➕console.log(➕fn(➕1➕)➕)➕"
   })
+
+  test({
+    name: 'Basic case 22',
+    a: `
+      {
+        { a, b, x } = obj
+      }
+    `,
+    b: `
+      {
+        { x } = obj
+        z
+      }
+    `,
+    expA: `
+      {
+        { ➖a, b,➖ x } = obj
+        <<Alignment>>
+      }
+    `,
+    expB: `
+      {
+        { x } = obj
+        ➕z➕
+      }
+    `
+  })
 })
 
 describe("Properly format code", () => {

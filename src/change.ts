@@ -275,7 +275,9 @@ export function compactChanges(type: ChangeType.deletion | ChangeType.addition, 
       }
 
       indexes.push(..._indexesNext)
-      closingNodeIndexes.push(..._current.indexesOfClosingMoves, ..._next.indexesOfClosingMoves)
+
+      // TODO: Enable this? Find a test case first
+      // closingNodeIndexes.push(..._current.indexesOfClosingMoves, ..._next.indexesOfClosingMoves)
 
       innerCursor++
     }

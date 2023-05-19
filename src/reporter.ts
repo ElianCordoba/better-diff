@@ -200,11 +200,6 @@ function updateChanges(changes: Change[], sideToUpdate: Side, startPosition: num
   const rangeToUpdate = sideToUpdate === Side.a ? "rangeA" : "rangeB";
 
   for (let i = 0; i < changes.length; i++) {
-    // TODO-NOW
-    // Don't update the change we just applied
-    // if (i === currentChange) {
-    //   continue
-    // }
     const change = changes[i];
     // Skip type of changes we don't want
     if (change.type === changesToSkip) {
