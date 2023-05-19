@@ -485,20 +485,11 @@ describe("Properly align code", () => {
   })
 
   test({
-    disabled: true,
     name: 'Basic case 21',
-    a: `
-      fn(x)
-    `,
-    b: `
-      console.log(fn(1))
-    `,
-    expA: `
-      fn(➖x➖)
-    `,
-    expB: `
-      ➕console.log(➕fn(➕1➕)➕)➕
-    `
+    a: "fn(x)",
+    b: "console.log(fn(1))",
+    expA: "fn(➖x➖)",
+    expB: "➕console.log(➕fn(➕1➕)➕)➕"
   })
 })
 
