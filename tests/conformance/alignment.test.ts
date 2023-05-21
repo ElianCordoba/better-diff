@@ -518,6 +518,55 @@ describe("Properly align code", () => {
       }
     `
   })
+
+  test({
+    name: 'Basic case 23',
+    a: `
+      1 x
+    `,
+    b: `
+      2
+      x
+    `,
+    expA: `
+      <<Alignment>>
+      ➖1➖ x
+    `,
+    expB: `
+      ➕2➕
+      x
+    `
+  })
+
+  test({
+    name: 'Basic case 24',
+    a: `
+      1 {
+        a: 1
+      }
+    `,
+    b: `
+      {
+        {
+          a: 1
+        }
+      }
+    `,
+    expA: `
+      <<Alignment>>
+      ➖1➖ {
+          a: 1
+        }
+      <<Alignment>>
+    `,
+    expB: `
+      ➕{➕
+        {
+          a: 1
+        }
+      ➕}➕
+    `
+  })
 })
 
 describe("Properly format code", () => {

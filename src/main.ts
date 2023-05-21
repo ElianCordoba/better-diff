@@ -200,6 +200,14 @@ function applyFormatAlignments(match: Change) {
     const nodeA = iterA.textNodes.at(indexA)!;
     const nodeB = iterB.textNodes.at(indexB)!;
 
+    const offsettedLineA = textAligner.getOffsettedLineNumber(Side.b, nodeA.lineNumberStart)
+    const offsettedLineB = textAligner.getOffsettedLineNumber(Side.a, nodeB.lineNumberStart)
+
+    // No need to insert formatting aligments if they are already aligned
+    if (offsettedLineA === offsettedLineB) {
+      continue
+    }
+
     if (nodeA.numberOfNewlines !== nodeB.numberOfNewlines) {
       const linesToInsert = Math.abs(nodeA.numberOfNewlines - nodeB.numberOfNewlines);
       const sideToInsertAlignment = nodeA.numberOfNewlines < nodeB.numberOfNewlines ? Side.a : Side.b;

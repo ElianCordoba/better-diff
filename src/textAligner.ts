@@ -54,7 +54,7 @@ export class TextAligner {
 
     let offsetSum = 0;
     for (const offset of offsets) {
-      if (offset < lineNumber) {
+      if (offset <= lineNumber) {
         offsetSum++;
       } else {
         break;
