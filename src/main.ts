@@ -203,7 +203,7 @@ function applyFormatAlignments(match: Change) {
     const offsettedLineA = textAligner.getOffsettedLineNumber(Side.b, nodeA.lineNumberStart)
     const offsettedLineB = textAligner.getOffsettedLineNumber(Side.a, nodeB.lineNumberStart)
 
-    // No need to insert formatting aligments if they are already aligned
+    // No need to insert formatting alignments if they are already aligned
     if (offsettedLineA === offsettedLineB) {
       continue
     }
