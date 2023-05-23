@@ -758,32 +758,33 @@ describe("Properly format code", () => {
       ➖1➖
     `,
   })
+
+  // Testing the ignoring the push down of alignments
+  test({
+    name: 'Format 11',
+    a: `
+      x z 1
+    `,
+    b: `
+      1
+
+      x z
+    `,
+    expA: `
+      <<Alignment>>
+      <<Alignment>>
+      x z 🔀1⏹️
+    `,
+    expB: `
+      🔀1⏹️
+
+      x z
+      <<Alignment>>
+      <<Alignment>>
+    `
+  })
 })
 
-// Testing the ignoring the push down of alignments
-test({
-  name: 'Format 9',
-  a: `
-    x z 1
-  `,
-  b: `
-    1
-
-    x z
-  `,
-  expA: `
-    <<Alignment>>
-    <<Alignment>>
-    x z 🔀1⏹️
-  `,
-  expB: `
-    🔀1⏹️
-
-    x z
-    <<Alignment>>
-    <<Alignment>>
-  `
-})
 
 describe('Properly ignore alignments', () => {
   test({
