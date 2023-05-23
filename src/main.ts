@@ -212,7 +212,7 @@ function applyFormatAlignments(match: Change) {
     if (nodeA.numberOfNewlines !== nodeB.numberOfNewlines) {
       const linesToInsert = Math.abs(nodeA.numberOfNewlines - nodeB.numberOfNewlines);
       const sideToInsertAlignment = nodeA.numberOfNewlines < nodeB.numberOfNewlines ? Side.a : Side.b;
-      const insertAlignmentAt = (sideToInsertAlignment === Side.a ? nodeA.lineNumberStart : nodeB.lineNumberStart) + 1;
+      const insertAlignmentAt = sideToInsertAlignment === Side.a ? nodeB.lineNumberStart : nodeA.lineNumberStart
 
       for (const i of range(insertAlignmentAt, insertAlignmentAt + linesToInsert)) {
         textAligner.add(sideToInsertAlignment, { lineNumber: i, change: match, reasons: LineAlignmentReason.NewLineDiff });
