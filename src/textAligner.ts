@@ -189,7 +189,7 @@ export class TextAligner {
       const formattedLineB = colorFn.green(lineB.padStart(10).padEnd(20))
 
       // + 1 because line number are 1-indexes
-      const lineNumber = colorFn.yellow(String(i + 1))
+      const lineNumber = colorFn.yellow(String(i + 1).padEnd(2))
 
       report += `${lineNumber} | ${formattedLineA} | ${formattedLineB}\n`
     }
@@ -222,7 +222,7 @@ function compressReasonsString(reasons: LineAlignmentReason[]) {
 
   let report = ''
   for (const [reason, numberOfOccurrences] of counter) {
-    report += `${reason} x${numberOfOccurrences} |`
+    report += `(${reason} x${numberOfOccurrences}) |`
   }
 
   // Removes the last |
