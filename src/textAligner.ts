@@ -18,10 +18,12 @@ export class TextAligner {
   a = new Set<number>();
   b = new Set<number>();
 
-  add(side: Side, lineNumber: number) {
-    const insertAtLine = this.findInsertionPoint(side, lineNumber);
+  add(side: Side, lineNumber: number, pushAlignmentDown = true) {
+    const insertAtLine = this.findInsertionPoint(side, lineNumber, pushAlignmentDown);
 
     this[side].add(insertAtLine);
+
+    this[side] = new Set(this.getSortedOffsets(side))
   }
 
   updateLineMap(side: Side, source: string) {
@@ -81,6 +83,12 @@ export class TextAligner {
     }
   }
 
+  getSortedOffsets(side: Side) {
+    const offsets = [...this[side]]
+
+    return offsets.sort((a, b) => a > b ? 1 : -1)
+  }
+
   isEmpty() {
     return this.a.size === 0 && this.b.size === 0;
   }
@@ -89,7 +97,20 @@ export class TextAligner {
     return [...this.getLineMap(side).values()].sort((a, b) => a < b ? -1 : 1).at(-1)!;
   }
 
-  findInsertionPoint(side: Side, lineNumber: number) {
+  // `pushAlignmentDown` will do the following, given the following alignments, with line number in the left and trying to insert a new one at line 2:
+  //
+  // 1 |
+  // 2 | -
+  // 3 | -
+  // 4 | 
+  //
+  // With `pushAlignmentDown` in `false`: We will return 2 from the function meaning that the alignment will be ignored, since it's already present
+  // With `pushAlignmentDown` in `true`: We will find the next free spot, which is 4 and return that
+  findInsertionPoint(side: Side, lineNumber: number, pushAlignmentDown: boolean) {
+    // if (!pushAlignmentDown) {
+    return lineNumber
+    // }
+
     let currentLine = lineNumber;
     while (true) {
       if (!this[side].has(currentLine)) {

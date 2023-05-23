@@ -445,9 +445,13 @@ function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
 // 3          3
 // -          1
 function insertAlignmentsForMatch(indexA: number, indexB: number, offsettedIndexA: number, offsettedIndexB: number) {
-  const { iterA, iterB, offsetTracker } = _context;
+  const { iterA, iterB, offsetTracker, textAligner } = _context;
   const indexDiff = Math.abs(offsettedIndexA - offsettedIndexB);
-  const linesDiff = Math.abs(iterA.textNodes[indexA].lineNumberStart - iterB.textNodes[indexB].lineNumberStart);
+
+  const lineStartA = iterA.getLineNumber(indexA)
+  const lineStartB = iterB.getLineNumber(indexB)
+
+  const linesDiff = Math.abs(lineStartA - lineStartB);
 
   function apply(side: Side, index: number, lineNumberStart: number) {
     // Apply semantic offset
@@ -457,13 +461,13 @@ function insertAlignmentsForMatch(indexA: number, indexB: number, offsettedIndex
 
     // Apply text offset
     for (const i of range(lineNumberStart, lineNumberStart + linesDiff)) {
-      _context.textAligner.add(side, i);
+      _context.textAligner.add(side, i, false);
       lineNumberStart++;
     }
   }
 
-  let insertionPointA = iterA.getLineNumber(indexA);
-  let insertionPointB = iterB.getLineNumber(indexB);
+  let insertionPointA = textAligner.getOffsettedLineNumber(Side.b, lineStartA)
+  let insertionPointB = textAligner.getOffsettedLineNumber(Side.a, lineStartB)
 
   // Add one extra to the alignment of side we align at the end, so it looks like this
   //
