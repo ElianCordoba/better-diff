@@ -3,15 +3,17 @@ import { getLineMap } from "./ts-util";
 import { Side } from "./types";
 import { oppositeSide } from "./utils";
 import { Change } from './change'
+import { colorFn } from "./reporter";
 
 // line number (one-based) -> line start position
 type LineMapTable = Map<number, number>;
 
+// The value is a short string so it can be printed to the console easily
 export enum LineAlignmentReason {
-  AdditionAffectedWholeLine = 'AdditionAffectedWholeLine',
-  DeletionAffectedWholeLine = 'DeletionAffectedWholeLine',
-  NewLineDiff = 'NewLineDiff',
-  MoveAlignment = 'MoveAlignment'
+  AdditionAffectedWholeLine = '+',
+  DeletionAffectedWholeLine = '-',
+  NewLineDiff = '\/n',
+  MoveAlignment = 'move'
 }
 interface LineAlignment {
   lineNumber: number;
@@ -164,4 +166,65 @@ export class TextAligner {
     const readFrom = side === Side.a ? "nodesPerLineA" : "nodesPerLineB";
     return this[readFrom].get(lineNumber) === numberOfNodesAffected;
   }
+
+  draw() {
+    const { sourceA, sourceB } = _context
+
+    const linesA = sourceA.split('\n')
+    const linesB = sourceB.split('\n')
+
+    // Fill in with the alignments
+
+    const filledLinesA = this.getFilledAlignmentList(Side.a, linesA)
+    const filledLinesB = this.getFilledAlignmentList(Side.b, linesB)
+
+    const max = Math.max(filledLinesA.length, filledLinesB.length)
+
+    let report = '';
+    for (let i = 0; i < max; i++) {
+      const lineA = filledLinesA[i] || '';
+      const lineB = filledLinesB[i] || '';
+
+      const formattedLineA = colorFn.red(lineA.padStart(10).padEnd(20))
+      const formattedLineB = colorFn.green(lineB.padStart(10).padEnd(20))
+
+      // + 1 because line number are 1-indexes
+      const lineNumber = colorFn.yellow(String(i + 1))
+
+      report += `${lineNumber} | ${formattedLineA} | ${formattedLineB}\n`
+    }
+
+    console.log(report)
+  }
+
+  getFilledAlignmentList(side: Side, lines: string[]) {
+    const alignments = this[side];
+
+    for (const { lineNumber, reasons } of alignments.values()) {
+      lines.splice(lineNumber - 1, 0, compressReasonsString(reasons));
+    }
+
+    return lines;
+  }
+}
+
+function compressReasonsString(reasons: LineAlignmentReason[]) {
+  const counter: Map<LineAlignmentReason, number> = new Map()
+
+  for (const reason of reasons) {
+    if (counter.has(reason)) {
+      const currentValue = counter.get(reason)!
+      counter.set(reason, currentValue + 1)
+    } else {
+      counter.set(reason, 1)
+    }
+  }
+
+  let report = ''
+  for (const [reason, numberOfOccurrences] of counter) {
+    report += `${reason} x${numberOfOccurrences} |`
+  }
+
+  // Removes the last |
+  return report.slice(0, -1)
 }
