@@ -645,6 +645,48 @@ describe("Properly format code", () => {
   })
 
   test({
+    name: 'Format 4b',
+    a: `
+      ()
+      x
+      111
+      222
+      333
+    `,
+    b: `
+      111
+      222
+      333
+      (
+
+      )
+      x
+    `,
+    expA: `
+      🔀()
+      x⏹️
+      111
+      222
+      333
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>>
+    `,
+    expB: `
+      <<Alignment>>
+      <<Alignment>>
+      111
+      222
+      333
+      🔀(
+
+      )
+      x⏹️
+    `
+  })
+
+  test({
     name: 'Format 5',
     a: `
       1 2
