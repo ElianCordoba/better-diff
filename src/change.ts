@@ -2,8 +2,9 @@ import { ChangeType, Range, Side, TypeMasks } from "./types";
 import { colorFn, getSourceWithChange } from "./reporter";
 import { _context } from "./index";
 import { assert } from "./debug";
-import { arraySum, getPrettyChangeType, getSideFromChangeType } from "./utils";
+import { arraySum, getIterFromSide, getPrettyChangeType, getSideFromChangeType } from "./utils";
 import { Iterator } from "./iterator";
+import { LineAlignmentReason } from "./textAligner";
 export class Change<Type extends ChangeType = ChangeType> {
   rangeA: Range | undefined;
   rangeB: Range | undefined;
@@ -156,6 +157,13 @@ export class Change<Type extends ChangeType = ChangeType> {
 
       insertAlignmentIfNeeded(this);
     }
+  }
+
+  getText(side: Side) {
+    const indexes = side === Side.a ? this.indexesA : this.indexesB
+    const iter = getIterFromSide(side)
+
+    return indexes.map(i => iter.textNodes[i].text).join(' ')
   }
 
   draw() {
@@ -360,15 +368,19 @@ function insertAlignmentIfNeeded(change: Change) {
   let iter: Iterator;
   // It's the opposite side of where the change happened
   let sideToInsertAlignment: Side;
+  // May or may not be used, declared early on for convenience
+  let alignmentReason: LineAlignmentReason
 
   if (change.type === ChangeType.deletion) {
     sideToInsertAlignment = Side.b;
     indexes = change.indexesA;
     iter = _context.iterA;
+    alignmentReason = LineAlignmentReason.DeletionAffectedWholeLine
   } else {
     sideToInsertAlignment = Side.a;
     indexes = change.indexesB;
     iter = _context.iterB;
+    alignmentReason = LineAlignmentReason.AdditionAffectedWholeLine
   }
 
   const nodesPerLine: Map<number, Set<number>> = new Map();
@@ -390,7 +402,7 @@ function insertAlignmentIfNeeded(change: Change) {
   const side = getSideFromChangeType(change.type);
   for (const [lineNumber, nodes] of nodesPerLine) {
     if (textAligner.wholeLineAffected(side, lineNumber, nodes.size)) {
-      textAligner.add(sideToInsertAlignment, lineNumber);
+      textAligner.add(sideToInsertAlignment, { lineNumber, change, reasons: alignmentReason });
     }
   }
 }

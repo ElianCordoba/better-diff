@@ -7,6 +7,7 @@ import { Node } from "./node";
 import { assert } from "./debug";
 import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from "./sequence";
 import { OpenCloseVerifier } from "./openCloseVerifier";
+import { LineAlignmentReason } from "./textAligner";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -176,7 +177,7 @@ function processMoves(matches: Change[]) {
     const canMoveBeAligned = offsetTracker.moveCanGetAligned(offsettedIndexA, offsettedIndexB);
 
     if (canMoveBeAligned) {
-      insertAlignmentsForMatch(indexA, indexB, offsettedIndexA, offsettedIndexB);
+      insertAlignmentsForMatch(match, indexA, indexB, offsettedIndexA, offsettedIndexB);
     } else {
       if (match.indexesOfClosingMoves.length) {
         changes.push(...match.indexesOfClosingMoves.map((i) => matches[i]));
@@ -214,7 +215,7 @@ function applyFormatAlignments(match: Change) {
       const insertAlignmentAt = (sideToInsertAlignment === Side.a ? nodeA.lineNumberStart : nodeB.lineNumberStart) + 1;
 
       for (const i of range(insertAlignmentAt, insertAlignmentAt + linesToInsert)) {
-        textAligner.add(sideToInsertAlignment, i);
+        textAligner.add(sideToInsertAlignment, { lineNumber: i, change: match, reasons: LineAlignmentReason.NewLineDiff });
       }
     }
   }
@@ -444,7 +445,7 @@ function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
 // 2          2
 // 3          3
 // -          1
-function insertAlignmentsForMatch(indexA: number, indexB: number, offsettedIndexA: number, offsettedIndexB: number) {
+function insertAlignmentsForMatch(change: Change, indexA: number, indexB: number, offsettedIndexA: number, offsettedIndexB: number) {
   const { iterA, iterB, offsetTracker, textAligner } = _context;
   const indexDiff = Math.abs(offsettedIndexA - offsettedIndexB);
 
@@ -461,7 +462,7 @@ function insertAlignmentsForMatch(indexA: number, indexB: number, offsettedIndex
 
     // Apply text offset
     for (const i of range(lineNumberStart, lineNumberStart + linesDiff)) {
-      _context.textAligner.add(side, i, false);
+      _context.textAligner.add(side, { lineNumber: i, change, reasons: LineAlignmentReason.MoveAlignment }); // pushAlignmentDown false
       lineNumberStart++;
     }
   }
@@ -522,7 +523,7 @@ function compactAlignments() {
     return
   }
 
-  for (const alignmentAt of a) {
+  for (const [alignmentAt] of a) {
     if (b.has(alignmentAt)) {
       a.delete(alignmentAt);
       b.delete(alignmentAt);

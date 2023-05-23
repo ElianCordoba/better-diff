@@ -167,8 +167,8 @@ function insertAlignments(side: Side, changes: Change[], source: string): string
 
   const alignmentText = getOptions().alignmentText;
 
-  for (const lineAlignment of lineOffsets.values()) {
-    const realLineNumber = textAligner.getOffsettedLineNumber(side, lineAlignment);
+  for (const { lineNumber } of lineOffsets.values()) {
+    const realLineNumber = textAligner.getOffsettedLineNumber(side, lineNumber);
 
     let insertAt = textAligner.getLineMap(side).get(realLineNumber)!;
 

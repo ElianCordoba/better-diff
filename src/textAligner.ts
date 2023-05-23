@@ -2,9 +2,29 @@ import { _context } from ".";
 import { getLineMap } from "./ts-util";
 import { Side } from "./types";
 import { oppositeSide } from "./utils";
+import { Change } from './change'
 
 // line number (one-based) -> line start position
 type LineMapTable = Map<number, number>;
+
+export enum LineAlignmentReason {
+  AdditionAffectedWholeLine = 'AdditionAffectedWholeLine',
+  DeletionAffectedWholeLine = 'DeletionAffectedWholeLine',
+  NewLineDiff = 'NewLineDiff',
+  MoveAlignment = 'MoveAlignment'
+}
+interface LineAlignment {
+  lineNumber: number;
+  // More that one reason may have inserted the alignment
+  reasons: LineAlignmentReason[]
+  // Change that originated the alignment
+  change: Change
+
+  nodeText: string
+}
+
+// When we create a new alignment we always pass in one reason, then multiple may be stored
+type NewLineAlignment = Omit<LineAlignment, 'reasons' | 'nodeText'> & { reasons: LineAlignmentReason }
 
 export class TextAligner {
   lineMapA: LineMapTable = new Map();
@@ -14,16 +34,31 @@ export class TextAligner {
   nodesPerLineA = new Map<number, number>();
   nodesPerLineB = new Map<number, number>();
 
-  // In which lines the \nl are inserted
-  a = new Set<number>();
-  b = new Set<number>();
+  // line number as key
+  a = new Map<number, LineAlignment>();
+  b = new Map<number, LineAlignment>();
 
-  add(side: Side, lineNumber: number, pushAlignmentDown = true) {
-    const insertAtLine = this.findInsertionPoint(side, lineNumber, pushAlignmentDown);
+  add(side: Side, newAlignment: NewLineAlignment) { // pushAlignmentDown = true
+    const { lineNumber, ...remainingInfo } = newAlignment
+    const insertAtLine = this.findInsertionPoint(side, lineNumber, true);
 
-    this[side].add(insertAtLine);
+    const existingAlignment = this[side].get(insertAtLine)
 
-    this[side] = new Set(this.getSortedOffsets(side))
+    // TODO(Perf): Skip some of the info, like the "nodeText" in release mode
+    if (existingAlignment) {
+      const { reasons, ...existingAlignmentInfo } = existingAlignment
+      this[side].set(insertAtLine, { reasons: reasons.concat(newAlignment.reasons), ...existingAlignmentInfo })
+    } else {
+      const { reasons, ...newAlignmentInfo } = newAlignment
+
+      this[side].set(insertAtLine, {
+        ...newAlignmentInfo,
+        reasons: [reasons],
+        nodeText: newAlignmentInfo.change.getText(side)
+      });
+    }
+
+    this[side] = new Map(this.getSortedOffsets(side))
   }
 
   updateLineMap(side: Side, source: string) {
@@ -55,8 +90,8 @@ export class TextAligner {
     const offsets = this[oppositeSide(side)];
 
     let offsetSum = 0;
-    for (const offset of offsets) {
-      if (offset <= lineNumber) {
+    for (const alignment of offsets.values()) {
+      if (alignment.lineNumber <= lineNumber) {
         offsetSum++;
       } else {
         break;
@@ -84,9 +119,9 @@ export class TextAligner {
   }
 
   getSortedOffsets(side: Side) {
-    const offsets = [...this[side]]
+    const copy = new Map(this[side])
 
-    return offsets.sort((a, b) => a > b ? 1 : -1)
+    return new Map([...copy.entries()].sort((a, b) => a[0] > b[0] ? 1 : -1))
   }
 
   isEmpty() {
