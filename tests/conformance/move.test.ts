@@ -14,10 +14,10 @@ describe("Properly report lines added", () => {
     `,
     expA: `
       aa
-      🔀b⏹️
+      ⏩b⏪
     `,
     expB: `
-      🔀b⏹️
+      ⏩b⏪
       aa
     `
   })
@@ -34,10 +34,10 @@ describe("Properly report lines added", () => {
     `,
     expA: `
       1 2
-      🔀1⏹️
+      ⏩1⏪
     `,
     expB: `
-      🔀1⏹️
+      ⏩1⏪
       1 2
     `
   })
@@ -57,10 +57,10 @@ describe("Properly report lines added", () => {
     expA: `
       console.log()
       let name = 'Elian'
-      🔀let age;⏹️
+      ⏩let age;⏪
     `,
     expB: `
-      🔀let age;⏹️
+      ⏩let age;⏪
       console.log()
       let name = 'Elian'
     `

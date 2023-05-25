@@ -172,14 +172,14 @@ describe("Properly align code", () => {
       x
     `,
     expA: `
-      🔀x⏹️
+      ⏩x⏪
       123
       <<Alignment>>
     `,
     expB: `
       <<Alignment>>  
       123
-      🔀x⏹️
+      ⏩x⏪
     `
   })
 
@@ -197,10 +197,10 @@ describe("Properly align code", () => {
     expA: `
       <<Alignment>>
       123
-      🔀x⏹️
+      ⏩x⏪
     `,
     expB: `
-      🔀x⏹️
+      ⏩x⏪
       123
       ➕z➕
     `
@@ -222,11 +222,11 @@ describe("Properly align code", () => {
     expA: `
       <<Alignment>>
       123
-      🔀x⏹️
+      ⏩x⏪
       5
     `,
     expB: `
-      🔀x⏹️
+      ⏩x⏪
       123
       ➕z➕
       5
@@ -244,14 +244,14 @@ describe("Properly align code", () => {
       x
     `,
     expA: `
-      🔀x⏹️ ➖y➖
+      ⏩x⏪ ➖y➖
       123
       <<Alignment>>
     `,
     expB: `
       <<Alignment>>
       123
-      🔀x⏹️
+      ⏩x⏪
     `
   })
 
@@ -285,8 +285,8 @@ describe("Properly align code", () => {
     name: 'Basic case 13',
     a: "xx\n1",
     b: "1\nxx",
-    expA: "<<Alignment>>\nxx\n🔀1⏹️",
-    expB: "🔀1⏹️\n<<Alignment>>\nxx"
+    expA: "<<Alignment>>\nxx\n⏩1⏪",
+    expB: "⏩1⏪\n<<Alignment>>\nxx"
   })
 
   test({
@@ -361,7 +361,7 @@ describe("Properly align code", () => {
       4
     `,
     expA: `
-      🔀xx⏹️
+      ⏩xx⏪
       1
       2
       <<Alignment>>
@@ -372,7 +372,7 @@ describe("Properly align code", () => {
       <<Alignment>>
       1
       2
-      🔀xx⏹️
+      ⏩xx⏪
       3
       4
     `,
@@ -471,14 +471,14 @@ describe("Properly align code", () => {
       z
     `,
     expA: `
-      🔀x⏹️
+      ⏩x⏪
       console.log(➖0➖)
       <<Alignment>>
     `,
     expB: `
       <<Alignment>>
       console.log(➕1➕)
-      🔀x⏹️
+      ⏩x⏪
       ➕z➕
     `
   })
@@ -663,8 +663,8 @@ describe("Properly format code", () => {
       x
     `,
     expA: `
-      🔀()
-      x⏹️
+      ⏩()
+      x⏪
       111
       222
       333
@@ -679,10 +679,10 @@ describe("Properly format code", () => {
       111
       222
       333
-      🔀(
+      ⏩(
 
       )
-      x⏹️
+      x⏪
     `
   })
 
@@ -815,10 +815,10 @@ describe("Properly format code", () => {
     expA: `
       <<Alignment>>
       <<Alignment>>
-      x z 🔀1⏹️
+      x z ⏩1⏪
     `,
     expB: `
-      🔀1⏹️
+      ⏩1⏪
 
       x z
       <<Alignment>>
