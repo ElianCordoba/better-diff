@@ -63,31 +63,6 @@ export class TextAligner {
     this[side] = new Map(this.getSortedOffsets(side))
   }
 
-  updateLineMap(side: Side, source: string) {
-    const fullLineMap = getLineMap(source!);
-
-    const lineMap = this.getLineMap(side);
-    lineMap.clear();
-
-    let lineNumber = 1;
-    for (const startOfLine of fullLineMap) {
-      lineMap.set(lineNumber, startOfLine);
-      lineNumber++;
-    }
-
-    // TODO: Update this way will be faster
-    // const { alignmentText } = getOptions()
-    // const lineMap = new Map(this.getLineMap(side).entries())
-    // for (const [lineNumber, startPosition] of lineMap) {
-    //   if (lineNumber > lineInserted) {
-    //     this[side === Side.a ? 'lineMapA' : 'lineMapB'].delete(lineNumber)
-    //     this[side === Side.a ? 'lineMapA' : 'lineMapB'].set(lineNumber, startPosition + alignmentText.length)
-    //   }
-    // }
-
-    // this.sortLineMap(side)
-  }
-
   getOffsettedLineNumber(side: Side, lineNumber: number) {
     const offsets = this[oppositeSide(side)];
 
@@ -185,8 +160,8 @@ export class TextAligner {
       const lineA = filledLinesA[i] || '';
       const lineB = filledLinesB[i] || '';
 
-      const formattedLineA = colorFn.red(lineA.padStart(10).padEnd(20))
-      const formattedLineB = colorFn.green(lineB.padStart(10).padEnd(20))
+      const formattedLineA = colorFn.red(lineA.padStart(20))
+      const formattedLineB = colorFn.green(lineB.padEnd(20))
 
       // + 1 because line number are 1-indexes
       const lineNumber = colorFn.yellow(String(i + 1).padEnd(2))
@@ -201,7 +176,7 @@ export class TextAligner {
     const alignments = this[side];
 
     for (const { lineNumber, reasons } of alignments.values()) {
-      lines.splice(lineNumber - 1, 0, compressReasonsString(reasons));
+      lines.splice(lineNumber - 1, 1, compressReasonsString(reasons));
     }
 
     return lines;
@@ -227,4 +202,31 @@ function compressReasonsString(reasons: LineAlignmentReason[]) {
 
   // Removes the last |
   return report.slice(0, -1)
+}
+
+
+export function getUpdatedLineMap(source: string) {
+  const fullLineMap = getLineMap(source);
+
+  const lineMap: LineMapTable = new Map()
+
+  let lineNumber = 1;
+  for (const startOfLine of fullLineMap) {
+    lineMap.set(lineNumber, startOfLine);
+    lineNumber++;
+  }
+
+  return lineMap
+
+  // TODO: Update this way will be faster
+  // const { alignmentText } = getOptions()
+  // const lineMap = new Map(this.getLineMap(side).entries())
+  // for (const [lineNumber, startPosition] of lineMap) {
+  //   if (lineNumber > lineInserted) {
+  //     this[side === Side.a ? 'lineMapA' : 'lineMapB'].delete(lineNumber)
+  //     this[side === Side.a ? 'lineMapA' : 'lineMapB'].set(lineNumber, startPosition + alignmentText.length)
+  //   }
+  // }
+
+  // this.sortLineMap(side)
 }

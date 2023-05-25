@@ -2,6 +2,7 @@ import { _context, getOptions } from ".";
 import { ChangeType, Side } from "../src/types";
 import { Change } from "./change";
 import { assert, fail } from "./debug";
+import { getUpdatedLineMap } from "./textAligner";
 
 //@ts-ignore TODO: Importing normally doesn't work with vitest
 export const k = require("kleur");
@@ -46,7 +47,7 @@ export const prettyRenderFn: DiffRendererFn = {
 export const asciiRenderFn: DiffRendererFn = {
   [ChangeType.deletion]: (text) => `➖${text}➖`,
   [ChangeType.addition]: (text) => `➕${text}➕`,
-  [ChangeType.move]: (text) => `🔀${text}⏹️`,
+  [ChangeType.move]: (text) => `⏩${text}⏪`,
 };
 
 export function applyChangesToSources(
@@ -147,8 +148,8 @@ export function getComplimentArray(length: number, fillInCharacter = ""): string
 }
 
 export function applyAlignments(sourceA: string, sourceB: string, changes: Change[]): { sourceA: string; sourceB: string; changes: Change[] } {
-  sourceA = insertAlignments(Side.a, changes, sourceA);
-  sourceB = insertAlignments(Side.b, changes, sourceB);
+  sourceA = getTextAligned(Side.a, changes);
+  sourceB = getTextAligned(Side.b, changes);
 
   return {
     sourceA,
@@ -157,20 +158,23 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
   };
 }
 
-function insertAlignments(side: Side, changes: Change[], source: string): string {
-  const { textAligner } = _context;
+export function getTextAligned(side: Side, changes: Change[]) {
+  const { textAligner, sourceA, sourceB } = _context;
   const lineOffsets = textAligner[side];
+
+  let source = side === Side.a ? sourceA : sourceB
 
   if (lineOffsets.size === 0) {
     return source;
   }
 
   const alignmentText = getOptions().alignmentText;
+  let lineMap = new Map(textAligner.getLineMap(side))
 
   for (const { lineNumber } of lineOffsets.values()) {
     const realLineNumber = textAligner.getOffsettedLineNumber(side, lineNumber);
 
-    let insertAt = textAligner.getLineMap(side).get(realLineNumber)!;
+    let insertAt = lineMap.get(realLineNumber)!;
 
     // Insert at will be undefined if the line we are tring to insert to is not present on the other side, for example
     // If you try to insert line 5 but the other source only has 3 line, we will append it at the end
@@ -180,9 +184,8 @@ function insertAlignments(side: Side, changes: Change[], source: string): string
 
     source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
 
-    textAligner.updateLineMap(side, source);
+    lineMap = getUpdatedLineMap(source)
 
-    // updateChanges(changes, offset.change?.index!, side, insertAt)
     updateChanges(changes, side, insertAt);
   }
 
