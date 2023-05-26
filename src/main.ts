@@ -214,7 +214,8 @@ function applyFormatAlignments(match: Change) {
       const sideToInsertAlignment = nodeA.numberOfNewlines < nodeB.numberOfNewlines ? Side.a : Side.b;
       const insertAlignmentAt = sideToInsertAlignment === Side.a ? nodeB.lineNumberStart : nodeA.lineNumberStart;
 
-      for (const i of range(insertAlignmentAt, insertAlignmentAt + linesToInsert)) {
+      // for (const i of range(insertAlignmentAt, insertAlignmentAt + linesToInsert)) {
+      for (const i of range(insertAlignmentAt - linesToInsert, insertAlignmentAt)) {
         textAligner.add(sideToInsertAlignment, { lineNumber: i, change: match, reasons: LineAlignmentReason.NewLineDiff });
       }
     }

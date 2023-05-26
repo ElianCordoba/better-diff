@@ -235,4 +235,35 @@ describe("Properly align formatted code", () => {
       log()
     `
   });
+
+  test({
+    name: "Case 13",
+    a: `
+      123
+
+
+      x
+    `,
+    b: `
+
+      x
+      123
+    `,
+    expA: `
+      <<Alignment>> 
+      <<Alignment>> 
+      123
+
+
+      ⏩x⏪
+    `,
+    expB: `
+
+      ⏩x⏪
+      123
+      <<Alignment>> 
+      <<Alignment>> 
+      <<Alignment>> 
+    `
+  })
 })

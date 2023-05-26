@@ -285,7 +285,7 @@ describe("Properly align code", () => {
     name: 'Basic case 13',
     a: "xx\n1",
     b: "1\nxx",
-    expA: "<<Alignment>>\nxx\n⏩1⏪",
+    expA: "xx\n<<Alignment>>\n⏩1⏪",
     expB: "⏩1⏪\n<<Alignment>>\nxx"
   })
 
@@ -308,16 +308,16 @@ describe("Properly align code", () => {
       2
       3➖
       console.log()
-      <<Alignment>>
     `,
     expB: `
       ➕4
       5➕
-      <<Alignment>>
-      console.log()
+      console
+      .log()
     `
   })
 
+  // TODO(Alignment): Take the most wight in order to specify where to put the alignment, either at the beginning or the end
   test({
     name: 'Basic case 15',
     a: `
@@ -335,10 +335,10 @@ describe("Properly align code", () => {
     `,
     expA: `
       x
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>>
       if (true) {}
-      <<Alignment>>
-      <<Alignment>>
-      <<Alignment>>
       z 
     `,
   })
@@ -379,6 +379,7 @@ describe("Properly align code", () => {
 
   })
 
+  // TODO(Alignment): Take the most wight in order to specify where to put the alignment, either at the beginning or the end
   test({
     name: 'Basic case 17',
     a: `
@@ -394,19 +395,10 @@ describe("Properly align code", () => {
     `,
     expA: `
       ➖1➖
-      print(true) {}
       <<Alignment>>
       <<Alignment>>
       <<Alignment>> 
-      <<Alignment>>
-    `,
-    expB: `
-      <<Alignment>>
-      print(
-        true
-      ) {
-
-      }
+      print(true) {}
     `,
   });
 
@@ -579,6 +571,13 @@ describe("Properly align code", () => {
     b: `
       x
     `,
+    expA: `
+      ➖1
+      1➖
+      x
+      ➖1
+      1➖
+    `,
     expB: `
       <<Alignment>>
       <<Alignment>>
@@ -600,8 +599,8 @@ describe("Properly format code", () => {
       )
     `,
     expA: `
-      console.log()
       <<Alignment>>
+      console.log()
     `,
     expB: `
       console.log(
@@ -621,10 +620,10 @@ describe("Properly format code", () => {
       )
     `,
     expA: `
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>>
       console.log()
-      <<Alignment>>
-      <<Alignment>>
-      <<Alignment>>
     `
   })
 
@@ -639,9 +638,9 @@ describe("Properly format code", () => {
       }
     `,
     expA: `
+      <<Alignment>>
+      <<Alignment>>
       {}
-      <<Alignment>>
-      <<Alignment>>
     `
   })
 
@@ -658,21 +657,54 @@ describe("Properly format code", () => {
       x
     `,
     expA: `
+      <<Alignment>>
+      <<Alignment>>
       ()
-      <<Alignment>>
-      <<Alignment>>
       x
     `
   })
 
   test({
-    name: 'Format 4b',
+    name: "Format 4b",
+    a: `
+      ()
+      start
+      end
+    `,
+    b: `
+      start
+      (
+
+      )
+      end
+    `,
+    expA: `
+      ⏩()⏪
+      start
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>>
+      end
+    `,
+    expB: `
+      <<Alignment>>
+      start
+      ⏩(
+
+      )⏪
+      end
+    `
+  })
+
+  test({
+    name: 'Format 4c',
     a: `
       ()
       x
       111
       222
       333
+      zz
     `,
     b: `
       111
@@ -682,6 +714,7 @@ describe("Properly format code", () => {
 
       )
       x
+      zz
     `,
     expA: `
       ⏩()

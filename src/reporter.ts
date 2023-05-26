@@ -150,6 +150,9 @@ export function getComplimentArray(length: number, fillInCharacter = ""): string
 }
 
 export function applyAlignments(sourceA: string, sourceB: string, changes: Change[]): { sourceA: string; sourceB: string; changes: Change[] } {
+  // Handy for debugging
+  // _context.textAligner.draw()
+
   sourceA = getTextAligned(Side.a, changes);
   sourceB = getTextAligned(Side.b, changes);
 

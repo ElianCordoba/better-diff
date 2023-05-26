@@ -162,7 +162,7 @@ export class TextAligner {
     const alignments = this[side];
 
     for (const { lineNumber, reasons } of alignments.values()) {
-      lines.splice(lineNumber - 1, 1, compressReasonsString(reasons));
+      lines.splice(lineNumber - 1, 0, compressReasonsString(reasons));
     }
 
     return lines;
