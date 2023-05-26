@@ -112,7 +112,7 @@ export class OffsetTracker {
     return this.offsetsA.size === 0 && this.offsetsB.size === 0;
   }
 
-  // TODO-NOW improve this
+  // TODO-NOW Rename draw, use createTextTable
   print() {
     console.log("A offset tracker");
     console.table(this.offsetsA);
