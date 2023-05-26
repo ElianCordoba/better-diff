@@ -160,10 +160,10 @@ export class Change<Type extends ChangeType = ChangeType> {
   }
 
   getText(side: Side) {
-    const indexes = side === Side.a ? this.indexesA : this.indexesB
-    const iter = getIterFromSide(side)
+    const indexes = side === Side.a ? this.indexesA : this.indexesB;
+    const iter = getIterFromSide(side);
 
-    return indexes.map(i => iter.textNodes[i].text).join(' ')
+    return indexes.map((i) => iter.textNodes[i].text).join(" ");
   }
 
   draw() {
@@ -214,24 +214,24 @@ export class Change<Type extends ChangeType = ChangeType> {
 // [ 1, 2 ] & [ 3, 4 ] are compatible
 // [ 5 ] & [ 7 ] aren't compatible
 function indexesCompatible(a: number[], b: number[]): boolean {
-  const lastA = a.at(-1)!
-  const firstB = b.at(0)!
+  const lastA = a.at(-1)!;
+  const firstB = b.at(0)!;
 
   if (lastA + 1 === firstB) {
-    return true
+    return true;
   } else {
-    return false
+    return false;
   }
 }
 
 export function compactChanges(type: ChangeType.deletion | ChangeType.addition, _changes: (Change & { seen?: boolean })[]) {
   if (!_changes.length) {
-    return []
+    return [];
   }
 
-  assert(type & TypeMasks.AddOrDel)
+  assert(type & TypeMasks.AddOrDel);
 
-  const indexesProp = type === ChangeType.deletion ? 'indexesA' : 'indexesB'
+  const indexesProp = type === ChangeType.deletion ? "indexesA" : "indexesB";
   const sortedChanges = _changes.sort((a, b) => {
     const indexA = a.getFirstIndex();
     const indexB = b.getFirstIndex();
@@ -246,63 +246,63 @@ export function compactChanges(type: ChangeType.deletion | ChangeType.addition, 
     let next = sortedChanges[index + 1];
 
     if (!next) {
-      finalChanges.push(current)
-      break
+      finalChanges.push(current);
+      break;
     }
 
-    let currentIndexes = current[indexesProp]
-    let nextIndexes = next[indexesProp]
+    let currentIndexes = current[indexesProp];
+    let nextIndexes = next[indexesProp];
 
     if (!indexesCompatible(currentIndexes, nextIndexes)) {
-      finalChanges.push(current)
-      continue
+      finalChanges.push(current);
+      continue;
     }
 
     // We have a compatibility, start the inner loop to see if there are more compatible nodes ahead
 
-    let innerCursor = index + 1
+    let innerCursor = index + 1;
 
     // Values to accumulate
-    const indexes = [...currentIndexes, ...nextIndexes] // Skip first two entries since we know they are compatible
-    const closingNodeIndexes: number[] = []
+    const indexes = [...currentIndexes, ...nextIndexes]; // Skip first two entries since we know they are compatible
+    const closingNodeIndexes: number[] = [];
 
-
-    innerLoop: while (true) {
-      const _current = sortedChanges[innerCursor]
-      const _next = sortedChanges[innerCursor + 1]
+    innerLoop:
+    while (true) {
+      const _current = sortedChanges[innerCursor];
+      const _next = sortedChanges[innerCursor + 1];
 
       if (!_next) {
-        break innerLoop
+        break innerLoop;
       }
 
-      const _indexesCurrent = _current[indexesProp]
-      const _indexesNext = _next[indexesProp]
+      const _indexesCurrent = _current[indexesProp];
+      const _indexesNext = _next[indexesProp];
 
       if (!indexesCompatible(_indexesCurrent, _indexesNext)) {
         break innerLoop;
       }
 
-      indexes.push(..._indexesNext)
+      indexes.push(..._indexesNext);
 
       // TODO: Enable this? Find a test case first
       // closingNodeIndexes.push(..._current.indexesOfClosingMoves, ..._next.indexesOfClosingMoves)
 
-      innerCursor++
+      innerCursor++;
     }
 
     const newChange = new Change(
       type,
       indexes,
-    )
+    );
 
     // TODO-NOW replace indexesOfClosingMoves with ids
     //newChange.indexesOfClosingMoves
 
     finalChanges.push(
-      newChange
-    )
+      newChange,
+    );
 
-    index = innerCursor
+    index = innerCursor;
   }
 
   return finalChanges;
@@ -369,18 +369,18 @@ function insertAlignmentIfNeeded(change: Change) {
   // It's the opposite side of where the change happened
   let sideToInsertAlignment: Side;
   // May or may not be used, declared early on for convenience
-  let alignmentReason: LineAlignmentReason
+  let alignmentReason: LineAlignmentReason;
 
   if (change.type === ChangeType.deletion) {
     sideToInsertAlignment = Side.b;
     indexes = change.indexesA;
     iter = _context.iterA;
-    alignmentReason = LineAlignmentReason.DeletionAffectedWholeLine
+    alignmentReason = LineAlignmentReason.DeletionAffectedWholeLine;
   } else {
     sideToInsertAlignment = Side.a;
     indexes = change.indexesB;
     iter = _context.iterB;
-    alignmentReason = LineAlignmentReason.AdditionAffectedWholeLine
+    alignmentReason = LineAlignmentReason.AdditionAffectedWholeLine;
   }
 
   const nodesPerLine: Map<number, Set<number>> = new Map();
