@@ -87,8 +87,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
   loop();
 
   // TODO: Once we improve compaction to be on-demand, we will be able to remove this
-  const deletions = compactChanges(ChangeType.deletion, changes.filter((x) => x.type === ChangeType.deletion))
-  const additions = compactChanges(ChangeType.addition, changes.filter((x) => x.type === ChangeType.addition))
+  const deletions = compactChanges(ChangeType.deletion, changes.filter((x) => x.type === ChangeType.deletion));
+  const additions = compactChanges(ChangeType.addition, changes.filter((x) => x.type === ChangeType.addition));
 
   processAddAndDel(deletions, additions);
 
@@ -201,18 +201,18 @@ function applyFormatAlignments(match: Change) {
     const nodeA = iterA.textNodes.at(indexA)!;
     const nodeB = iterB.textNodes.at(indexB)!;
 
-    const offsettedLineA = textAligner.getOffsettedLineNumber(Side.b, nodeA.lineNumberStart)
-    const offsettedLineB = textAligner.getOffsettedLineNumber(Side.a, nodeB.lineNumberStart)
+    const offsettedLineA = textAligner.getOffsettedLineNumber(Side.b, nodeA.lineNumberStart);
+    const offsettedLineB = textAligner.getOffsettedLineNumber(Side.a, nodeB.lineNumberStart);
 
     // No need to insert formatting alignments if they are already aligned
     if (offsettedLineA === offsettedLineB) {
-      continue
+      continue;
     }
 
     if (nodeA.numberOfNewlines !== nodeB.numberOfNewlines) {
       const linesToInsert = Math.abs(nodeA.numberOfNewlines - nodeB.numberOfNewlines);
       const sideToInsertAlignment = nodeA.numberOfNewlines < nodeB.numberOfNewlines ? Side.a : Side.b;
-      const insertAlignmentAt = sideToInsertAlignment === Side.a ? nodeB.lineNumberStart : nodeA.lineNumberStart
+      const insertAlignmentAt = sideToInsertAlignment === Side.a ? nodeB.lineNumberStart : nodeA.lineNumberStart;
 
       for (const i of range(insertAlignmentAt, insertAlignmentAt + linesToInsert)) {
         textAligner.add(sideToInsertAlignment, { lineNumber: i, change: match, reasons: LineAlignmentReason.NewLineDiff });
@@ -449,8 +449,8 @@ function insertAlignmentsForMatch(change: Change, indexA: number, indexB: number
   const { iterA, iterB, offsetTracker, textAligner } = _context;
   const indexDiff = Math.abs(offsettedIndexA - offsettedIndexB);
 
-  const lineStartA = iterA.getLineNumber(indexA)
-  const lineStartB = iterB.getLineNumber(indexB)
+  const lineStartA = iterA.getLineNumber(indexA);
+  const lineStartB = iterB.getLineNumber(indexB);
 
   const linesDiff = Math.abs(lineStartA - lineStartB);
 
@@ -467,8 +467,8 @@ function insertAlignmentsForMatch(change: Change, indexA: number, indexB: number
     }
   }
 
-  let insertionPointA = textAligner.getOffsettedLineNumber(Side.b, lineStartA)
-  let insertionPointB = textAligner.getOffsettedLineNumber(Side.a, lineStartB)
+  let insertionPointA = textAligner.getOffsettedLineNumber(Side.b, lineStartA);
+  let insertionPointB = textAligner.getOffsettedLineNumber(Side.a, lineStartB);
 
   // Add one extra to the alignment of side we align at the end, so it looks like this
   //
@@ -520,7 +520,7 @@ function compactAlignments() {
   const { a, b } = _context.textAligner;
 
   if (!a.size && !b.size) {
-    return
+    return;
   }
 
   for (const [alignmentAt] of a) {
