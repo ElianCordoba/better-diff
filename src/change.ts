@@ -402,7 +402,7 @@ function insertAlignmentIfNeeded(change: Change) {
   const side = getSideFromChangeType(change.type);
   for (const [lineNumber, nodes] of nodesPerLine) {
     if (textAligner.wholeLineAffected(side, lineNumber, nodes.size)) {
-      textAligner.add(sideToInsertAlignment, { lineNumber, change, reasons: alignmentReason });
+      textAligner.add(sideToInsertAlignment, { lineNumber, change, reasons: alignmentReason, nodeText: change.getText(side).trim() });
     }
   }
 }

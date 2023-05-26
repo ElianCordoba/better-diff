@@ -216,7 +216,7 @@ function applyFormatAlignments(match: Change) {
 
       // for (const i of range(insertAlignmentAt, insertAlignmentAt + linesToInsert)) {
       for (const i of range(insertAlignmentAt - linesToInsert, insertAlignmentAt)) {
-        textAligner.add(sideToInsertAlignment, { lineNumber: i, change: match, reasons: LineAlignmentReason.NewLineDiff });
+        textAligner.add(sideToInsertAlignment, { lineNumber: i, change: match, reasons: LineAlignmentReason.NewLineDiff, nodeText: nodeA.text.trim() });
       }
     }
   }
@@ -463,7 +463,7 @@ function insertAlignmentsForMatch(change: Change, indexA: number, indexB: number
 
     // Apply text offset
     for (const i of range(lineNumberStart, lineNumberStart + linesDiff)) {
-      _context.textAligner.add(side, { lineNumber: i, change, reasons: LineAlignmentReason.MoveAlignment }); // pushAlignmentDown false
+      _context.textAligner.add(side, { lineNumber: i, change, reasons: LineAlignmentReason.MoveAlignment, nodeText: change.getText(side).trim() });
       lineNumberStart++;
     }
   }
