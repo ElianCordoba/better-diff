@@ -2,31 +2,31 @@ import { _context } from ".";
 import { getLineMap } from "./ts-util";
 import { Side } from "./types";
 import { oppositeSide } from "./utils";
-import { Change } from './change'
-import { colorFn } from "./reporter";
+import { Change } from "./change";
+import { colorFn, createTextTable } from "./reporter";
 
 // line number (one-based) -> line start position
 type LineMapTable = Map<number, number>;
 
 // The value is a short string so it can be printed to the console easily
 export enum LineAlignmentReason {
-  AdditionAffectedWholeLine = '+',
-  DeletionAffectedWholeLine = '-',
-  NewLineDiff = '\/n',
-  MoveAlignment = 'move'
+  AdditionAffectedWholeLine = "+",
+  DeletionAffectedWholeLine = "-",
+  NewLineDiff = "\/n",
+  MoveAlignment = "move",
 }
 interface LineAlignment {
   lineNumber: number;
   // More that one reason may have inserted the alignment
-  reasons: LineAlignmentReason[]
+  reasons: LineAlignmentReason[];
   // Change that originated the alignment
-  change: Change
+  change: Change;
 
-  nodeText: string
+  nodeText: string;
 }
 
 // When we create a new alignment we always pass in one reason, then multiple may be stored
-type NewLineAlignment = Omit<LineAlignment, 'reasons' | 'nodeText'> & { reasons: LineAlignmentReason }
+type NewLineAlignment = Omit<LineAlignment, "reasons" | "nodeText"> & { reasons: LineAlignmentReason };
 
 export class TextAligner {
   lineMapA: LineMapTable = new Map();
@@ -41,26 +41,26 @@ export class TextAligner {
   b = new Map<number, LineAlignment>();
 
   add(side: Side, newAlignment: NewLineAlignment) { // pushAlignmentDown = true
-    const { lineNumber, ...remainingInfo } = newAlignment
+    const { lineNumber, ...remainingInfo } = newAlignment;
     const insertAtLine = this.findInsertionPoint(side, lineNumber, true);
 
-    const existingAlignment = this[side].get(insertAtLine)
+    const existingAlignment = this[side].get(insertAtLine);
 
     // TODO(Perf): Skip some of the info, like the "nodeText" in release mode
     if (existingAlignment) {
-      const { reasons, ...existingAlignmentInfo } = existingAlignment
-      this[side].set(insertAtLine, { reasons: reasons.concat(newAlignment.reasons), ...existingAlignmentInfo })
+      const { reasons, ...existingAlignmentInfo } = existingAlignment;
+      this[side].set(insertAtLine, { reasons: reasons.concat(newAlignment.reasons), ...existingAlignmentInfo });
     } else {
-      const { reasons, ...newAlignmentInfo } = newAlignment
+      const { reasons, ...newAlignmentInfo } = newAlignment;
 
       this[side].set(insertAtLine, {
         ...newAlignmentInfo,
         reasons: [reasons],
-        nodeText: newAlignmentInfo.change.getText(side)
+        nodeText: newAlignmentInfo.change.getText(side),
       });
     }
 
-    this[side] = new Map(this.getSortedOffsets(side))
+    this[side] = new Map(this.getSortedOffsets(side));
   }
 
   getOffsettedLineNumber(side: Side, lineNumber: number) {
@@ -96,9 +96,9 @@ export class TextAligner {
   }
 
   getSortedOffsets(side: Side) {
-    const copy = new Map(this[side])
+    const copy = new Map(this[side]);
 
-    return new Map([...copy.entries()].sort((a, b) => a[0] > b[0] ? 1 : -1))
+    return new Map([...copy.entries()].sort((a, b) => a[0] > b[0] ? 1 : -1));
   }
 
   isEmpty() {
@@ -114,13 +114,13 @@ export class TextAligner {
   // 1 |
   // 2 | -
   // 3 | -
-  // 4 | 
+  // 4 |
   //
   // With `pushAlignmentDown` in `false`: We will return 2 from the function meaning that the alignment will be ignored, since it's already present
   // With `pushAlignmentDown` in `true`: We will find the next free spot, which is 4 and return that
   findInsertionPoint(side: Side, lineNumber: number, pushAlignmentDown: boolean) {
     // if (!pushAlignmentDown) {
-    return lineNumber
+    return lineNumber;
     // }
 
     let currentLine = lineNumber;
@@ -143,33 +143,19 @@ export class TextAligner {
   }
 
   draw() {
-    const { sourceA, sourceB } = _context
+    const { sourceA, sourceB } = _context;
 
-    const linesA = sourceA.split('\n')
-    const linesB = sourceB.split('\n')
+    const linesA = sourceA.split("\n");
+    const linesB = sourceB.split("\n");
 
     // Fill in with the alignments
 
-    const filledLinesA = this.getFilledAlignmentList(Side.a, linesA)
-    const filledLinesB = this.getFilledAlignmentList(Side.b, linesB)
+    const filledLinesA = this.getFilledAlignmentList(Side.a, linesA).join("\n");
+    const filledLinesB = this.getFilledAlignmentList(Side.b, linesB).join("\n");
 
-    const max = Math.max(filledLinesA.length, filledLinesB.length)
+    const report = createTextTable(filledLinesA, filledLinesB);
 
-    let report = '';
-    for (let i = 0; i < max; i++) {
-      const lineA = filledLinesA[i] || '';
-      const lineB = filledLinesB[i] || '';
-
-      const formattedLineA = colorFn.red(lineA.padStart(20))
-      const formattedLineB = colorFn.green(lineB.padEnd(20))
-
-      // + 1 because line number are 1-indexes
-      const lineNumber = colorFn.yellow(String(i + 1).padEnd(2))
-
-      report += `${lineNumber} | ${formattedLineA} | ${formattedLineB}\n`
-    }
-
-    console.log(report)
+    console.log(report);
   }
 
   getFilledAlignmentList(side: Side, lines: string[]) {
@@ -184,31 +170,29 @@ export class TextAligner {
 }
 
 function compressReasonsString(reasons: LineAlignmentReason[]) {
-  const counter: Map<LineAlignmentReason, number> = new Map()
+  const counter: Map<LineAlignmentReason, number> = new Map();
 
   for (const reason of reasons) {
     if (counter.has(reason)) {
-      const currentValue = counter.get(reason)!
-      counter.set(reason, currentValue + 1)
+      const currentValue = counter.get(reason)!;
+      counter.set(reason, currentValue + 1);
     } else {
-      counter.set(reason, 1)
+      counter.set(reason, 1);
     }
   }
 
-  let report = ''
+  let report = "";
   for (const [reason, numberOfOccurrences] of counter) {
-    report += `(${reason} x${numberOfOccurrences}) |`
+    report += colorFn.magenta(`(${reason} x${numberOfOccurrences})`);
   }
 
-  // Removes the last |
-  return report.slice(0, -1)
+  return report;
 }
-
 
 export function getUpdatedLineMap(source: string) {
   const fullLineMap = getLineMap(source);
 
-  const lineMap: LineMapTable = new Map()
+  const lineMap: LineMapTable = new Map();
 
   let lineNumber = 1;
   for (const startOfLine of fullLineMap) {
@@ -216,7 +200,7 @@ export function getUpdatedLineMap(source: string) {
     lineNumber++;
   }
 
-  return lineMap
+  return lineMap;
 
   // TODO: Update this way will be faster
   // const { alignmentText } = getOptions()

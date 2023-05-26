@@ -1,3 +1,5 @@
+import Table from "cli-table3";
+
 import { _context, getOptions } from ".";
 import { ChangeType, Side } from "../src/types";
 import { Change } from "./change";
@@ -148,6 +150,7 @@ export function getComplimentArray(length: number, fillInCharacter = ""): string
 }
 
 export function applyAlignments(sourceA: string, sourceB: string, changes: Change[]): { sourceA: string; sourceB: string; changes: Change[] } {
+  _context.textAligner.draw();
   sourceA = getTextAligned(Side.a, changes);
   sourceB = getTextAligned(Side.b, changes);
 
@@ -162,14 +165,14 @@ export function getTextAligned(side: Side, changes: Change[]) {
   const { textAligner, sourceA, sourceB } = _context;
   const lineOffsets = textAligner[side];
 
-  let source = side === Side.a ? sourceA : sourceB
+  let source = side === Side.a ? sourceA : sourceB;
 
   if (lineOffsets.size === 0) {
     return source;
   }
 
   const alignmentText = getOptions().alignmentText;
-  let lineMap = new Map(textAligner.getLineMap(side))
+  let lineMap = new Map(textAligner.getLineMap(side));
 
   for (const { lineNumber } of lineOffsets.values()) {
     const realLineNumber = textAligner.getOffsettedLineNumber(side, lineNumber);
@@ -184,7 +187,7 @@ export function getTextAligned(side: Side, changes: Change[]) {
 
     source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
 
-    lineMap = getUpdatedLineMap(source)
+    lineMap = getUpdatedLineMap(source);
 
     updateChanges(changes, side, insertAt);
   }
@@ -216,4 +219,40 @@ function updateChanges(changes: Change[], sideToUpdate: Side, startPosition: num
 
     changes[i] = change;
   }
+}
+
+const _defaultTextTableOptions = {
+  lineCounterStartAt: 1
+}
+
+export function createTextTable(
+  sourceA: string,
+  sourceB: string,
+  options?: typeof _defaultTextTableOptions
+) {
+  const parsedOptions = { ..._defaultTextTableOptions, ...options }
+
+  const aLines = sourceA.split("\n");
+  const bLines = sourceB.split("\n");
+  const maxLength = Math.max(aLines.length, bLines.length);
+
+  const table = new Table({
+    head: [colorFn.yellow("Nº"), colorFn.red("Source"), colorFn.green("Revision")],
+    colAligns: ["left", "left"],
+    colWidths: [5, 30, 30],
+    style: {
+      compact: true,
+    },
+  });
+
+  let lineNumber = parsedOptions.lineCounterStartAt;
+  for (let i = 0; i < maxLength; i++) {
+    const aLine = (aLines[i] || "").trim();
+    const bLine = (bLines[i] || "").trim();
+
+    table.push([lineNumber, aLine, bLine]);
+    lineNumber++;
+  }
+
+  return table.toString();
 }
