@@ -2,9 +2,9 @@ import { describe } from "vitest";
 import { getTestFn } from "../utils";
 import { OutputType, getDiff } from "../../src";
 
-const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: "    <<Alignment>>\n" })
+const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: "    <<Alignment>>", ignoreChangeMarkers: true })
 
-describe("Properly align formatted code", () => {
+describe.only("Properly align formatted code", () => {
   test({
     name: 'Case 1',
     a: `
@@ -85,11 +85,12 @@ describe("Properly align formatted code", () => {
       print()
     `,
     expA: `
-      ➖1➖
+      1
       print()
     `,
   });
 
+  // TODO(Improve): If a whole line is deleted / added and to the other side we have a matching alignment, we could skip both. The bellow example can be compacted
   test({
     name: 'Case 6',
     a: `
@@ -104,7 +105,7 @@ describe("Properly align formatted code", () => {
     `,
     expA: `
       1
-      ➖x➖
+      x
       2
     `,
   });
@@ -143,9 +144,9 @@ describe("Properly align formatted code", () => {
       print()
     `,
     expA: `
-      ➖1
+      1
       2
-      3➖
+      3
       print()
     `,
     expB: `
@@ -165,7 +166,7 @@ describe("Properly align formatted code", () => {
       x
     `,
     expA: `
-    ➖1➖x
+    1x
     `
   });
 
@@ -227,9 +228,9 @@ describe("Properly align formatted code", () => {
       console.log()
     `,
     expB: `
-      ➕1
+      1
       2
-      3➕
+      3
       console
       .
       log()
@@ -255,11 +256,11 @@ describe("Properly align formatted code", () => {
       123
 
 
-      ⏩x⏪
+      x
     `,
     expB: `
 
-      ⏩x⏪
+      x
       123
       <<Alignment>> 
       <<Alignment>> 

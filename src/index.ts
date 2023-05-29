@@ -15,6 +15,9 @@ export interface Options {
 
   // For testing and debugging mostly
   alignmentText?: string;
+
+  // If enable, the emojis / text coloring will be ignored. Useful when testing alignments
+  ignoreChangeMarkers?: boolean;
 }
 
 export enum OutputType {
@@ -72,6 +75,10 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
     case OutputType.alignedText: {
       const alignedResult = applyAlignments(sourceA, sourceB, changes);
       // deno-lint-ignore no-explicit-any
+
+      if (options?.ignoreChangeMarkers) {
+        return alignedResult as any
+      }
       return applyChangesToSources(alignedResult.sourceA, alignedResult.sourceB, alignedResult.changes) as any;
     }
 
@@ -94,6 +101,7 @@ const defaultOptions: Options = {
   outputType: OutputType.text,
   warnOnInvalidCode: false,
   alignmentText: "",
+  ignoreChangeMarkers: false
 };
 
 let _options: Required<Options>;
