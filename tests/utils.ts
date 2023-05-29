@@ -23,7 +23,7 @@ export function getTestFn(testFn: TestFn, testOptions: Options = {}) {
     const { a = '', b = '', expA, expB, name = "anonymous" } = testInfo;
 
     if (a === expA && b === expB) {
-      throw new Error('Invalid test, input and output are the same')
+      throw new Error(`Invalid test ${name}, input and output are the same`)
     }
 
     if (testInfo.disabled) {

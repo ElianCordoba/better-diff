@@ -4,7 +4,7 @@ import { OutputType, getDiff } from "../../src";
 
 const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: "    <<Alignment>>", ignoreChangeMarkers: true })
 
-describe.only("Properly align formatted code", () => {
+describe("Properly align formatted code", () => {
   test({
     name: 'Case 1',
     a: `
@@ -74,6 +74,7 @@ describe.only("Properly align formatted code", () => {
     `,
   });
 
+  // TODO(Improve): If a whole line is deleted / added and to the other side we have a matching alignment, we could skip both. The bellow example can be compacted
   test({
     name: 'Case 5',
     a: `
@@ -86,11 +87,17 @@ describe.only("Properly align formatted code", () => {
     `,
     expA: `
       1
+      <<Alignment>>
+      print()
+    `,
+    expB: `
+      <<Alignment>>
+
       print()
     `,
   });
 
-  // TODO(Improve): If a whole line is deleted / added and to the other side we have a matching alignment, we could skip both. The bellow example can be compacted
+  // TODO(Improve): Another example of compaction as mentioned above
   test({
     name: 'Case 6',
     a: `
@@ -106,8 +113,15 @@ describe.only("Properly align formatted code", () => {
     expA: `
       1
       x
+      <<Alignment>>
       2
     `,
+    expB: `
+      1
+      <<Alignment>>
+
+      2
+    `
   });
 
 

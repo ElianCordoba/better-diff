@@ -84,6 +84,16 @@ export class Change<Type extends ChangeType = ChangeType> {
     return this._newLines;
   }
 
+  getWidth(side: Side) {
+    const indexes = side === Side.a ? this.indexesA : this.indexesB;
+    const iter = getIterFromSide(side)
+
+    const lineStart = iter.textNodes[indexes[0]].lineNumberStart
+    const lineEnd = iter.textNodes[indexes.at(-1)!].lineNumberEnd
+
+    return (lineStart - lineEnd) + 1
+  }
+
   getFirstIndex(side?: Side) {
     return this.getIndex(this.getSide(side), 0);
   }

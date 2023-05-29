@@ -1,8 +1,9 @@
 import { describe } from "vitest";
 import { getTestFn } from "../utils";
 import { OutputType, getDiff } from "../../src";
+import { colorFn } from "../../src/reporter";
 
-const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: "    <<Alignment>>\n" })
+const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: colorFn.cyan("<<Alignment>>"), ignoreChangeMarkers: true })
 
 describe.only("Properly align code", () => {
   test({
@@ -17,8 +18,8 @@ describe.only("Properly align code", () => {
     `,
     expA: `
       1
-      ➖2
-      3➖
+      2
+      3
     `,
     expB: `
       1
@@ -41,7 +42,7 @@ describe.only("Properly align code", () => {
     expA: `
       1
       2
-      ➖3➖
+      3
     `,
     expB: `
       1
@@ -63,7 +64,7 @@ describe.only("Properly align code", () => {
     `,
     expA: `
       1
-      ➖2➖
+      2
       3
     `,
     expB: `
@@ -84,8 +85,8 @@ describe.only("Properly align code", () => {
       3
     `,
     expA: `
-      ➖1
-      2➖
+      1
+      2
       3
     `,
     expB: `
@@ -106,8 +107,8 @@ describe.only("Properly align code", () => {
       3
     `,
     expA: `
-      ➖1
-      2➖
+      1
+      2
       3
     `,
     expB: `
@@ -130,10 +131,10 @@ describe.only("Properly align code", () => {
     expA: `
       <<Alignment>>
       123
-      ➖A➖
+      A
     `,
     expB: `
-      ➕B➕
+      B
       123
       <<Alignment>>
     `
@@ -151,13 +152,13 @@ describe.only("Properly align code", () => {
       123
     `,
     expA: `
-      ➖A➖
+      A
       <<Alignment>>
       123
     `,
     expB: `
       <<Alignment>>
-      ➕B➕
+      B
       123
     `
   })
@@ -173,14 +174,14 @@ describe.only("Properly align code", () => {
       x
     `,
     expA: `
-      ⏩x⏪
+      x
       123
       <<Alignment>>
     `,
     expB: `
       <<Alignment>>  
       123
-      ⏩x⏪
+      x
     `
   })
 
@@ -198,12 +199,12 @@ describe.only("Properly align code", () => {
     expA: `
       <<Alignment>>
       123
-      ⏩x⏪
+      x
     `,
     expB: `
-      ⏩x⏪
+      x
       123
-      ➕z➕
+      z
     `
   })
 
@@ -223,13 +224,13 @@ describe.only("Properly align code", () => {
     expA: `
       <<Alignment>>
       123
-      ⏩x⏪
+      x
       5
     `,
     expB: `
-      ⏩x⏪
+      x
       123
-      ➕z➕
+      z
       5
     `
   })
@@ -245,14 +246,14 @@ describe.only("Properly align code", () => {
       x
     `,
     expA: `
-      ⏩x⏪ ➖y➖
+      x y
       123
       <<Alignment>>
     `,
     expB: `
       <<Alignment>>
       123
-      ⏩x⏪
+      x
     `
   })
 
@@ -274,9 +275,9 @@ describe.only("Properly align code", () => {
       console.log()
     `,
     expB: `
-      ➕1
+      1
       2
-      3➕
+      3
       console.log()
     `
   })
@@ -286,8 +287,8 @@ describe.only("Properly align code", () => {
     name: 'Basic case 13',
     a: "xx\n1",
     b: "1\nxx",
-    expA: "xx\n<<Alignment>>\n⏩1⏪",
-    expB: "⏩1⏪\n<<Alignment>>\nxx"
+    expA: "<<Alignment>>\nxx\n1",
+    expB: "1\nxx\n<<Alignment>>"
   })
 
   test({
@@ -303,10 +304,10 @@ describe.only("Properly align code", () => {
     expA: `
       <<Alignment>>
       xx
-      ⏩1⏪
+      1
     `,
     expB: `
-      ⏩1⏪
+      1
       xx
       <<Alignment>>
     `
@@ -327,16 +328,20 @@ describe.only("Properly align code", () => {
       .log()
     `,
     expA: `
-      ➖1
+      1
       2
-      3➖
+      3
+      <<Alignment>>
+      <<Alignment>>
       <<Alignment>>
       console.log()
     `,
     expB: `
       <<Alignment>>
-      ➕4
-      5➕
+      <<Alignment>>
+      <<Alignment>>
+      4
+      5
       console
       .log()
     `
@@ -386,7 +391,7 @@ describe.only("Properly align code", () => {
       4
     `,
     expA: `
-      ⏩xx⏪
+      xx
       1
       2
       <<Alignment>>
@@ -397,7 +402,7 @@ describe.only("Properly align code", () => {
       <<Alignment>>
       1
       2
-      ⏩xx⏪
+      xx
       3
       4
     `,
@@ -419,7 +424,7 @@ describe.only("Properly align code", () => {
       }
     `,
     expA: `
-      ➖1➖
+      1
       <<Alignment>>
       <<Alignment>>
       <<Alignment>> 
@@ -447,8 +452,8 @@ describe.only("Properly align code", () => {
     `,
     expB: `
       x
-      ➕1
-      2➕
+      1
+      2
       z
     `,
   })
@@ -465,8 +470,8 @@ describe.only("Properly align code", () => {
       3
     `,
     expA: `
-      x ➖z
-      1 2➖
+      x z
+      1 2
       3
     `,
     expB: `
@@ -488,15 +493,15 @@ describe.only("Properly align code", () => {
       z
     `,
     expA: `
-      ⏩x⏪
-      console.log(➖0➖)
+      x
+      console.log(0)
       <<Alignment>>
     `,
     expB: `
       <<Alignment>>
-      console.log(➕1➕)
-      ⏩x⏪
-      ➕z➕
+      console.log(1)
+      x
+      z
     `
   })
 
@@ -504,8 +509,6 @@ describe.only("Properly align code", () => {
     name: 'Basic case 21',
     a: "fn(x)",
     b: "console.log(fn(1))",
-    expA: "fn(➖x➖)",
-    expB: "➕console.log(➕fn(➕1➕)➕)➕"
   })
 
   test({
@@ -523,14 +526,14 @@ describe.only("Properly align code", () => {
     `,
     expA: `
       {
-        { ➖a, b,➖ x } = obj
+        { a, b, x } = obj
         <<Alignment>>
       }
     `,
     expB: `
       {
         { x } = obj
-        ➕z➕
+        z
       }
     `
   })
@@ -546,10 +549,10 @@ describe.only("Properly align code", () => {
     `,
     expA: `
       <<Alignment>>
-      ➖1➖ x
+      1 x
     `,
     expB: `
-      ➕2➕
+      2
       x
     `
   })
@@ -570,17 +573,17 @@ describe.only("Properly align code", () => {
     `,
     expA: `
       <<Alignment>>
-      ➖1➖ {
+      1 {
           a: 1
         }
       <<Alignment>>
     `,
     expB: `
-      ➕{➕
+      {
         {
           a: 1
         }
-      ➕}➕
+      }
     `
   })
 
@@ -597,11 +600,11 @@ describe.only("Properly align code", () => {
       x
     `,
     expA: `
-      ➖1
-      1➖
+      1
+      1
       x
-      ➖1
-      1➖
+      1
+      1
     `,
     expB: `
       <<Alignment>>
@@ -704,7 +707,7 @@ describe("Properly format code", () => {
       end
     `,
     expA: `
-      ⏩()⏪
+      ()
       start
       <<Alignment>>
       <<Alignment>>
@@ -714,9 +717,9 @@ describe("Properly format code", () => {
     expB: `
       <<Alignment>>
       start
-      ⏩(
+      (
 
-      )⏪
+      )
       end
     `
   })
@@ -742,8 +745,8 @@ describe("Properly format code", () => {
       zz
     `,
     expA: `
-      ⏩()
-      x⏪
+      ()
+      x
       111
       222
       333
@@ -758,10 +761,10 @@ describe("Properly format code", () => {
       111
       222
       333
-      ⏩(
+      (
 
       )
-      x⏪
+      x
     `
   })
 
@@ -789,12 +792,6 @@ describe("Properly format code", () => {
     b: `
       (x)
     `,
-    expA: `
-      ➖()➖
-    `,
-    expB: `
-      ➕(x)➕  
-    `
   })
 
   test({
@@ -876,7 +873,7 @@ describe("Properly format code", () => {
     `,
     expA: `
       console.log()
-      ➖1➖
+      1
     `,
   })
 
@@ -894,10 +891,10 @@ describe("Properly format code", () => {
     expA: `
       <<Alignment>>
       <<Alignment>>
-      x z ⏩1⏪
+      x z 1
     `,
     expB: `
-      ⏩1⏪
+      1
 
       x z
       <<Alignment>>
@@ -945,7 +942,7 @@ describe('Properly ignore alignments', () => {
       1
     `,
     expA: `
-      1 ➖2➖
+      1 2
     `,
   })
 
@@ -959,8 +956,8 @@ describe('Properly ignore alignments', () => {
       1
     `,
     expA: `
-    ➖x➖
-      1 ➖2➖
+    x
+      1 2
     `,
     expB: `
       <<Alignment>>

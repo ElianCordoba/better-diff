@@ -150,9 +150,10 @@ function processMoves(matches: Change[]) {
 
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of sortedMatches) {
-    insertNewLineAlignment(match);
+    let didApplyFormatAlignment = false
 
     if (matchesToIgnore.includes(match.index)) {
+      // TODO-NOW Format?
       continue;
     }
 
@@ -169,12 +170,18 @@ function processMoves(matches: Change[]) {
 
     // If the nodes are aligned after calculating the offset means that there is no extra work needed
     if (offsettedIndexA === offsettedIndexB) {
+      insertNewLineAlignment(match, true)
+      didApplyFormatAlignment = true
       continue;
     }
 
     // There are two outcomes, if the match can be aligned, we add the corresponding alignments and move on.
     // If it can't be aligned then we report a move
     const canMoveBeAligned = offsetTracker.moveCanGetAligned(offsettedIndexA, offsettedIndexB);
+
+    if (!didApplyFormatAlignment) {
+      insertNewLineAlignment(match, canMoveBeAligned);
+    }
 
     if (canMoveBeAligned) {
       insertMoveAlignment(match, indexA, indexB, offsettedIndexA, offsettedIndexB);

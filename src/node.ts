@@ -66,6 +66,10 @@ export class Node {
     };
   }
 
+  getOffsettedLineNumber() {
+    return _context.textAligner.getOffsettedLineNumber(this.side, this.lineNumberStart)
+  }
+
   draw() {
     const iter = _context[this.side === Side.a ? "iterA" : "iterB"];
 
