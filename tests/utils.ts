@@ -8,7 +8,8 @@ type TestFn = (...args: any[]) => {
 }
 
 interface TestInfo {
-  only?: 'standard' | 'inversed' | undefined,
+  disabled?: boolean;
+  only?: 'standard' | 'inversed',
   name?: string | number,
   a?: string;
   b?: string;
@@ -23,6 +24,10 @@ export function getTestFn(testFn: TestFn, testOptions: Options = {}) {
 
     if (a === expA && b === expB) {
       throw new Error('Invalid test, input and output are the same')
+    }
+
+    if (testInfo.disabled) {
+      return
     }
 
     const skipStandardTest = testInfo.only === 'inversed';

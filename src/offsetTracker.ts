@@ -1,7 +1,6 @@
 import { _context } from ".";
 import { Change } from "./change";
 import { assert } from "./debug";
-import { Node } from "./node";
 import { ChangeType, Side } from "./types";
 import { range } from "./utils";
 
@@ -113,25 +112,7 @@ export class OffsetTracker {
     return this.offsetsA.size === 0 && this.offsetsB.size === 0;
   }
 
-  getFilledOffsettedIndexes(side: Side) {
-    const iter = side === Side.a ? _context.iterA : _context.iterB;
-
-    const nodes: (Node | undefined)[] = [...iter.textNodes];
-
-    const offsets = this.getSide(side);
-
-    for (const offset of offsets.values()) {
-      if (offset.numberOfNewLines === 0) {
-        continue;
-      }
-
-      nodes.splice(offset.index, 0, undefined);
-    }
-
-    return nodes;
-  }
-
-  // TODO-NOW improve this
+  // TODO-NOW Rename draw, use createTextTable
   print() {
     console.log("A offset tracker");
     console.table(this.offsetsA);

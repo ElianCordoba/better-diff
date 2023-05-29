@@ -2,8 +2,9 @@ import { ChangeType, Range, Side, TypeMasks } from "./types";
 import { colorFn, getSourceWithChange } from "./reporter";
 import { _context } from "./index";
 import { assert } from "./debug";
-import { arraySum, getPrettyChangeType } from "./utils";
+import { arraySum, getIterFromSide, getPrettyChangeType, getSideFromChangeType } from "./utils";
 import { Iterator } from "./iterator";
+import { LineAlignmentReason } from "./textAligner";
 export class Change<Type extends ChangeType = ChangeType> {
   rangeA: Range | undefined;
   rangeB: Range | undefined;
@@ -121,8 +122,15 @@ export class Change<Type extends ChangeType = ChangeType> {
       // 1          -
       // 2          2
       this.indexesA!.map((index) => {
-        _context.offsetTracker.add(Side.b, { type: ChangeType.deletion, index: offsetTracker.getOffset(Side.a, index), numberOfNewLines: this.getNewLines(), change: this });
+        _context.offsetTracker.add(Side.b, {
+          type: ChangeType.deletion,
+          index: offsetTracker.getOffset(Side.a, index),
+          numberOfNewLines: this.getNewLines(),
+          change: this,
+        });
       });
+
+      insertAlignmentIfNeeded(this);
     } else {
       // Alignment for additions:
       //
@@ -139,9 +147,23 @@ export class Change<Type extends ChangeType = ChangeType> {
       // y          y
       // -          z
       this.indexesB!.map((index) => {
-        _context.offsetTracker.add(Side.a, { type: ChangeType.addition, index: offsetTracker.getOffset(Side.b, index), numberOfNewLines: this.getNewLines(), change: this });
+        _context.offsetTracker.add(Side.a, {
+          type: ChangeType.addition,
+          index: offsetTracker.getOffset(Side.b, index),
+          numberOfNewLines: this.getNewLines(),
+          change: this,
+        });
       });
+
+      insertAlignmentIfNeeded(this);
     }
+  }
+
+  getText(side: Side) {
+    const indexes = side === Side.a ? this.indexesA : this.indexesB;
+    const iter = getIterFromSide(side);
+
+    return indexes.map((i) => iter.textNodes[i].text).join(" ");
   }
 
   draw() {
@@ -188,67 +210,102 @@ export class Change<Type extends ChangeType = ChangeType> {
   }
 }
 
-// TODO: Compact at the moment when we push new changes to the array. Mainly to save memory since we will avoid having a big array before the moment of compaction
-export function compactChanges(changes: (Change & { seen?: boolean })[]) {
-  const newChanges: Change[] = [];
+// Changes are compatible to merge if their indexes are sequential, for example
+// [ 1, 2 ] & [ 3, 4 ] are compatible
+// [ 5 ] & [ 7 ] aren't compatible
+function indexesCompatible(a: number[], b: number[]): boolean {
+  const lastA = a.at(-1)!;
+  const firstB = b.at(0)!;
 
-  let currentChangeIndex = -1;
-  for (const change of changes) {
-    const candidate = change;
+  if (lastA + 1 === firstB) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
-    currentChangeIndex++;
+export function compactChanges(type: ChangeType.deletion | ChangeType.addition, _changes: (Change & { seen?: boolean })[]) {
+  if (!_changes.length) {
+    return [];
+  }
 
-    if (change.seen) {
+  assert(type & TypeMasks.AddOrDel);
+
+  const indexesProp = type === ChangeType.deletion ? "indexesA" : "indexesB";
+  const sortedChanges = _changes.sort((a, b) => {
+    const indexA = a.getFirstIndex();
+    const indexB = b.getFirstIndex();
+
+    return indexA < indexB ? -1 : 1;
+  });
+
+  const finalChanges: Change[] = [];
+
+  for (let index = 0; index < sortedChanges.length; index++) {
+    let current = sortedChanges[index];
+    let next = sortedChanges[index + 1];
+
+    if (!next) {
+      finalChanges.push(current);
+      break;
+    }
+
+    let currentIndexes = current[indexesProp];
+    let nextIndexes = next[indexesProp];
+
+    if (!indexesCompatible(currentIndexes, nextIndexes)) {
+      finalChanges.push(current);
       continue;
     }
 
-    if (change.type === ChangeType.move) {
-      newChanges.push(change);
-      continue;
-    }
+    // We have a compatibility, start the inner loop to see if there are more compatible nodes ahead
 
-    // We start from the current position since we known that above changes wont be compatible
-    let nextIndex = currentChangeIndex + 1;
+    let innerCursor = index + 1;
+
+    // Values to accumulate
+    const indexes = [...currentIndexes, ...nextIndexes]; // Skip first two entries since we know they are compatible
+    const closingNodeIndexes: number[] = [];
 
     innerLoop:
-    while (nextIndex < changes.length) {
-      const next = changes[nextIndex];
+    while (true) {
+      const _current = sortedChanges[innerCursor];
+      const _next = sortedChanges[innerCursor + 1];
 
-      if (next.seen) {
-        nextIndex++;
-        continue;
-      }
-
-      if (change.type !== next.type) {
-        nextIndex++;
-        continue;
-      }
-
-      const readFrom = change!.type === ChangeType.deletion ? "rangeA" : "rangeB";
-
-      const currentRange = change![readFrom]!;
-      const nextRange = next[readFrom]!;
-
-      const compatible = tryMergeRanges(currentRange, nextRange);
-
-      if (!compatible) {
-        nextIndex++;
-        // No compatibility at i means that we can break early, there will be no compatibility at i + n because ranges keep moving on
+      if (!_next) {
         break innerLoop;
       }
 
-      changes[nextIndex].seen = true;
+      const _indexesCurrent = _current[indexesProp];
+      const _indexesNext = _next[indexesProp];
 
-      candidate[readFrom] = compatible;
+      if (!indexesCompatible(_indexesCurrent, _indexesNext)) {
+        break innerLoop;
+      }
 
-      nextIndex++;
-      continue;
+      indexes.push(..._indexesNext);
+
+      // TODO: Enable this? Find a test case first
+      // closingNodeIndexes.push(..._current.indexesOfClosingMoves, ..._next.indexesOfClosingMoves)
+
+      innerCursor++;
     }
 
-    newChanges.push(candidate);
+    const newChange = new Change(
+      type,
+      indexes,
+    );
+
+    // TODO-NOW replace indexesOfClosingMoves with ids
+    //newChange.indexesOfClosingMoves
+
+    finalChanges.push(
+      newChange,
+    );
+
+    index = innerCursor;
   }
 
-  return newChanges;
+  return finalChanges;
 }
 
 export function tryMergeRanges(
@@ -281,4 +338,71 @@ function getRange(iter: Iterator, indexes: number[]): Range {
     start: iter.textNodes[startIndex].start,
     end: iter.textNodes[endIndex].end,
   };
+}
+
+// We want to insert a text alignment if the full line is deleted
+//
+// A          B
+// ------------
+// x
+//
+// Results in:
+//
+// A          B
+// ------------
+// x         \n
+//
+// But, if the whole line is _not_ deleted / added, then we don't insert it
+//
+// A          B
+// ------------
+// 1 2        2
+//
+// Results in the same format
+
+function insertAlignmentIfNeeded(change: Change) {
+  // This function should only be called with additions or deletions
+  assert(change.type & TypeMasks.AddOrDel, () => "Tried to insert alignment in a change that wasn't a addition or deletion");
+
+  let indexes: number[];
+  let iter: Iterator;
+  // It's the opposite side of where the change happened
+  let sideToInsertAlignment: Side;
+  // May or may not be used, declared early on for convenience
+  let alignmentReason: LineAlignmentReason;
+
+  if (change.type === ChangeType.deletion) {
+    sideToInsertAlignment = Side.b;
+    indexes = change.indexesA;
+    iter = _context.iterA;
+    alignmentReason = LineAlignmentReason.DeletionAffectedWholeLine;
+  } else {
+    sideToInsertAlignment = Side.a;
+    indexes = change.indexesB;
+    iter = _context.iterB;
+    alignmentReason = LineAlignmentReason.AdditionAffectedWholeLine;
+  }
+
+  const nodesPerLine: Map<number, Set<number>> = new Map();
+
+  for (const i of indexes) {
+    const node = iter.textNodes[i];
+
+    assert(node);
+
+    const line = node.lineNumberStart;
+
+    if (nodesPerLine.has(line)) {
+      nodesPerLine.get(line)!.add(node.index);
+    } else {
+      nodesPerLine.set(line, new Set([node.index]));
+    }
+  }
+  const { textAligner } = _context;
+  const side = getSideFromChangeType(change.type);
+  for (const [lineNumber, nodes] of nodesPerLine) {
+    if (textAligner.wholeLineAffected(side, lineNumber, nodes.size)) {
+      textAligner.add(sideToInsertAlignment, { lineNumber, change, reasons: alignmentReason, nodeText: change.getText(side).trim() });
+    }
+  }
 }

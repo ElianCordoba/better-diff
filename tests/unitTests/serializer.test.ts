@@ -21,22 +21,13 @@ test('Case 1', () => {
           moveNumber: "",
         },
         {
-          text: "&&",
-          type: "deletion",
-          moveNumber: "",
-        },
-        {
-          text: " ",
-          type: "default",
-          moveNumber: "",
-        },
-        {
-          text: "3",
+          text: "&& 3",
           type: "deletion",
           moveNumber: "",
         },
       ],
     ],
+
     chunksB: [
       [
       ],
@@ -67,7 +58,7 @@ test('Case 1', () => {
           moveNumber: "",
         },
       ],
-    ],
+    ]
   }
 
   const result = getDiff(a, b, { outputType: OutputType.serializedChunks })
@@ -75,8 +66,7 @@ test('Case 1', () => {
   expect(result).toEqual(expected)
 })
 
-// TODO-now
-test.skip('Case 2', () => {
+test('Case 2', () => {
   const a = `
     if (true) {
       3; print
@@ -93,27 +83,7 @@ test.skip('Case 2', () => {
     chunksA: [
       [
         {
-          text: "if",
-          type: "deletion",
-          moveNumber: "",
-        },
-        {
-          text: " ",
-          type: "default",
-          moveNumber: "",
-        },
-        {
-          text: "(true)",
-          type: "deletion",
-          moveNumber: "",
-        },
-        {
-          text: " ",
-          type: "default",
-          moveNumber: "",
-        },
-        {
-          text: "{",
+          text: "if (true) {",
           type: "deletion",
           moveNumber: "",
         },
@@ -132,7 +102,7 @@ test.skip('Case 2', () => {
         {
           text: "3",
           type: "move",
-          moveNumber: "7",
+          moveNumber: "6",
         },
         {
           text: ";",
@@ -190,7 +160,7 @@ test.skip('Case 2', () => {
         {
           text: "3",
           type: "move",
-          moveNumber: "7",
+          moveNumber: "6",
         },
         {
           text: "\n",

@@ -1,5 +1,5 @@
 import { ChangeType, Side } from "./types";
-import { equals, getSequence, getSideFromType, normalize, oppositeSide, range } from "./utils";
+import { equals, getSequence, normalize, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change, compactChanges } from "./change";
 import { _context } from "./index";
@@ -7,7 +7,7 @@ import { Node } from "./node";
 import { assert } from "./debug";
 import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from "./sequence";
 import { OpenCloseVerifier } from "./openCloseVerifier";
-import { Offset, OffsetTracker } from "./offsetTracker";
+import { LineAlignmentReason } from "./textAligner";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -87,16 +87,18 @@ export function getChanges(codeA: string, codeB: string): Change[] {
   loop();
 
   // TODO: Once we improve compaction to be on-demand, we will be able to remove this
-  const deletions = changes.filter((x) => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start! - b.rangeA?.start!);
-  const additions = changes.filter((x) => x.type === ChangeType.addition).sort((a, b) => a.rangeB?.start! - b.rangeB?.start!);
+  const deletions = compactChanges(ChangeType.deletion, changes.filter((x) => x.type === ChangeType.deletion));
+  const additions = compactChanges(ChangeType.addition, changes.filter((x) => x.type === ChangeType.addition));
 
   processAddAndDel(deletions, additions);
 
-  const { matches, offsetTracker } = _context;
+  const { matches } = _context;
 
-  const moves = processMoves(matches, offsetTracker);
+  const moves = processMoves(matches);
 
-  return compactChanges([...additions, ...deletions, ...moves]);
+  compactAlignments();
+
+  return [...additions, ...deletions, ...moves];
 }
 
 function processAddAndDel(additions: Change[], deletions: Change[]) {
@@ -135,8 +137,9 @@ function processAddAndDel(additions: Change[], deletions: Change[]) {
 // -     ┌──► b
 // aa ◄──┼──► aa
 // b  ◄──┘    -
-function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
+function processMoves(matches: Change[]) {
   const changes: Change[] = [];
+  const { offsetTracker } = _context;
 
   const sortedMatches = matches.sort((a, b) => a.getWeight() < b.getWeight() ? 1 : -1);
 
@@ -147,16 +150,7 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
 
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of sortedMatches) {
-    const identicalNewLines = getNewLinesDifferences(match);
-    if (identicalNewLines.length) {
-      // TODO-NOW: It's hardcoded that we will insert the alignment bellow the node, this should see which parts has the most weight
-
-      for (const discrepancy of identicalNewLines) {
-        const side = getSideFromType(discrepancy.type);
-        // TODO-SUPER-NOW: Recalc offsets??? si agrego arriba de uno recalcular pa abajo
-        offsetTracker.add(side, discrepancy);
-      }
-    }
+    applyFormatAlignments(match);
 
     if (matchesToIgnore.includes(match.index)) {
       continue;
@@ -167,51 +161,23 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
       matchesToIgnore.push(...match.indexesOfClosingMoves);
     }
 
-    const indexA = offsetTracker.getOffset(Side.a, match.getFirstIndex(Side.a));
-    const indexB = offsetTracker.getOffset(Side.b, match.getFirstIndex(Side.b));
+    const indexA = match.getFirstIndex(Side.a);
+    const indexB = match.getFirstIndex(Side.b);
+
+    const offsettedIndexA = offsetTracker.getOffset(Side.a, indexA);
+    const offsettedIndexB = offsetTracker.getOffset(Side.b, indexB);
 
     // If the nodes are aligned after calculating the offset means that there is no extra work needed
-    if (indexA === indexB) {
+    if (offsettedIndexA === offsettedIndexB) {
       continue;
     }
 
     // There are two outcomes, if the match can be aligned, we add the corresponding alignments and move on.
     // If it can't be aligned then we report a move
-    const canMoveBeAligned = offsetTracker.moveCanGetAligned(indexA, indexB);
+    const canMoveBeAligned = offsetTracker.moveCanGetAligned(offsettedIndexA, offsettedIndexB);
 
     if (canMoveBeAligned) {
-      // We need to add alignments to both sides, for example
-      //
-      // A          B
-      // ------------
-      // 1          2
-      // 2          3
-      // 3          1
-      //
-      // LCS is "2 3", so it results in:
-      //
-      // A          B
-      // ------------
-      // 1          -
-      // 2          2
-      // 3          3
-      // -          1
-
-      const sideToAlignStart = indexA < indexB ? Side.a : Side.b;
-      const startIndex = sideToAlignStart === Side.a ? indexA : indexB;
-
-      const indexDiff = Math.abs(indexA - indexB);
-
-      for (const i of range(startIndex, startIndex + indexDiff)) {
-        offsetTracker.add(sideToAlignStart, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
-      }
-
-      const sideToAlignEnd = oppositeSide(sideToAlignStart);
-      const endIndex = (sideToAlignEnd === Side.a ? indexA : indexB) + 1;
-
-      for (const i of range(endIndex, endIndex + indexDiff)) {
-        offsetTracker.add(sideToAlignEnd, { type: ChangeType.move, index: i, numberOfNewLines: match.getNewLines() });
-      }
+      insertAlignmentsForMatch(match, indexA, indexB, offsettedIndexA, offsettedIndexB);
     } else {
       if (match.indexesOfClosingMoves.length) {
         changes.push(...match.indexesOfClosingMoves.map((i) => matches[i]));
@@ -224,14 +190,10 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
   return changes;
 }
 
-function getNewLinesDifferences(match: Change): Offset[] {
+function applyFormatAlignments(match: Change) {
   const { indexesA, indexesB } = match;
-  const { iterA, iterB } = _context;
+  const { iterA, iterB, textAligner } = _context;
 
-  let insertionPointA = indexesA.at(-1)!;
-  let insertionPointB = indexesB.at(-1)!;
-
-  const discrepancies: Offset[] = [];
   for (let i = 0; i < indexesA.length; i++) {
     const indexA = indexesA[i];
     const indexB = indexesB[i];
@@ -239,35 +201,25 @@ function getNewLinesDifferences(match: Change): Offset[] {
     const nodeA = iterA.textNodes.at(indexA)!;
     const nodeB = iterB.textNodes.at(indexB)!;
 
+    const offsettedLineA = textAligner.getOffsettedLineNumber(Side.b, nodeA.lineNumberStart);
+    const offsettedLineB = textAligner.getOffsettedLineNumber(Side.a, nodeB.lineNumberStart);
+
+    // No need to insert formatting alignments if they are already aligned
+    if (offsettedLineA === offsettedLineB) {
+      continue;
+    }
+
     if (nodeA.numberOfNewlines !== nodeB.numberOfNewlines) {
-      const difference = Math.abs(nodeA.numberOfNewlines - nodeB.numberOfNewlines);
-      let index: number;
-      let type: ChangeType;
+      const linesToInsert = Math.abs(nodeA.numberOfNewlines - nodeB.numberOfNewlines);
+      const sideToInsertAlignment = nodeA.numberOfNewlines < nodeB.numberOfNewlines ? Side.a : Side.b;
+      const insertAlignmentAt = sideToInsertAlignment === Side.a ? nodeB.lineNumberStart : nodeA.lineNumberStart;
 
-      // We insert alignments on the side with the least new lines
-      if (nodeA.numberOfNewlines < nodeB.numberOfNewlines) {
-        insertionPointA++;
-        // index = lineMapNodeTable[Side.a].get(nodeA.lineNumberStart)!
-        index = insertionPointA;
-
-        type = ChangeType.deletion;
-      } else {
-        insertionPointB++;
-        // index = lineMapNodeTable[Side.b].get(nodeB.lineNumberStart)!
-        index = insertionPointB;
-        type = ChangeType.addition;
+      // for (const i of range(insertAlignmentAt, insertAlignmentAt + linesToInsert)) {
+      for (const i of range(insertAlignmentAt - linesToInsert, insertAlignmentAt)) {
+        textAligner.add(sideToInsertAlignment, { lineNumber: i, change: match, reasons: LineAlignmentReason.NewLineDiff, nodeText: nodeA.text.trim() });
       }
-
-      discrepancies.push({
-        index,
-        type,
-        numberOfNewLines: difference,
-        change: match,
-      });
     }
   }
-
-  return discrepancies;
 }
 
 function oneSidedIteration(
@@ -475,5 +427,107 @@ function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
     return backwardPassLCS;
   } else {
     return lcs;
+  }
+}
+
+// We need to add alignments to both sides, for example
+//
+// A          B
+// ------------
+// 1          2
+// 2          3
+// 3          1
+//
+// LCS is "2 3", so it results in:
+//
+// A          B
+// ------------
+// 1          -
+// 2          2
+// 3          3
+// -          1
+function insertAlignmentsForMatch(change: Change, indexA: number, indexB: number, offsettedIndexA: number, offsettedIndexB: number) {
+  const { iterA, iterB, offsetTracker, textAligner } = _context;
+  const indexDiff = Math.abs(offsettedIndexA - offsettedIndexB);
+
+  const lineStartA = iterA.getLineNumber(indexA);
+  const lineStartB = iterB.getLineNumber(indexB);
+
+  const linesDiff = Math.abs(lineStartA - lineStartB);
+
+  function apply(side: Side, index: number, lineNumberStart: number) {
+    // Apply semantic offset
+    for (const i of range(index, index + indexDiff)) {
+      offsetTracker.add(side, { type: ChangeType.move, index: i, numberOfNewLines: 0 });
+    }
+
+    // Apply text offset
+    for (const i of range(lineNumberStart, lineNumberStart + linesDiff)) {
+      _context.textAligner.add(side, { lineNumber: i, change, reasons: LineAlignmentReason.MoveAlignment, nodeText: change.getText(side).trim() });
+      lineNumberStart++;
+    }
+  }
+
+  let insertionPointA = textAligner.getOffsettedLineNumber(Side.b, lineStartA);
+  let insertionPointB = textAligner.getOffsettedLineNumber(Side.a, lineStartB);
+
+  // Add one extra to the alignment of side we align at the end, so it looks like this
+  //
+  // A          B
+  // ------------
+  // aa         b
+  // b          aa
+  //
+  // Into this:
+  //
+  // A          B
+  // ------------
+  // -          b    <- Align at the start on A, inserting _before_
+  // aa         aa
+  // b          -    <- Align at the end on B, inserting _after_
+  //
+  if (offsettedIndexA > offsettedIndexB) {
+    insertionPointA++;
+  } else {
+    insertionPointB++;
+  }
+
+  apply(Side.a, offsettedIndexA, insertionPointA);
+  apply(Side.b, offsettedIndexB, insertionPointB);
+}
+
+// Remove alignments in the same line, for example
+// A          B
+// ------------
+// x          y
+// z          2
+// 2
+//
+// Fully aligned would be:
+// A          B
+// ------------
+// -          -
+// x          y
+// z          _
+// 2          2
+//
+// After the compaction:
+// A          B
+// ------------
+// x          y
+// z          _
+// 2          2
+function compactAlignments() {
+  const { a, b } = _context.textAligner;
+
+  if (!a.size && !b.size) {
+    return;
+  }
+
+  for (const [alignmentAt] of a) {
+    if (b.has(alignmentAt)) {
+      a.delete(alignmentAt);
+      b.delete(alignmentAt);
+    }
   }
 }

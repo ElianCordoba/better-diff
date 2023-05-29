@@ -1,11 +1,10 @@
+import Table from "cli-table3";
+
 import { _context, getOptions } from ".";
 import { ChangeType, Side } from "../src/types";
 import { Change } from "./change";
 import { assert, fail } from "./debug";
-import { OffsetsMap, OffsetTracker } from "./offsetTracker";
-import { range } from "./utils";
-import { Iterator } from "./iterator";
-import { Node } from "./node";
+import { getUpdatedLineMap } from "./textAligner";
 
 //@ts-ignore TODO: Importing normally doesn't work with vitest
 export const k = require("kleur");
@@ -50,7 +49,7 @@ export const prettyRenderFn: DiffRendererFn = {
 export const asciiRenderFn: DiffRendererFn = {
   [ChangeType.deletion]: (text) => `➖${text}➖`,
   [ChangeType.addition]: (text) => `➕${text}➕`,
-  [ChangeType.move]: (text) => `🔀${text}⏹️`,
+  [ChangeType.move]: (text) => `⏩${text}⏪`,
 };
 
 export function applyChangesToSources(
@@ -150,21 +149,12 @@ export function getComplimentArray(length: number, fillInCharacter = ""): string
   return new Array(length).fill(fillInCharacter);
 }
 
-export function applyAlignments(sourceA: string, sourceB: string, changes: Change[], offsets: OffsetTracker): { sourceA: string; sourceB: string; changes: Change[] } {
-  const offsettedIndexesA = offsets.offsetsA;
-  const offsettedIndexesB = offsets.offsetsB;
+export function applyAlignments(sourceA: string, sourceB: string, changes: Change[]): { sourceA: string; sourceB: string; changes: Change[] } {
+  // Handy for debugging
+  // _context.textAligner.draw()
 
-  // TODO: Compact alignments
-  // for (const ofA of offsettedIndexesA.values()) {
-  //   const ofB = offsettedIndexesB.get(ofA.index)
-  //   if (ofB?.numberOfNewLines === ofA.numberOfNewLines) {
-  //     offsettedIndexesA.delete(ofA.index)
-  //     offsettedIndexesB.delete(ofA.index)
-  //   }
-  // }
-
-  sourceA = insertAlignments(Side.a, changes, offsettedIndexesA, sourceA, _context.iterA);
-  sourceB = insertAlignments(Side.b, changes, offsettedIndexesB, sourceB, _context.iterB);
+  sourceA = getTextAligned(Side.a, changes);
+  sourceB = getTextAligned(Side.b, changes);
 
   return {
     sourceA,
@@ -173,57 +163,38 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
   };
 }
 
-function insertAlignments(side: Side, changes: Change[], offsets: OffsetsMap, source: string, iter: Iterator): string {
-  if (offsets.size === 0) {
+export function getTextAligned(side: Side, changes: Change[]) {
+  const { textAligner, sourceA, sourceB } = _context;
+  const lineOffsets = textAligner[side];
+
+  let source = side === Side.a ? sourceA : sourceB;
+
+  if (lineOffsets.size === 0) {
     return source;
   }
 
   const alignmentText = getOptions().alignmentText;
+  let lineMap = new Map(textAligner.getLineMap(side));
 
-  for (const offset of offsets.values()) {
-    // TODO: DOn't add them in the first place
-    if (offset.numberOfNewLines === 0) {
-      continue;
+  for (const { lineNumber } of lineOffsets.values()) {
+    const realLineNumber = textAligner.getOffsettedLineNumber(side, lineNumber);
+
+    let insertAt = lineMap.get(realLineNumber)!;
+
+    // Insert at will be undefined if the line we are tring to insert to is not present on the other side, for example
+    // If you try to insert line 5 but the other source only has 3 line, we will append it at the end
+    if (insertAt === undefined) {
+      insertAt = textAligner.getLastLineStart(side);
     }
 
-    const _offsetsFilled = _context.offsetTracker.getFilledOffsettedIndexes(side);
+    source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
 
-    const insertAt = findPointToInsertAlignment(iter, _offsetsFilled, offset.index);
+    lineMap = getUpdatedLineMap(source);
 
-    assert(insertAt !== undefined);
-
-    for (const _ of range(0, offset.numberOfNewLines)) {
-      source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
-    }
-
-    // updateChanges(changes, offset.change?.index!, side, insertAt)
     updateChanges(changes, side, insertAt);
   }
 
   return source;
-}
-
-function findPointToInsertAlignment(iter: Iterator, offsettedIndexes: (Node | undefined)[], targetIndex: number): number {
-  // We know that targetIndex is the alignment position, so that wont be our anchor
-  let currentIndex = targetIndex - 1;
-
-  while (true) {
-    if (currentIndex < 0) {
-      return 0;
-    }
-
-    const current = offsettedIndexes[currentIndex];
-
-    if (current) {
-      // const node = iter.textNodes[currentIndex];
-      // const lineToInsert = node.lineNumberStart === 0 ? 0 : node.lineNumberStart - 1
-      // const startOfLine = _context.lineMapNodeTable[iter.side].get(lineToInsert)!
-      // return startOfLine
-      return iter.textNodes[currentIndex].end;
-    }
-
-    currentIndex--;
-  }
 }
 
 // Iterate for each change
@@ -237,11 +208,6 @@ function updateChanges(changes: Change[], sideToUpdate: Side, startPosition: num
   const rangeToUpdate = sideToUpdate === Side.a ? "rangeA" : "rangeB";
 
   for (let i = 0; i < changes.length; i++) {
-    // TODO-NOW
-    // Don't update the change we just applied
-    // if (i === currentChange) {
-    //   continue
-    // }
     const change = changes[i];
     // Skip type of changes we don't want
     if (change.type === changesToSkip) {
@@ -255,4 +221,40 @@ function updateChanges(changes: Change[], sideToUpdate: Side, startPosition: num
 
     changes[i] = change;
   }
+}
+
+const _defaultTextTableOptions = {
+  lineCounterStartAt: 1
+}
+
+export function createTextTable(
+  sourceA: string,
+  sourceB: string,
+  options?: typeof _defaultTextTableOptions
+) {
+  const parsedOptions = { ..._defaultTextTableOptions, ...options }
+
+  const aLines = sourceA.split("\n");
+  const bLines = sourceB.split("\n");
+  const maxLength = Math.max(aLines.length, bLines.length);
+
+  const table = new Table({
+    head: [colorFn.yellow("Nº"), colorFn.red("Source"), colorFn.green("Revision")],
+    colAligns: ["left", "left"],
+    colWidths: [5, 30, 30],
+    style: {
+      compact: true,
+    },
+  });
+
+  let lineNumber = parsedOptions.lineCounterStartAt;
+  for (let i = 0; i < maxLength; i++) {
+    const aLine = (aLines[i] || "").trim();
+    const bLine = (bLines[i] || "").trim();
+
+    table.push([lineNumber, aLine, bLine]);
+    lineNumber++;
+  }
+
+  return table.toString();
 }

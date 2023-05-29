@@ -166,6 +166,11 @@ export class Iterator {
     return candidates;
   }
 
+  getLineNumber(index: number) {
+    // TODO: Contemplate lineNumberStart !== lineNumberEnd
+    return this.textNodes[index].lineNumberStart;
+  }
+
   printList(nodesToPrint?: Node[]) {
     console.log(`----------- SIDE ${this.side.toUpperCase()} -----------`);
     console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("\/n n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
