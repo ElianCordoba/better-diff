@@ -168,6 +168,7 @@ export function getTextAligned(side: Side, changes: Change[]) {
   const lineOffsets = textAligner[side];
 
   let source = side === Side.a ? sourceA : sourceB;
+  const lines = source.split('\n')
 
   if (lineOffsets.size === 0) {
     return source;
@@ -177,22 +178,26 @@ export function getTextAligned(side: Side, changes: Change[]) {
   let lineMap = new Map(textAligner.getLineMap(side));
 
   for (const { lineNumber } of lineOffsets.values()) {
-    const realLineNumber = textAligner.getOffsettedLineNumber(side, lineNumber);
+    lines.splice(lineNumber - 1, 0, alignmentText);
+    // const realLineNumber = textAligner.getOffsettedLineNumber(side, lineNumber);
 
-    let insertAt = lineMap.get(realLineNumber)!;
+    // let insertAt = lineMap.get(realLineNumber)!;
 
-    // Insert at will be undefined if the line we are tring to insert to is not present on the other side, for example
-    // If you try to insert line 5 but the other source only has 3 line, we will append it at the end
-    if (insertAt === undefined) {
-      insertAt = textAligner.getLastLineStart(side);
-    }
+    // // Insert at will be undefined if the line we are tring to insert to is not present on the other side, for example
+    // // If you try to insert line 5 but the other source only has 3 line, we will append it at the end
+    // if (insertAt === undefined) {
+    //   insertAt = textAligner.getLastLineStart(side);
+    // }
 
-    source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
+    // source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
 
-    lineMap = getUpdatedLineMap(source);
+    // lineMap = getUpdatedLineMap(source);
 
-    updateChanges(changes, side, insertAt);
+    updateChanges(changes, side, lineMap.get(lineNumber)!);
   }
+
+  source = lines.join('\n')
+  lineMap = getUpdatedLineMap(source);
 
   return source;
 }
@@ -201,7 +206,7 @@ export function getTextAligned(side: Side, changes: Change[]) {
 // Only take the ones with the proper range
 // Only take the ones that happen after the start pos
 function updateChanges(changes: Change[], sideToUpdate: Side, startPosition: number) {
-  const alignmentText = getOptions().alignmentText;
+  const textAlignmentLength = getOptions().alignmentText.length + 1;
 
   // Side where the alignment happened, thus the side we need to recalculate the ranges of the changes
   const changesToSkip = sideToUpdate === Side.a ? ChangeType.addition : ChangeType.deletion;
@@ -215,8 +220,8 @@ function updateChanges(changes: Change[], sideToUpdate: Side, startPosition: num
     }
 
     if (change[rangeToUpdate]!.start >= startPosition) {
-      change[rangeToUpdate]!.start += alignmentText.length;
-      change[rangeToUpdate]!.end += alignmentText.length;
+      change[rangeToUpdate]!.start += textAlignmentLength;
+      change[rangeToUpdate]!.end += textAlignmentLength;
     }
 
     changes[i] = change;

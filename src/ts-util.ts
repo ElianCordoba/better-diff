@@ -131,7 +131,8 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
     lineNumber++;
   }
 
-  _context.textAligner.sortLineMap(side);
+  // TODO-NOW enable?
+  // _context.textAligner.sortLineMap(side);
 
   return {
     nodes,

@@ -93,7 +93,7 @@ const defaultOptions: Options = {
   mode: Mode.debug,
   outputType: OutputType.text,
   warnOnInvalidCode: false,
-  alignmentText: "\n",
+  alignmentText: "",
 };
 
 let _options: Required<Options>;

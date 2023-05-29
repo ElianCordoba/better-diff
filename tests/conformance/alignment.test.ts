@@ -4,7 +4,7 @@ import { OutputType, getDiff } from "../../src";
 
 const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: "    <<Alignment>>\n" })
 
-describe("Properly align code", () => {
+describe.only("Properly align code", () => {
   test({
     name: 'Basic case 1',
     a: `
@@ -139,7 +139,6 @@ describe("Properly align code", () => {
     `
   })
 
-  // TODO-NOW Compaction case
   test({
     only: 'standard',
     name: 'Basic case 7',
@@ -153,9 +152,11 @@ describe("Properly align code", () => {
     `,
     expA: `
       ➖A➖
+      <<Alignment>>
       123
     `,
     expB: `
+      <<Alignment>>
       ➕B➕
       123
     `
@@ -290,6 +291,28 @@ describe("Properly align code", () => {
   })
 
   test({
+    name: "Basic case 13b",
+    a: `
+      xx
+      1
+    `,
+    b: `
+      1
+      xx
+    `,
+    expA: `
+      <<Alignment>>
+      xx
+      ⏩1⏪
+    `,
+    expB: `
+      ⏩1⏪
+      xx
+      <<Alignment>>
+    `
+  })
+
+  test({
     name: 'Basic case 14',
     a: `
       1
@@ -307,9 +330,11 @@ describe("Properly align code", () => {
       ➖1
       2
       3➖
+      <<Alignment>>
       console.log()
     `,
     expB: `
+      <<Alignment>>
       ➕4
       5➕
       console
@@ -876,6 +901,34 @@ describe("Properly format code", () => {
 
       x z
       <<Alignment>>
+      <<Alignment>>
+    `
+  })
+
+  test({
+    name: "Format 12",
+    a: `
+      1 2 3
+      x
+    `,
+    b: `
+      x
+      1
+      2
+      3
+    `,
+    expA: `
+      <<Alignment>>
+      1 2 3
+      <<Alignment>>
+      <<Alignment>>
+      x
+    `,
+    expB: `
+      x
+      1
+      2
+      3
       <<Alignment>>
     `
   })

@@ -7,7 +7,7 @@ import { Node } from "./node";
 import { assert } from "./debug";
 import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from "./sequence";
 import { OpenCloseVerifier } from "./openCloseVerifier";
-import { LineAlignmentReason } from "./textAligner";
+import { compactAlignments, insertMoveAlignment, insertNewLineAlignment } from "./textAligner";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -150,7 +150,7 @@ function processMoves(matches: Change[]) {
 
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of sortedMatches) {
-    applyFormatAlignments(match);
+    insertNewLineAlignment(match);
 
     if (matchesToIgnore.includes(match.index)) {
       continue;
@@ -177,7 +177,7 @@ function processMoves(matches: Change[]) {
     const canMoveBeAligned = offsetTracker.moveCanGetAligned(offsettedIndexA, offsettedIndexB);
 
     if (canMoveBeAligned) {
-      insertAlignmentsForMatch(match, indexA, indexB, offsettedIndexA, offsettedIndexB);
+      insertMoveAlignment(match, indexA, indexB, offsettedIndexA, offsettedIndexB);
     } else {
       if (match.indexesOfClosingMoves.length) {
         changes.push(...match.indexesOfClosingMoves.map((i) => matches[i]));
@@ -188,38 +188,6 @@ function processMoves(matches: Change[]) {
   }
 
   return changes;
-}
-
-function applyFormatAlignments(match: Change) {
-  const { indexesA, indexesB } = match;
-  const { iterA, iterB, textAligner } = _context;
-
-  for (let i = 0; i < indexesA.length; i++) {
-    const indexA = indexesA[i];
-    const indexB = indexesB[i];
-
-    const nodeA = iterA.textNodes.at(indexA)!;
-    const nodeB = iterB.textNodes.at(indexB)!;
-
-    const offsettedLineA = textAligner.getOffsettedLineNumber(Side.b, nodeA.lineNumberStart);
-    const offsettedLineB = textAligner.getOffsettedLineNumber(Side.a, nodeB.lineNumberStart);
-
-    // No need to insert formatting alignments if they are already aligned
-    if (offsettedLineA === offsettedLineB) {
-      continue;
-    }
-
-    if (nodeA.numberOfNewlines !== nodeB.numberOfNewlines) {
-      const linesToInsert = Math.abs(nodeA.numberOfNewlines - nodeB.numberOfNewlines);
-      const sideToInsertAlignment = nodeA.numberOfNewlines < nodeB.numberOfNewlines ? Side.a : Side.b;
-      const insertAlignmentAt = sideToInsertAlignment === Side.a ? nodeB.lineNumberStart : nodeA.lineNumberStart;
-
-      // for (const i of range(insertAlignmentAt, insertAlignmentAt + linesToInsert)) {
-      for (const i of range(insertAlignmentAt - linesToInsert, insertAlignmentAt)) {
-        textAligner.add(sideToInsertAlignment, { lineNumber: i, change: match, reasons: LineAlignmentReason.NewLineDiff, nodeText: nodeA.text.trim() });
-      }
-    }
-  }
 }
 
 function oneSidedIteration(
@@ -430,104 +398,3 @@ function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
   }
 }
 
-// We need to add alignments to both sides, for example
-//
-// A          B
-// ------------
-// 1          2
-// 2          3
-// 3          1
-//
-// LCS is "2 3", so it results in:
-//
-// A          B
-// ------------
-// 1          -
-// 2          2
-// 3          3
-// -          1
-function insertAlignmentsForMatch(change: Change, indexA: number, indexB: number, offsettedIndexA: number, offsettedIndexB: number) {
-  const { iterA, iterB, offsetTracker, textAligner } = _context;
-  const indexDiff = Math.abs(offsettedIndexA - offsettedIndexB);
-
-  const lineStartA = iterA.getLineNumber(indexA);
-  const lineStartB = iterB.getLineNumber(indexB);
-
-  const linesDiff = Math.abs(lineStartA - lineStartB);
-
-  function apply(side: Side, index: number, lineNumberStart: number) {
-    // Apply semantic offset
-    for (const i of range(index, index + indexDiff)) {
-      offsetTracker.add(side, { type: ChangeType.move, index: i, numberOfNewLines: 0 });
-    }
-
-    // Apply text offset
-    for (const i of range(lineNumberStart, lineNumberStart + linesDiff)) {
-      _context.textAligner.add(side, { lineNumber: i, change, reasons: LineAlignmentReason.MoveAlignment, nodeText: change.getText(side).trim() });
-      lineNumberStart++;
-    }
-  }
-
-  let insertionPointA = textAligner.getOffsettedLineNumber(Side.b, lineStartA);
-  let insertionPointB = textAligner.getOffsettedLineNumber(Side.a, lineStartB);
-
-  // Add one extra to the alignment of side we align at the end, so it looks like this
-  //
-  // A          B
-  // ------------
-  // aa         b
-  // b          aa
-  //
-  // Into this:
-  //
-  // A          B
-  // ------------
-  // -          b    <- Align at the start on A, inserting _before_
-  // aa         aa
-  // b          -    <- Align at the end on B, inserting _after_
-  //
-  if (offsettedIndexA > offsettedIndexB) {
-    insertionPointA++;
-  } else {
-    insertionPointB++;
-  }
-
-  apply(Side.a, offsettedIndexA, insertionPointA);
-  apply(Side.b, offsettedIndexB, insertionPointB);
-}
-
-// Remove alignments in the same line, for example
-// A          B
-// ------------
-// x          y
-// z          2
-// 2
-//
-// Fully aligned would be:
-// A          B
-// ------------
-// -          -
-// x          y
-// z          _
-// 2          2
-//
-// After the compaction:
-// A          B
-// ------------
-// x          y
-// z          _
-// 2          2
-function compactAlignments() {
-  const { a, b } = _context.textAligner;
-
-  if (!a.size && !b.size) {
-    return;
-  }
-
-  for (const [alignmentAt] of a) {
-    if (b.has(alignmentAt)) {
-      a.delete(alignmentAt);
-      b.delete(alignmentAt);
-    }
-  }
-}

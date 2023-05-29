@@ -2,9 +2,10 @@ import { ChangeType, Range, Side, TypeMasks } from "./types";
 import { colorFn, getSourceWithChange } from "./reporter";
 import { _context } from "./index";
 import { assert } from "./debug";
-import { arraySum, getIterFromSide, getPrettyChangeType, getSideFromChangeType } from "./utils";
+import { arraySum, getIterFromSide, getPrettyChangeType } from "./utils";
 import { Iterator } from "./iterator";
-import { LineAlignmentReason } from "./textAligner";
+import { insertAddOrDelAlignment } from "./textAligner";
+
 export class Change<Type extends ChangeType = ChangeType> {
   rangeA: Range | undefined;
   rangeB: Range | undefined;
@@ -130,7 +131,7 @@ export class Change<Type extends ChangeType = ChangeType> {
         });
       });
 
-      insertAlignmentIfNeeded(this);
+      insertAddOrDelAlignment(this);
     } else {
       // Alignment for additions:
       //
@@ -155,7 +156,7 @@ export class Change<Type extends ChangeType = ChangeType> {
         });
       });
 
-      insertAlignmentIfNeeded(this);
+      insertAddOrDelAlignment(this);
     }
   }
 
@@ -338,71 +339,4 @@ function getRange(iter: Iterator, indexes: number[]): Range {
     start: iter.textNodes[startIndex].start,
     end: iter.textNodes[endIndex].end,
   };
-}
-
-// We want to insert a text alignment if the full line is deleted
-//
-// A          B
-// ------------
-// x
-//
-// Results in:
-//
-// A          B
-// ------------
-// x         \n
-//
-// But, if the whole line is _not_ deleted / added, then we don't insert it
-//
-// A          B
-// ------------
-// 1 2        2
-//
-// Results in the same format
-
-function insertAlignmentIfNeeded(change: Change) {
-  // This function should only be called with additions or deletions
-  assert(change.type & TypeMasks.AddOrDel, () => "Tried to insert alignment in a change that wasn't a addition or deletion");
-
-  let indexes: number[];
-  let iter: Iterator;
-  // It's the opposite side of where the change happened
-  let sideToInsertAlignment: Side;
-  // May or may not be used, declared early on for convenience
-  let alignmentReason: LineAlignmentReason;
-
-  if (change.type === ChangeType.deletion) {
-    sideToInsertAlignment = Side.b;
-    indexes = change.indexesA;
-    iter = _context.iterA;
-    alignmentReason = LineAlignmentReason.DeletionAffectedWholeLine;
-  } else {
-    sideToInsertAlignment = Side.a;
-    indexes = change.indexesB;
-    iter = _context.iterB;
-    alignmentReason = LineAlignmentReason.AdditionAffectedWholeLine;
-  }
-
-  const nodesPerLine: Map<number, Set<number>> = new Map();
-
-  for (const i of indexes) {
-    const node = iter.textNodes[i];
-
-    assert(node);
-
-    const line = node.lineNumberStart;
-
-    if (nodesPerLine.has(line)) {
-      nodesPerLine.get(line)!.add(node.index);
-    } else {
-      nodesPerLine.set(line, new Set([node.index]));
-    }
-  }
-  const { textAligner } = _context;
-  const side = getSideFromChangeType(change.type);
-  for (const [lineNumber, nodes] of nodesPerLine) {
-    if (textAligner.wholeLineAffected(side, lineNumber, nodes.size)) {
-      textAligner.add(sideToInsertAlignment, { lineNumber, change, reasons: alignmentReason, nodeText: change.getText(side).trim() });
-    }
-  }
 }
