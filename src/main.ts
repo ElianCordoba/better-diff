@@ -184,7 +184,7 @@ function processMoves(matches: Change[]) {
     }
 
     if (canMoveBeAligned) {
-      insertMoveAlignment(match, indexA, indexB, offsettedIndexA, offsettedIndexB);
+      insertMoveAlignment(match, offsettedIndexA, offsettedIndexB);
     } else {
       if (match.indexesOfClosingMoves.length) {
         changes.push(...match.indexesOfClosingMoves.map((i) => matches[i]));

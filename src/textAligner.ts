@@ -331,15 +331,21 @@ export function insertNewLineAlignment(match: Change, alignedChange: boolean) {
 // 2          2
 // 3          3
 // -          1
-export function insertMoveAlignment(change: Change, indexA: number, indexB: number, offsettedIndexA: number, offsettedIndexB: number) {
-  const { iterA, iterB, offsetTracker, textAligner } = _context;
+export function insertMoveAlignment(change: Change, offsettedIndexA: number, offsettedIndexB: number) {
+  const { iterA, iterB, offsetTracker } = _context;
   const indexDiff = Math.abs(offsettedIndexA - offsettedIndexB);
 
-  const lineA = iterA.getLineNumber(indexA)
-  const lineB = iterB.getLineNumber(indexB)
+  const firstIndexA = change.getFirstIndex(Side.a)
+  const lastIndexA = change.getLastIndex(Side.a)
 
-  let lineStartA = textAligner.getOffsettedLineNumber(Side.a, lineA);
-  let lineStartB = textAligner.getOffsettedLineNumber(Side.b, lineB);
+  const lineStartA = iterA.textNodes[firstIndexA].getOffsettedLineNumber('start')
+  const lineEndA = iterA.textNodes[lastIndexA].getOffsettedLineNumber('end')
+
+  const firstIndexB = change.getFirstIndex(Side.b)
+  const lastIndexB = change.getLastIndex(Side.b)
+
+  const lineStartB = iterB.textNodes[firstIndexB].getOffsettedLineNumber('start')
+  const lineEndB = iterB.textNodes[lastIndexB].getOffsettedLineNumber('end')
 
   const linesDiff = Math.abs(lineStartA - lineStartB);
 
@@ -356,7 +362,7 @@ export function insertMoveAlignment(change: Change, indexA: number, indexB: numb
     }
   }
 
-  // Add one extra to the alignment of side we align at the end, so it looks like this
+  // The alignments are inserted _before_ the match in the side that has the lower line number (higher up in the text) and _after_ on the side with the bigger line number
   //
   // A          B
   // ------------
@@ -371,14 +377,17 @@ export function insertMoveAlignment(change: Change, indexA: number, indexB: numb
   // aa         aa
   // b          -    <- Align at the end on B, inserting _after_
   //
-  if (offsettedIndexA > offsettedIndexB) {
-    lineStartA++;
+  const sideToAlignStart = lineStartA < lineStartB ? Side.a : Side.b
+
+  if (sideToAlignStart === Side.a) {
+    apply(Side.a, offsettedIndexA, lineStartA);
+    apply(Side.b, offsettedIndexB, lineEndB + 1);
   } else {
-    lineStartB++;
+    apply(Side.b, offsettedIndexB, lineStartB);
+    apply(Side.a, offsettedIndexA, lineEndA + 1);
   }
 
-  apply(Side.a, offsettedIndexA, lineStartA);
-  apply(Side.b, offsettedIndexB, lineStartB);
+  // TODO: Instead of + 1 should be + width?
 }
 
 // Remove alignments in the same line, for example
