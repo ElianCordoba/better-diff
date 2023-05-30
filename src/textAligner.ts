@@ -291,9 +291,11 @@ export function insertNewLineAlignment(match: Change, alignedChange: boolean) {
     if (nodeA.numberOfNewlines !== nodeB.numberOfNewlines) {
 
       const sideToInsertAlignment = nodeA.numberOfNewlines < nodeB.numberOfNewlines ? Side.a : Side.b;
-      const insertAlignmentAt = sideToInsertAlignment === Side.a
-        ? nodeB.getOffsettedLineNumber()
-        : nodeA.getOffsettedLineNumber()
+
+      // If we are inserting in A we read the width from B, and viscera
+      const nodeToReadData = sideToInsertAlignment === Side.a ? nodeB : nodeA
+
+      const insertAlignmentAt = nodeToReadData.getOffsettedLineNumber('start')
 
       if (alignedChange) {
         const linesToInsert = Math.abs(nodeA.numberOfNewlines - nodeB.numberOfNewlines);
@@ -301,10 +303,10 @@ export function insertNewLineAlignment(match: Change, alignedChange: boolean) {
           textAligner.add(sideToInsertAlignment, { lineNumber: i, change: match, reasons: [LineAlignmentReason.NewLineDiff], nodeText: nodeA.text.trim() });
         }
       } else {
-        const nl = (sideToInsertAlignment === Side.a ? nodeB.numberOfNewlines : nodeA.numberOfNewlines - 1)
-        const start = (sideToInsertAlignment === Side.a ? nodeB.getOffsettedLineNumber('start') : nodeA.getOffsettedLineNumber('start')) - nl
-        const end = sideToInsertAlignment === Side.a ? nodeB.getOffsettedLineNumber('end') : nodeA.getOffsettedLineNumber('end')
-        for (const i of range(start, end + 1)) {
+        const nl = nodeToReadData.numberOfNewlines - 1
+        const start = insertAlignmentAt - nl
+        const end = nodeToReadData.getOffsettedLineNumber('end') + 1
+        for (const i of range(start, end)) {
           textAligner.add(sideToInsertAlignment, { lineNumber: i, change: match, reasons: [LineAlignmentReason.NewLineDiff], nodeText: nodeA.text.trim() });
         }
       }
