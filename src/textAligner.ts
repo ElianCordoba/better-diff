@@ -301,10 +301,10 @@ export function insertNewLineAlignment(match: Change, alignedChange: boolean) {
           textAligner.add(sideToInsertAlignment, { lineNumber: i, change: match, reasons: [LineAlignmentReason.NewLineDiff], nodeText: nodeA.text.trim() });
         }
       } else {
-        const linesToInsert = sideToInsertAlignment === Side.a
-          ? nodeB.numberOfNewlines - match.getWidth()
-          : nodeA.numberOfNewlines - match.getWidth()
-        for (const i of range(insertAlignmentAt - linesToInsert, insertAlignmentAt + match.getWidth())) {
+        const nl = (sideToInsertAlignment === Side.a ? nodeB.numberOfNewlines : nodeA.numberOfNewlines - 1)
+        const start = (sideToInsertAlignment === Side.a ? nodeB.getOffsettedLineNumber('start') : nodeA.getOffsettedLineNumber('start')) - nl
+        const end = sideToInsertAlignment === Side.a ? nodeB.getOffsettedLineNumber('end') : nodeA.getOffsettedLineNumber('end')
+        for (const i of range(start, end + 1)) {
           textAligner.add(sideToInsertAlignment, { lineNumber: i, change: match, reasons: [LineAlignmentReason.NewLineDiff], nodeText: nodeA.text.trim() });
         }
       }

@@ -66,8 +66,9 @@ export class Node {
     };
   }
 
-  getOffsettedLineNumber() {
-    return _context.textAligner.getOffsettedLineNumber(this.side, this.lineNumberStart)
+  getOffsettedLineNumber(read: 'start' | 'end' = 'start') {
+    const readFrom = read === 'start' ? 'lineNumberStart' : 'lineNumberEnd'
+    return _context.textAligner.getOffsettedLineNumber(this.side, this[readFrom])
   }
 
   draw() {

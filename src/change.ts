@@ -91,7 +91,7 @@ export class Change<Type extends ChangeType = ChangeType> {
     const lineStart = iter.textNodes[indexes[0]].lineNumberStart
     const lineEnd = iter.textNodes[indexes.at(-1)!].lineNumberEnd
 
-    return (lineStart - lineEnd) + 1
+    return (lineEnd - lineStart) + 1
   }
 
   getFirstIndex(side?: Side) {

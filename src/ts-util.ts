@@ -35,7 +35,7 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
     const start = node.pos + node.getLeadingTriviaWidth();
 
     const lineNumberStart = getLineNumber(sourceFile, start);
-    const lineNumberEnd = 0; // TODO ALIGNMENT = getLineNumber(sourceFile, node.end);
+    const lineNumberEnd = getLineNumber(sourceFile, node.end);
 
     const numberOfNewlines = node.getFullText().match(/\n/g)?.length || 0;
 
