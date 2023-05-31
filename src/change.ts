@@ -4,7 +4,7 @@ import { _context } from "./index";
 import { assert } from "./debug";
 import { arraySum, getIterFromSide, getPrettyChangeType } from "./utils";
 import { Iterator } from "./iterator";
-import { insertAddOrDelAlignment } from "./textAligner";
+import { LineAlignmentTable, insertAddOrDelAlignment } from "./textAligner";
 
 export class Change<Type extends ChangeType = ChangeType> {
   rangeA: Range | undefined;
@@ -143,7 +143,7 @@ export class Change<Type extends ChangeType = ChangeType> {
 
       assert(node);
 
-      const line = node.lineNumberStart;
+      const line = node.getOffsettedLineNumber('start');
 
       if (nodesPerLine.has(line)) {
         nodesPerLine.get(line)!.add(node.index);
@@ -155,7 +155,7 @@ export class Change<Type extends ChangeType = ChangeType> {
     return nodesPerLine
   }
 
-  applyOffset() {
+  applyOffset(): LineAlignmentTable {
     const { offsetTracker } = _context;
     if (this.type === ChangeType.deletion) {
       // Alignment for deletions:

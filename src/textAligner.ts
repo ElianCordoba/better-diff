@@ -27,7 +27,7 @@ interface LineAlignment {
   nodeText: string;
 }
 
-type LineAlignmentTable = Map<number, LineAlignment>
+export type LineAlignmentTable = Map<number, LineAlignment>
 
 export class TextAligner {
   lineMapA: LineMapTable = new Map();
@@ -144,7 +144,15 @@ export class TextAligner {
   // This also is used for additions
   wholeLineAffected(side: Side, lineNumber: number, numberOfNodesAffected: number) {
     const readFrom = side === Side.a ? "nodesPerLineA" : "nodesPerLineB";
-    return this[readFrom].get(lineNumber) === numberOfNodesAffected;
+
+    const nodesAtGivenLine = this[readFrom].get(lineNumber)
+
+    if (nodesAtGivenLine === undefined) {
+      return true
+    } else {
+      return nodesAtGivenLine === numberOfNodesAffected;
+    }
+
   }
 
   draw() {
@@ -290,20 +298,28 @@ export function insertNewLineAlignment(change: Change, alignedChange: boolean) {
 
   // TODO-NOW example
   if (!alignedChange) {
-    const lineStartA = change.getOffsettedLineStart(Side.a)
+    const offsetA = change.getOffsettedLineStart(Side.a) - iterA.textNodes[change.indexesA[0]].lineNumberStart
+    const lineStartA = change.getOffsettedLineStart(Side.a) - iterA.textNodes[indexesA[0]].numberOfNewlines + 1
     const lineEndA = change.getOffsettedLineEnd(Side.a) + 1
 
-    // if (textAligner.wholeLineAffected(side, lineNumber, nodes.size)) { }
+    const nodesA = change.getNodesPerLine(Side.a)
 
     for (const i of range(lineStartA, lineEndA)) {
-      textAligner.add(Side.b, { lineNumber: i, change: change, reasons: [LineAlignmentReason.NewLineDiff], nodeText: change.getText(Side.a).trim() });
+      if (!nodesA.has(i) || textAligner.wholeLineAffected(Side.a, i - offsetA, nodesA.get(i)!.size)) {
+        textAligner.add(Side.b, { lineNumber: i, change: change, reasons: [LineAlignmentReason.NewLineDiff], nodeText: change.getText(Side.a).trim() });
+      }
     }
 
-    const lineStartB = change.getOffsettedLineStart(Side.b)
+    const offsetB = change.getOffsettedLineStart(Side.b) - iterB.textNodes[change.indexesB[0]].lineNumberStart
+    const lineStartB = change.getOffsettedLineStart(Side.b) - iterB.textNodes[indexesB[0]].numberOfNewlines + 1
     const lineEndB = change.getOffsettedLineEnd(Side.b) + 1
 
+    const nodesB = change.getNodesPerLine(Side.b)
+
     for (const i of range(lineStartB, lineEndB)) {
-      textAligner.add(Side.a, { lineNumber: i, change: change, reasons: [LineAlignmentReason.NewLineDiff], nodeText: change.getText(Side.b).trim() });
+      if (!nodesB.get(i) || textAligner.wholeLineAffected(Side.b, i - offsetB, nodesB.get(i)!.size)) {
+        textAligner.add(Side.a, { lineNumber: i, change: change, reasons: [LineAlignmentReason.NewLineDiff], nodeText: change.getText(Side.b).trim() });
+      }
     }
 
     return
