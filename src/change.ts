@@ -54,9 +54,9 @@ export class Change<Type extends ChangeType = ChangeType> {
 
   _weight!: number;
   getWeight(): number {
-    if (this._weight) {
-      return this._weight;
-    }
+    // if (this._weight) {
+    //   return this._weight;
+    // }
 
     const side = this.getSide();
     const indexes = side === Side.a ? this.indexesA : this.indexesB;
@@ -130,6 +130,29 @@ export class Change<Type extends ChangeType = ChangeType> {
     } else {
       return this.type === ChangeType.deletion ? Side.a : Side.b;
     }
+  }
+
+  getNodesPerLine(side: Side) {
+    const indexes = side === Side.a ? this.indexesA : this.indexesB
+    const iter = getIterFromSide(side)
+
+    const nodesPerLine: Map<number, Set<number>> = new Map();
+
+    for (const i of indexes) {
+      const node = iter.textNodes[i];
+
+      assert(node);
+
+      const line = node.lineNumberStart;
+
+      if (nodesPerLine.has(line)) {
+        nodesPerLine.get(line)!.add(node.index);
+      } else {
+        nodesPerLine.set(line, new Set([node.index]));
+      }
+    }
+
+    return nodesPerLine
   }
 
   applyOffset() {

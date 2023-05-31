@@ -246,21 +246,8 @@ export function insertAddOrDelAlignment(change: Change) {
     alignmentReason = LineAlignmentReason.AdditionAffectedWholeLine;
   }
 
-  const nodesPerLine: Map<number, Set<number>> = new Map();
+  const nodesPerLine = change.getNodesPerLine(oppositeSide(sideToInsertAlignment))
 
-  for (const i of indexes) {
-    const node = iter.textNodes[i];
-
-    assert(node);
-
-    const line = node.lineNumberStart;
-
-    if (nodesPerLine.has(line)) {
-      nodesPerLine.get(line)!.add(node.index);
-    } else {
-      nodesPerLine.set(line, new Set([node.index]));
-    }
-  }
   // Instead of actually storing the alignment right away we defer this until we have all the addition and deletions alignments
   // This is to compact it so that this case can work fine
   //
@@ -305,6 +292,8 @@ export function insertNewLineAlignment(change: Change, alignedChange: boolean) {
   if (!alignedChange) {
     const lineStartA = change.getOffsettedLineStart(Side.a)
     const lineEndA = change.getOffsettedLineEnd(Side.a) + 1
+
+    // if (textAligner.wholeLineAffected(side, lineNumber, nodes.size)) { }
 
     for (const i of range(lineStartA, lineEndA)) {
       textAligner.add(Side.b, { lineNumber: i, change: change, reasons: [LineAlignmentReason.NewLineDiff], nodeText: change.getText(Side.a).trim() });
