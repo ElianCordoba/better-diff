@@ -102,30 +102,19 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 }
 
 function processAddAndDel(additions: Change[], deletions: Change[]) {
-  const sortedAdds = additions.sort((a, b) => {
-    const indexA = a.getFirstIndex();
-    const indexB = b.getFirstIndex();
-
-    return indexA < indexB ? -1 : 1;
-  });
-
-  const sortedDels = deletions.sort((a, b) => {
-    const indexA = a.getFirstIndex();
-    const indexB = b.getFirstIndex();
-
-    return indexA < indexB ? -1 : 1;
-  });
-
-  const additionsOffsets = new Map(...sortedAdds.map(x => x.applyOffset()))
-  const deletionOffsets = new Map(...sortedDels.map(x => x.applyOffset()))
+  // Merge all the alignments
+  const additionsOffsets = new Map(...additions.map(x => x.applyOffset()))
+  const deletionOffsets = new Map(...deletions.map(x => x.applyOffset()))
 
   compactAlignments(deletionOffsets, additionsOffsets)
 
-  for (const [lineNumber, alignment] of additionsOffsets) {
+  // Apply the non-compacted changes
+
+  for (const alignment of additionsOffsets.values()) {
     _context.textAligner.add(Side.b, alignment)
   }
 
-  for (const [lineNumber, alignment] of deletionOffsets) {
+  for (const alignment of deletionOffsets.values()) {
     _context.textAligner.add(Side.a, alignment)
   }
 }
