@@ -25,6 +25,9 @@ interface LineAlignment {
   change: Change;
 
   nodeText: string;
+
+  side?: Side
+  index?: number
 }
 
 export type LineAlignmentTable = Map<number, LineAlignment>
@@ -64,7 +67,7 @@ export class TextAligner {
 
     this[side] = new Map(this.getSortedOffsets(side));
 
-    this.draw()
+    // this.draw()
 
     1
   }
@@ -282,10 +285,19 @@ export function insertAddOrDelAlignment(change: Change) {
   const alignments: LineAlignmentTable = new Map()
   const { textAligner } = _context
   const side = getSideFromChangeType(change.type);
+  const index = side === Side.a ? change.indexesA[0] : change.indexesB[0]
   for (const [lineNumber, nodes] of nodesPerLine) {
     if (textAligner.wholeLineAffected(side, lineNumber, nodes.size)) {
       const offsettedLineNumber = textAligner.getOffsettedLineNumber(side, lineNumber)
-      alignments.set(offsettedLineNumber, { lineNumber: offsettedLineNumber, change, reasons: [alignmentReason], nodeText: change.getText(side).trim() })
+
+      alignments.set(offsettedLineNumber, {
+        side: oppositeSide(side),
+        lineNumber: offsettedLineNumber,
+        change,
+        reasons: [alignmentReason],
+        nodeText: change.getText(side).trim(),
+        index
+      })
     }
   }
 
@@ -455,12 +467,7 @@ export function insertMoveAlignment(change: Change, offsettedIndexA: number, off
 // x          y
 // z          _
 // 2          2
-export function compactAlignments(_a?: LineAlignmentTable, _b?: LineAlignmentTable) {
-  const { textAligner } = _context;
-
-  const a = _a || textAligner.a
-  const b = _b || textAligner.b
-
+export function compactAlignments(a: LineAlignmentTable, b: LineAlignmentTable) {
   if (!a.size && !b.size) {
     return;
   }
@@ -469,6 +476,22 @@ export function compactAlignments(_a?: LineAlignmentTable, _b?: LineAlignmentTab
     if (b.has(alignmentAt)) {
       a.delete(alignmentAt);
       b.delete(alignmentAt);
+
+      for (const [_line, val] of new Map([...a.entries()].reverse())) {
+        if (_line > alignmentAt) {
+          a.delete(_line)
+          val.lineNumber = val.lineNumber - 1
+          a.set(_line + 1, val)
+        }
+      }
+
+      for (const [_line, val] of new Map([...b.entries()].reverse())) {
+        if (_line > alignmentAt) {
+          b.delete(_line)
+          val.lineNumber = val.lineNumber - 1
+          b.set(_line + 1, val)
+        }
+      }
     }
   }
 }

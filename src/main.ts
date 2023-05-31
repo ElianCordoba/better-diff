@@ -96,26 +96,45 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 
   const moves = processMoves(matches);
 
-  compactAlignments();
+  const { a: aAlignments, b: bAlignments } = _context.textAligner
+  compactAlignments(aAlignments, bAlignments);
 
   return [...additions, ...deletions, ...moves];
 }
 
 function processAddAndDel(additions: Change[], deletions: Change[]) {
   // Merge all the alignments
-  const additionsOffsets = new Map(...additions.map(x => x.applyOffset()))
-  const deletionOffsets = new Map(...deletions.map(x => x.applyOffset()))
+  let additionsOffsets = new Map()
+  additions.map(x => {
+    const offsets = x.applyOffset()
+    for (const [l, n] of offsets) {
+      additionsOffsets.set(l, n)
+    }
+  })
+
+
+  let deletionOffsets = new Map()
+  deletions.map(x => {
+    const offsets = x.applyOffset()
+    for (const [l, n] of offsets) {
+      deletionOffsets.set(l, n)
+    }
+  })
+
 
   compactAlignments(deletionOffsets, additionsOffsets)
 
   // Apply the non-compacted changes
 
-  for (const alignment of additionsOffsets.values()) {
-    _context.textAligner.add(Side.b, alignment)
-  }
+  const unifiedList = [...additionsOffsets, ...deletionOffsets].sort((a, b) => {
+    const indexA = a[1].index!
+    const indexB = b[1].index!
 
-  for (const alignment of deletionOffsets.values()) {
-    _context.textAligner.add(Side.a, alignment)
+    return indexA < indexB ? -1 : 1
+  })
+
+  for (const [, alignment] of unifiedList) {
+    _context.textAligner.add(alignment.side!, alignment)
   }
 }
 
