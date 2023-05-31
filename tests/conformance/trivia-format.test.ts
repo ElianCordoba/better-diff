@@ -281,4 +281,42 @@ describe("Properly align formatted code", () => {
       <<Alignment>> 
     `
   })
+
+  test({
+    name: "Case 14",
+    a: `
+      ()
+    `,
+    b: `
+      (
+
+      )
+    `,
+    expA: `
+      <<Alignment>>
+      <<Alignment>>
+      ()
+    `,
+  })
+
+  test({
+    name: "Case 15",
+    a: `
+      (
+
+      )
+    `,
+    b: `
+      (
+
+
+      )
+    `,
+    expA: `
+      (
+        
+      <<Alignment>>
+      )
+    `,
+  })
 })

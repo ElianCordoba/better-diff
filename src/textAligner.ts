@@ -4,7 +4,7 @@ import { ChangeType, Side, TypeMasks } from "./types";
 import { getSideFromChangeType, oppositeSide, range } from "./utils";
 import { Change } from "./change";
 import { colorFn, createTextTable } from "./reporter";
-import { assert } from "./debug";
+import { assert, fail } from "./debug";
 import { Iterator } from './iterator'
 
 // line number (one-based) -> line start position
@@ -269,9 +269,28 @@ export function insertAddOrDelAlignment(change: Change) {
   }
 }
 
-export function insertNewLineAlignment(match: Change, alignedChange: boolean) {
-  const { indexesA, indexesB } = match;
+export function insertNewLineAlignment(change: Change, alignedChange: boolean) {
+  const { indexesA, indexesB } = change;
   const { iterA, iterB, textAligner } = _context;
+
+  // TODO-NOW example
+  if (!alignedChange) {
+    const lineStartA = change.getOffsettedLineStart(Side.a)
+    const lineEndA = change.getOffsettedLineEnd(Side.a) + 1
+
+    for (const i of range(lineStartA, lineEndA)) {
+      textAligner.add(Side.b, { lineNumber: i, change: change, reasons: [LineAlignmentReason.NewLineDiff], nodeText: change.getText(Side.a).trim() });
+    }
+
+    const lineStartB = change.getOffsettedLineStart(Side.b)
+    const lineEndB = change.getOffsettedLineEnd(Side.b) + 1
+
+    for (const i of range(lineStartB, lineEndB)) {
+      textAligner.add(Side.a, { lineNumber: i, change: change, reasons: [LineAlignmentReason.NewLineDiff], nodeText: change.getText(Side.b).trim() });
+    }
+
+    return
+  }
 
   for (let i = 0; i < indexesA.length; i++) {
     const indexA = indexesA[i];
@@ -295,23 +314,15 @@ export function insertNewLineAlignment(match: Change, alignedChange: boolean) {
       // If we are inserting in A we read the width from B, and viscera
       const nodeToReadData = sideToInsertAlignment === Side.a ? nodeB : nodeA
 
-      const insertAlignmentAt = nodeToReadData.getOffsettedLineNumber('start')
+      const insertAlignmentAt = nodeToReadData.getOffsettedLineNumber('end')
 
-      if (alignedChange) {
-        const linesToInsert = Math.abs(nodeA.numberOfNewlines - nodeB.numberOfNewlines);
-        for (const i of range(insertAlignmentAt - linesToInsert, insertAlignmentAt)) {
-          textAligner.add(sideToInsertAlignment, { lineNumber: i, change: match, reasons: [LineAlignmentReason.NewLineDiff], nodeText: nodeA.text.trim() });
-        }
-      } else {
-        const nl = nodeToReadData.numberOfNewlines - 1
-        const start = insertAlignmentAt - nl
-        const end = nodeToReadData.getOffsettedLineNumber('end') + 1
-        for (const i of range(start, end)) {
-          textAligner.add(sideToInsertAlignment, { lineNumber: i, change: match, reasons: [LineAlignmentReason.NewLineDiff], nodeText: nodeA.text.trim() });
-        }
+
+      const linesToInsert = Math.abs(nodeA.numberOfNewlines - nodeB.numberOfNewlines);
+      for (const i of range(insertAlignmentAt - linesToInsert, insertAlignmentAt)) {
+        textAligner.add(sideToInsertAlignment, { lineNumber: i, change: change, reasons: [LineAlignmentReason.NewLineDiff], nodeText: nodeA.text.trim() });
       }
-
     }
+
   }
 }
 

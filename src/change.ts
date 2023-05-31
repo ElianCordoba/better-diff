@@ -70,12 +70,13 @@ export class Change<Type extends ChangeType = ChangeType> {
   // TODO-NOW Duplicated code
 
   _newLines!: number;
-  getNewLines(): number {
-    if (this._newLines) {
-      return this._newLines;
-    }
+  getNewLines(_side?: Side): number {
+    // TODO-NOW: One cache per side
+    // if (this._newLines) {
+    //   return this._newLines;
+    // }
 
-    const side = this.getSide();
+    const side = this.getSide(_side);
     const indexes = side === Side.a ? this.indexesA : this.indexesB;
     const iter = side === Side.a ? _context.iterA : _context.iterB;
 
@@ -90,8 +91,9 @@ export class Change<Type extends ChangeType = ChangeType> {
 
     const lineStart = iter.textNodes[indexes[0]].lineNumberStart
     const lineEnd = iter.textNodes[indexes.at(-1)!].lineNumberEnd
+    const newLines = this.getNewLines(side)
 
-    return (lineEnd - lineStart) + 1
+    return (lineEnd - lineStart) + 1 + newLines
   }
 
   getFirstIndex(side?: Side) {
@@ -100,6 +102,20 @@ export class Change<Type extends ChangeType = ChangeType> {
 
   getLastIndex(side?: Side) {
     return this.getIndex(this.getSide(side), -1);
+  }
+
+  getOffsettedLineStart(side: Side) {
+    const index = this.getFirstIndex(side)
+    const iter = getIterFromSide(side)
+
+    return iter.textNodes[index].getOffsettedLineNumber('start')
+  }
+
+  getOffsettedLineEnd(side: Side) {
+    const index = this.getLastIndex(side)
+    const iter = getIterFromSide(side)
+
+    return iter.textNodes[index].getOffsettedLineNumber('end')
   }
 
   private getIndex(side: Side, position: number): number {
