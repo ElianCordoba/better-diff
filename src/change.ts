@@ -157,7 +157,7 @@ export class Change<Type extends ChangeType = ChangeType> {
         });
       });
 
-      insertAddOrDelAlignment(this);
+      return insertAddOrDelAlignment(this);
     } else {
       // Alignment for additions:
       //
@@ -182,7 +182,7 @@ export class Change<Type extends ChangeType = ChangeType> {
         });
       });
 
-      insertAddOrDelAlignment(this);
+      return insertAddOrDelAlignment(this);
     }
   }
 

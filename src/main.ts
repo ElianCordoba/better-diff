@@ -102,15 +102,31 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 }
 
 function processAddAndDel(additions: Change[], deletions: Change[]) {
-  const unifiedList = [...additions, ...deletions].sort((a, b) => {
+  const sortedAdds = additions.sort((a, b) => {
     const indexA = a.getFirstIndex();
     const indexB = b.getFirstIndex();
 
     return indexA < indexB ? -1 : 1;
   });
 
-  for (const change of unifiedList) {
-    change.applyOffset();
+  const sortedDels = deletions.sort((a, b) => {
+    const indexA = a.getFirstIndex();
+    const indexB = b.getFirstIndex();
+
+    return indexA < indexB ? -1 : 1;
+  });
+
+  const additionsOffsets = new Map(...sortedAdds.map(x => x.applyOffset()))
+  const deletionOffsets = new Map(...sortedDels.map(x => x.applyOffset()))
+
+  compactAlignments(deletionOffsets, additionsOffsets)
+
+  for (const [lineNumber, alignment] of additionsOffsets) {
+    _context.textAligner.add(Side.b, alignment)
+  }
+
+  for (const [lineNumber, alignment] of deletionOffsets) {
+    _context.textAligner.add(Side.a, alignment)
   }
 }
 

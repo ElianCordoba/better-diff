@@ -27,6 +27,8 @@ interface LineAlignment {
   nodeText: string;
 }
 
+type LineAlignmentTable = Map<number, LineAlignment>
+
 export class TextAligner {
   lineMapA: LineMapTable = new Map();
   lineMapB: LineMapTable = new Map();
@@ -36,8 +38,8 @@ export class TextAligner {
   nodesPerLineB = new Map<number, number>();
 
   // line number as key
-  a = new Map<number, LineAlignment>();
-  b = new Map<number, LineAlignment>();
+  a: LineAlignmentTable = new Map();
+  b: LineAlignmentTable = new Map();
 
   add(side: Side, newAlignment: LineAlignment) {
     const { lineNumber, reasons, nodeText } = newAlignment;
@@ -259,14 +261,40 @@ export function insertAddOrDelAlignment(change: Change) {
       nodesPerLine.set(line, new Set([node.index]));
     }
   }
-  const { textAligner } = _context;
+  // Instead of actually storing the alignment right away we defer this until we have all the addition and deletions alignments
+  // This is to compact it so that this case can work fine
+  //
+  // A          B
+  // ------------
+  // ()         (x)
+  //
+  // Without this is will happen
+  //
+  // A          B
+  // ------------
+  // -          (x)
+  // ()         -
+  //
+  // Because we apply one and then the next alignment get offsetted, with this change the output is the desired:
+  //
+  // A          B
+  // ------------
+  // -          -
+  // ()         (x)
+  //
+  // Then compaction happens and both of them get removed
+
+  const alignments: LineAlignmentTable = new Map()
+  const { textAligner } = _context
   const side = getSideFromChangeType(change.type);
   for (const [lineNumber, nodes] of nodesPerLine) {
     if (textAligner.wholeLineAffected(side, lineNumber, nodes.size)) {
       const offsettedLineNumber = textAligner.getOffsettedLineNumber(side, lineNumber)
-      textAligner.add(sideToInsertAlignment, { lineNumber: offsettedLineNumber, change, reasons: [alignmentReason], nodeText: change.getText(side).trim() });
+      alignments.set(offsettedLineNumber, { lineNumber: offsettedLineNumber, change, reasons: [alignmentReason], nodeText: change.getText(side).trim() })
     }
   }
+
+  return alignments
 }
 
 export function insertNewLineAlignment(change: Change, alignedChange: boolean) {
@@ -422,8 +450,11 @@ export function insertMoveAlignment(change: Change, offsettedIndexA: number, off
 // x          y
 // z          _
 // 2          2
-export function compactAlignments() {
-  const { a, b } = _context.textAligner;
+export function compactAlignments(_a?: LineAlignmentTable, _b?: LineAlignmentTable) {
+  const { textAligner } = _context;
+
+  const a = _a || textAligner.a
+  const b = _b || textAligner.b
 
   if (!a.size && !b.size) {
     return;
