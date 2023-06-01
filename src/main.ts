@@ -1,5 +1,5 @@
 import { ChangeType, Side } from "./types";
-import { equals, getSequence, normalize, range } from "./utils";
+import { equals, getSequence, normalize, oppositeSide, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change, compactChanges } from "./change";
 import { _context } from "./index";
@@ -7,7 +7,7 @@ import { Node } from "./node";
 import { assert } from "./debug";
 import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from "./sequence";
 import { OpenCloseVerifier } from "./openCloseVerifier";
-import { compactAlignments, insertMoveAlignment, insertNewLineAlignment } from "./textAligner";
+import { LineAlignmentTable, compactAlignments, insertMoveAlignment, insertNewLineAlignment } from "./textAligner";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
@@ -104,7 +104,7 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 
 function processAddAndDel(additions: Change[], deletions: Change[]) {
   // Merge all the alignments
-  let additionsOffsets = new Map()
+  let additionsOffsets: LineAlignmentTable = new Map()
   additions.map(x => {
     const offsets = x.applyOffset()
     for (const [l, n] of offsets) {
@@ -113,7 +113,7 @@ function processAddAndDel(additions: Change[], deletions: Change[]) {
   })
 
 
-  let deletionOffsets = new Map()
+  let deletionOffsets: LineAlignmentTable = new Map()
   deletions.map(x => {
     const offsets = x.applyOffset()
     for (const [l, n] of offsets) {
@@ -134,6 +134,7 @@ function processAddAndDel(additions: Change[], deletions: Change[]) {
   })
 
   for (const [, alignment] of unifiedList) {
+    alignment.lineNumber = _context.textAligner.getOffsettedLineNumber(oppositeSide(alignment.side!), alignment.lineNumber)
     _context.textAligner.add(alignment.side!, alignment)
   }
 }
