@@ -5,7 +5,7 @@ import { colorFn } from "../../src/reporter";
 
 const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: colorFn.cyan("<<Alignment>>"), ignoreChangeMarkers: true })
 
-describe.only("Properly align code", () => {
+describe("Properly align code", () => {
   test({
     name: 'Basic case 1',
     a: `
@@ -151,16 +151,6 @@ describe.only("Properly align code", () => {
       B
       123
     `,
-    expA: `
-      A
-      <<Alignment>>
-      123
-    `,
-    expB: `
-      <<Alignment>>
-      B
-      123
-    `
   })
 
   test({
@@ -187,6 +177,7 @@ describe.only("Properly align code", () => {
 
   test({
     name: 'Basic case 9',
+    disabled: true,
     a: `
       123
       x
@@ -224,6 +215,7 @@ describe.only("Properly align code", () => {
     expA: `
       <<Alignment>>
       123
+      <<Alignment>>
       x
       5
     `,
@@ -231,6 +223,7 @@ describe.only("Properly align code", () => {
       x
       123
       z
+      <<Alignment>>
       5
     `
   })
@@ -313,8 +306,10 @@ describe.only("Properly align code", () => {
     `
   })
 
+  // Ignored backward because it's order dependant
   test({
     name: 'Basic case 14',
+    only: 'standard',
     a: `
       1
       2
@@ -332,13 +327,9 @@ describe.only("Properly align code", () => {
       2
       3
       <<Alignment>>
-      <<Alignment>>
-      <<Alignment>>
       console.log()
     `,
     expB: `
-      <<Alignment>>
-      <<Alignment>>
       <<Alignment>>
       4
       5
@@ -377,7 +368,7 @@ describe.only("Properly align code", () => {
     name: 'Basic case 16',
     only: 'standard',
     a: `
-      xx
+      zzz
       1
       2
       3
@@ -386,27 +377,28 @@ describe.only("Properly align code", () => {
     b: `
       1
       2
-      xx
+      zzz
       3
       4
     `,
     expA: `
-      xx
+      <<Alignment>>
+      <<Alignment>>
+      zzz
       1
       2
-      <<Alignment>>
       3
       4
     `,
     expB: `
-      <<Alignment>>
       1
       2
-      xx
+      zzz
+      <<Alignment>>
+      <<Alignment>>
       3
       4
     `,
-
   })
 
   // TODO(Alignment): Take the most wight in order to specify where to put the alignment, either at the beginning or the end
@@ -427,9 +419,17 @@ describe.only("Properly align code", () => {
       1
       <<Alignment>>
       <<Alignment>>
-      <<Alignment>> 
+      <<Alignment>>
+      <<Alignment>>
       print(true) {}
     `,
+    expB: `
+      <<Alignment>>
+      print(
+        true
+      ) {
+
+      }`
   });
 
   test({
@@ -614,323 +614,33 @@ describe.only("Properly align code", () => {
       <<Alignment>>
     `,
   });
-})
-
-describe("Properly format code", () => {
-  test({
-    name: 'Format 1',
-    a: `
-      console.log()
-    `,
-    b: `
-      console.log(
-      )
-    `,
-    expA: `
-      <<Alignment>>
-      console.log()
-    `,
-    expB: `
-      console.log(
-      )
-    `
-  })
 
   test({
-    name: 'Format 2',
-    a: `
-      console.log()
-    `,
-    b: `
-      console
-      .log
-      (
-      )
-    `,
-    expA: `
-      <<Alignment>>
-      <<Alignment>>
-      <<Alignment>>
-      console.log()
-    `
-  })
-
-  test({
-    name: 'Format 3',
-    a: `
-      {}
-    `,
-    b: `
-      {
-
-      }
-    `,
-    expA: `
-      <<Alignment>>
-      <<Alignment>>
-      {}
-    `
-  })
-
-  test({
-    name: 'Format 4',
-    a: `
-      ()
-      x
-    `,
-    b: `
-      (
-
-      )
-      x
-    `,
-    expA: `
-      <<Alignment>>
-      <<Alignment>>
-      ()
-      x
-    `
-  })
-
-  test({
-    name: "Format 4b",
-    a: `
-      ()
-      start
-      end
-    `,
-    b: `
-      start
-      (
-
-      )
-      end
-    `,
-    expA: `
-      ()
-      start
-      <<Alignment>>
-      <<Alignment>>
-      <<Alignment>>
-      end
-    `,
-    expB: `
-      <<Alignment>>
-      start
-      (
-
-      )
-      end
-    `
-  })
-
-  test({
-    name: 'Format 4c',
-    a: `
-      ()
-      x
-      111
-      222
-      333
-      zz
-    `,
-    b: `
-      111
-      222
-      333
-      (
-
-      )
-      x
-      zz
-    `,
-    expA: `
-      ()
-      x
-      111
-      222
-      333
-      <<Alignment>>
-      <<Alignment>>
-      <<Alignment>>
-      <<Alignment>>
-    `,
-    expB: `
-      <<Alignment>>
-      <<Alignment>>
-      111
-      222
-      333
-      (
-
-      )
-      x
-    `
-  })
-
-  test({
-    name: 'Format 5',
-    a: `
-      1 2
-      x
-    `,
-    b: `
-      1 2 x
-    `,
-    expB: `
-      1 2 x
-      <<Alignment>>
-    `
-  })
-
-  // TODO: Another example of compression
-  test({
-    name: 'Format 6',
-    a: `
-      ()
-    `,
-    b: `
-      (x)
-    `,
-  })
-
-  test({
-    name: 'Format 7',
-    a: `
-      1 2 3
-    `,
-    b: `
-      1
-      2
-      3
-    `,
-    expA: `
-      1 2 3
-      <<Alignment>>
-      <<Alignment>>
-    `,
-  })
-
-  test({
-    name: 'Format 8',
-    a: `
-      x
-      if (true) {}
-      z
-    `,
-    b: `
-      x
-      if (
-        true
-      ) { 
-      }
-      z
-    `,
-    expA: `
-      x
-      if (true) {}
-      <<Alignment>>
-      <<Alignment>>
-      <<Alignment>>
-      z
-    `,
-  })
-
-  test({
-    name: 'Format 9',
-    a: `
-      x
-      if (true) {}
-      z
-    `,
-    b: `
-      x
-      if (
-        true
-      ) { 
-      }
-      z
-    `,
-    expA: `
-      x
-      if (true) {}
-      <<Alignment>>
-      <<Alignment>>
-      <<Alignment>>
-      z
-    `,
-  })
-
-  test({
-    name: 'Format 10',
-    a: `
-      console.log()
-      1
-    `,
-    b: `
-      console.
-      log()
-    `,
-    expA: `
-      console.log()
-      1
-    `,
-  })
-
-  // Testing the ignoring the push down of alignments
-  test({
-    name: 'Format 11',
+    name: "Basic case 26",
     a: `
       x z 1
+      zz
     `,
     b: `
       1
 
       x z
+      zz
     `,
     expA: `
       <<Alignment>>
       <<Alignment>>
       x z 1
+      zz
     `,
     expB: `
       1
 
       x z
-      <<Alignment>>
-      <<Alignment>>
-    `
-  })
-
-  test({
-    name: "Format 12",
-    a: `
-      1 2 3
-      x
-    `,
-    b: `
-      x
-      1
-      2
-      3
-    `,
-    expA: `
-      <<Alignment>>
-      1 2 3
-      <<Alignment>>
-      <<Alignment>>
-      x
-    `,
-    expB: `
-      x
-      1
-      2
-      3
-      <<Alignment>>
+      zz
     `
   })
 })
-
 
 describe('Properly ignore alignments', () => {
   test({

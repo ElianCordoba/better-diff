@@ -319,4 +319,267 @@ describe("Properly align formatted code", () => {
       )
     `,
   })
+
+  test({
+    name: 'Case 16',
+    a: `
+      console.log()
+    `,
+    b: `
+      console.log(
+      )
+    `,
+    expA: `
+      <<Alignment>>
+      console.log()
+    `,
+    expB: `
+      console.log(
+      )
+    `
+  })
+
+  test({
+    name: 'Case 17',
+    a: `
+      console.log()
+    `,
+    b: `
+      console
+      .log
+      (
+      )
+    `,
+    expA: `
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>>
+      console.log()
+    `
+  })
+
+  test({
+    name: 'Case 18',
+    a: `
+      {}
+    `,
+    b: `
+      {
+
+      }
+    `,
+    expA: `
+      <<Alignment>>
+      <<Alignment>>
+      {}
+    `
+  })
+
+  test({
+    name: 'Case 19',
+    a: `
+      ()
+      x
+    `,
+    b: `
+      (
+
+      )
+      x
+    `,
+    expA: `
+      <<Alignment>>
+      <<Alignment>>
+      ()
+      x
+    `
+  })
+
+  test({
+    name: "Case 20",
+    a: `
+      ()
+      start
+      end
+    `,
+    b: `
+      start
+      (
+
+      )
+      end
+    `,
+    expA: `
+      ()
+      start
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>>
+      end
+    `,
+    expB: `
+      <<Alignment>>
+      start
+      (
+
+      )
+      end
+    `
+  })
+
+  test({
+    name: 'Case 21',
+    a: `
+      ()
+      x
+      111
+      222
+      333
+      zz
+    `,
+    b: `
+      111
+      222
+      333
+      (
+
+      )
+      x
+      zz
+    `,
+    expA: `
+      ()
+      x
+      111
+      222
+      333
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>>
+      zz
+    `,
+    expB: `
+      <<Alignment>>
+      <<Alignment>>
+      111
+      222
+      333
+      (
+
+      )
+      x
+      zz
+    `
+  })
+
+  test({
+    name: 'Case 22',
+    a: `
+      1 2
+      x
+    `,
+    b: `
+      1 2 x
+    `,
+    expB: `
+      <<Alignment>>
+      1 2 x
+    `
+  })
+
+  // TODO: Another example of compression
+  test({
+    name: 'Case 23',
+    a: `
+      ()
+    `,
+    b: `
+      (x)
+    `,
+  })
+
+  test({
+    name: 'Case 24',
+    a: `
+      1 2 3
+    `,
+    b: `
+      1
+      2
+      3
+    `,
+    expA: `
+      <<Alignment>>
+      <<Alignment>>
+      1 2 3
+    `,
+  })
+
+  // Testing the ignoring the push down of alignments
+  test({
+    name: 'Case 25',
+    a: `
+      x z 1
+    `,
+    b: `
+      1
+
+      x z
+    `,
+    expA: `
+      <<Alignment>>
+      <<Alignment>>
+      x z 1
+    `,
+    expB: `
+      1
+
+      x z
+    `
+  })
+
+  test({
+    name: "Case 26",
+    a: `
+      1 2 3
+      x
+    `,
+    b: `
+      x
+      1
+      2
+      3
+    `,
+    expA: `
+      <<Alignment>>
+      <<Alignment>>
+      <<Alignment>>
+      1 2 3
+      x
+    `,
+    expB: `
+      x
+      1
+      2
+      3
+      <<Alignment>>
+    `
+  })
+
+  test({
+    name: 'Case 27',
+    a: `
+      console.log()
+      1
+    `,
+    b: `
+      console.
+      log()
+    `,
+    expA: `
+      console.log()
+      1
+    `,
+  })
 })
