@@ -69,7 +69,7 @@ export class TextAligner {
 
     // this.draw()
 
-    1
+    // 1
   }
 
   getOffsettedLineNumber(side: Side, lineNumber: number) {
@@ -288,7 +288,7 @@ export function insertAddOrDelAlignment(change: Change) {
   const index = side === Side.a ? change.indexesA[0] : change.indexesB[0]
   for (const [lineNumber, nodes] of nodesPerLine) {
     if (textAligner.wholeLineAffected(side, lineNumber, nodes.size)) {
-      const offsettedLineNumber = textAligner.getOffsettedLineNumber(side, lineNumber)
+      const offsettedLineNumber = textAligner.getOffsettedLineNumber(side, lineNumber) - iter.textNodes[index].numberOfNewlines
 
       alignments.set(offsettedLineNumber, {
         side: oppositeSide(side),
@@ -405,12 +405,15 @@ export function insertMoveAlignment(change: Change, offsettedIndexA: number, off
 
   const linesDiff = Math.abs(lineStartA - lineStartB);
 
-  function apply(side: Side, index: number, lineNumberStart: number) {
+  function apply(side: Side, index: number, lineNumberStart: number, ignore = false) {
     // Apply semantic offset
     for (const i of range(index, index + indexDiff)) {
       offsetTracker.add(side, { type: ChangeType.move, index: i, numberOfNewLines: 0 });
     }
 
+    if (ignore) {
+      return
+    }
     // Apply text offset
     for (const i of range(lineNumberStart, lineNumberStart + linesDiff)) {
       _context.textAligner.add(side, { lineNumber: i, change, reasons: [LineAlignmentReason.MoveAlignment], nodeText: change.getText(side).trim() });
@@ -437,10 +440,10 @@ export function insertMoveAlignment(change: Change, offsettedIndexA: number, off
 
   if (sideToAlignStart === Side.a) {
     apply(Side.a, offsettedIndexA, lineStartA);
-    apply(Side.b, offsettedIndexB, lineEndB + 1);
+    apply(Side.b, offsettedIndexB, lineEndB + 1, true);
   } else {
     apply(Side.b, offsettedIndexB, lineStartB);
-    apply(Side.a, offsettedIndexA, lineEndA + 1);
+    apply(Side.a, offsettedIndexA, lineEndA + 1, true);
   }
 
   // TODO: Instead of + 1 should be + width?

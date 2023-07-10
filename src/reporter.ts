@@ -254,8 +254,8 @@ export function createTextTable(
 
   let lineNumber = parsedOptions.lineCounterStartAt;
   for (let i = 0; i < maxLength; i++) {
-    const aLine = (aLines[i] || "").trim();
-    const bLine = (bLines[i] || "").trim();
+    const aLine = aLines[i] || "";
+    const bLine = bLines[i] || "";
 
     table.push([lineNumber, aLine, bLine]);
     lineNumber++;
