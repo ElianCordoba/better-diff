@@ -1,20 +1,19 @@
 import { ChangeType, Side } from "./types";
-import { equals, getSequence, mergeRanges, normalize, oppositeSide, range } from "./utils";
+import { equals, getSequence, normalize, oppositeSide, range } from "./utils";
 import { Iterator } from "./iterator";
 import { Change, compactChanges } from "./change";
 import { _context } from "./index";
 import { Node } from "./node";
 import { assert } from "./debug";
-import { AlignmentTable } from "./alignmentTable";
 import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from "./sequence";
 import { OpenCloseVerifier } from "./openCloseVerifier";
-import { OffsetTracker } from "./offsetTracker";
+import { LineAlignmentTable, compactAlignments, insertMoveAlignment, insertNewLineAlignment } from "./textAligner";
 
 export function getChanges(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
 
-  const iterA = new Iterator({ source: codeA, name: Side.a });
-  const iterB = new Iterator({ source: codeB, name: Side.b });
+  const iterA = new Iterator({ side: Side.a, source: codeA });
+  const iterB = new Iterator({ side: Side.b, source: codeB });
 
   _context.iterA = iterA;
   _context.iterB = iterB;
@@ -62,8 +61,8 @@ export function getChanges(codeA: string, codeB: string): Change[] {
         iterB.mark(b.index, ChangeType.addition);
 
         changes.push(
-          new Change(ChangeType.deletion, a),
-          new Change(ChangeType.addition, b),
+          new Change(ChangeType.deletion, [a.index]),
+          new Change(ChangeType.addition, [b.index]),
         );
 
         // We need to ensure that we the closing one is matched as well. Also, a == b, so no need to check if b is an open node
@@ -88,14 +87,56 @@ export function getChanges(codeA: string, codeB: string): Change[] {
   loop();
 
   // TODO: Once we improve compaction to be on-demand, we will be able to remove this
-  const deletions = changes.filter((x) => x.type === ChangeType.deletion).sort((a, b) => a.rangeA?.start! - b.rangeA?.start!);
-  const additions = changes.filter((x) => x.type === ChangeType.addition).sort((a, b) => a.rangeB?.start! - b.rangeB?.start!);
+  const deletions = compactChanges(ChangeType.deletion, changes.filter((x) => x.type === ChangeType.deletion));
+  const additions = compactChanges(ChangeType.addition, changes.filter((x) => x.type === ChangeType.addition));
 
-  const { matches, offsetTracker } = _context;
+  processAddAndDel(deletions, additions);
 
-  const moves = processMoves(matches, offsetTracker);
+  const { matches } = _context;
 
-  return compactChanges([...additions, ...deletions, ...moves]);
+  const moves = processMoves(matches);
+
+  const { a: aAlignments, b: bAlignments } = _context.textAligner
+  compactAlignments(aAlignments, bAlignments);
+
+  return [...additions, ...deletions, ...moves];
+}
+
+function processAddAndDel(additions: Change[], deletions: Change[]) {
+  // Merge all the alignments
+  let additionsOffsets: LineAlignmentTable = new Map()
+  additions.map(x => {
+    const offsets = x.applyOffset()
+    for (const [l, n] of offsets) {
+      additionsOffsets.set(l, n)
+    }
+  })
+
+
+  let deletionOffsets: LineAlignmentTable = new Map()
+  deletions.map(x => {
+    const offsets = x.applyOffset()
+    for (const [l, n] of offsets) {
+      deletionOffsets.set(l, n)
+    }
+  })
+
+
+  compactAlignments(deletionOffsets, additionsOffsets)
+
+  // Apply the non-compacted changes
+
+  const unifiedList = [...additionsOffsets, ...deletionOffsets].sort((a, b) => {
+    const indexA = a[1].index!
+    const indexB = b[1].index!
+
+    return indexA < indexB ? -1 : 1
+  })
+
+  for (const [, alignment] of unifiedList) {
+    alignment.lineNumber = _context.textAligner.getOffsettedLineNumber(oppositeSide(alignment.side!), alignment.lineNumber)
+    _context.textAligner.add(alignment.side!, alignment)
+  }
 }
 
 // This function receives all the matches and iterate over them in descending order of weight (matches with more text involved go first)
@@ -121,14 +162,11 @@ export function getChanges(codeA: string, codeB: string): Change[] {
 // -     ┌──► b
 // aa ◄──┼──► aa
 // b  ◄──┘    -
-function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
+function processMoves(matches: Change[]) {
   const changes: Change[] = [];
+  const { offsetTracker } = _context;
 
-  // We create a new offset tracker so that the alignments of additions and deletions don't interfere, we only report a movements
-  // if we cross an alignment from a move, not from a addition or deletion
-  const moveOffsetTracker = new OffsetTracker();
-
-  const sortedMatches = matches.sort((a, b) => a.weight < b.weight ? 1 : -1);
+  const sortedMatches = matches.sort((a, b) => a.getWeight() < b.getWeight() ? 1 : -1);
 
   // If a match contains opening nodes, it's necessary to process the closing counterpart in the same way.
   // For instance, a match resulting in an "(" being moved, should have the matching ")" being reported as moved as well.
@@ -137,7 +175,10 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
 
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of sortedMatches) {
+    let didApplyFormatAlignment = false
+
     if (matchesToIgnore.includes(match.index)) {
+      // TODO-NOW Format?
       continue;
     }
 
@@ -146,56 +187,29 @@ function processMoves(matches: Change[], offsetTracker: OffsetTracker) {
       matchesToIgnore.push(...match.indexesOfClosingMoves);
     }
 
-    const _indexA = match.indexA;
-    const _indexB = match.indexB;
+    const indexA = match.getFirstIndex(Side.a);
+    const indexB = match.getFirstIndex(Side.b);
 
-    const indexA = _indexA + offsetTracker.getOffset(Side.a, _indexA);
-    const indexB = _indexB + offsetTracker.getOffset(Side.b, _indexB);
+    const offsettedIndexA = offsetTracker.getOffset(Side.a, indexA);
+    const offsettedIndexB = offsetTracker.getOffset(Side.b, indexB);
 
     // If the nodes are aligned after calculating the offset means that there is no extra work needed
-    if (indexA === indexB) {
+    if (offsettedIndexA === offsettedIndexB) {
+      insertNewLineAlignment(match, true)
+      didApplyFormatAlignment = true
       continue;
     }
 
-    // There are two outcomes, if the match can be aligned, we add the corresponding aligments and move on.
+    // There are two outcomes, if the match can be aligned, we add the corresponding alignments and move on.
     // If it can't be aligned then we report a move
-    const canMoveBeAligned = moveOffsetTracker.moveCanGetAligned(indexA, indexB);
+    const canMoveBeAligned = offsetTracker.moveCanGetAligned(offsettedIndexA, offsettedIndexB);
+
+    if (!didApplyFormatAlignment) {
+      insertNewLineAlignment(match, canMoveBeAligned);
+    }
 
     if (canMoveBeAligned) {
-      // We need to add alignments to both sides, for example
-      //
-      // A          B
-      // ------------
-      // 1          2
-      // 2          3
-      // 3          1
-      //
-      // LCS is "2 3", so it results in:
-      //
-      // A          B
-      // ------------
-      // 1          -
-      // 2          2
-      // 3          3
-      // -          1
-
-      const sideToAlignStart = indexA < indexB ? Side.a : Side.b;
-      const startIndex = sideToAlignStart === Side.a ? indexA : indexB;
-
-      const indexDiff = Math.abs(indexA - indexB);
-
-      for (const i of range(startIndex, startIndex + indexDiff)) {
-        offsetTracker.add(sideToAlignStart, i);
-        moveOffsetTracker.add(sideToAlignStart, i);
-      }
-
-      const sideToAlignEnd = oppositeSide(sideToAlignStart);
-      const endIndex = (sideToAlignEnd === Side.a ? indexA : indexB) + 1;
-
-      for (const i of range(endIndex, endIndex + indexDiff)) {
-        offsetTracker.add(sideToAlignEnd, i);
-        moveOffsetTracker.add(sideToAlignEnd, i);
-      }
+      insertMoveAlignment(match, offsettedIndexA, offsettedIndexB);
     } else {
       if (match.indexesOfClosingMoves.length) {
         changes.push(...match.indexesOfClosingMoves.map((i) => matches[i]));
@@ -217,21 +231,10 @@ function oneSidedIteration(
 
   let value = iter.next(startFrom);
 
-  // ALIGNMENT const { alignmentTable } = _context;
-
-  // TODO: Compact
   while (value) {
-    /// Alignment: Addition / Deletion ///
-    if (typeOfChange === ChangeType.addition) {
-      // TODO: ALIGNMENT alignmentTable.add(Side.a, value.lineNumberStart, value.text.length);
-      changes.push(new Change(typeOfChange, value));
-    } else {
-      // TODO: ALIGNMENT alignmentTable.add(Side.b, value.lineNumberStart, value.text.length);
-      changes.push(new Change(typeOfChange, value));
-    }
+    changes.push(new Change(typeOfChange, [value.index]));
 
     iter.mark(value.index, typeOfChange, true);
-
     value = iter.next(value.index + 1);
   }
 
@@ -243,20 +246,11 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   const changes: Change[] = [];
   const { matches } = _context;
 
-  let a = iterA.next(indexA)!;
-  let b = iterB.next(indexB)!;
+  const indexesA: number[] = [];
+  const indexesB: number[] = [];
 
-  let rangeA = a.getRange();
-  let rangeB = b.getRange();
-
-  const startA = a.lineNumberStart;
-  const startB = b.lineNumberStart;
-
-  let textMatched = "";
-  let matchWeight = 0;
-
-  const { alignmentTable } = _context;
-  const localAlignmentTable = new AlignmentTable();
+  let a: Node;
+  let b: Node;
 
   const verifier = new OpenCloseVerifier(iterA, iterB);
 
@@ -272,78 +266,20 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     indexA++;
     indexB++;
 
-    matchWeight += a.text.length;
+    indexesA.push(a.index);
+    indexesB.push(b.index);
 
     assert(equals(a, b), () => `Misaligned matcher. A: ${indexA} (${a.prettyKind}), B: ${indexB} (${b.prettyKind})`);
 
     // Used for the open-close node correctness
     verifier.track(a);
-
-    /// Alignment: Move ///
-
-    textMatched += a.text;
-
-    const _startA = a.lineNumberStart - startA;
-    const _startB = b.lineNumberStart - startB;
-
-    let alignmentHappened = false;
-
-    const linesDiff = Math.abs(_startA - _startB);
-    if (linesDiff !== 0) {
-      alignmentHappened = true;
-
-      // It's a guarantee that both "a" and "b" text are of the same length here
-      const length = a.text.length;
-
-      if (_startA < _startB) {
-        localAlignmentTable.add(Side.a, b.lineNumberStart, length);
-      } else {
-        localAlignmentTable.add(Side.b, a.lineNumberStart, length);
-      }
-    }
-
-    const triviaLinesDiff = Math.abs(a.triviaLinesAbove - b.triviaLinesAbove);
-    if (!alignmentHappened && triviaLinesDiff !== 0) {
-      if (a.triviaLinesAbove < b.triviaLinesAbove) {
-        for (const i of range(a.lineNumberStart, a.lineNumberStart + triviaLinesDiff)) {
-          alignmentTable.add(Side.a, i);
-        }
-      } else {
-        for (const i of range(b.lineNumberStart, b.lineNumberStart + triviaLinesDiff)) {
-          alignmentTable.add(Side.b, i);
-        }
-      }
-    }
-
-    /// Alignment end ///
-
-    rangeA = mergeRanges(rangeA, a.getRange());
-    rangeB = mergeRanges(rangeB, b.getRange());
   }
 
-  const endA = a.lineNumberEnd;
-  const endB = b.lineNumberEnd;
-
-  if (startA !== startB || endA !== endB) {
-    _context.alignmentsOfMoves.push({
-      startA,
-      startB,
-      endA,
-      endB,
-      text: textMatched,
-    });
-  }
-
-  // deno-lint-ignore no-explicit-any
-  const dummyNodeA = { range: rangeA, index: indexA } as any as Node;
-  // deno-lint-ignore no-explicit-any
-  const dummyNodeB = { range: rangeB, index: indexB } as any as Node;
   matches.push(
     new Change(
       ChangeType.move,
-      dummyNodeA,
-      dummyNodeB,
-      matchWeight,
+      indexesA,
+      indexesB,
     ),
   );
 
@@ -358,7 +294,7 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSRe
 
   // Report deletion if applicable
   if (candidateOppositeSide.length === 0) {
-    const changes = [new Change(ChangeType.deletion, startNode)];
+    const changes = [new Change(ChangeType.deletion, [startNode.index])];
     iterA.mark(startNode.index, ChangeType.deletion);
 
     // TODO: Maybe add the open/close here?
@@ -493,3 +429,4 @@ function checkLCSBackwards(iterA: Iterator, iterB: Iterator, lcs: LCSResult) {
     return lcs;
   }
 }
+

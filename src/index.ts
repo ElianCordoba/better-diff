@@ -1,8 +1,7 @@
 import { getChanges } from "./main";
-import { applyChangesToSources, getAlignedSources, prettyRenderFn } from "./reporter";
+import { applyAlignments, applyChangesToSources, prettyRenderFn } from "./reporter";
 import { serialize } from "./serializer";
-import { ChangeType, Mode, SerializedResponse, Side } from "./types";
-import { Node } from "./node";
+import { Mode, SerializedResponse } from "./types";
 import { fail } from "./debug";
 import { Context } from "./context";
 
@@ -16,7 +15,9 @@ export interface Options {
 
   // For testing and debugging mostly
   alignmentText?: string;
-  includeDebugAlignmentInfo?: boolean;
+
+  // If enable, the emojis / text coloring will be ignored. Useful when testing alignments
+  ignoreChangeMarkers?: boolean;
 }
 
 export enum OutputType {
@@ -56,9 +57,9 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
     }
 
     case OutputType.serializedAlignedChunks: {
-      const alignedSources = getAlignedSources(sourceA, sourceB);
+      const alignedResult = applyAlignments(sourceA, sourceB, changes);
       // deno-lint-ignore no-explicit-any
-      return serialize(alignedSources.sourceA, alignedSources.sourceB, changes) as any;
+      return serialize(alignedResult.sourceA, alignedResult.sourceB, alignedResult.changes) as any;
     }
 
     case OutputType.text: {
@@ -72,8 +73,13 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
     }
 
     case OutputType.alignedText: {
+      const alignedResult = applyAlignments(sourceA, sourceB, changes);
       // deno-lint-ignore no-explicit-any
-      return getAlignedSources(sourceA, sourceB) as any;
+
+      if (options?.ignoreChangeMarkers) {
+        return alignedResult as any
+      }
+      return applyChangesToSources(alignedResult.sourceA, alignedResult.sourceB, alignedResult.changes) as any;
     }
 
     // Used mainly for benchmarking the core algorithm on it's own. Without this the total execution time of the `getDiff`
@@ -94,83 +100,13 @@ const defaultOptions: Options = {
   mode: Mode.debug,
   outputType: OutputType.text,
   warnOnInvalidCode: false,
-  alignmentText: "\n",
-  includeDebugAlignmentInfo: false,
+  alignmentText: "",
+  ignoreChangeMarkers: false
 };
 
 let _options: Required<Options>;
 export function getOptions(): Required<Options> {
   return _options || {};
-}
-
-export interface LayoutShift {
-  producedBy: ChangeType;
-  a: Map<number, number>;
-  b: Map<number, number>;
-  lcs: number;
-  nodeA: Node;
-  nodeB: Node;
-}
-
-export class LayoutShiftCandidate {
-  constructor(
-    // Key: Number on lines to insert on each side
-    // Value: Length of the string
-    public a = new Map<number, number>(),
-    public b = new Map<number, number>(),
-  ) {}
-
-  add(side: Side, at: number, length: number) {
-    if (side === Side.a) {
-      if (this.a.has(at)) {
-        const currentValue = this.a.get(at)!;
-
-        this.a.set(at, currentValue + length);
-      } else {
-        this.a.set(at, length);
-      }
-    } else {
-      if (this.b.has(at)) {
-        const currentValue = this.b.get(at)!;
-
-        this.b.set(at, currentValue + length);
-      } else {
-        this.b.set(at, length);
-      }
-    }
-  }
-
-  getLcs(side: Side) {
-    const _side = side === Side.a ? this.a : this.b;
-
-    let tot = 0;
-    _side.forEach((x) => tot += x);
-
-    return tot;
-  }
-
-  getShift(type: ChangeType, a: Node, b: Node): LayoutShift {
-    return {
-      producedBy: type,
-      a: this.a,
-      b: this.b,
-      lcs: this.getLcs(Side.a) + this.getLcs(Side.b),
-      nodeA: a,
-      nodeB: b,
-    };
-  }
-
-  isEmpty() {
-    return this.a.size === 0 && this.b.size === 0;
-  }
-}
-
-export interface MoveAlignmentInfo {
-  startA: number;
-  startB: number;
-  endA: number;
-  endB: number;
-  text: string;
 }
 
 export let _context: Context;

@@ -1,18 +1,17 @@
 import { ChangeType, Range, Side, TypeMasks } from "./types";
 import { colorFn, getSourceWithChange } from "./reporter";
 import { _context } from "./index";
-import { assert, fail } from "./debug";
-import { getDataForChange } from "./utils";
-import { Node } from "./node";
+import { assert } from "./debug";
+import { arraySum, getIterFromSide, getPrettyChangeType } from "./utils";
+import { Iterator } from "./iterator";
+import { LineAlignmentTable, insertAddOrDelAlignment } from "./textAligner";
 
-// deno-lint-ignore no-explicit-any
-export class Change<Type extends ChangeType = any> {
+export class Change<Type extends ChangeType = ChangeType> {
   rangeA: Range | undefined;
   rangeB: Range | undefined;
 
-  indexA = -1;
-  indexB = -1;
-
+  public indexesA: number[] = [];
+  public indexesB: number[] = [];
   index: number;
 
   // This is used when processing matches, if the move contains an odd number of opening nodes, one or move closing nodes
@@ -21,83 +20,200 @@ export class Change<Type extends ChangeType = any> {
 
   constructor(
     public type: Type,
-    nodeOne: Node,
-    nodeTwo?: Node,
-    // More characters the change involved the more weight
-    public weight = 0,
+    indexesOne: number[],
+    indexesTwo?: number[],
   ) {
-    switch (type) {
-      case ChangeType.move: {
-        const a = getDataForChange(nodeOne!);
-        this.rangeA = a.range;
-        this.indexA = a.index;
+    if (type === ChangeType.move) {
+      this.indexesA = indexesOne;
+      this.indexesB = indexesTwo!;
 
-        const b = getDataForChange(nodeTwo!);
-        this.rangeB = b.range;
-        this.indexB = b.index;
-
-        // There is no alignment tracking for moves just yet, it happens in the "processMoves" fn
-        break;
-      }
-
-      case ChangeType.deletion: {
-        const { range, index } = getDataForChange(nodeOne!);
-        this.rangeA = range;
-        this.indexA = index;
-
-        // Alignment for deletions:
-        //
-        // A          B
-        // ------------
-        // 1          2
-        // 2
-        //
-        // With alignment
-        //
-        // A          B
-        // ------------
-        // 1          -
-        // 2          2
-        _context.offsetTracker.add(Side.b, index);
-        break;
-      }
-
-      case ChangeType.addition: {
-        const { range, index } = getDataForChange(nodeOne!);
-        this.rangeB = range;
-        this.indexB = index;
-
-        // Alignment for additions:
-        //
-        // A          B
-        // ------------
-        // y          x
-        //            y
-        //            z
-        // With alignment
-        //
-        // A          B
-        // ------------
-        // -          x
-        // y          y
-        // -          z
-        _context.offsetTracker.add(Side.a, index);
-        break;
-      }
-
-      default:
-        fail(`Unexpected change type ${type}`);
+      assert(this.indexesA.length === this.indexesB.length);
+    } else if (type === ChangeType.deletion) {
+      this.indexesA = indexesOne;
+    } else {
+      this.indexesB = indexesOne;
     }
 
+    const { iterA, iterB } = _context;
+
     if (type & TypeMasks.DelOrMove) {
-      assert(this.rangeA, () => "Range A is not present on change creation");
+      assert(this.indexesA.length);
+      this.rangeA = getRange(iterA, this.indexesA);
     }
 
     if (type & TypeMasks.AddOrMove) {
-      assert(this.rangeB, () => "Range B is not present on change creation");
+      assert(this.indexesB.length);
+      this.rangeB = getRange(iterB, this.indexesB);
     }
 
+    // TODO-NOW adds and dels will have the same index if no move is in between
     this.index = _context.matches.length;
+  }
+
+  // TODO-NOW Duplicated code
+
+  _weight!: number;
+  getWeight(): number {
+    // if (this._weight) {
+    //   return this._weight;
+    // }
+
+    const side = this.getSide();
+    const indexes = side === Side.a ? this.indexesA : this.indexesB;
+    const iter = side === Side.a ? _context.iterA : _context.iterB;
+
+    this._weight = arraySum(indexes!.map((i) => iter.textNodes[i].text.length));
+
+    return this._weight;
+  }
+
+  // TODO-NOW Duplicated code
+
+  _newLines!: number;
+  getNewLines(_side?: Side): number {
+    // TODO-NOW: One cache per side
+    // if (this._newLines) {
+    //   return this._newLines;
+    // }
+
+    const side = this.getSide(_side);
+    const indexes = side === Side.a ? this.indexesA : this.indexesB;
+    const iter = side === Side.a ? _context.iterA : _context.iterB;
+
+    this._newLines = arraySum(indexes!.map((i) => iter.textNodes[i].numberOfNewlines));
+
+    return this._newLines;
+  }
+
+  getWidth(side: Side) {
+    const indexes = side === Side.a ? this.indexesA : this.indexesB;
+    const iter = getIterFromSide(side)
+
+    const lineStart = iter.textNodes[indexes[0]].lineNumberStart
+    const lineEnd = iter.textNodes[indexes.at(-1)!].lineNumberEnd
+    const newLines = this.getNewLines(side)
+
+    return (lineEnd - lineStart) + 1 + newLines
+  }
+
+  getFirstIndex(side?: Side) {
+    return this.getIndex(this.getSide(side), 0);
+  }
+
+  getLastIndex(side?: Side) {
+    return this.getIndex(this.getSide(side), -1);
+  }
+
+  getOffsettedLineStart(side: Side) {
+    const index = this.getFirstIndex(side)
+    const iter = getIterFromSide(side)
+
+    return iter.textNodes[index].getOffsettedLineNumber('start')
+  }
+
+  getOffsettedLineEnd(side: Side) {
+    const index = this.getLastIndex(side)
+    const iter = getIterFromSide(side)
+
+    return iter.textNodes[index].getOffsettedLineNumber('end')
+  }
+
+  private getIndex(side: Side, position: number): number {
+    const indexes = side === Side.a ? this.indexesA : this.indexesB;
+
+    return indexes.at(position)!;
+  }
+
+  private getSide(passedInSide?: Side): Side {
+    if (passedInSide) {
+      return passedInSide;
+    } else {
+      return this.type === ChangeType.deletion ? Side.a : Side.b;
+    }
+  }
+
+  getNodesPerLine(side: Side) {
+    const indexes = side === Side.a ? this.indexesA : this.indexesB
+    const iter = getIterFromSide(side)
+
+    const nodesPerLine: Map<number, Set<number>> = new Map();
+
+    for (const i of indexes) {
+      const node = iter.textNodes[i];
+
+      assert(node);
+
+      const line = node.getOffsettedLineNumber('start');
+
+      if (nodesPerLine.has(line)) {
+        nodesPerLine.get(line)!.add(node.index);
+      } else {
+        nodesPerLine.set(line, new Set([node.index]));
+      }
+    }
+
+    return nodesPerLine
+  }
+
+  applyOffset(): LineAlignmentTable {
+    const { offsetTracker } = _context;
+    if (this.type === ChangeType.deletion) {
+      // Alignment for deletions:
+      //
+      // A          B
+      // ------------
+      // 1          2
+      // 2
+      //
+      // With alignment
+      //
+      // A          B
+      // ------------
+      // 1          -
+      // 2          2
+      this.indexesA!.map((index) => {
+        _context.offsetTracker.add(Side.b, {
+          type: ChangeType.deletion,
+          index: offsetTracker.getOffset(Side.a, index),
+          numberOfNewLines: this.getNewLines(),
+          change: this,
+        });
+      });
+
+      return insertAddOrDelAlignment(this)
+    } else {
+      // Alignment for additions:
+      //
+      // A          B
+      // ------------
+      // y          x
+      //            y
+      //            z
+      // With alignment
+      //
+      // A          B
+      // ------------
+      // -          x
+      // y          y
+      // -          z
+      this.indexesB!.map((index) => {
+        _context.offsetTracker.add(Side.a, {
+          type: ChangeType.addition,
+          index: offsetTracker.getOffset(Side.b, index),
+          numberOfNewLines: this.getNewLines(),
+          change: this,
+        });
+      });
+
+      return insertAddOrDelAlignment(this)
+    }
+  }
+
+  getText(side: Side) {
+    const indexes = side === Side.a ? this.indexesA : this.indexesB;
+    const iter = getIterFromSide(side);
+
+    return indexes.map((i) => iter.textNodes[i].text).join(" ");
   }
 
   draw() {
@@ -106,14 +222,21 @@ export class Change<Type extends ChangeType = any> {
     const charsA = sourceA.split("");
     const charsB = sourceB.split("");
 
+    const changeType = getPrettyChangeType(this.type, true);
+
+    console.log(`${changeType}`);
+
     if (this.rangeA) {
       console.log("----A----");
+
+      const renderFn = this.type === ChangeType.move ? colorFn.yellow : colorFn.red;
+
       console.log(
         getSourceWithChange(
           charsA,
           this.rangeA.start,
           this.rangeA.end,
-          colorFn.green,
+          renderFn,
         ).join(""),
       );
       console.log("\n");
@@ -121,12 +244,15 @@ export class Change<Type extends ChangeType = any> {
 
     if (this.rangeB) {
       console.log("----B----");
+
+      const renderFn = this.type === ChangeType.move ? colorFn.yellow : colorFn.green;
+
       console.log(
         getSourceWithChange(
           charsB,
           this.rangeB.start,
           this.rangeB.end,
-          colorFn.green,
+          renderFn,
         ).join(""),
       );
       console.log("\n");
@@ -134,67 +260,102 @@ export class Change<Type extends ChangeType = any> {
   }
 }
 
-// TODO: Compact at the moment when we push new changes to the array. Mainly to save memory since we will avoid having a big array before the moment of compaction
-export function compactChanges(changes: (Change & { seen?: boolean })[]) {
-  const newChanges: Change[] = [];
+// Changes are compatible to merge if their indexes are sequential, for example
+// [ 1, 2 ] & [ 3, 4 ] are compatible
+// [ 5 ] & [ 7 ] aren't compatible
+function indexesCompatible(a: number[], b: number[]): boolean {
+  const lastA = a.at(-1)!;
+  const firstB = b.at(0)!;
 
-  let currentChangeIndex = -1;
-  for (const change of changes) {
-    const candidate = change;
+  if (lastA + 1 === firstB) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
-    currentChangeIndex++;
+export function compactChanges(type: ChangeType.deletion | ChangeType.addition, _changes: (Change & { seen?: boolean })[]) {
+  if (!_changes.length) {
+    return [];
+  }
 
-    if (change.seen) {
+  assert(type & TypeMasks.AddOrDel);
+
+  const indexesProp = type === ChangeType.deletion ? "indexesA" : "indexesB";
+  const sortedChanges = _changes.sort((a, b) => {
+    const indexA = a.getFirstIndex();
+    const indexB = b.getFirstIndex();
+
+    return indexA < indexB ? -1 : 1;
+  });
+
+  const finalChanges: Change[] = [];
+
+  for (let index = 0; index < sortedChanges.length; index++) {
+    let current = sortedChanges[index];
+    let next = sortedChanges[index + 1];
+
+    if (!next) {
+      finalChanges.push(current);
+      break;
+    }
+
+    let currentIndexes = current[indexesProp];
+    let nextIndexes = next[indexesProp];
+
+    if (!indexesCompatible(currentIndexes, nextIndexes)) {
+      finalChanges.push(current);
       continue;
     }
 
-    if (change.type === ChangeType.move) {
-      newChanges.push(change);
-      continue;
-    }
+    // We have a compatibility, start the inner loop to see if there are more compatible nodes ahead
 
-    // We start from the current position since we known that above changes wont be compatible
-    let nextIndex = currentChangeIndex + 1;
+    let innerCursor = index + 1;
+
+    // Values to accumulate
+    const indexes = [...currentIndexes, ...nextIndexes]; // Skip first two entries since we know they are compatible
+    const closingNodeIndexes: number[] = [];
 
     innerLoop:
-    while (nextIndex < changes.length) {
-      const next = changes[nextIndex];
+    while (true) {
+      const _current = sortedChanges[innerCursor];
+      const _next = sortedChanges[innerCursor + 1];
 
-      if (next.seen) {
-        nextIndex++;
-        continue;
-      }
-
-      if (change.type !== next.type) {
-        nextIndex++;
-        continue;
-      }
-
-      const readFrom = change!.type === ChangeType.deletion ? "rangeA" : "rangeB";
-
-      const currentRange = change![readFrom]!;
-      const nextRange = next[readFrom]!;
-
-      const compatible = tryMergeRanges(currentRange, nextRange);
-
-      if (!compatible) {
-        nextIndex++;
-        // No compatibility at i means that we can break early, there will be no compatibility at i + n because ranges keep moving on
+      if (!_next) {
         break innerLoop;
       }
 
-      changes[nextIndex].seen = true;
+      const _indexesCurrent = _current[indexesProp];
+      const _indexesNext = _next[indexesProp];
 
-      candidate[readFrom] = compatible;
+      if (!indexesCompatible(_indexesCurrent, _indexesNext)) {
+        break innerLoop;
+      }
 
-      nextIndex++;
-      continue;
+      indexes.push(..._indexesNext);
+
+      // TODO: Enable this? Find a test case first
+      // closingNodeIndexes.push(..._current.indexesOfClosingMoves, ..._next.indexesOfClosingMoves)
+
+      innerCursor++;
     }
 
-    newChanges.push(candidate);
+    const newChange = new Change(
+      type,
+      indexes,
+    );
+
+    // TODO-NOW replace indexesOfClosingMoves with ids
+    //newChange.indexesOfClosingMoves
+
+    finalChanges.push(
+      newChange,
+    );
+
+    index = innerCursor;
   }
 
-  return newChanges;
+  return finalChanges;
 }
 
 export function tryMergeRanges(
@@ -217,4 +378,14 @@ export function tryMergeRanges(
       end: newEnd,
     };
   }
+}
+
+function getRange(iter: Iterator, indexes: number[]): Range {
+  const startIndex = indexes.at(0)!;
+  const endIndex = indexes.at(-1)!;
+
+  return {
+    start: iter.textNodes[startIndex].start,
+    end: iter.textNodes[endIndex].end,
+  };
 }

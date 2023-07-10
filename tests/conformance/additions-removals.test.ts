@@ -13,7 +13,7 @@ describe("Properly report lines added and removed", () => {
     `,
     expB: `
       let name;
-      ➕let➕ ➕age;➕
+      ➕let age;➕
     `
   })
 
@@ -30,7 +30,7 @@ describe("Properly report lines added and removed", () => {
       let name;
     `,
     expB: `
-      ➕let➕ ➕age;➕
+      ➕let age;➕
       let name;
     `
   })
@@ -42,8 +42,8 @@ describe("Properly report lines added and removed", () => {
       let b;
     `,
     expB: `
-      ➕let➕ ➕a;➕
-      ➕let➕ ➕b;➕
+      ➕let a;
+      let b;➕
     `
   })
 
@@ -55,9 +55,9 @@ describe("Properly report lines added and removed", () => {
       let c;
     `,
     expB: `
-      ➕let➕ ➕a;➕
-      ➕let➕ ➕b;➕
-      ➕let➕ ➕c;➕
+      ➕let a;
+      let b;
+      let c;➕
     `
   })
 
@@ -66,8 +66,8 @@ describe("Properly report lines added and removed", () => {
     b: `let a;
       let b;
     `,
-    expB: `➕let➕ ➕a;➕
-    ➕let➕ ➕b;➕
+    expB: `➕let a;
+    let b;➕
   `
   })
 
@@ -85,7 +85,7 @@ describe("Properly report lines added and removed", () => {
       callFn()
     `,
     expB: `
-      ➕while➕ ➕(true)➕ ➕{➕
+      ➕while (true) {➕
         callFn()
       ➕}➕
     `
@@ -104,7 +104,7 @@ describe("Properly report lines added and removed", () => {
       ➖3➖
     `,
     expB: `
-      ➕()➕ ➕{}➕
+      ➕() {}➕
     `
   })
 });

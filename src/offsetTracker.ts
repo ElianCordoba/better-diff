@@ -1,26 +1,47 @@
 import { _context } from ".";
+import { Change } from "./change";
 import { assert } from "./debug";
-import { Side } from "./types";
+import { ChangeType, Side } from "./types";
 import { range } from "./utils";
 
-export class OffsetTracker {
-  // number = index
-  offsetsA = new Set<number>();
-  offsetsB = new Set<number>();
+export interface Offset {
+  index: number;
+  type: ChangeType;
+  numberOfNewLines: number;
+  change?: Change;
+}
 
-  add(side: Side, index: number) {
-    assert(typeof index === "number", () => `Expected number when storing offset but received ${typeof index}`);
-    this.getSide(side).add(index);
+// number = index
+export type OffsetsMap = Map<number, Offset>;
+
+export class OffsetTracker {
+  offsetsA: OffsetsMap = new Map();
+  offsetsB: OffsetsMap = new Map();
+
+  // 1- Get offsetted index by looking at offsets above
+  // 2- Update, if applicable, offsets bellow
+  // 3- Sort
+  add(side: Side, offset: Offset) {
+    assert(typeof offset.index === "number", () => `Expected number when storing offset but received ${typeof offset.index}`);
+
+    // const i = offset.index + this.getOffset((side), offset.index)
+
+    // this.getSide(side).set(i, { ...offset, index: i })
+    this.getSide(side).set(offset.index, offset);
   }
 
-  getOffset(side: Side, targetIndex: number) {
-    const _side = this.getSide(side);
+  getOffset(side: Side, targetIndex: number, offsets?: OffsetsMap) {
+    const ogIndex = targetIndex;
+    const _side = offsets ? offsets : this.getSide(side);
 
     let offset = 0;
     // TODO: Use and array with insertion sort
     // The offset is unsorted, so we need to order the indexes first before processing it
-    for (const index of [..._side.values()].sort((a, b) => a > b ? 1 : -1)) {
-      if (index < targetIndex) {
+    for (const index of [..._side.keys()].sort((a, b) => a > b ? 1 : -1)) {
+      // if (index === targetIndex) {
+
+      // }
+      if (index <= targetIndex) {
         // We increase the target index so that if we are inside an alignment (example bellow) we can read the offsets properly, for example:
         //
         // A          B
@@ -47,7 +68,7 @@ export class OffsetTracker {
       }
     }
 
-    return offset;
+    return ogIndex + offset;
   }
 
   getSide(side: Side) {
@@ -72,10 +93,16 @@ export class OffsetTracker {
     let valid = true;
     // +1 so it includes the last index
     for (const i of range(startIndex, startIndex + indexDiff + 1)) {
-      if (offsetsToCheck.has(i)) {
-        valid = false;
-        break;
+      const offset = offsetsToCheck.get(i);
+
+      // The offset trackers contains allegement from all the change types, but when it comes to movement alignment
+      //  we are only interested in the ones coming from`moves`
+      if (!offset || offset.type !== ChangeType.move) {
+        continue;
       }
+
+      valid = false;
+      break;
     }
 
     return valid;
@@ -85,6 +112,7 @@ export class OffsetTracker {
     return this.offsetsA.size === 0 && this.offsetsB.size === 0;
   }
 
+  // TODO-NOW Rename draw, use createTextTable
   print() {
     console.log("A offset tracker");
     console.table(this.offsetsA);

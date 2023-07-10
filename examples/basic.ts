@@ -4,11 +4,11 @@ const a = `
   while (true) {
     fn()
   }
-`
+`;
 
 const b = `
   fn()
-`
+`;
 
 // Or you can read the code from files
 // const a = readFileSync("./etc/fileA.ts", { encoding: "utf-8" });

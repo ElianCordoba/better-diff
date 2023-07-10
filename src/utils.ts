@@ -1,9 +1,23 @@
 import ts from "typescript";
 import { Node } from "./node";
-import { NewChangeInfo, Range, Side } from "./types";
+import { ChangeType, NewChangeInfo, Range, Side } from "./types";
 import { fail } from "./debug";
 import { LCSResult } from "./sequence";
 import { Iterator } from "./iterator";
+import { prettyRenderFn } from "./reporter";
+import { _context } from ".";
+
+export function getPrettyChangeType(type: ChangeType, withColor = false): string {
+  const renderFn = withColor ? prettyRenderFn[type] : (i: string) => i;
+  switch (type) {
+    case ChangeType.deletion:
+      return renderFn("Deletion");
+    case ChangeType.addition:
+      return renderFn("Addition");
+    case ChangeType.move:
+      return renderFn("Move");
+  }
+}
 
 export function getPrettyKind(kind: number): string {
   // deno-lint-ignore no-explicit-any
@@ -106,7 +120,7 @@ export function getOppositeNodeKind({ kind, prettyKind }: Node): number {
 }
 
 export function normalize(iter: Iterator, lcs: LCSResult): LCSResult {
-  const perspective = iter.name === Side.a ? Side.a : Side.b;
+  const perspective = iter.side === Side.a ? Side.a : Side.b;
 
   return {
     bestSequence: lcs.bestSequence,
@@ -128,4 +142,23 @@ export function getDataForChange(nodeOrInfo: Node | NewChangeInfo): NewChangeInf
   } else {
     return nodeOrInfo;
   }
+}
+
+export function arraySum(array: number[]): number {
+  return array.reduce((a, b) => a + b, 0);
+}
+
+export function getSideFromChangeType(type: ChangeType): Side {
+  switch (type) {
+    case ChangeType.deletion:
+      return Side.a;
+    case ChangeType.addition:
+      return Side.b;
+    default:
+      fail();
+  }
+}
+
+export function getIterFromSide(side: Side): Iterator {
+  return side === Side.a ? _context.iterA : _context.iterB;
 }

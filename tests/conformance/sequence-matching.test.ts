@@ -12,11 +12,11 @@ describe("Properly report moves in a same sequence", () => {
       let age = 24
     `,
     expA: `
-      🔀let age = 24⏹️ ➖&&➖ print('elian')
+      ⏩let age = 24⏪ ➖&&➖ print('elian')
     `,
     expB: `
       print('elian')
-      🔀let age = 24⏹️
+      ⏩let age = 24⏪
     `
   })
 
@@ -48,10 +48,10 @@ describe("Properly report moves in a same sequence", () => {
       print('elian')
     `,
     expA: `
-      let age = print('elian') ➖&&➖ 🔀24⏹️
+      let age = print('elian') ➖&&➖ ⏩24⏪
     `,
     expB: `
-      let age = 🔀24⏹️
+      let age = ⏩24⏪
       print('elian')
     `
   })
@@ -66,11 +66,11 @@ describe("Properly report moves in a same sequence", () => {
       let age = 24
     `,
     expA: `
-      🔀let age =⏹️ print('elian') ➖&&➖ 24
+      ⏩let age =⏪ print('elian') ➖&&➖ 24
     `,
     expB: `
       print('elian')
-      🔀let age =⏹️ 24
+      ⏩let age =⏪ 24
     `
   })
 
@@ -87,11 +87,11 @@ describe("Properly report moves in a same sequence", () => {
     `,
     expA: `
       let age = 24 ➖&&➖ print('elian')
-      🔀fn()⏹️
+      ⏩fn()⏪
       ➖1➖
     `,
     expB: `
-      let age = 24 ➕||➕ 🔀fn()⏹️
+      let age = 24 ➕||➕ ⏩fn()⏪
       print('elian')
     `
   })
@@ -108,12 +108,12 @@ describe("Properly report moves in a same sequence", () => {
       let down;
     `,
     expA: `
-      ➖let➖ ➖up;➖
+      ➖let up;➖
       let middle;
     `,
     expB: `
       let middle;
-      ➕let➕ ➕down;➕
+      ➕let down;➕
     `
   })
 });
@@ -130,7 +130,7 @@ describe("Recursive matching", () => {
       import { bar } from "bar";
     `,
     expA: `
-      ➖import➖ ➖{➖ ➖foo➖ ➖}➖ ➖from➖ ➖"foo";➖
+      ➖import { foo } from "foo";➖
       import { bar } from "bar";
     `,
     expB: `
@@ -159,10 +159,10 @@ describe("Recursive matching", () => {
     `,
     expB: `
       1 2
-      ➕0➕
-      ➕1➕ 
-      ➕0➕
-      ➕0➕
+      ➕0
+      1 
+      0
+      0➕
       1 2 3 4
     `
   })
@@ -183,17 +183,17 @@ describe("Recursive matching", () => {
       12 34
     `,
     expA: `
-      🔀12⏹️
-      🔀12 34⏹️
+      ⏩12⏪
+      ⏩12 34⏪
       12 34 56
     `,
     expB: `
       12 34 56
       ➕0➕
-      🔀12⏹️
-      ➕0➕
-      ➕0➕
-      🔀12 34⏹️
+      ⏩12⏪
+      ➕0
+      0➕
+      ⏩12 34⏪
     `
   })
 
@@ -213,17 +213,17 @@ describe("Recursive matching", () => {
       12 34
     `,
     expA: `
-      🔀12⏹️
-      🔀12 34⏹️
+      ⏩12⏪
+      ⏩12 34⏪
       12 34 56
     `,
     expB: `
       12 34 56
       ➕0➕
-      🔀12⏹️
-      ➕0➕
-      ➕0➕
-      🔀12 34⏹️
+      ⏩12⏪
+      ➕0
+      0➕
+      ⏩12 34⏪
     `
   })
 
@@ -249,7 +249,7 @@ describe("Recursive matching", () => {
       }
     `,
     expA: `
-      ➖let➖ ➖start➖
+      ➖let start➖
 
       export function bar(range) {
         return {
@@ -258,7 +258,7 @@ describe("Recursive matching", () => {
       }
     `,
     expB: `
-      ➕function➕ ➕foo()➕ ➕{➕ ➕}➕
+      ➕function foo() { }➕
 
       export function bar(range) {
         return {
@@ -282,7 +282,7 @@ describe("Recursive matching", () => {
     `,
     expA: `
       1
-      ➖import➖ ➖{➖ ➖Y➖ ➖}➖ ➖from➖ ➖"./y";➖
+      ➖import { Y } from "./y";➖
       import { X } from "./x";
     `,
     expB: `
@@ -305,12 +305,12 @@ describe("Recursive matching", () => {
     `,
     expA: `
       ➖1➖
-      🔀2⏹️
+      ⏩2⏪
       33
     `,
     expB: `
       33
-      🔀2⏹️
+      ⏩2⏪
     `
   })
 
@@ -319,7 +319,7 @@ describe("Recursive matching", () => {
   // this is why I had to create the cases separated
   test({
     only: 'standard',
-    name: "Random 2",
+    name: "Random 2 standard",
     a: `
       1
       2
@@ -332,15 +332,15 @@ describe("Recursive matching", () => {
       3
     `,
     expA: `
-      ➖1➖
-      ➖2➖
-      🔀3⏹️
+      ➖1
+      2➖
+      ⏩3⏪
       4
     `,
     expB: `
       ➕5➕
       4
-      🔀3⏹️
+      ⏩3⏪
     `
   })
 
@@ -359,15 +359,38 @@ describe("Recursive matching", () => {
       3
     `,
     expA: `
-      ➖1➖
-      ➖2➖
+      ➖1
+      2➖
       3
-      🔀4⏹️
+      ⏩4⏪
     `,
     expB: `
       ➕5➕
-      🔀4⏹️
+      ⏩4⏪
       3
+    `
+  })
+
+  // Used to crash when inserting new line alignments in "processMoves" when aligning two moves
+  test({
+    name: "Random 3",
+    a: `
+      1
+      22
+    `,
+    b: `
+      22
+      x
+      1
+    `,
+    expA: `
+      ⏩1⏪
+      22
+    `,
+    expB: `
+      22
+      ➕x➕
+      ⏩1⏪
     `
   })
 })

@@ -7,13 +7,12 @@ import { OpenCloseStack } from "./openCloseVerifier";
 import { getNodesArray } from "./ts-util";
 
 interface IteratorOptions {
-  name: string;
+  side: Side;
   source: string;
 }
 
 export class Iterator {
-  name: string;
-
+  side: Side;
   matchNumber = 0;
   textNodes: Node[];
   kindTable: KindTable;
@@ -21,11 +20,11 @@ export class Iterator {
   // Only read when printing nodes
   private indexOfLastItem = 0;
 
-  constructor({ source, name }: IteratorOptions) {
-    const { nodes, kindTable } = getNodesArray(source);
+  constructor({ side, source }: IteratorOptions) {
+    const { nodes, kindTable } = getNodesArray(side, source);
+    this.side = side;
     this.textNodes = nodes;
     this.kindTable = kindTable;
-    this.name = name;
   }
 
   // Get the next unmatched node in the iterator, optionally after a given index
@@ -167,9 +166,14 @@ export class Iterator {
     return candidates;
   }
 
+  getLineNumber(index: number) {
+    // TODO: Contemplate lineNumberStart !== lineNumberEnd
+    return this.textNodes[index].lineNumberStart;
+  }
+
   printList(nodesToPrint?: Node[]) {
-    console.log(`----------- SIDE ${this.name} -----------`);
-    console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("exp n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
+    console.log(`----------- SIDE ${this.side.toUpperCase()} -----------`);
+    console.log(`${colorFn.blue("index")} | ${colorFn.magenta("match n°")} | ${colorFn.green("\/n n°")} | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
 
     const list: string[] = [];
 
@@ -198,13 +202,13 @@ export class Iterator {
       const index = String(node.index).padStart(3).padEnd(6);
 
       const matchNumber = String(node.matchNumber).padStart(5).padEnd(10);
-      const expressionNumber = String(node.expressionNumber ?? "-").padStart(5).padEnd(8);
 
       const { kind, text } = getNodeForPrinting(node.kind, node.text);
       const _kind = kind.padStart(5).padEnd(25);
       const _text = ` ${text}`;
+      const newLines = String(node.numberOfNewlines).padStart(4).padEnd(7);
 
-      const row = `${index}|${matchNumber}|${expressionNumber}|${colorFn(_kind)}|${_text}`;
+      const row = `${index}|${matchNumber}|${newLines}|${colorFn(_kind)}|${_text}`;
 
       if (node.index === this.indexOfLastItem) {
         colorFn = k.yellow;
@@ -217,7 +221,7 @@ export class Iterator {
   }
 
   printRange(node: Node | undefined) {
-    const source = this.name === Side.a ? _context.sourceA : _context.sourceB;
+    const source = this.side === Side.a ? _context.sourceA : _context.sourceB;
     const chars = source.split("");
 
     let nodeToDraw: Node | undefined;
@@ -241,52 +245,6 @@ export class Iterator {
     const result = getSourceWithChange(chars, start, end, colorFn.magenta);
 
     console.log(result.join(""));
-  }
-
-  printDepth() {
-    let res = "";
-    for (const node of this.textNodes) {
-      const _colorFn = colorFn.grey;
-
-      res += `
-      (${node.expressionNumber + 1})${new Array(node.expressionNumber + 1).join("-")}${_colorFn(node.prettyKind)}`;
-    }
-
-    return res;
-  }
-
-  printPositionInfo() {
-    console.log(`${colorFn.blue("index")} | ${colorFn.green("line")} | ${colorFn.white("trivia")} |  ${colorFn.magenta("pos")}  | ${colorFn.red("         kind          ")} | ${colorFn.yellow("text")}`);
-
-    const list: string[] = [];
-
-    for (const node of this.textNodes) {
-      let colorFn = node.matched ? k.green : k.grey;
-
-      const index = String(node.index).padStart(3).padEnd(6);
-
-      const lineStart = node.lineNumberStart;
-      const lineEnd = node.lineNumberEnd;
-      const triviaLines = String(node.triviaLinesAbove).padStart(5).padEnd(8);
-
-      const line = `${lineStart}-${lineEnd} `.padStart(5).padEnd(6);
-
-      const pos = `${node.start}-${node.end}`.padStart(6).padEnd(7);
-
-      const { kind, text } = getNodeForPrinting(node.kind, node.text);
-      const _kind = kind.padStart(5).padEnd(25);
-      const _text = ` ${text}`;
-
-      const row = `${index}|${line}|${triviaLines}|${pos}|${colorFn(_kind)}|${_text}`;
-
-      if (node.index === this.indexOfLastItem) {
-        colorFn = k.cyan;
-      }
-
-      list.push(colorFn(row));
-    }
-
-    console.log(list.join("\n"));
   }
 }
 

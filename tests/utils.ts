@@ -8,7 +8,8 @@ type TestFn = (...args: any[]) => {
 }
 
 interface TestInfo {
-  only?: 'standard' | 'inversed' | undefined,
+  disabled?: boolean;
+  only?: 'standard' | 'inversed',
   name?: string | number,
   a?: string;
   b?: string;
@@ -16,19 +17,24 @@ interface TestInfo {
   expB?: string;
 }
 
-export function getTestFn(testFn: TestFn, testOptions: Options = { outputType: OutputType.text }) {
+export function getTestFn(testFn: TestFn, testOptions: Options = {}) {
+  const options = { outputType: OutputType.text, ...testOptions }
   return function test(testInfo: TestInfo) {
     const { a = '', b = '', expA, expB, name = "anonymous" } = testInfo;
 
     if (a === expA && b === expB) {
-      throw new Error('Invalid test, input and output are the same')
+      throw new Error(`Invalid test ${name}, input and output are the same`)
+    }
+
+    if (testInfo.disabled) {
+      return
     }
 
     const skipStandardTest = testInfo.only === 'inversed';
 
     if (!skipStandardTest) {
       vTest(`Test ${name}`, () => {
-        const { sourceA: resultA, sourceB: resultB } = testFn(a, b, { outputType: testOptions.outputType } as Options)
+        const { sourceA: resultA, sourceB: resultB } = testFn(a, b, options)
 
         validateDiff(expA || a, expB || b, resultA, resultB);
       });
@@ -38,7 +44,7 @@ export function getTestFn(testFn: TestFn, testOptions: Options = { outputType: O
 
     if (!skipInversedTest) {
       vTest(`Test ${name} inverse`, () => {
-        const { sourceA: resultA, sourceB: resultB } = testFn(b, a, { outputType: testOptions.outputType } as Options)
+        const { sourceA: resultA, sourceB: resultB } = testFn(b, a, options)
 
         const inversedExpectedA = getInversedExpectedResult(expB || b);
         const inversedExpectedB = getInversedExpectedResult(expA || a)

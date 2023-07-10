@@ -1,32 +1,33 @@
 import { SyntaxKind } from "typescript";
 import { getNodeForPrinting } from "./utils";
-import { ChangeType, Mode, Range } from "./types";
+import { ChangeType, Mode, Range, Side } from "./types";
+import { _context } from ".";
 
 interface NodeArgs {
+  side: Side;
   mode: Mode;
-  fullStart: number;
   start: number;
   end: number;
   kind: SyntaxKind;
   text: string;
-  triviaLinesAbove: number;
+  numberOfNewlines: number;
   lineNumberStart: number;
   lineNumberEnd: number;
   index?: number;
 }
 
 export class Node {
-  fullStart: number;
+  side: Side;
   start: number;
   end: number;
   kind: SyntaxKind;
   text: string;
   prettyKind: string;
-  triviaLinesAbove: number;
+  // How many new lines characters does the trivia of this node holds?
+  numberOfNewlines: number;
   lineNumberStart: number;
   lineNumberEnd: number;
   index = -1;
-  expressionNumber = -1;
   matched = false;
   matchNumber = 0;
   canBeMatchedAlone = false;
@@ -37,9 +38,9 @@ export class Node {
   // For printing proposes
   markedAs?: ChangeType;
   constructor(args: NodeArgs) {
-    const { fullStart, start, end, kind, triviaLinesAbove, lineNumberStart, lineNumberEnd, text, mode } = args;
+    const { side, start, end, kind, lineNumberStart, lineNumberEnd, text, mode, numberOfNewlines } = args;
 
-    this.fullStart = fullStart;
+    this.side = side;
     this.start = start;
     this.end = end;
     this.kind = kind;
@@ -53,10 +54,9 @@ export class Node {
     }
 
     this.text = text;
-
-    this.triviaLinesAbove = triviaLinesAbove;
     this.lineNumberStart = lineNumberStart;
     this.lineNumberEnd = lineNumberEnd;
+    this.numberOfNewlines = numberOfNewlines;
   }
 
   getRange(): Range {
@@ -64,5 +64,16 @@ export class Node {
       start: this.start,
       end: this.end,
     };
+  }
+
+  getOffsettedLineNumber(read: 'start' | 'end' = 'start') {
+    const readFrom = read === 'start' ? 'lineNumberStart' : 'lineNumberEnd'
+    return _context.textAligner.getOffsettedLineNumber(this.side, this[readFrom])
+  }
+
+  draw() {
+    const iter = _context[this.side === Side.a ? "iterA" : "iterB"];
+
+    iter.printRange(this);
   }
 }

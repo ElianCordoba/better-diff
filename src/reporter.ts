@@ -1,21 +1,17 @@
+import Table from "cli-table3";
+
 import { _context, getOptions } from ".";
 import { ChangeType, Side } from "../src/types";
-import { AlignmentTable } from "./alignmentTable";
 import { Change } from "./change";
 import { assert, fail } from "./debug";
-import { range } from "./utils";
+import { getUpdatedLineMap } from "./textAligner";
 
 //@ts-ignore TODO: Importing normally doesn't work with vitest
 export const k = require("kleur");
 
 type RenderFn = (text: string) => string;
 
-export interface DiffRendererFn {
-  addition: RenderFn;
-  removal: RenderFn;
-  change: RenderFn;
-  move: RenderFn;
-}
+export type DiffRendererFn = Record<ChangeType, RenderFn>;
 
 type Colors =
   | "blue"
@@ -44,18 +40,16 @@ export const colorFn: ColorFns = {
 
 // Pretty print. Human readable
 export const prettyRenderFn: DiffRendererFn = {
-  addition: colorFn.green,
-  removal: colorFn.red,
-  change: colorFn.yellow,
-  move: (text) => k.blue().underline(text),
+  [ChangeType.deletion]: colorFn.red,
+  [ChangeType.addition]: colorFn.green,
+  [ChangeType.move]: (text) => k.blue().underline(text),
 };
 
 // Testing friendly
 export const asciiRenderFn: DiffRendererFn = {
-  addition: (text) => `➕${text}➕`,
-  removal: (text) => `➖${text}➖`,
-  change: (text) => `✏️${text}✏️`,
-  move: (text) => `🔀${text}⏹️`,
+  [ChangeType.deletion]: (text) => `➖${text}➖`,
+  [ChangeType.addition]: (text) => `➕${text}➕`,
+  [ChangeType.move]: (text) => `⏩${text}⏪`,
 };
 
 export function applyChangesToSources(
@@ -78,7 +72,7 @@ export function applyChangesToSources(
           charsB,
           start,
           end,
-          renderFn.addition,
+          renderFn[ChangeType.addition],
         );
         break;
       }
@@ -89,7 +83,7 @@ export function applyChangesToSources(
           charsA,
           start,
           end,
-          renderFn.removal,
+          renderFn[ChangeType.deletion],
         );
         break;
       }
@@ -100,7 +94,7 @@ export function applyChangesToSources(
           charsA,
           resultA.start,
           resultA.end,
-          renderFn.move,
+          renderFn[ChangeType.move],
         );
 
         const resultB = rangeB!;
@@ -108,7 +102,7 @@ export function applyChangesToSources(
           charsB,
           resultB.start,
           resultB.end,
-          renderFn.move,
+          renderFn[ChangeType.move],
         );
 
         moveCounter++;
@@ -155,156 +149,117 @@ export function getComplimentArray(length: number, fillInCharacter = ""): string
   return new Array(length).fill(fillInCharacter);
 }
 
-// This function returns both sources with the lines aligned, here an example with line number included:
-//
-// 1) x
-//
-// --------
-//
-// 1) "hello"
-// 2) x
-//
-// The b side will be the same but the a side will be
-//
-// <<New line>>
-// 1) x
-//
-// There are test covering this behavior in the file "sourceAlignment.test.ts"
-export function getAlignedSources(
-  a: string,
-  b: string,
-) {
-  let linesA = a.split("\n");
-  let linesB = b.split("\n");
+export function applyAlignments(sourceA: string, sourceB: string, changes: Change[]): { sourceA: string; sourceB: string; changes: Change[] } {
+  // Handy for debugging
+  // _context.textAligner.draw()
 
-  const { includeDebugAlignmentInfo, alignmentText } = getOptions();
-
-  function insertNewlines(insertAtLine: number, side: Side.a | Side.b, type?: string): string[] {
-    const chars = side === Side.a ? linesA : linesB;
-
-    // The -1 is because line number start at 1 but we need 0-indexed number for the array slice
-    const insertAt = insertAtLine - 1;
-
-    const head = chars.slice(0, insertAt);
-    const tail = chars.slice(insertAt, chars.length);
-
-    const _alignmentText = includeDebugAlignmentInfo ? alignmentText + type : alignmentText;
-
-    const compliment = getComplimentArray(1, _alignmentText);
-
-    const newChars = [...head, ...compliment, ...tail];
-
-    return newChars;
-  }
-
-  function applySimpleAlignments(alignmentTable: AlignmentTable) {
-    if (alignmentTable.a.size) {
-      for (const lineNumber of alignmentTable.a.keys()) {
-        linesA = insertNewlines(lineNumber, Side.a);
-      }
-    }
-
-    if (alignmentTable.b.size) {
-      for (const lineNumber of alignmentTable.b.keys()) {
-        linesB = insertNewlines(lineNumber, Side.b);
-      }
-    }
-  }
-
-  function needsPartialAlignment(side: Side, at: number) {
-    return !alignmentTable[side].has(at);
-  }
-
-  const { alignmentTable, alignmentsOfMoves } = _context;
-
-  // First we apply the "simple" alignments, aka the ones we know are compatible and require no extra verification.
-  // These are additions, deletions and formats
-  applySimpleAlignments(alignmentTable);
-
-  // Then we apply the moves alignments, right now they are also simple one but in the future we want to include "full" alignment and not just partial ones
-  // Before applying them we need to make sure they still apply, for example:
-  //
-  //   1   |   -
-  //          ^^^ We want to align here, but's it's already aligned, so we can skip it
-  for (const move of alignmentsOfMoves) {
-    const startA = move.startA + alignmentTable.getOffset(Side.a, move.startA);
-    const startB = move.startB + alignmentTable.getOffset(Side.b, move.startB);
-
-    let endA = move.endA + alignmentTable.getOffset(Side.a, move.endA);
-    let endB = move.endB + alignmentTable.getOffset(Side.b, move.endB);
-
-    const canBeFullyAligned = endA >= startB && endB >= startA;
-
-    if (!canBeFullyAligned) {
-      continue;
-    }
-
-    if (startA !== startB) {
-      // Needs alignment at the start
-
-      const start = startA < startB ? startA : startB;
-      const startLinesDiff = Math.abs(startA - startB);
-      const startAlignmentSide = startA < startB ? Side.a : Side.b;
-
-      for (const i of range(start, start + startLinesDiff)) {
-        if (needsPartialAlignment(startAlignmentSide, i)) {
-          if (startAlignmentSide === Side.a) {
-            linesA = insertNewlines(i, Side.a, " | Start a");
-          } else {
-            linesB = insertNewlines(i, Side.b, " | Start b");
-          }
-
-          alignmentTable.add(startAlignmentSide, i);
-        }
-      }
-    }
-
-    endA = move.endA + alignmentTable.getOffset(Side.a, move.endA);
-    endB = move.endB + alignmentTable.getOffset(Side.b, move.endB);
-
-    if (endA !== endB) {
-      // Needs alignment at the start
-
-      // We add a + 1 so that the alignment is put bellow the desired line
-      const end = (endA < endB ? endA : endB) + 1;
-      const endLinesDiff = Math.abs(endA - endB);
-      const endAlignmentSide = endA < endB ? Side.a : Side.b;
-
-      for (const i of range(end, end + endLinesDiff)) {
-        if (needsPartialAlignment(endAlignmentSide, i)) {
-          if (endAlignmentSide === Side.a) {
-            linesA = insertNewlines(i, Side.a, " | End a");
-          } else {
-            linesB = insertNewlines(i, Side.b, " | End b");
-          }
-
-          alignmentTable.add(endAlignmentSide, i);
-        }
-      }
-    }
-  }
-
-  const compactedLines = compactAlignments(alignmentTable, linesA, linesB);
+  sourceA = getTextAligned(Side.a, changes);
+  sourceB = getTextAligned(Side.b, changes);
 
   return {
-    sourceA: compactedLines.linesA.join("\n"),
-    sourceB: compactedLines.linesB.join("\n"),
+    sourceA,
+    sourceB,
+    changes,
   };
 }
 
-function compactAlignments(alignmentTable: AlignmentTable, _linesA: string[], _linesB: string[]) {
-  const linesA = [..._linesA];
-  const linesB = [..._linesB];
+export function getTextAligned(side: Side, changes: Change[]) {
+  const { textAligner, sourceA, sourceB } = _context;
+  const lineOffsets = textAligner[side];
 
-  for (const i of alignmentTable.a.keys()) {
-    if (alignmentTable.b.has(i)) {
-      linesA.splice(i - 1, 1);
-      linesB.splice(i - 1, 1);
-    }
+  let source = side === Side.a ? sourceA : sourceB;
+  const lines = source.split('\n')
+
+  if (lineOffsets.size === 0) {
+    return source;
   }
 
-  return {
-    linesA,
-    linesB,
-  };
+  const alignmentText = getOptions().alignmentText;
+  let lineMap = new Map(textAligner.getLineMap(side));
+
+  for (const { lineNumber } of lineOffsets.values()) {
+    lines.splice(lineNumber - 1, 0, alignmentText);
+    // const realLineNumber = textAligner.getOffsettedLineNumber(side, lineNumber);
+
+    // let insertAt = lineMap.get(realLineNumber)!;
+
+    // // Insert at will be undefined if the line we are tring to insert to is not present on the other side, for example
+    // // If you try to insert line 5 but the other source only has 3 line, we will append it at the end
+    // if (insertAt === undefined) {
+    //   insertAt = textAligner.getLastLineStart(side);
+    // }
+
+    // source = source.slice(0, insertAt) + alignmentText + source.slice(insertAt);
+
+    // lineMap = getUpdatedLineMap(source);
+
+    updateChanges(changes, side, lineMap.get(lineNumber)!);
+  }
+
+  source = lines.join('\n')
+  lineMap = getUpdatedLineMap(source);
+
+  return source;
+}
+
+// Iterate for each change
+// Only take the ones with the proper range
+// Only take the ones that happen after the start pos
+function updateChanges(changes: Change[], sideToUpdate: Side, startPosition: number) {
+  const textAlignmentLength = getOptions().alignmentText.length + 1;
+
+  // Side where the alignment happened, thus the side we need to recalculate the ranges of the changes
+  const changesToSkip = sideToUpdate === Side.a ? ChangeType.addition : ChangeType.deletion;
+  const rangeToUpdate = sideToUpdate === Side.a ? "rangeA" : "rangeB";
+
+  for (let i = 0; i < changes.length; i++) {
+    const change = changes[i];
+    // Skip type of changes we don't want
+    if (change.type === changesToSkip) {
+      continue;
+    }
+
+    if (change[rangeToUpdate]!.start >= startPosition) {
+      change[rangeToUpdate]!.start += textAlignmentLength;
+      change[rangeToUpdate]!.end += textAlignmentLength;
+    }
+
+    changes[i] = change;
+  }
+}
+
+const _defaultTextTableOptions = {
+  lineCounterStartAt: 1
+}
+
+export function createTextTable(
+  sourceA: string,
+  sourceB: string,
+  options?: typeof _defaultTextTableOptions
+) {
+  const parsedOptions = { ..._defaultTextTableOptions, ...options }
+
+  const aLines = sourceA.split("\n");
+  const bLines = sourceB.split("\n");
+  const maxLength = Math.max(aLines.length, bLines.length);
+
+  const table = new Table({
+    head: [colorFn.yellow("Nº"), colorFn.red("Source"), colorFn.green("Revision")],
+    colAligns: ["left", "left"],
+    colWidths: [5, 30, 30],
+    style: {
+      compact: true,
+    },
+  });
+
+  let lineNumber = parsedOptions.lineCounterStartAt;
+  for (let i = 0; i < maxLength; i++) {
+    const aLine = aLines[i] || "";
+    const bLine = bLines[i] || "";
+
+    table.push([lineNumber, aLine, bLine]);
+    lineNumber++;
+  }
+
+  return table.toString();
 }

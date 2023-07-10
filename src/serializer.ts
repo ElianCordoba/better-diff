@@ -21,7 +21,7 @@ export function serialize(
   // [ "p", "r", "i", "n", "t", " "] as characters with type "default", meaning that they are unchanged and ["'", "h", "i", "'"] as characters added
   // later, we will merge together the characters into chunks of same type
   for (let i = 0; i < changes.length; i++) {
-    const { type, rangeA, rangeB, indexA } = changes[i];
+    const { type, rangeA, rangeB, indexesA } = changes[i];
 
     switch (type) {
       case ChangeType.deletion: {
@@ -35,7 +35,7 @@ export function serialize(
       }
 
       case ChangeType.move: {
-        const moveNumber = _context.iterA.textNodes[indexA].matchNumber;
+        const moveNumber = _context.iterA.textNodes[indexesA?.at(0)!].matchNumber;
         markChars(RenderInstruction.move, rangeA!, charsA, moveNumber);
         markChars(RenderInstruction.move, rangeB!, charsB, moveNumber);
         break;
