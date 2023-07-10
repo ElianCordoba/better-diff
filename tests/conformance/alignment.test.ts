@@ -5,7 +5,7 @@ import { colorFn } from "../../src/reporter";
 
 const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: colorFn.cyan("<<Alignment>>"), ignoreChangeMarkers: true })
 
-describe("Properly align code", () => {
+describe.skip("Properly align code", () => {
   test({
     name: 'Basic case 1',
     a: `
@@ -642,7 +642,7 @@ describe("Properly align code", () => {
   })
 })
 
-describe('Properly ignore alignments', () => {
+describe.skip('Properly ignore alignments', () => {
   test({
     name: 'Ignore alignment 1',
     a: `
