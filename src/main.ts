@@ -8,12 +8,13 @@ import { assert } from "./debug";
 import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from "./sequence";
 import { OpenCloseVerifier } from "./openCloseVerifier";
 import { LineAlignmentTable, compactAlignments, insertMoveAlignment, insertNewLineAlignment } from "./textAligner";
+import { ParsedProgram } from "./frontend/typescript";
 
-export function computeDiff(codeA: string, codeB: string): Change[] {
+export function computeDiff(programA: ParsedProgram, programB: ParsedProgram): Change[] {
   const changes: Change[] = [];
 
-  const iterA = new Iterator({ side: Side.a, source: codeA });
-  const iterB = new Iterator({ side: Side.b, source: codeB });
+  const iterA = new Iterator(programA);
+  const iterB = new Iterator(programB);
 
   _context.iterA = iterA;
   _context.iterB = iterB;

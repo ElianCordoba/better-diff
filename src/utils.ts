@@ -129,7 +129,7 @@ export function normalize(iter: Iterator, lcs: LCSResult): LCSResult {
 }
 
 export function getSequence(iter: Iterator, from: number, length: number): Node[] {
-  return iter.textNodes.slice(from, from + length);
+  return iter.nodes.slice(from, from + length);
 }
 
 export function getDataForChange(nodeOrInfo: Node | NewChangeInfo): NewChangeInfo {

@@ -62,7 +62,7 @@ export class Change<Type extends ChangeType = ChangeType> {
     const indexes = side === Side.a ? this.indexesA : this.indexesB;
     const iter = side === Side.a ? _context.iterA : _context.iterB;
 
-    this._weight = arraySum(indexes!.map((i) => iter.textNodes[i].text.length));
+    this._weight = arraySum(indexes!.map((i) => iter.nodes[i].text.length));
 
     return this._weight;
   }
@@ -80,7 +80,7 @@ export class Change<Type extends ChangeType = ChangeType> {
     const indexes = side === Side.a ? this.indexesA : this.indexesB;
     const iter = side === Side.a ? _context.iterA : _context.iterB;
 
-    this._newLines = arraySum(indexes!.map((i) => iter.textNodes[i].numberOfNewlines));
+    this._newLines = arraySum(indexes!.map((i) => iter.nodes[i].numberOfNewlines));
 
     return this._newLines;
   }
@@ -89,8 +89,8 @@ export class Change<Type extends ChangeType = ChangeType> {
     const indexes = side === Side.a ? this.indexesA : this.indexesB;
     const iter = getIterFromSide(side)
 
-    const lineStart = iter.textNodes[indexes[0]].lineNumberStart
-    const lineEnd = iter.textNodes[indexes.at(-1)!].lineNumberEnd
+    const lineStart = iter.nodes[indexes[0]].lineNumberStart
+    const lineEnd = iter.nodes[indexes.at(-1)!].lineNumberEnd
     const newLines = this.getNewLines(side)
 
     return (lineEnd - lineStart) + 1 + newLines
@@ -108,14 +108,14 @@ export class Change<Type extends ChangeType = ChangeType> {
     const index = this.getFirstIndex(side)
     const iter = getIterFromSide(side)
 
-    return iter.textNodes[index].getOffsettedLineNumber('start')
+    return iter.nodes[index].getOffsettedLineNumber('start')
   }
 
   getOffsettedLineEnd(side: Side) {
     const index = this.getLastIndex(side)
     const iter = getIterFromSide(side)
 
-    return iter.textNodes[index].getOffsettedLineNumber('end')
+    return iter.nodes[index].getOffsettedLineNumber('end')
   }
 
   private getIndex(side: Side, position: number): number {
@@ -139,7 +139,7 @@ export class Change<Type extends ChangeType = ChangeType> {
     const nodesPerLine: Map<number, Set<number>> = new Map();
 
     for (const i of indexes) {
-      const node = iter.textNodes[i];
+      const node = iter.nodes[i];
 
       assert(node);
 
@@ -213,7 +213,7 @@ export class Change<Type extends ChangeType = ChangeType> {
     const indexes = side === Side.a ? this.indexesA : this.indexesB;
     const iter = getIterFromSide(side);
 
-    return indexes.map((i) => iter.textNodes[i].text).join(" ");
+    return indexes.map((i) => iter.nodes[i].text).join(" ");
   }
 
   draw() {
@@ -385,7 +385,7 @@ function getRange(iter: Iterator, indexes: number[]): Range {
   const endIndex = indexes.at(-1)!;
 
   return {
-    start: iter.textNodes[startIndex].start,
-    end: iter.textNodes[endIndex].end,
+    start: iter.nodes[startIndex].start,
+    end: iter.nodes[endIndex].end,
   };
 }

@@ -1,9 +1,10 @@
 import { computeDiff } from "./main";
 import { applyAlignments, applyChangesToSources, prettyRenderFn } from "./reporter";
 import { serialize } from "./serializer";
-import { Mode, SerializedResponse } from "./types";
+import { Mode, SerializedResponse, Side } from "./types";
 import { fail } from "./debug";
 import { Context } from "./context";
+import { getParsedProgram } from "./frontend/typescript";
 
 // These options have their own tests under the /tests/options folder
 export interface Options {
@@ -48,7 +49,10 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
 
   _context = new Context(sourceA, sourceB);
 
-  const diff = computeDiff(sourceA, sourceB);
+  const programA = getParsedProgram(Side.a, sourceA)
+  const programB = getParsedProgram(Side.b, sourceB)
+
+  const diff = computeDiff(programA, programB);
 
   switch (_options.outputType) {
     case OutputType.serializedChunks: {

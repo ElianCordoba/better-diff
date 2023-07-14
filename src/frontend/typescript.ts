@@ -7,7 +7,14 @@ import { getIfNodeCanBeMatchedAlone, getLineMap, getLineNumber, getSourceFile } 
 
 type TSNode = ts.Node & { text: string };
 
-export function getNodes(side: Side, source: string): { nodes: Node[]; kindTable: KindTable } {
+//
+export interface ParsedProgram {
+  nodes: Node[];
+  kindTable: KindTable;
+  side: Side;
+}
+
+export function getParsedProgram(side: Side, source: string): ParsedProgram {
   const sourceFile = getSourceFile(source);
 
   const { warnOnInvalidCode, mode } = getOptions();
@@ -133,5 +140,6 @@ export function getNodes(side: Side, source: string): { nodes: Node[]; kindTable
   return {
     nodes,
     kindTable,
+    side
   };
 }

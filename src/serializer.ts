@@ -1,9 +1,9 @@
 import { Change } from "./change";
 import { ChangeType, Range, RenderInstruction, SerializedResponse, SourceChunk } from "./types";
 import { range } from "./utils";
-import { getLineMap } from "./frontend/typescript";
 import { fail } from "./debug";
 import { _context } from "./index";
+import { getLineMap } from "./frontend/utils";
 
 export function serialize(
   a: string,
@@ -35,7 +35,7 @@ export function serialize(
       }
 
       case ChangeType.move: {
-        const moveNumber = _context.iterA.textNodes[indexesA?.at(0)!].matchNumber;
+        const moveNumber = _context.iterA.nodes[indexesA?.at(0)!].matchNumber;
         markChars(RenderInstruction.move, rangeA!, charsA, moveNumber);
         markChars(RenderInstruction.move, rangeB!, charsB, moveNumber);
         break;

@@ -1,11 +1,11 @@
 import { _context } from ".";
-import { getLineMap } from "./frontend/typescript";
 import { ChangeType, Side, TypeMasks } from "./types";
 import { getSideFromChangeType, oppositeSide, range } from "./utils";
 import { Change } from "./change";
 import { colorFn, createTextTable } from "./reporter";
 import { assert, fail } from "./debug";
 import { Iterator } from './iterator'
+import { getLineMap } from "./frontend/utils";
 
 // line number (one-based) -> line start position
 type LineMapTable = Map<number, number>;
@@ -288,7 +288,7 @@ export function insertAddOrDelAlignment(change: Change) {
   const index = side === Side.a ? change.indexesA[0] : change.indexesB[0]
   for (const [lineNumber, nodes] of nodesPerLine) {
     if (textAligner.wholeLineAffected(side, lineNumber, nodes.size)) {
-      const offsettedLineNumber = textAligner.getOffsettedLineNumber(side, lineNumber) - iter.textNodes[index].numberOfNewlines
+      const offsettedLineNumber = textAligner.getOffsettedLineNumber(side, lineNumber) - iter.nodes[index].numberOfNewlines
 
       alignments.set(offsettedLineNumber, {
         side: oppositeSide(side),
@@ -310,8 +310,8 @@ export function insertNewLineAlignment(change: Change, alignedChange: boolean) {
 
   // TODO-NOW example
   if (!alignedChange) {
-    const offsetA = change.getOffsettedLineStart(Side.a) - iterA.textNodes[change.indexesA[0]].lineNumberStart
-    const lineStartA = change.getOffsettedLineStart(Side.a) - iterA.textNodes[indexesA[0]].numberOfNewlines + 1
+    const offsetA = change.getOffsettedLineStart(Side.a) - iterA.nodes[change.indexesA[0]].lineNumberStart
+    const lineStartA = change.getOffsettedLineStart(Side.a) - iterA.nodes[indexesA[0]].numberOfNewlines + 1
     const lineEndA = change.getOffsettedLineEnd(Side.a) + 1
 
     const nodesA = change.getNodesPerLine(Side.a)
@@ -322,8 +322,8 @@ export function insertNewLineAlignment(change: Change, alignedChange: boolean) {
       }
     }
 
-    const offsetB = change.getOffsettedLineStart(Side.b) - iterB.textNodes[change.indexesB[0]].lineNumberStart
-    const lineStartB = change.getOffsettedLineStart(Side.b) - iterB.textNodes[indexesB[0]].numberOfNewlines + 1
+    const offsetB = change.getOffsettedLineStart(Side.b) - iterB.nodes[change.indexesB[0]].lineNumberStart
+    const lineStartB = change.getOffsettedLineStart(Side.b) - iterB.nodes[indexesB[0]].numberOfNewlines + 1
     const lineEndB = change.getOffsettedLineEnd(Side.b) + 1
 
     const nodesB = change.getNodesPerLine(Side.b)
@@ -341,8 +341,8 @@ export function insertNewLineAlignment(change: Change, alignedChange: boolean) {
     const indexA = indexesA[i];
     const indexB = indexesB[i];
 
-    const nodeA = iterA.textNodes.at(indexA)!;
-    const nodeB = iterB.textNodes.at(indexB)!;
+    const nodeA = iterA.nodes.at(indexA)!;
+    const nodeB = iterB.nodes.at(indexB)!;
 
     const offsettedLineA = nodeA.getOffsettedLineNumber()
     const offsettedLineB = nodeB.getOffsettedLineNumber()
@@ -394,14 +394,14 @@ export function insertMoveAlignment(change: Change, offsettedIndexA: number, off
   const firstIndexA = change.getFirstIndex(Side.a)
   const lastIndexA = change.getLastIndex(Side.a)
 
-  const lineStartA = iterA.textNodes[firstIndexA].getOffsettedLineNumber('start')
-  const lineEndA = iterA.textNodes[lastIndexA].getOffsettedLineNumber('end')
+  const lineStartA = iterA.nodes[firstIndexA].getOffsettedLineNumber('start')
+  const lineEndA = iterA.nodes[lastIndexA].getOffsettedLineNumber('end')
 
   const firstIndexB = change.getFirstIndex(Side.b)
   const lastIndexB = change.getLastIndex(Side.b)
 
-  const lineStartB = iterB.textNodes[firstIndexB].getOffsettedLineNumber('start')
-  const lineEndB = iterB.textNodes[lastIndexB].getOffsettedLineNumber('end')
+  const lineStartB = iterB.nodes[firstIndexB].getOffsettedLineNumber('start')
+  const lineEndB = iterB.nodes[lastIndexB].getOffsettedLineNumber('end')
 
   const linesDiff = Math.abs(lineStartA - lineStartB);
 
