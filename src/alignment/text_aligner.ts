@@ -2,8 +2,7 @@ import { _context } from "..";
 import { DiffType, TypeMasks } from "../types";
 import { oppositeSide, range } from "../utils";
 import { Diff } from "../data_structures/diff";
-import { createTextTable } from "../backend/printer";
-import { assert, fail } from "../debug";
+import { assert, createTextTable, fail } from "../debug";
 import { Iterator } from '../core/iterator'
 import { getLineMap } from "../frontend/utils";
 import colorFn from 'kleur'

@@ -1,8 +1,8 @@
 import { computeDiff } from "./core/main";
-import { applyAlignments, applyChangesToSources, prettyRenderFn } from "./backend/printer";
+import { applyAlignments, applyChangesToSources } from "./backend/printer";
 import { SerializedResponse, serialize } from "./backend/serializer";
 import { Mode } from "./types";
-import { fail } from "./debug";
+import { fail, prettyRenderFn } from "./debug";
 import { Context } from "./context";
 import { getParsedProgram } from "./frontend/typescript";
 import { Side } from "./shared/language";

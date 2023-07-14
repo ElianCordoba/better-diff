@@ -1,7 +1,7 @@
 import { DiffType, Range, TypeMasks } from "../types";
-import { getPrettyChangeType, getSourceWithChange } from "../backend/printer";
+import { getSourceWithChange } from "../backend/printer";
 import { _context } from "../index";
-import { assert } from "../debug";
+import { assert, getPrettyChangeType } from "../debug";
 import { arraySum, getIterFromSide } from "../utils";
 import { Iterator } from "../core/iterator";
 import { LineAlignmentTable, insertAddOrDelAlignment } from "../alignment/text_aligner";

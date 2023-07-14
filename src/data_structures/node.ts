@@ -2,7 +2,7 @@ import { SyntaxKind } from "typescript";
 import { DiffType, Mode, Range } from "../types";
 import { _context } from "..";
 import { Side } from "../shared/language";
-import { getNodeForPrinting } from "../backend/printer";
+import { getNodeForPrinting } from "../debug";
 
 interface NodeArgs {
   side: Side;
