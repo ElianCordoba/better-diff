@@ -1,6 +1,6 @@
 import ts from "typescript";
 import { Node } from "./data_structures/node";
-import { DiffType, NewDiffInfo, Range } from "./types";
+import { DiffType, Range } from "./types";
 import { fail } from "./debug";
 import { Iterator } from "./core/iterator";
 import { prettyRenderFn } from "./backend/printer";
@@ -131,6 +131,11 @@ export function normalize(iter: Iterator, lcs: LCSResult): LCSResult {
 
 export function getSequence(iter: Iterator, from: number, length: number): Node[] {
   return iter.nodes.slice(from, from + length);
+}
+
+interface NewDiffInfo {
+  index: number;
+  range: Range;
 }
 
 export function getDataForChange(nodeOrInfo: Node | NewDiffInfo): NewDiffInfo {

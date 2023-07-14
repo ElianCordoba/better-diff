@@ -1,7 +1,12 @@
 import fastify from "fastify";
 import cors from "@fastify/cors";
 import { getDiff, OutputType } from "./index";
-import { GetDiffPayload } from "./types";
+
+// What the frontend sends
+interface GetDiffPayload {
+  a: string;
+  b: string;
+}
 
 const server = fastify({ logger: true });
 

@@ -1,5 +1,5 @@
 import { Diff } from "../data_structures/diff";
-import { DiffType, Range, RenderInstruction, SourceChunk } from "../types";
+import { DiffType, Range } from "../types";
 import { range } from "../utils";
 import { fail } from "../debug";
 import { _context } from "../index";
@@ -28,6 +28,22 @@ import { getLineMap } from "../frontend/utils";
 export interface SerializedResponse {
   chunksA: SourceChunk[][];
   chunksB: SourceChunk[][];
+}
+
+interface SourceChunk {
+  type: RenderInstruction;
+  text: string;
+  moveNumber: string;
+}
+
+enum RenderInstruction {
+  // No text decoration
+  default = "default",
+
+  // Text with color
+  addition = "addition",
+  deletion = "deletion",
+  move = "move",
 }
 
 export function serialize(
