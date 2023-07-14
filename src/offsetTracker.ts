@@ -1,5 +1,5 @@
 import { _context } from ".";
-import { Change } from "./change";
+import { Diff } from "./change";
 import { assert } from "./debug";
 import { ChangeType, Side } from "./types";
 import { range } from "./utils";
@@ -8,7 +8,7 @@ export interface Offset {
   index: number;
   type: ChangeType;
   numberOfNewLines: number;
-  change?: Change;
+  change?: Diff;
 }
 
 // number = index

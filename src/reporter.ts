@@ -2,7 +2,7 @@ import Table from "cli-table3";
 
 import { _context, getOptions } from ".";
 import { ChangeType, Side } from "../src/types";
-import { Change } from "./change";
+import { Diff } from "./change";
 import { assert, fail } from "./debug";
 import { getUpdatedLineMap } from "./textAligner";
 
@@ -55,7 +55,7 @@ export const asciiRenderFn: DiffRendererFn = {
 export function applyChangesToSources(
   sourceA: string,
   sourceB: string,
-  changes: Change[],
+  changes: Diff[],
   renderFn = asciiRenderFn,
 ) {
   let charsA = sourceA.split("");
@@ -149,7 +149,7 @@ export function getComplimentArray(length: number, fillInCharacter = ""): string
   return new Array(length).fill(fillInCharacter);
 }
 
-export function applyAlignments(sourceA: string, sourceB: string, changes: Change[]): { sourceA: string; sourceB: string; changes: Change[] } {
+export function applyAlignments(sourceA: string, sourceB: string, changes: Diff[]): { sourceA: string; sourceB: string; changes: Diff[] } {
   // Handy for debugging
   // _context.textAligner.draw()
 
@@ -163,7 +163,7 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
   };
 }
 
-export function getTextAligned(side: Side, changes: Change[]) {
+export function getTextAligned(side: Side, changes: Diff[]) {
   const { textAligner, sourceA, sourceB } = _context;
   const lineOffsets = textAligner[side];
 
@@ -205,7 +205,7 @@ export function getTextAligned(side: Side, changes: Change[]) {
 // Iterate for each change
 // Only take the ones with the proper range
 // Only take the ones that happen after the start pos
-function updateChanges(changes: Change[], sideToUpdate: Side, startPosition: number) {
+function updateChanges(changes: Diff[], sideToUpdate: Side, startPosition: number) {
   const textAlignmentLength = getOptions().alignmentText.length + 1;
 
   // Side where the alignment happened, thus the side we need to recalculate the ranges of the changes

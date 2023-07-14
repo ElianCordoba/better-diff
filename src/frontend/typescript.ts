@@ -4,15 +4,9 @@ import { k } from "../reporter";
 import { _context, getOptions } from "..";
 import { KindTable, Side } from "../types";
 import { getIfNodeCanBeMatchedAlone, getLineMap, getLineNumber, getSourceFile } from "./utils";
+import { ParsedProgram } from "../shared/language";
 
 type TSNode = ts.Node & { text: string };
-
-//
-export interface ParsedProgram {
-  nodes: Node[];
-  kindTable: KindTable;
-  side: Side;
-}
 
 export function getParsedProgram(side: Side, source: string): ParsedProgram {
   const sourceFile = getSourceFile(source);

@@ -1,17 +1,17 @@
 import { ChangeType, Side } from "../types";
 import { equals, getSequence, normalize, oppositeSide, range } from "../utils";
 import { Iterator } from "../iterator";
-import { Change, compactChanges } from "../change";
+import { Diff, compactChanges } from "../change";
 import { _context } from "../index";
 import { Node } from "../node";
 import { assert } from "../debug";
 import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from "../sequence";
 import { OpenCloseVerifier } from "../openCloseVerifier";
 import { LineAlignmentTable, compactAlignments, insertMoveAlignment, insertNewLineAlignment } from "../textAligner";
-import { ParsedProgram } from "../frontend/typescript";
+import { ParsedProgram } from "../shared/language";
 
-export function computeDiff(programA: ParsedProgram, programB: ParsedProgram): Change[] {
-  const changes: Change[] = [];
+export function computeDiff(programA: ParsedProgram, programB: ParsedProgram): Diff[] {
+  const changes: Diff[] = [];
 
   const iterA = new Iterator(programA);
   const iterB = new Iterator(programB);
@@ -62,8 +62,8 @@ export function computeDiff(programA: ParsedProgram, programB: ParsedProgram): C
         iterB.mark(b.index, ChangeType.addition);
 
         changes.push(
-          new Change(ChangeType.deletion, [a.index]),
-          new Change(ChangeType.addition, [b.index]),
+          new Diff(ChangeType.deletion, [a.index]),
+          new Diff(ChangeType.addition, [b.index]),
         );
 
         // We need to ensure that we the closing one is matched as well. Also, a == b, so no need to check if b is an open node
@@ -103,7 +103,7 @@ export function computeDiff(programA: ParsedProgram, programB: ParsedProgram): C
   return [...additions, ...deletions, ...moves];
 }
 
-function processAddAndDel(additions: Change[], deletions: Change[]) {
+function processAddAndDel(additions: Diff[], deletions: Diff[]) {
   // Merge all the alignments
   let additionsOffsets: LineAlignmentTable = new Map()
   additions.map(x => {
@@ -163,8 +163,8 @@ function processAddAndDel(additions: Change[], deletions: Change[]) {
 // -     ┌──► b
 // aa ◄──┼──► aa
 // b  ◄──┘    -
-function processMoves(matches: Change[]) {
-  const changes: Change[] = [];
+function processMoves(matches: Diff[]) {
+  const changes: Diff[] = [];
   const { offsetTracker } = _context;
 
   const sortedMatches = matches.sort((a, b) => a.getWeight() < b.getWeight() ? 1 : -1);
@@ -227,13 +227,13 @@ function oneSidedIteration(
   iter: Iterator,
   typeOfChange: ChangeType.addition | ChangeType.deletion,
   startFrom: number,
-): Change[] {
-  const changes: Change[] = [];
+): Diff[] {
+  const changes: Diff[] = [];
 
   let value = iter.next(startFrom);
 
   while (value) {
-    changes.push(new Change(typeOfChange, [value.index]));
+    changes.push(new Diff(typeOfChange, [value.index]));
 
     iter.mark(value.index, typeOfChange, true);
     value = iter.next(value.index + 1);
@@ -243,8 +243,8 @@ function oneSidedIteration(
 }
 
 // This function has side effects, mutates data in the iterators
-function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, lcs: number): Change[] {
-  const changes: Change[] = [];
+function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, indexB: number, lcs: number): Diff[] {
+  const changes: Diff[] = [];
   const { matches } = _context;
 
   const indexesA: number[] = [];
@@ -277,7 +277,7 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
   }
 
   matches.push(
-    new Change(
+    new Diff(
       ChangeType.move,
       indexesA,
       indexesB,
@@ -295,7 +295,7 @@ function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSRe
 
   // Report deletion if applicable
   if (candidateOppositeSide.length === 0) {
-    const changes = [new Change(ChangeType.deletion, [startNode.index])];
+    const changes = [new Diff(ChangeType.deletion, [startNode.index])];
     iterA.mark(startNode.index, ChangeType.deletion);
 
     // TODO: Maybe add the open/close here?

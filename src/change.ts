@@ -6,7 +6,7 @@ import { arraySum, getIterFromSide, getPrettyChangeType } from "./utils";
 import { Iterator } from "./iterator";
 import { LineAlignmentTable, insertAddOrDelAlignment } from "./textAligner";
 
-export class Change<Type extends ChangeType = ChangeType> {
+export class Diff<Type extends ChangeType = ChangeType> {
   rangeA: Range | undefined;
   rangeB: Range | undefined;
 
@@ -274,7 +274,7 @@ function indexesCompatible(a: number[], b: number[]): boolean {
   }
 }
 
-export function compactChanges(type: ChangeType.deletion | ChangeType.addition, _changes: (Change & { seen?: boolean })[]) {
+export function compactChanges(type: ChangeType.deletion | ChangeType.addition, _changes: (Diff & { seen?: boolean })[]) {
   if (!_changes.length) {
     return [];
   }
@@ -289,7 +289,7 @@ export function compactChanges(type: ChangeType.deletion | ChangeType.addition, 
     return indexA < indexB ? -1 : 1;
   });
 
-  const finalChanges: Change[] = [];
+  const finalChanges: Diff[] = [];
 
   for (let index = 0; index < sortedChanges.length; index++) {
     let current = sortedChanges[index];
@@ -340,7 +340,7 @@ export function compactChanges(type: ChangeType.deletion | ChangeType.addition, 
       innerCursor++;
     }
 
-    const newChange = new Change(
+    const newChange = new Diff(
       type,
       indexes,
     );

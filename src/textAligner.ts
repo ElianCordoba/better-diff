@@ -1,7 +1,7 @@
 import { _context } from ".";
 import { ChangeType, Side, TypeMasks } from "./types";
 import { getSideFromChangeType, oppositeSide, range } from "./utils";
-import { Change } from "./change";
+import { Diff } from "./change";
 import { colorFn, createTextTable } from "./reporter";
 import { assert, fail } from "./debug";
 import { Iterator } from './iterator'
@@ -22,7 +22,7 @@ interface LineAlignment {
   // More that one reason may have inserted the alignment
   reasons: string[];
   // Change that originated the alignment
-  change: Change;
+  change: Diff;
 
   nodeText: string;
 
@@ -234,7 +234,7 @@ export function getUpdatedLineMap(source: string) {
 //
 // Results in the same format
 
-export function insertAddOrDelAlignment(change: Change) {
+export function insertAddOrDelAlignment(change: Diff) {
   // This function should only be called with additions or deletions
   assert(change.type & TypeMasks.AddOrDel, () => "Tried to insert alignment in a change that wasn't a addition or deletion");
 
@@ -304,7 +304,7 @@ export function insertAddOrDelAlignment(change: Change) {
   return alignments
 }
 
-export function insertNewLineAlignment(change: Change, alignedChange: boolean) {
+export function insertNewLineAlignment(change: Diff, alignedChange: boolean) {
   const { indexesA, indexesB } = change;
   const { iterA, iterB, textAligner } = _context;
 
@@ -387,7 +387,7 @@ export function insertNewLineAlignment(change: Change, alignedChange: boolean) {
 // 2          2
 // 3          3
 // -          1
-export function insertMoveAlignment(change: Change, offsettedIndexA: number, offsettedIndexB: number) {
+export function insertMoveAlignment(change: Diff, offsettedIndexA: number, offsettedIndexB: number) {
   const { iterA, iterB, offsetTracker } = _context;
   const indexDiff = Math.abs(offsettedIndexA - offsettedIndexB);
 

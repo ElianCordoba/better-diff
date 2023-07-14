@@ -3,7 +3,7 @@ import { Iterator } from "./iterator";
 import { ClosingNodeGroup, getClosingNodeGroup, getOppositeNodeKind, getPrettyKind } from "./utils";
 import { assert } from "./debug";
 import { ChangeType, TypeMasks } from "./types";
-import { Change } from "./change";
+import { Diff } from "./change";
 import { _context } from ".";
 
 export class OpenCloseStack {
@@ -56,7 +56,7 @@ export class OpenCloseVerifier {
   }
 
   verify(changeType: ChangeType, indexA?: number, indexB?: number) {
-    const changes: Change[] = [];
+    const changes: Diff[] = [];
     const { matches } = _context;
 
     const indexOfOpenNodeMatch = matches.length - 1;
@@ -73,13 +73,13 @@ export class OpenCloseVerifier {
         if (closingNodeForA) {
           assert(!closingNodeForB, () => "Found a node on B side node even though we are in a deletion");
           this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
-          changes.push(new Change(ChangeType.deletion, [closingNodeForA.index]));
+          changes.push(new Diff(ChangeType.deletion, [closingNodeForA.index]));
         }
 
         if (closingNodeForB) {
           assert(!closingNodeForA, () => "Found a node on a side node even though we are in a addition");
           this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-          changes.push(new Change(ChangeType.addition, [closingNodeForB.index]));
+          changes.push(new Diff(ChangeType.addition, [closingNodeForB.index]));
         }
 
         return changes;
@@ -95,7 +95,7 @@ export class OpenCloseVerifier {
         this.iterA.mark(closingNodeForA.index, ChangeType.move);
         this.iterB.mark(closingNodeForB.index, ChangeType.move);
 
-        const _change = new Change(
+        const _change = new Diff(
           ChangeType.move,
           [closingNodeForA.index],
           [closingNodeForB.index],
@@ -110,14 +110,14 @@ export class OpenCloseVerifier {
         if (closingNodeForA) {
           this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
           changes.push(
-            new Change(
+            new Diff(
               ChangeType.deletion,
               [closingNodeForA.index],
             ),
           );
         } else {
           this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-          changes.push(new Change(ChangeType.addition, [closingNodeForB!.index]));
+          changes.push(new Diff(ChangeType.addition, [closingNodeForB!.index]));
         }
       }
     }

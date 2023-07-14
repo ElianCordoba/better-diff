@@ -1,4 +1,4 @@
-import { Change } from "./change";
+import { Diff } from "./change";
 import { Iterator } from "./iterator";
 import { TextAligner } from "./textAligner";
 import { OffsetTracker } from "./offsetTracker";
@@ -9,12 +9,12 @@ export class Context {
   iterA!: Iterator;
   iterB!: Iterator;
 
-  matches: Change<ChangeType.move>[] = [];
+  matches: Diff<ChangeType.move>[] = [];
   offsetTracker = new OffsetTracker();
   textAligner = new TextAligner();
 
   constructor(
     public sourceA: string,
     public sourceB: string,
-  ) {}
+  ) { }
 }

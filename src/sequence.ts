@@ -1,7 +1,7 @@
 import { assert } from "./debug";
 import { equals } from "./utils";
 import { Iterator } from "./iterator";
-import { Change } from "./change";
+import { Diff } from "./change";
 
 export function getSequenceSingleDirection(
   iterA: Iterator,
@@ -69,7 +69,7 @@ export function getSequenceBothDirections(iterA: Iterator, iterB: Iterator, inde
 }
 
 export interface LCSResult {
-  changes?: Change[];
+  changes?: Diff[];
   bestSequence: number;
   indexA: number;
   indexB: number;

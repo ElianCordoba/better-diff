@@ -1,4 +1,4 @@
-import { Change } from "./change";
+import { Diff } from "./change";
 import { ChangeType, Range, RenderInstruction, SerializedResponse, SourceChunk } from "./types";
 import { range } from "./utils";
 import { fail } from "./debug";
@@ -8,7 +8,7 @@ import { getLineMap } from "./frontend/utils";
 export function serialize(
   a: string,
   b: string,
-  changes: Change[],
+  changes: Diff[],
 ): SerializedResponse {
   const charsA = getChars(a);
   const charsB = getChars(b);

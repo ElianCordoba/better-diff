@@ -4,12 +4,7 @@ import { Node } from "./node";
 import { ChangeType, KindTable, Side } from "./types";
 import { _context } from ".";
 import { OpenCloseStack } from "./openCloseVerifier";
-import { ParsedProgram, getParsedProgram } from "./frontend/typescript";
-
-interface IteratorOptions {
-  side: Side;
-  source: string;
-}
+import { ParsedProgram } from "./shared/language";
 
 export class Iterator {
   side: Side;
