@@ -1,4 +1,4 @@
-import { Diff } from '../change';
+import { Diff } from '../diff';
 import { assert } from '../debug';
 import { Iterator } from '../iterator'
 import { Node } from '../node';

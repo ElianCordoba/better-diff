@@ -1,7 +1,7 @@
 import { ChangeType, Side } from "../types";
 import { equals, oppositeSide, range } from "../utils";
 import { Iterator } from "../iterator";
-import { Diff, compactChanges } from "../change";
+import { Diff, compactChanges } from "../diff";
 import { _context } from "../index";
 import { Node } from "../node";
 import { assert } from "../debug";

@@ -2,7 +2,7 @@ import Table from "cli-table3";
 
 import { _context, getOptions } from ".";
 import { ChangeType, Side } from "../src/types";
-import { Diff } from "./change";
+import { Diff } from "./diff";
 import { assert, fail } from "./debug";
 import { getUpdatedLineMap } from "./textAligner";
 

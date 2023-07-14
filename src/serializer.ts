@@ -1,4 +1,4 @@
-import { Diff } from "./change";
+import { Diff } from "./diff";
 import { ChangeType, Range, RenderInstruction, SerializedResponse, SourceChunk } from "./types";
 import { range } from "./utils";
 import { fail } from "./debug";

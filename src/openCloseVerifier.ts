@@ -3,7 +3,7 @@ import { Iterator } from "./iterator";
 import { ClosingNodeGroup, getClosingNodeGroup, getOppositeNodeKind, getPrettyKind } from "./utils";
 import { assert } from "./debug";
 import { ChangeType, TypeMasks } from "./types";
-import { Diff } from "./change";
+import { Diff } from "./diff";
 import { _context } from ".";
 
 export class OpenCloseStack {

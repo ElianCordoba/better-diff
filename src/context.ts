@@ -1,4 +1,4 @@
-import { Diff } from "./change";
+import { Diff } from "./diff";
 import { Iterator } from "./iterator";
 import { TextAligner } from "./textAligner";
 import { OffsetTracker } from "./offsetTracker";

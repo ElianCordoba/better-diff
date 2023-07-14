@@ -1,5 +1,5 @@
 import { _context } from ".";
-import { Diff } from "./change";
+import { Diff } from "./diff";
 import { assert } from "./debug";
 import { ChangeType, Side } from "./types";
 import { range } from "./utils";

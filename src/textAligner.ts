@@ -1,7 +1,7 @@
 import { _context } from ".";
 import { ChangeType, Side, TypeMasks } from "./types";
 import { getSideFromChangeType, oppositeSide, range } from "./utils";
-import { Diff } from "./change";
+import { Diff } from "./diff";
 import { colorFn, createTextTable } from "./reporter";
 import { assert, fail } from "./debug";
 import { Iterator } from './iterator'
