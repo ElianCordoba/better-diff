@@ -1,6 +1,6 @@
 import ts from "typescript";
 import { Node } from "./data_structures/node";
-import { ChangeType, NewChangeInfo, Range } from "./types";
+import { DiffType, NewDiffInfo, Range } from "./types";
 import { fail } from "./debug";
 import { Iterator } from "./core/iterator";
 import { prettyRenderFn } from "./backend/printer";
@@ -8,14 +8,14 @@ import { _context } from ".";
 import { LCSResult } from "./core/find_diffs";
 import { Side } from "./shared/language";
 
-export function getPrettyChangeType(type: ChangeType, withColor = false): string {
+export function getPrettyChangeType(type: DiffType, withColor = false): string {
   const renderFn = withColor ? prettyRenderFn[type] : (i: string) => i;
   switch (type) {
-    case ChangeType.deletion:
+    case DiffType.deletion:
       return renderFn("Deletion");
-    case ChangeType.addition:
+    case DiffType.addition:
       return renderFn("Addition");
-    case ChangeType.move:
+    case DiffType.move:
       return renderFn("Move");
   }
 }
@@ -133,7 +133,7 @@ export function getSequence(iter: Iterator, from: number, length: number): Node[
   return iter.nodes.slice(from, from + length);
 }
 
-export function getDataForChange(nodeOrInfo: Node | NewChangeInfo): NewChangeInfo {
+export function getDataForChange(nodeOrInfo: Node | NewDiffInfo): NewDiffInfo {
   if (nodeOrInfo instanceof Node) {
     return {
       index: nodeOrInfo.index,
@@ -148,11 +148,11 @@ export function arraySum(array: number[]): number {
   return array.reduce((a, b) => a + b, 0);
 }
 
-export function getSideFromChangeType(type: ChangeType): Side {
+export function getSideFromChangeType(type: DiffType): Side {
   switch (type) {
-    case ChangeType.deletion:
+    case DiffType.deletion:
       return Side.a;
-    case ChangeType.addition:
+    case DiffType.addition:
       return Side.b;
     default:
       fail();

@@ -1,11 +1,35 @@
 import { Diff } from "../data_structures/diff";
-import { ChangeType, Range, RenderInstruction, SerializedResponse, SourceChunk } from "../types";
+import { DiffType, Range, RenderInstruction, SourceChunk } from "../types";
 import { range } from "../utils";
 import { fail } from "../debug";
 import { _context } from "../index";
 import { getLineMap } from "../frontend/utils";
 
-// This functions takes in the original source code strings and diffs and returns a response that can be consumed by the frontend to display the diffs
+// This is the data structure that it's sent to the frontend to display the diffs, it's an array of arrays of chunks, where the first level represents a line in the source code and it's sub-arrays represent the chunks of code of that line:
+//
+// - Code: `
+//   console.log(123)
+//   return 1 + 2
+// `
+//
+// - Server response:
+// [
+//   (line 1)
+//   [
+//     { text: "console.log(123)", type: RenderInstruction.default }
+//   ],
+//
+//   (line 2)
+//   [
+//     { text: "return", type: RenderInstruction.default },
+//     { text: "1 + 2", type: RenderInstruction.addition }
+//   ],
+// ]
+export interface SerializedResponse {
+  chunksA: SourceChunk[][];
+  chunksB: SourceChunk[][];
+}
+
 export function serialize(
   a: string,
   b: string,
@@ -25,17 +49,17 @@ export function serialize(
     const { type, rangeA, rangeB, indexesA } = diffs[i];
 
     switch (type) {
-      case ChangeType.deletion: {
+      case DiffType.deletion: {
         markChars(RenderInstruction.deletion, rangeA!, charsA);
         break;
       }
 
-      case ChangeType.addition: {
+      case DiffType.addition: {
         markChars(RenderInstruction.addition, rangeB!, charsB);
         break;
       }
 
-      case ChangeType.move: {
+      case DiffType.move: {
         const moveNumber = _context.iterA.nodes[indexesA?.at(0)!].matchNumber;
         markChars(RenderInstruction.move, rangeA!, charsA, moveNumber);
         markChars(RenderInstruction.move, rangeB!, charsB, moveNumber);

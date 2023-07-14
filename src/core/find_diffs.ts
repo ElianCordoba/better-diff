@@ -2,7 +2,7 @@ import { Diff } from '../data_structures/diff';
 import { assert } from '../debug';
 import { Iterator } from './iterator'
 import { Node } from '../data_structures/node';
-import { ChangeType } from '../types';
+import { DiffType } from '../types';
 import { equals, getSequence, normalize, range } from '../utils';
 
 export function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSResult {
@@ -10,8 +10,8 @@ export function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node)
 
   // Report deletion if applicable
   if (candidateOppositeSide.length === 0) {
-    const changes = [new Diff(ChangeType.deletion, [startNode.index])];
-    iterA.mark(startNode.index, ChangeType.deletion);
+    const changes = [new Diff(DiffType.deletion, [startNode.index])];
+    iterA.mark(startNode.index, DiffType.deletion);
 
     // TODO: Maybe add the open/close here?
     return { changes, indexA: -1, indexB: -1, bestSequence: 0 };

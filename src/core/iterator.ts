@@ -1,7 +1,7 @@
 import { getNodeForPrinting, getOppositeNodeKind, getSequence } from "../utils";
 import { getSourceWithChange, } from "../backend/printer";
 import { Node } from "../data_structures/node";
-import { ChangeType } from "../types";
+import { DiffType } from "../types";
 import { _context } from "..";
 import { OpenCloseStack } from "../open_close_verifier";
 import { KindTable, ParsedProgram, Side } from "../shared/language";
@@ -80,7 +80,7 @@ export class Iterator {
     return item;
   }
 
-  mark(index: number, markedAs: ChangeType, done = false) {
+  mark(index: number, markedAs: DiffType, done = false) {
     // TODO: Should only apply for moves, otherwise a move, addition and move
     // will display 1 for the first move and 3 for the second
     this.matchNumber++;
@@ -97,7 +97,7 @@ export class Iterator {
     }
   }
 
-  markMultiple(startIndex: number, numberOfNodes: number, markAs: ChangeType) {
+  markMultiple(startIndex: number, numberOfNodes: number, markAs: DiffType) {
     let i = startIndex;
     while (i < startIndex + numberOfNodes) {
       this.mark(i, markAs);
@@ -177,15 +177,15 @@ export class Iterator {
     for (const node of _nodes) {
       let color;
       switch (node.markedAs) {
-        case ChangeType.addition: {
+        case DiffType.addition: {
           color = colorFn.green;
           break;
         }
-        case ChangeType.deletion: {
+        case DiffType.deletion: {
           color = colorFn.red;
           break;
         }
-        case ChangeType.move: {
+        case DiffType.move: {
           color = colorFn.blue;
           break;
         }

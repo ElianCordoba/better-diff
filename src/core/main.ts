@@ -1,4 +1,4 @@
-import { ChangeType } from "../types";
+import { DiffType } from "../types";
 import { equals, oppositeSide } from "../utils";
 import { Iterator } from "./iterator";
 import { Diff, compactChanges } from "../data_structures/diff";
@@ -35,7 +35,7 @@ export function computeDiff(programA: ParsedProgram, programB: ParsedProgram): D
       // One of the iterators finished. We will traverse the remaining nodes in the other iterator
       if (!a || !b) {
         const iterOn = !a ? iterB : iterA;
-        const type = !a ? ChangeType.addition : ChangeType.deletion;
+        const type = !a ? DiffType.addition : DiffType.deletion;
         const startFrom = !a ? b?.index : a.index;
 
         const remainingChanges = oneSidedIteration(iterOn, type, startFrom!);
@@ -58,19 +58,19 @@ export function computeDiff(programA: ParsedProgram, programB: ParsedProgram): D
       // In case we obtain a sequence of length 1, we will only create a move if that single node can be matched alone.
       // If the move isn't created then we report them as addition/removal
       if (lcs.bestSequence === 1 && !a.canBeMatchedAlone) {
-        iterA.mark(a.index, ChangeType.deletion);
-        iterB.mark(b.index, ChangeType.addition);
+        iterA.mark(a.index, DiffType.deletion);
+        iterB.mark(b.index, DiffType.addition);
 
         changes.push(
-          new Diff(ChangeType.deletion, [a.index]),
-          new Diff(ChangeType.addition, [b.index]),
+          new Diff(DiffType.deletion, [a.index]),
+          new Diff(DiffType.addition, [b.index]),
         );
 
         // We need to ensure that we the closing one is matched as well. Also, a == b, so no need to check if b is an open node
         if (a.isOpeningNode) {
           changes.push(
-            ...OpenCloseVerifier.verifySingle(ChangeType.deletion, a, iterA, iterB),
-            ...OpenCloseVerifier.verifySingle(ChangeType.addition, b, iterA, iterB),
+            ...OpenCloseVerifier.verifySingle(DiffType.deletion, a, iterA, iterB),
+            ...OpenCloseVerifier.verifySingle(DiffType.addition, b, iterA, iterB),
           );
         }
 
@@ -88,8 +88,8 @@ export function computeDiff(programA: ParsedProgram, programB: ParsedProgram): D
   loop();
 
   // TODO: Once we improve compaction to be on-demand, we will be able to remove this
-  const deletions = compactChanges(ChangeType.deletion, changes.filter((x) => x.type === ChangeType.deletion));
-  const additions = compactChanges(ChangeType.addition, changes.filter((x) => x.type === ChangeType.addition));
+  const deletions = compactChanges(DiffType.deletion, changes.filter((x) => x.type === DiffType.deletion));
+  const additions = compactChanges(DiffType.addition, changes.filter((x) => x.type === DiffType.addition));
 
   processAddAndDel(deletions, additions);
 
@@ -225,7 +225,7 @@ function processMoves(matches: Diff[]) {
 
 function oneSidedIteration(
   iter: Iterator,
-  typeOfChange: ChangeType.addition | ChangeType.deletion,
+  typeOfChange: DiffType.addition | DiffType.deletion,
   startFrom: number,
 ): Diff[] {
   const changes: Diff[] = [];
@@ -260,8 +260,8 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
     a = iterA.next(indexA)!;
     b = iterB.next(indexB)!;
 
-    iterA.mark(a.index, ChangeType.move);
-    iterB.mark(b.index, ChangeType.move);
+    iterA.mark(a.index, DiffType.move);
+    iterB.mark(b.index, DiffType.move);
 
     i++;
     indexA++;
@@ -278,14 +278,14 @@ function matchSubsequence(iterA: Iterator, iterB: Iterator, indexA: number, inde
 
   matches.push(
     new Diff(
-      ChangeType.move,
+      DiffType.move,
       indexesA,
       indexesB,
     ),
   );
 
   // Ensure open-close node correctness, may push a change if nodes are missing
-  changes.push(...verifier.verify(ChangeType.move, indexA, indexB));
+  changes.push(...verifier.verify(DiffType.move, indexA, indexB));
 
   return changes;
 }

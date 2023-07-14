@@ -1,6 +1,6 @@
 import { SyntaxKind } from "typescript";
 import { getNodeForPrinting } from "../utils";
-import { ChangeType, Mode, Range } from "../types";
+import { DiffType, Mode, Range } from "../types";
 import { _context } from "..";
 import { Side } from "../shared/language";
 
@@ -37,7 +37,7 @@ export class Node {
   isClosingNode = false;
 
   // For printing proposes
-  markedAs?: ChangeType;
+  markedAs?: DiffType;
   constructor(args: NodeArgs) {
     const { side, start, end, kind, lineNumberStart, lineNumberEnd, text, mode, numberOfNewlines } = args;
 

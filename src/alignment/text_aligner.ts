@@ -1,5 +1,5 @@
 import { _context } from "..";
-import { ChangeType, TypeMasks } from "../types";
+import { DiffType, TypeMasks } from "../types";
 import { getSideFromChangeType, oppositeSide, range } from "../utils";
 import { Diff } from "../data_structures/diff";
 import { createTextTable } from "../backend/printer";
@@ -247,7 +247,7 @@ export function insertAddOrDelAlignment(change: Diff) {
   // May or may not be used, declared early on for convenience
   let alignmentReason: LineAlignmentReason;
 
-  if (change.type === ChangeType.deletion) {
+  if (change.type === DiffType.deletion) {
     sideToInsertAlignment = Side.b;
     indexes = change.indexesA;
     iter = _context.iterA;
@@ -410,7 +410,7 @@ export function insertMoveAlignment(change: Diff, offsettedIndexA: number, offse
   function apply(side: Side, index: number, lineNumberStart: number, ignore = false) {
     // Apply semantic offset
     for (const i of range(index, index + indexDiff)) {
-      semanticAligner.add(side, { type: ChangeType.move, index: i, numberOfNewLines: 0 });
+      semanticAligner.add(side, { type: DiffType.move, index: i, numberOfNewLines: 0 });
     }
 
     if (ignore) {

@@ -1,7 +1,7 @@
 import Table from "cli-table3";
 
 import { _context, _options } from "..";
-import { ChangeType } from "../types";
+import { DiffType } from "../types";
 import { Diff } from "../data_structures/diff";
 import { assert, fail } from "../debug";
 import { getUpdatedLineMap } from "../alignment/text_aligner";
@@ -11,20 +11,20 @@ import { Side } from "../shared/language";
 
 type RenderFn = (text: string) => string;
 
-export type DiffRendererFn = Record<ChangeType, RenderFn>;
+export type DiffRendererFn = Record<DiffType, RenderFn>;
 
 // Pretty print. Human readable
 export const prettyRenderFn: DiffRendererFn = {
-  [ChangeType.deletion]: colorFn.red,
-  [ChangeType.addition]: colorFn.green,
-  [ChangeType.move]: (text) => colorFn.blue().underline(text),
+  [DiffType.deletion]: colorFn.red,
+  [DiffType.addition]: colorFn.green,
+  [DiffType.move]: (text) => colorFn.blue().underline(text),
 };
 
 // Testing friendly
 export const asciiRenderFn: DiffRendererFn = {
-  [ChangeType.deletion]: (text) => `➖${text}➖`,
-  [ChangeType.addition]: (text) => `➕${text}➕`,
-  [ChangeType.move]: (text) => `⏩${text}⏪`,
+  [DiffType.deletion]: (text) => `➖${text}➖`,
+  [DiffType.addition]: (text) => `➕${text}➕`,
+  [DiffType.move]: (text) => `⏩${text}⏪`,
 };
 
 export function applyChangesToSources(
@@ -41,35 +41,35 @@ export function applyChangesToSources(
 
   for (const { rangeA, rangeB, type } of changes) {
     switch (type) {
-      case ChangeType.addition: {
+      case DiffType.addition: {
         const { start, end } = rangeB!;
         charsB = getSourceWithChange(
           charsB,
           start,
           end,
-          renderFn[ChangeType.addition],
+          renderFn[DiffType.addition],
         );
         break;
       }
 
-      case ChangeType.deletion: {
+      case DiffType.deletion: {
         const { start, end } = rangeA!;
         charsA = getSourceWithChange(
           charsA,
           start,
           end,
-          renderFn[ChangeType.deletion],
+          renderFn[DiffType.deletion],
         );
         break;
       }
 
-      case ChangeType.move: {
+      case DiffType.move: {
         const resultA = rangeA!;
         charsA = getSourceWithChange(
           charsA,
           resultA.start,
           resultA.end,
-          renderFn[ChangeType.move],
+          renderFn[DiffType.move],
         );
 
         const resultB = rangeB!;
@@ -77,7 +77,7 @@ export function applyChangesToSources(
           charsB,
           resultB.start,
           resultB.end,
-          renderFn[ChangeType.move],
+          renderFn[DiffType.move],
         );
 
         moveCounter++;
@@ -184,7 +184,7 @@ function updateChanges(changes: Diff[], sideToUpdate: Side, startPosition: numbe
   const textAlignmentLength = _options.alignmentText.length + 1;
 
   // Side where the alignment happened, thus the side we need to recalculate the ranges of the changes
-  const changesToSkip = sideToUpdate === Side.a ? ChangeType.addition : ChangeType.deletion;
+  const changesToSkip = sideToUpdate === Side.a ? DiffType.addition : DiffType.deletion;
   const rangeToUpdate = sideToUpdate === Side.a ? "rangeA" : "rangeB";
 
   for (let i = 0; i < changes.length; i++) {

@@ -2,7 +2,7 @@ import { Node } from "./data_structures/node";
 import { Iterator } from "./core/iterator";
 import { ClosingNodeGroup, getClosingNodeGroup, getOppositeNodeKind, getPrettyKind } from "./utils";
 import { assert } from "./debug";
-import { ChangeType, TypeMasks } from "./types";
+import { DiffType, TypeMasks } from "./types";
 import { Diff } from "./data_structures/diff";
 import { _context } from ".";
 
@@ -55,7 +55,7 @@ export class OpenCloseVerifier {
     return this;
   }
 
-  verify(changeType: ChangeType, indexA?: number, indexB?: number) {
+  verify(changeType: DiffType, indexA?: number, indexB?: number) {
     const changes: Diff[] = [];
     const { matches } = _context;
 
@@ -72,14 +72,14 @@ export class OpenCloseVerifier {
 
         if (closingNodeForA) {
           assert(!closingNodeForB, () => "Found a node on B side node even though we are in a deletion");
-          this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
-          changes.push(new Diff(ChangeType.deletion, [closingNodeForA.index]));
+          this.iterA.mark(closingNodeForA!.index, DiffType.deletion);
+          changes.push(new Diff(DiffType.deletion, [closingNodeForA.index]));
         }
 
         if (closingNodeForB) {
           assert(!closingNodeForA, () => "Found a node on a side node even though we are in a addition");
-          this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-          changes.push(new Diff(ChangeType.addition, [closingNodeForB.index]));
+          this.iterB.mark(closingNodeForB!.index, DiffType.addition);
+          changes.push(new Diff(DiffType.addition, [closingNodeForB.index]));
         }
 
         return changes;
@@ -92,11 +92,11 @@ export class OpenCloseVerifier {
 
       // If we are in a move, there are two path, the happy one where we find both nodes
       if (closingNodeForA && closingNodeForB) {
-        this.iterA.mark(closingNodeForA.index, ChangeType.move);
-        this.iterB.mark(closingNodeForB.index, ChangeType.move);
+        this.iterA.mark(closingNodeForA.index, DiffType.move);
+        this.iterB.mark(closingNodeForB.index, DiffType.move);
 
         const _change = new Diff(
-          ChangeType.move,
+          DiffType.move,
           [closingNodeForA.index],
           [closingNodeForB.index],
         );
@@ -108,16 +108,16 @@ export class OpenCloseVerifier {
         // If one of the nodes is missing, it's a syntax error, the is a open node unclosed.
         // We will still continue to processing the code by marking the found node as added / removed
         if (closingNodeForA) {
-          this.iterA.mark(closingNodeForA!.index, ChangeType.deletion);
+          this.iterA.mark(closingNodeForA!.index, DiffType.deletion);
           changes.push(
             new Diff(
-              ChangeType.deletion,
+              DiffType.deletion,
               [closingNodeForA.index],
             ),
           );
         } else {
-          this.iterB.mark(closingNodeForB!.index, ChangeType.addition);
-          changes.push(new Diff(ChangeType.addition, [closingNodeForB!.index]));
+          this.iterB.mark(closingNodeForB!.index, DiffType.addition);
+          changes.push(new Diff(DiffType.addition, [closingNodeForB!.index]));
         }
       }
     }
@@ -125,7 +125,7 @@ export class OpenCloseVerifier {
   }
 
   // Simplified method for cases where we only need to check one node
-  static verifySingle(changeType: ChangeType, node: Node, iterA: Iterator, iterB: Iterator) {
+  static verifySingle(changeType: DiffType, node: Node, iterA: Iterator, iterB: Iterator) {
     return new OpenCloseVerifier(iterA, iterB).track(node).verify(changeType);
   }
 

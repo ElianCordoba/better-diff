@@ -1,4 +1,4 @@
-import { ChangeType, Range, TypeMasks } from "../types";
+import { DiffType, Range, TypeMasks } from "../types";
 import { getSourceWithChange } from "../backend/printer";
 import { _context } from "../index";
 import { assert } from "../debug";
@@ -8,7 +8,7 @@ import { LineAlignmentTable, insertAddOrDelAlignment } from "../alignment/text_a
 import colorFn from 'kleur'
 import { Side } from "../shared/language";
 
-export class Diff<Type extends ChangeType = ChangeType> {
+export class Diff<Type extends DiffType = DiffType> {
   rangeA: Range | undefined;
   rangeB: Range | undefined;
 
@@ -25,12 +25,12 @@ export class Diff<Type extends ChangeType = ChangeType> {
     indexesOne: number[],
     indexesTwo?: number[],
   ) {
-    if (type === ChangeType.move) {
+    if (type === DiffType.move) {
       this.indexesA = indexesOne;
       this.indexesB = indexesTwo!;
 
       assert(this.indexesA.length === this.indexesB.length);
-    } else if (type === ChangeType.deletion) {
+    } else if (type === DiffType.deletion) {
       this.indexesA = indexesOne;
     } else {
       this.indexesB = indexesOne;
@@ -130,7 +130,7 @@ export class Diff<Type extends ChangeType = ChangeType> {
     if (passedInSide) {
       return passedInSide;
     } else {
-      return this.type === ChangeType.deletion ? Side.a : Side.b;
+      return this.type === DiffType.deletion ? Side.a : Side.b;
     }
   }
 
@@ -159,7 +159,7 @@ export class Diff<Type extends ChangeType = ChangeType> {
 
   applyOffset(): LineAlignmentTable {
     const { semanticAligner } = _context;
-    if (this.type === ChangeType.deletion) {
+    if (this.type === DiffType.deletion) {
       // Alignment for deletions:
       //
       // A          B
@@ -175,7 +175,7 @@ export class Diff<Type extends ChangeType = ChangeType> {
       // 2          2
       this.indexesA!.map((index) => {
         _context.semanticAligner.add(Side.b, {
-          type: ChangeType.deletion,
+          type: DiffType.deletion,
           index: semanticAligner.getOffset(Side.a, index),
           numberOfNewLines: this.getNewLines(),
           change: this,
@@ -200,7 +200,7 @@ export class Diff<Type extends ChangeType = ChangeType> {
       // -          z
       this.indexesB!.map((index) => {
         _context.semanticAligner.add(Side.a, {
-          type: ChangeType.addition,
+          type: DiffType.addition,
           index: semanticAligner.getOffset(Side.b, index),
           numberOfNewLines: this.getNewLines(),
           change: this,
@@ -231,7 +231,7 @@ export class Diff<Type extends ChangeType = ChangeType> {
     if (this.rangeA) {
       console.log("----A----");
 
-      const renderFn = this.type === ChangeType.move ? colorFn.yellow : colorFn.red;
+      const renderFn = this.type === DiffType.move ? colorFn.yellow : colorFn.red;
 
       console.log(
         getSourceWithChange(
@@ -247,7 +247,7 @@ export class Diff<Type extends ChangeType = ChangeType> {
     if (this.rangeB) {
       console.log("----B----");
 
-      const renderFn = this.type === ChangeType.move ? colorFn.yellow : colorFn.green;
+      const renderFn = this.type === DiffType.move ? colorFn.yellow : colorFn.green;
 
       console.log(
         getSourceWithChange(
@@ -276,14 +276,14 @@ function indexesCompatible(a: number[], b: number[]): boolean {
   }
 }
 
-export function compactChanges(type: ChangeType.deletion | ChangeType.addition, _changes: (Diff & { seen?: boolean })[]) {
+export function compactChanges(type: DiffType.deletion | DiffType.addition, _changes: (Diff & { seen?: boolean })[]) {
   if (!_changes.length) {
     return [];
   }
 
   assert(type & TypeMasks.AddOrDel);
 
-  const indexesProp = type === ChangeType.deletion ? "indexesA" : "indexesB";
+  const indexesProp = type === DiffType.deletion ? "indexesA" : "indexesB";
   const sortedChanges = _changes.sort((a, b) => {
     const indexA = a.getFirstIndex();
     const indexB = b.getFirstIndex();
