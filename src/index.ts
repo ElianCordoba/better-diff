@@ -102,9 +102,5 @@ const defaultOptions: Options = {
   ignoreChangeMarkers: false
 };
 
-let _options: Required<Options>;
-export function getOptions(): Required<Options> {
-  return _options || {};
-}
-
+export let _options: Required<Options>;
 export let _context: Context;

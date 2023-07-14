@@ -1,21 +1,21 @@
 import ts from "typescript";
 import { Node } from "../data_structures/node";
-import { k } from "../backend/printer";
-import { _context, getOptions } from "..";
+import { _context, _options } from "..";
 import { KindTable, Side } from "../types";
 import { getIfNodeCanBeMatchedAlone, getLineMap, getLineNumber, getSourceFile } from "./utils";
 import { ParsedProgram } from "../shared/language";
+import colorFn from 'kleur'
 
 type TSNode = ts.Node & { text: string };
 
 export function getParsedProgram(side: Side, source: string): ParsedProgram {
   const sourceFile = getSourceFile(source);
 
-  const { warnOnInvalidCode, mode } = getOptions();
+  const { warnOnInvalidCode, mode } = _options;
 
   if (warnOnInvalidCode && (sourceFile as any).parseDiagnostics.length > 0) {
     console.log(`
-      ${k.yellow("Parse error found in the following code:")}
+      ${colorFn.yellow("Parse error found in the following code:")}
       "${source}"
     `);
   }

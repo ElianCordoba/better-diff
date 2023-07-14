@@ -1,6 +1,6 @@
 import Table from "cli-table3";
 
-import { _context, getOptions } from "..";
+import { _context, _options } from "..";
 import { ChangeType, Side } from "../types";
 import { Diff } from "../data_structures/diff";
 import { assert, fail } from "../debug";
@@ -148,7 +148,7 @@ export function getTextAligned(side: Side, changes: Diff[]) {
     return source;
   }
 
-  const alignmentText = getOptions().alignmentText;
+  const alignmentText = _options.alignmentText;
   let lineMap = new Map(textAligner.getLineMap(side));
 
   for (const { lineNumber } of lineOffsets.values()) {
@@ -180,7 +180,7 @@ export function getTextAligned(side: Side, changes: Diff[]) {
 // Only take the ones with the proper range
 // Only take the ones that happen after the start pos
 function updateChanges(changes: Diff[], sideToUpdate: Side, startPosition: number) {
-  const textAlignmentLength = getOptions().alignmentText.length + 1;
+  const textAlignmentLength = _options.alignmentText.length + 1;
 
   // Side where the alignment happened, thus the side we need to recalculate the ranges of the changes
   const changesToSkip = sideToUpdate === Side.a ? ChangeType.addition : ChangeType.deletion;

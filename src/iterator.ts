@@ -1,10 +1,11 @@
 import { getNodeForPrinting, getOppositeNodeKind, getSequence } from "./utils";
-import { colorFn, getSourceWithChange, k } from "./backend/printer";
+import { getSourceWithChange, } from "./backend/printer";
 import { Node } from "./data_structures/node";
 import { ChangeType, KindTable, Side } from "./types";
 import { _context } from ".";
 import { OpenCloseStack } from "./openCloseVerifier";
 import { ParsedProgram } from "./shared/language";
+import colorFn from 'kleur'
 
 export class Iterator {
   side: Side;
@@ -174,22 +175,22 @@ export class Iterator {
     const _nodes = Array.isArray(nodesToPrint) ? nodesToPrint : this.nodes;
 
     for (const node of _nodes) {
-      let colorFn;
+      let color;
       switch (node.markedAs) {
         case ChangeType.addition: {
-          colorFn = k.green;
+          color = colorFn.green;
           break;
         }
         case ChangeType.deletion: {
-          colorFn = k.red;
+          color = colorFn.red;
           break;
         }
         case ChangeType.move: {
-          colorFn = k.blue;
+          color = colorFn.blue;
           break;
         }
         default: {
-          colorFn = k.grey;
+          color = colorFn.grey;
         }
       }
 
@@ -202,13 +203,13 @@ export class Iterator {
       const _text = ` ${text}`;
       const newLines = String(node.numberOfNewlines).padStart(4).padEnd(7);
 
-      const row = `${index}|${matchNumber}|${newLines}|${colorFn(_kind)}|${_text}`;
+      const row = `${index}|${matchNumber}|${newLines}|${color(_kind)}|${_text}`;
 
       if (node.index === this.indexOfLastItem) {
-        colorFn = k.yellow;
+        color = colorFn.yellow;
       }
 
-      list.push(colorFn(row));
+      list.push(color(row));
     }
 
     console.log(list.join("\n"));
