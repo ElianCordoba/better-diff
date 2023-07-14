@@ -3,11 +3,6 @@ export enum Side {
   b = "b",
 }
 
-export interface DiffResult {
-  sourceA: string;
-  sourceB: string;
-}
-
 export enum ChangeType {
   deletion = 1 << 0, // 1
   addition = 1 << 1, // 2

@@ -5,7 +5,7 @@ import { Diff, compactChanges } from "../data_structures/diff";
 import { _context } from "../index";
 import { Node } from "../data_structures/node";
 import { assert } from "../debug";
-import { OpenCloseVerifier } from "../openCloseVerifier";
+import { OpenCloseVerifier } from "../open_close_verifier";
 import { LineAlignmentTable, compactAlignments, insertMoveAlignment, insertNewLineAlignment } from "../alignment/text_aligner";
 import { ParsedProgram } from "../shared/language";
 import { findBestMatch } from "./find_diffs";
