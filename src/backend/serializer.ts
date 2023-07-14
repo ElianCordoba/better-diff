@@ -1,14 +1,15 @@
-import { Diff } from "./data_structures/diff";
-import { ChangeType, Range, RenderInstruction, SerializedResponse, SourceChunk } from "./types";
-import { range } from "./utils";
-import { fail } from "./debug";
-import { _context } from "./index";
-import { getLineMap } from "./frontend/utils";
+import { Diff } from "../data_structures/diff";
+import { ChangeType, Range, RenderInstruction, SerializedResponse, SourceChunk } from "../types";
+import { range } from "../utils";
+import { fail } from "../debug";
+import { _context } from "../index";
+import { getLineMap } from "../frontend/utils";
 
+// This functions takes in the original source code strings and diffs and returns a response that can be consumed by the frontend to display the diffs
 export function serialize(
   a: string,
   b: string,
-  changes: Diff[],
+  diffs: Diff[],
 ): SerializedResponse {
   const charsA = getChars(a);
   const charsB = getChars(b);
@@ -20,8 +21,8 @@ export function serialize(
   // (Emojis wont be present, is just to denote the added code), we will end up with
   // [ "p", "r", "i", "n", "t", " "] as characters with type "default", meaning that they are unchanged and ["'", "h", "i", "'"] as characters added
   // later, we will merge together the characters into chunks of same type
-  for (let i = 0; i < changes.length; i++) {
-    const { type, rangeA, rangeB, indexesA } = changes[i];
+  for (let i = 0; i < diffs.length; i++) {
+    const { type, rangeA, rangeB, indexesA } = diffs[i];
 
     switch (type) {
       case ChangeType.deletion: {

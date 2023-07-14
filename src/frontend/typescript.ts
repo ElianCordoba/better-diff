@@ -1,6 +1,6 @@
 import ts from "typescript";
 import { Node } from "../data_structures/node";
-import { k } from "../reporter";
+import { k } from "../backend/printer";
 import { _context, getOptions } from "..";
 import { KindTable, Side } from "../types";
 import { getIfNodeCanBeMatchedAlone, getLineMap, getLineNumber, getSourceFile } from "./utils";

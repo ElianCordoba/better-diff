@@ -1,13 +1,21 @@
 import Table from "cli-table3";
 
-import { _context, getOptions } from ".";
-import { ChangeType, Side } from "../src/types";
-import { Diff } from "./data_structures/diff";
-import { assert, fail } from "./debug";
-import { getUpdatedLineMap } from "./textAligner";
+import { _context, getOptions } from "..";
+import { ChangeType, Side } from "../types";
+import { Diff } from "../data_structures/diff";
+import { assert, fail } from "../debug";
+import { getUpdatedLineMap } from "../textAligner";
 
 //@ts-ignore TODO: Importing normally doesn't work with vitest
-export const k = require("kleur");
+// export const k = require("kleur");
+// export { default as k } from 'kleur'
+
+// import * as k from 'kleur/colors'
+
+// export { k }
+
+import * as k from 'kleur'
+export { k }
 
 type RenderFn = (text: string) => string;
 

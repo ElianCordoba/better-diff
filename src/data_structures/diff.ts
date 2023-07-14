@@ -1,5 +1,5 @@
 import { ChangeType, Range, Side, TypeMasks } from "../types";
-import { colorFn, getSourceWithChange } from "../reporter";
+import { colorFn, getSourceWithChange } from "../backend/printer";
 import { _context } from "../index";
 import { assert } from "../debug";
 import { arraySum, getIterFromSide, getPrettyChangeType } from "../utils";

@@ -1,6 +1,6 @@
 import { computeDiff } from "./core/main";
-import { applyAlignments, applyChangesToSources, prettyRenderFn } from "./reporter";
-import { serialize } from "./serializer";
+import { applyAlignments, applyChangesToSources, prettyRenderFn } from "./backend/printer";
+import { serialize } from "./backend/serializer";
 import { Mode, SerializedResponse, Side } from "./types";
 import { fail } from "./debug";
 import { Context } from "./context";

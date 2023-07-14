@@ -2,7 +2,7 @@ import { _context } from ".";
 import { ChangeType, Side, TypeMasks } from "./types";
 import { getSideFromChangeType, oppositeSide, range } from "./utils";
 import { Diff } from "./data_structures/diff";
-import { colorFn, createTextTable } from "./reporter";
+import { colorFn, createTextTable } from "./backend/printer";
 import { assert, fail } from "./debug";
 import { Iterator } from './iterator'
 import { getLineMap } from "./frontend/utils";

@@ -4,7 +4,7 @@ import { ChangeType, NewChangeInfo, Range, Side } from "./types";
 import { fail } from "./debug";
 import { LCSResult } from "./sequence";
 import { Iterator } from "./iterator";
-import { prettyRenderFn } from "./reporter";
+import { prettyRenderFn } from "./backend/printer";
 import { _context } from ".";
 
 export function getPrettyChangeType(type: ChangeType, withColor = false): string {

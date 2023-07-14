@@ -1,5 +1,5 @@
 import { getNodeForPrinting, getOppositeNodeKind, getSequence } from "./utils";
-import { colorFn, getSourceWithChange, k } from "./reporter";
+import { colorFn, getSourceWithChange, k } from "./backend/printer";
 import { Node } from "./data_structures/node";
 import { ChangeType, KindTable, Side } from "./types";
 import { _context } from ".";
