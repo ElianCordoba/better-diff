@@ -1,4 +1,4 @@
-import { getChanges } from "./main";
+import { computeDiff } from "./main";
 import { applyAlignments, applyChangesToSources, prettyRenderFn } from "./reporter";
 import { serialize } from "./serializer";
 import { Mode, SerializedResponse } from "./types";
@@ -48,32 +48,32 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
 
   _context = new Context(sourceA, sourceB);
 
-  const changes = getChanges(sourceA, sourceB);
+  const diff = computeDiff(sourceA, sourceB);
 
   switch (_options.outputType) {
     case OutputType.serializedChunks: {
       // deno-lint-ignore no-explicit-any
-      return serialize(sourceA, sourceB, changes) as any;
+      return serialize(sourceA, sourceB, diff) as any;
     }
 
     case OutputType.serializedAlignedChunks: {
-      const alignedResult = applyAlignments(sourceA, sourceB, changes);
+      const alignedResult = applyAlignments(sourceA, sourceB, diff);
       // deno-lint-ignore no-explicit-any
       return serialize(alignedResult.sourceA, alignedResult.sourceB, alignedResult.changes) as any;
     }
 
     case OutputType.text: {
       // deno-lint-ignore no-explicit-any
-      return applyChangesToSources(sourceA, sourceB, changes) as any;
+      return applyChangesToSources(sourceA, sourceB, diff) as any;
     }
 
     case OutputType.prettyText: {
       // deno-lint-ignore no-explicit-any
-      return applyChangesToSources(sourceA, sourceB, changes, prettyRenderFn) as any;
+      return applyChangesToSources(sourceA, sourceB, diff, prettyRenderFn) as any;
     }
 
     case OutputType.alignedText: {
-      const alignedResult = applyAlignments(sourceA, sourceB, changes);
+      const alignedResult = applyAlignments(sourceA, sourceB, diff);
       // deno-lint-ignore no-explicit-any
 
       if (options?.ignoreChangeMarkers) {

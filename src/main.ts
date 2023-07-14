@@ -9,7 +9,7 @@ import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from
 import { OpenCloseVerifier } from "./openCloseVerifier";
 import { LineAlignmentTable, compactAlignments, insertMoveAlignment, insertNewLineAlignment } from "./textAligner";
 
-export function getChanges(codeA: string, codeB: string): Change[] {
+export function computeDiff(codeA: string, codeB: string): Change[] {
   const changes: Change[] = [];
 
   const iterA = new Iterator({ side: Side.a, source: codeA });
