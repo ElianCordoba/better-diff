@@ -1,8 +1,8 @@
 import ts, { SourceFile } from "typescript";
-import { Node } from "./node";
-import { k } from "./reporter";
-import { _context, getOptions } from ".";
-import { KindTable, Side } from "./types";
+import { Node } from "../node";
+import { k } from "../reporter";
+import { _context, getOptions } from "..";
+import { KindTable, Side } from "../types";
 
 type TSNode = ts.Node & { text: string };
 

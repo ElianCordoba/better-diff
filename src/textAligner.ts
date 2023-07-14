@@ -1,5 +1,5 @@
 import { _context } from ".";
-import { getLineMap } from "./ts-util";
+import { getLineMap } from "./frontend/ts-util";
 import { ChangeType, Side, TypeMasks } from "./types";
 import { getSideFromChangeType, oppositeSide, range } from "./utils";
 import { Change } from "./change";

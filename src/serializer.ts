@@ -1,7 +1,7 @@
 import { Change } from "./change";
 import { ChangeType, Range, RenderInstruction, SerializedResponse, SourceChunk } from "./types";
 import { range } from "./utils";
-import { getLineMap } from "./ts-util";
+import { getLineMap } from "./frontend/ts-util";
 import { fail } from "./debug";
 import { _context } from "./index";
 
