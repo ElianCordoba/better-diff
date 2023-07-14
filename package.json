@@ -8,7 +8,7 @@
     "name": "Elian Cordoba"
   },
   "scripts": {
-    "test": "vitest --dir ./tests",
+    "test": "vitest -c ./vitest.config.js",
     "build": "tsc --watch",
     "check": "npm run format && npm run lint",
     "format": "deno fmt",

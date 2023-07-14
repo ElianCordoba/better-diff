@@ -6,51 +6,17 @@ import { Diff } from "../data_structures/diff";
 import { assert, fail } from "../debug";
 import { getUpdatedLineMap } from "../textAligner";
 
-//@ts-ignore TODO: Importing normally doesn't work with vitest
-// export const k = require("kleur");
-// export { default as k } from 'kleur'
-
-// import * as k from 'kleur/colors'
-
-// export { k }
-
-import * as k from 'kleur'
-export { k }
+import colorFn from "kleur";
 
 type RenderFn = (text: string) => string;
 
 export type DiffRendererFn = Record<ChangeType, RenderFn>;
 
-type Colors =
-  | "blue"
-  | "green"
-  | "magenta"
-  | "red"
-  | "yellow"
-  | "cyan"
-  | "black"
-  | "white"
-  | "grey";
-
-type ColorFns = Record<Colors, (text: string) => string>;
-
-export const colorFn: ColorFns = {
-  blue: k.blue,
-  green: k.green,
-  magenta: k.magenta,
-  red: k.red,
-  yellow: k.yellow,
-  cyan: k.cyan,
-  black: k.black,
-  white: k.white,
-  grey: k.grey,
-} as const;
-
 // Pretty print. Human readable
 export const prettyRenderFn: DiffRendererFn = {
   [ChangeType.deletion]: colorFn.red,
   [ChangeType.addition]: colorFn.green,
-  [ChangeType.move]: (text) => k.blue().underline(text),
+  [ChangeType.move]: (text) => colorFn.blue().underline(text),
 };
 
 // Testing friendly
