@@ -1,10 +1,11 @@
 import { computeDiff } from "./core/main";
 import { applyAlignments, applyChangesToSources, prettyRenderFn } from "./backend/printer";
 import { serialize } from "./backend/serializer";
-import { Mode, SerializedResponse, Side } from "./types";
+import { Mode, SerializedResponse } from "./types";
 import { fail } from "./debug";
 import { Context } from "./context";
 import { getParsedProgram } from "./frontend/typescript";
+import { Side } from "./shared/language";
 
 // These options have their own tests under the /tests/options folder
 export interface Options {

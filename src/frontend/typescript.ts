@@ -1,9 +1,8 @@
 import ts from "typescript";
 import { Node } from "../data_structures/node";
 import { _context, _options } from "..";
-import { KindTable, Side } from "../types";
 import { getIfNodeCanBeMatchedAlone, getLineMap, getLineNumber, getSourceFile } from "./utils";
-import { ParsedProgram } from "../shared/language";
+import { KindTable, ParsedProgram, Side } from "../shared/language";
 import colorFn from 'kleur'
 
 type TSNode = ts.Node & { text: string };

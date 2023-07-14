@@ -1,12 +1,13 @@
 import Table from "cli-table3";
 
 import { _context, _options } from "..";
-import { ChangeType, Side } from "../types";
+import { ChangeType } from "../types";
 import { Diff } from "../data_structures/diff";
 import { assert, fail } from "../debug";
 import { getUpdatedLineMap } from "../alignment/text_aligner";
 
 import colorFn from "kleur";
+import { Side } from "../shared/language";
 
 type RenderFn = (text: string) => string;
 

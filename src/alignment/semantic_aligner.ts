@@ -1,7 +1,8 @@
 import { _context } from "..";
 import { Diff } from "../data_structures/diff";
 import { assert } from "../debug";
-import { ChangeType, Side } from "../types";
+import { Side } from "../shared/language";
+import { ChangeType } from "../types";
 import { range } from "../utils";
 
 export interface Offset {

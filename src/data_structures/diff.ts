@@ -1,4 +1,4 @@
-import { ChangeType, Range, Side, TypeMasks } from "../types";
+import { ChangeType, Range, TypeMasks } from "../types";
 import { getSourceWithChange } from "../backend/printer";
 import { _context } from "../index";
 import { assert } from "../debug";
@@ -6,6 +6,7 @@ import { arraySum, getIterFromSide, getPrettyChangeType } from "../utils";
 import { Iterator } from "../core/iterator";
 import { LineAlignmentTable, insertAddOrDelAlignment } from "../alignment/text_aligner";
 import colorFn from 'kleur'
+import { Side } from "../shared/language";
 
 export class Diff<Type extends ChangeType = ChangeType> {
   rangeA: Range | undefined;

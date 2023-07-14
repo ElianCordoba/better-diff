@@ -1,5 +1,5 @@
 import { _context } from "..";
-import { ChangeType, Side, TypeMasks } from "../types";
+import { ChangeType, TypeMasks } from "../types";
 import { getSideFromChangeType, oppositeSide, range } from "../utils";
 import { Diff } from "../data_structures/diff";
 import { createTextTable } from "../backend/printer";
@@ -7,6 +7,7 @@ import { assert, fail } from "../debug";
 import { Iterator } from '../core/iterator'
 import { getLineMap } from "../frontend/utils";
 import colorFn from 'kleur'
+import { Side } from "../shared/language";
 
 // line number (one-based) -> line start position
 type LineMapTable = Map<number, number>;

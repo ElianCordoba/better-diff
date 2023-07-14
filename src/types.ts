@@ -1,18 +1,10 @@
-export enum Side {
-  a = "a",
-  b = "b",
-}
+
 
 export enum ChangeType {
   deletion = 1 << 0, // 1
   addition = 1 << 1, // 2
   move = 1 << 2, // 4
 }
-
-export type SyntaxKind = number;
-
-// A table with the syntax kind as the key an a set of indexes where an _unmatched_ node with that kind is found. Nodes get removed from the table as they get marked
-export type KindTable = Map<SyntaxKind, Set<number>>;
 
 export const TypeMasks = {
   AddOrDel: ChangeType.addition | ChangeType.deletion,
