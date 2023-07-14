@@ -11,7 +11,6 @@ export function getNodes(side: Side, source: string): { nodes: Node[]; kindTable
 
   const { warnOnInvalidCode, mode } = getOptions();
 
-  // deno-lint-ignore no-explicit-any
   if (warnOnInvalidCode && (sourceFile as any).parseDiagnostics.length > 0) {
     console.log(`
       ${k.yellow("Parse error found in the following code:")}
@@ -155,13 +154,11 @@ function getSourceFile(source: string): SourceFile {
 // [0, 1, 5, 10] means that the first line start at 0 and ends at 1 (non inclusive), next one start at 1 and ends at 5 and so on.
 export function getLineMap(source: string): number[] {
   const sourceFile = getSourceFile(source);
-  // deno-lint-ignore no-explicit-any
   return (ts as any).getLineStarts(sourceFile);
 }
 
 // Get the line number (1-indexed) of a given character
 function getLineNumber(sourceFile: ts.SourceFile, pos: number) {
-  // deno-lint-ignore no-explicit-any
   return (ts as any).getLineAndCharacterOfPosition(sourceFile, pos).line + 1;
 }
 

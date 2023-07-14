@@ -20,7 +20,6 @@ export function getPrettyChangeType(type: ChangeType, withColor = false): string
 }
 
 export function getPrettyKind(kind: number): string {
-  // deno-lint-ignore no-explicit-any
   return (ts as any).Debug.formatSyntaxKind(kind);
 }
 

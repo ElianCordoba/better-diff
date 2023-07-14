@@ -22,11 +22,9 @@ suite
   .add("Output noop, release mode", function () {
     getDiff(a, b, { outputType: OutputType.noop, mode: Mode.release });
   })
-  // deno-lint-ignore no-explicit-any
   .on("cycle", function (event: any) {
     console.log(String(event.target));
   })
-  // deno-lint-ignore no-explicit-any
   .on("complete", function (this: any) {
     console.log("Fastest is " + this.filter("fastest").map("name"));
   })

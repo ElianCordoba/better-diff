@@ -52,29 +52,24 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
 
   switch (_options.outputType) {
     case OutputType.serializedChunks: {
-      // deno-lint-ignore no-explicit-any
       return serialize(sourceA, sourceB, diff) as any;
     }
 
     case OutputType.serializedAlignedChunks: {
       const alignedResult = applyAlignments(sourceA, sourceB, diff);
-      // deno-lint-ignore no-explicit-any
       return serialize(alignedResult.sourceA, alignedResult.sourceB, alignedResult.changes) as any;
     }
 
     case OutputType.text: {
-      // deno-lint-ignore no-explicit-any
       return applyChangesToSources(sourceA, sourceB, diff) as any;
     }
 
     case OutputType.prettyText: {
-      // deno-lint-ignore no-explicit-any
       return applyChangesToSources(sourceA, sourceB, diff, prettyRenderFn) as any;
     }
 
     case OutputType.alignedText: {
       const alignedResult = applyAlignments(sourceA, sourceB, diff);
-      // deno-lint-ignore no-explicit-any
 
       if (options?.ignoreChangeMarkers) {
         return alignedResult as any
@@ -85,7 +80,6 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
     // Used mainly for benchmarking the core algorithm on it's own. Without this the total execution time of the `getDiff`
     // function will include the time it takes to do the reporting, which can be quite a lot
     case OutputType.noop: {
-      // deno-lint-ignore no-explicit-any
       return undefined as any;
     }
 
