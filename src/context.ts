@@ -1,7 +1,7 @@
 import { Diff } from "./data_structures/diff";
 import { Iterator } from "./core/iterator";
-import { TextAligner } from "./textAligner";
-import { OffsetTracker } from "./alignment/offset_tracker";
+import { TextAligner } from "./alignment/text_aligner";
+import { SemanticAligner } from "./alignment/semantic_aligner";
 import { ChangeType } from "./types";
 
 export class Context {
@@ -10,7 +10,7 @@ export class Context {
   iterB!: Iterator;
 
   matches: Diff<ChangeType.move>[] = [];
-  offsetTracker = new OffsetTracker();
+  semanticAligner = new SemanticAligner();
   textAligner = new TextAligner();
 
   constructor(

@@ -4,7 +4,7 @@ import { _context } from "../index";
 import { assert } from "../debug";
 import { arraySum, getIterFromSide, getPrettyChangeType } from "../utils";
 import { Iterator } from "../core/iterator";
-import { LineAlignmentTable, insertAddOrDelAlignment } from "../textAligner";
+import { LineAlignmentTable, insertAddOrDelAlignment } from "../alignment/text_aligner";
 import colorFn from 'kleur'
 
 export class Diff<Type extends ChangeType = ChangeType> {
@@ -157,7 +157,7 @@ export class Diff<Type extends ChangeType = ChangeType> {
   }
 
   applyOffset(): LineAlignmentTable {
-    const { offsetTracker } = _context;
+    const { semanticAligner } = _context;
     if (this.type === ChangeType.deletion) {
       // Alignment for deletions:
       //
@@ -173,9 +173,9 @@ export class Diff<Type extends ChangeType = ChangeType> {
       // 1          -
       // 2          2
       this.indexesA!.map((index) => {
-        _context.offsetTracker.add(Side.b, {
+        _context.semanticAligner.add(Side.b, {
           type: ChangeType.deletion,
-          index: offsetTracker.getOffset(Side.a, index),
+          index: semanticAligner.getOffset(Side.a, index),
           numberOfNewLines: this.getNewLines(),
           change: this,
         });
@@ -198,9 +198,9 @@ export class Diff<Type extends ChangeType = ChangeType> {
       // y          y
       // -          z
       this.indexesB!.map((index) => {
-        _context.offsetTracker.add(Side.a, {
+        _context.semanticAligner.add(Side.a, {
           type: ChangeType.addition,
-          index: offsetTracker.getOffset(Side.b, index),
+          index: semanticAligner.getOffset(Side.b, index),
           numberOfNewLines: this.getNewLines(),
           change: this,
         });

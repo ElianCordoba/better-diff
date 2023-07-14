@@ -1,11 +1,11 @@
-import { _context } from ".";
-import { ChangeType, Side, TypeMasks } from "./types";
-import { getSideFromChangeType, oppositeSide, range } from "./utils";
-import { Diff } from "./data_structures/diff";
-import { createTextTable } from "./backend/printer";
-import { assert, fail } from "./debug";
-import { Iterator } from './core/iterator'
-import { getLineMap } from "./frontend/utils";
+import { _context } from "..";
+import { ChangeType, Side, TypeMasks } from "../types";
+import { getSideFromChangeType, oppositeSide, range } from "../utils";
+import { Diff } from "../data_structures/diff";
+import { createTextTable } from "../backend/printer";
+import { assert, fail } from "../debug";
+import { Iterator } from '../core/iterator'
+import { getLineMap } from "../frontend/utils";
 import colorFn from 'kleur'
 
 // line number (one-based) -> line start position
@@ -389,7 +389,7 @@ export function insertNewLineAlignment(change: Diff, alignedChange: boolean) {
 // 3          3
 // -          1
 export function insertMoveAlignment(change: Diff, offsettedIndexA: number, offsettedIndexB: number) {
-  const { iterA, iterB, offsetTracker } = _context;
+  const { iterA, iterB, semanticAligner } = _context;
   const indexDiff = Math.abs(offsettedIndexA - offsettedIndexB);
 
   const firstIndexA = change.getFirstIndex(Side.a)
@@ -409,7 +409,7 @@ export function insertMoveAlignment(change: Diff, offsettedIndexA: number, offse
   function apply(side: Side, index: number, lineNumberStart: number, ignore = false) {
     // Apply semantic offset
     for (const i of range(index, index + indexDiff)) {
-      offsetTracker.add(side, { type: ChangeType.move, index: i, numberOfNewLines: 0 });
+      semanticAligner.add(side, { type: ChangeType.move, index: i, numberOfNewLines: 0 });
     }
 
     if (ignore) {

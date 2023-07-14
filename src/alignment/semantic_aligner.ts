@@ -14,7 +14,7 @@ export interface Offset {
 // number = index
 export type OffsetsMap = Map<number, Offset>;
 
-export class OffsetTracker {
+export class SemanticAligner {
   offsetsA: OffsetsMap = new Map();
   offsetsB: OffsetsMap = new Map();
 

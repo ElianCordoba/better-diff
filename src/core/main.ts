@@ -6,7 +6,7 @@ import { _context } from "../index";
 import { Node } from "../data_structures/node";
 import { assert } from "../debug";
 import { OpenCloseVerifier } from "../openCloseVerifier";
-import { LineAlignmentTable, compactAlignments, insertMoveAlignment, insertNewLineAlignment } from "../textAligner";
+import { LineAlignmentTable, compactAlignments, insertMoveAlignment, insertNewLineAlignment } from "../alignment/text_aligner";
 import { ParsedProgram } from "../shared/language";
 import { findBestMatch } from "./find_diffs";
 
@@ -165,7 +165,7 @@ function processAddAndDel(additions: Diff[], deletions: Diff[]) {
 // b  ◄──┘    -
 function processMoves(matches: Diff[]) {
   const changes: Diff[] = [];
-  const { offsetTracker } = _context;
+  const { semanticAligner } = _context;
 
   const sortedMatches = matches.sort((a, b) => a.getWeight() < b.getWeight() ? 1 : -1);
 
@@ -191,8 +191,8 @@ function processMoves(matches: Diff[]) {
     const indexA = match.getFirstIndex(Side.a);
     const indexB = match.getFirstIndex(Side.b);
 
-    const offsettedIndexA = offsetTracker.getOffset(Side.a, indexA);
-    const offsettedIndexB = offsetTracker.getOffset(Side.b, indexB);
+    const offsettedIndexA = semanticAligner.getOffset(Side.a, indexA);
+    const offsettedIndexB = semanticAligner.getOffset(Side.b, indexB);
 
     // If the nodes are aligned after calculating the offset means that there is no extra work needed
     if (offsettedIndexA === offsettedIndexB) {
@@ -203,7 +203,7 @@ function processMoves(matches: Diff[]) {
 
     // There are two outcomes, if the match can be aligned, we add the corresponding alignments and move on.
     // If it can't be aligned then we report a move
-    const canMoveBeAligned = offsetTracker.moveCanGetAligned(offsettedIndexA, offsettedIndexB);
+    const canMoveBeAligned = semanticAligner.moveCanGetAligned(offsettedIndexA, offsettedIndexB);
 
     if (!didApplyFormatAlignment) {
       insertNewLineAlignment(match, canMoveBeAligned);
