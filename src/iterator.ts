@@ -4,7 +4,7 @@ import { Node } from "./node";
 import { ChangeType, KindTable, Side } from "./types";
 import { _context } from ".";
 import { OpenCloseStack } from "./openCloseVerifier";
-import { getNodesArray } from "./ts-util";
+import { getNodes } from "./ts-util";
 
 interface IteratorOptions {
   side: Side;
@@ -21,7 +21,7 @@ export class Iterator {
   private indexOfLastItem = 0;
 
   constructor({ side, source }: IteratorOptions) {
-    const { nodes, kindTable } = getNodesArray(side, source);
+    const { nodes, kindTable } = getNodes(side, source);
     this.side = side;
     this.textNodes = nodes;
     this.kindTable = kindTable;
