@@ -7,39 +7,6 @@ import { Context } from "./context";
 import { getParsedProgram } from "./frontend/typescript";
 import { Side } from "./shared/language";
 
-// These options have their own tests under the /tests/options folder
-export interface Options {
-  mode?: Mode;
-
-  outputType?: OutputType;
-
-  warnOnInvalidCode?: boolean;
-
-  // For testing and debugging mostly
-  alignmentText?: string;
-
-  // If enable, the emojis / text coloring will be ignored. Useful when testing alignments
-  ignoreChangeMarkers?: boolean;
-}
-
-export enum OutputType {
-  serializedChunks,
-  serializedAlignedChunks,
-  text,
-  prettyText,
-  alignedText,
-  noop,
-}
-
-interface ResultTypeMapper {
-  [OutputType.serializedChunks]: SerializedResponse;
-  [OutputType.serializedAlignedChunks]: SerializedResponse;
-  [OutputType.text]: { sourceA: string; sourceB: string };
-  [OutputType.prettyText]: { sourceA: string; sourceB: string };
-  [OutputType.alignedText]: { sourceA: string; sourceB: string };
-  [OutputType.noop]: void;
-}
-
 export function getDiff<_OutputType extends OutputType = OutputType.text>(
   sourceA: string,
   sourceB: string,
@@ -93,6 +60,39 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
       fail(`Unknown output type "${assert}"`);
     }
   }
+}
+
+export enum OutputType {
+  serializedChunks,
+  serializedAlignedChunks,
+  text,
+  prettyText,
+  alignedText,
+  noop,
+}
+
+interface ResultTypeMapper {
+  [OutputType.serializedChunks]: SerializedResponse;
+  [OutputType.serializedAlignedChunks]: SerializedResponse;
+  [OutputType.text]: { sourceA: string; sourceB: string };
+  [OutputType.prettyText]: { sourceA: string; sourceB: string };
+  [OutputType.alignedText]: { sourceA: string; sourceB: string };
+  [OutputType.noop]: void;
+}
+
+// These options have their own tests under the /tests/options folder
+export interface Options {
+  mode?: Mode;
+
+  outputType?: OutputType;
+
+  warnOnInvalidCode?: boolean;
+
+  // For testing and debugging mostly
+  alignmentText?: string;
+
+  // If enable, the emojis / text coloring will be ignored. Useful when testing alignments
+  ignoreChangeMarkers?: boolean;
 }
 
 const defaultOptions: Options = {
