@@ -8,11 +8,11 @@
     "name": "Elian Cordoba"
   },
   "scripts": {
-    "test": "vitest --dir ./tests",
+    "test": "vitest -c ./vitest.config.js",
     "build": "tsc --watch",
     "check": "npm run format && npm run lint",
-    "format": "deno fmt --line-width 300 --ignore=node_modules,diff,internal,dist,tests,ui,scripts",
-    "lint": "deno lint --ignore=node_modules,diff,internal,dist,tests,ui,scripts",
+    "format": "deno fmt",
+    "lint": "deno lint",
     "startServer": "tsx src/server.ts",
     "start": "node dist/src/server.js",
     "ui": "npm run  dev --prefix ./ui",

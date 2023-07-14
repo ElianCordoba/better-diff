@@ -1,61 +1,15 @@
-import Table from "cli-table3";
+import { _context, _options } from "..";
+import { DiffType } from "../types";
+import { Diff } from "../data_structures/diff";
+import { asciiRenderFn, assert, fail, RenderFn } from "../debug";
+import { getUpdatedLineMap } from "../alignment/text_aligner";
 
-import { _context, getOptions } from ".";
-import { ChangeType, Side } from "../src/types";
-import { Change } from "./change";
-import { assert, fail } from "./debug";
-import { getUpdatedLineMap } from "./textAligner";
-
-//@ts-ignore TODO: Importing normally doesn't work with vitest
-export const k = require("kleur");
-
-type RenderFn = (text: string) => string;
-
-export type DiffRendererFn = Record<ChangeType, RenderFn>;
-
-type Colors =
-  | "blue"
-  | "green"
-  | "magenta"
-  | "red"
-  | "yellow"
-  | "cyan"
-  | "black"
-  | "white"
-  | "grey";
-
-type ColorFns = Record<Colors, (text: string) => string>;
-
-export const colorFn: ColorFns = {
-  blue: k.blue,
-  green: k.green,
-  magenta: k.magenta,
-  red: k.red,
-  yellow: k.yellow,
-  cyan: k.cyan,
-  black: k.black,
-  white: k.white,
-  grey: k.grey,
-} as const;
-
-// Pretty print. Human readable
-export const prettyRenderFn: DiffRendererFn = {
-  [ChangeType.deletion]: colorFn.red,
-  [ChangeType.addition]: colorFn.green,
-  [ChangeType.move]: (text) => k.blue().underline(text),
-};
-
-// Testing friendly
-export const asciiRenderFn: DiffRendererFn = {
-  [ChangeType.deletion]: (text) => `➖${text}➖`,
-  [ChangeType.addition]: (text) => `➕${text}➕`,
-  [ChangeType.move]: (text) => `⏩${text}⏪`,
-};
+import { Side } from "../shared/language";
 
 export function applyChangesToSources(
   sourceA: string,
   sourceB: string,
-  changes: Change[],
+  changes: Diff[],
   renderFn = asciiRenderFn,
 ) {
   let charsA = sourceA.split("");
@@ -66,35 +20,35 @@ export function applyChangesToSources(
 
   for (const { rangeA, rangeB, type } of changes) {
     switch (type) {
-      case ChangeType.addition: {
+      case DiffType.addition: {
         const { start, end } = rangeB!;
         charsB = getSourceWithChange(
           charsB,
           start,
           end,
-          renderFn[ChangeType.addition],
+          renderFn[DiffType.addition],
         );
         break;
       }
 
-      case ChangeType.deletion: {
+      case DiffType.deletion: {
         const { start, end } = rangeA!;
         charsA = getSourceWithChange(
           charsA,
           start,
           end,
-          renderFn[ChangeType.deletion],
+          renderFn[DiffType.deletion],
         );
         break;
       }
 
-      case ChangeType.move: {
+      case DiffType.move: {
         const resultA = rangeA!;
         charsA = getSourceWithChange(
           charsA,
           resultA.start,
           resultA.end,
-          renderFn[ChangeType.move],
+          renderFn[DiffType.move],
         );
 
         const resultB = rangeB!;
@@ -102,7 +56,7 @@ export function applyChangesToSources(
           charsB,
           resultB.start,
           resultB.end,
-          renderFn[ChangeType.move],
+          renderFn[DiffType.move],
         );
 
         moveCounter++;
@@ -149,7 +103,7 @@ export function getComplimentArray(length: number, fillInCharacter = ""): string
   return new Array(length).fill(fillInCharacter);
 }
 
-export function applyAlignments(sourceA: string, sourceB: string, changes: Change[]): { sourceA: string; sourceB: string; changes: Change[] } {
+export function applyAlignments(sourceA: string, sourceB: string, changes: Diff[]): { sourceA: string; sourceB: string; changes: Diff[] } {
   // Handy for debugging
   // _context.textAligner.draw()
 
@@ -163,18 +117,18 @@ export function applyAlignments(sourceA: string, sourceB: string, changes: Chang
   };
 }
 
-export function getTextAligned(side: Side, changes: Change[]) {
+export function getTextAligned(side: Side, changes: Diff[]) {
   const { textAligner, sourceA, sourceB } = _context;
   const lineOffsets = textAligner[side];
 
   let source = side === Side.a ? sourceA : sourceB;
-  const lines = source.split('\n')
+  const lines = source.split("\n");
 
   if (lineOffsets.size === 0) {
     return source;
   }
 
-  const alignmentText = getOptions().alignmentText;
+  const alignmentText = _options.alignmentText;
   let lineMap = new Map(textAligner.getLineMap(side));
 
   for (const { lineNumber } of lineOffsets.values()) {
@@ -196,7 +150,7 @@ export function getTextAligned(side: Side, changes: Change[]) {
     updateChanges(changes, side, lineMap.get(lineNumber)!);
   }
 
-  source = lines.join('\n')
+  source = lines.join("\n");
   lineMap = getUpdatedLineMap(source);
 
   return source;
@@ -205,11 +159,11 @@ export function getTextAligned(side: Side, changes: Change[]) {
 // Iterate for each change
 // Only take the ones with the proper range
 // Only take the ones that happen after the start pos
-function updateChanges(changes: Change[], sideToUpdate: Side, startPosition: number) {
-  const textAlignmentLength = getOptions().alignmentText.length + 1;
+function updateChanges(changes: Diff[], sideToUpdate: Side, startPosition: number) {
+  const textAlignmentLength = _options.alignmentText.length + 1;
 
   // Side where the alignment happened, thus the side we need to recalculate the ranges of the changes
-  const changesToSkip = sideToUpdate === Side.a ? ChangeType.addition : ChangeType.deletion;
+  const changesToSkip = sideToUpdate === Side.a ? DiffType.addition : DiffType.deletion;
   const rangeToUpdate = sideToUpdate === Side.a ? "rangeA" : "rangeB";
 
   for (let i = 0; i < changes.length; i++) {
@@ -226,40 +180,4 @@ function updateChanges(changes: Change[], sideToUpdate: Side, startPosition: num
 
     changes[i] = change;
   }
-}
-
-const _defaultTextTableOptions = {
-  lineCounterStartAt: 1
-}
-
-export function createTextTable(
-  sourceA: string,
-  sourceB: string,
-  options?: typeof _defaultTextTableOptions
-) {
-  const parsedOptions = { ..._defaultTextTableOptions, ...options }
-
-  const aLines = sourceA.split("\n");
-  const bLines = sourceB.split("\n");
-  const maxLength = Math.max(aLines.length, bLines.length);
-
-  const table = new Table({
-    head: [colorFn.yellow("Nº"), colorFn.red("Source"), colorFn.green("Revision")],
-    colAligns: ["left", "left"],
-    colWidths: [5, 30, 30],
-    style: {
-      compact: true,
-    },
-  });
-
-  let lineNumber = parsedOptions.lineCounterStartAt;
-  for (let i = 0; i < maxLength; i++) {
-    const aLine = aLines[i] || "";
-    const bLine = bLines[i] || "";
-
-    table.push([lineNumber, aLine, bLine]);
-    lineNumber++;
-  }
-
-  return table.toString();
 }

@@ -1,14 +1,55 @@
-import { Change } from "./change";
-import { ChangeType, Range, RenderInstruction, SerializedResponse, SourceChunk } from "./types";
-import { range } from "./utils";
-import { getLineMap } from "./ts-util";
-import { fail } from "./debug";
-import { _context } from "./index";
+import { Diff } from "../data_structures/diff";
+import { DiffType, Range } from "../types";
+import { range } from "../utils";
+import { fail } from "../debug";
+import { _context } from "../index";
+import { getLineMap } from "../frontend/utils";
+
+// This is the data structure that it's sent to the frontend to display the diffs, it's an array of arrays of chunks, where the first level represents a line in the source code and it's sub-arrays represent the chunks of code of that line:
+//
+// - Code: `
+//   console.log(123)
+//   return 1 + 2
+// `
+//
+// - Server response:
+// [
+//   (line 1)
+//   [
+//     { text: "console.log(123)", type: RenderInstruction.default }
+//   ],
+//
+//   (line 2)
+//   [
+//     { text: "return", type: RenderInstruction.default },
+//     { text: "1 + 2", type: RenderInstruction.addition }
+//   ],
+// ]
+export interface SerializedResponse {
+  chunksA: SourceChunk[][];
+  chunksB: SourceChunk[][];
+}
+
+interface SourceChunk {
+  type: RenderInstruction;
+  text: string;
+  moveNumber: string;
+}
+
+enum RenderInstruction {
+  // No text decoration
+  default = "default",
+
+  // Text with color
+  addition = "addition",
+  deletion = "deletion",
+  move = "move",
+}
 
 export function serialize(
   a: string,
   b: string,
-  changes: Change[],
+  diffs: Diff[],
 ): SerializedResponse {
   const charsA = getChars(a);
   const charsB = getChars(b);
@@ -20,22 +61,22 @@ export function serialize(
   // (Emojis wont be present, is just to denote the added code), we will end up with
   // [ "p", "r", "i", "n", "t", " "] as characters with type "default", meaning that they are unchanged and ["'", "h", "i", "'"] as characters added
   // later, we will merge together the characters into chunks of same type
-  for (let i = 0; i < changes.length; i++) {
-    const { type, rangeA, rangeB, indexesA } = changes[i];
+  for (let i = 0; i < diffs.length; i++) {
+    const { type, rangeA, rangeB, indexesA } = diffs[i];
 
     switch (type) {
-      case ChangeType.deletion: {
+      case DiffType.deletion: {
         markChars(RenderInstruction.deletion, rangeA!, charsA);
         break;
       }
 
-      case ChangeType.addition: {
+      case DiffType.addition: {
         markChars(RenderInstruction.addition, rangeB!, charsB);
         break;
       }
 
-      case ChangeType.move: {
-        const moveNumber = _context.iterA.textNodes[indexesA?.at(0)!].matchNumber;
+      case DiffType.move: {
+        const moveNumber = _context.iterA.nodes[indexesA?.at(0)!].matchNumber;
         markChars(RenderInstruction.move, rangeA!, charsA, moveNumber);
         markChars(RenderInstruction.move, rangeB!, charsB, moveNumber);
         break;

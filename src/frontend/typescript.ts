@@ -1,20 +1,21 @@
-import ts, { SourceFile } from "typescript";
-import { Node } from "./node";
-import { k } from "./reporter";
-import { _context, getOptions } from ".";
-import { KindTable, Side } from "./types";
+import ts from "typescript";
+import { Node } from "../data_structures/node";
+import { _context, _options } from "..";
+import { getIfNodeCanBeMatchedAlone, getLineMap, getLineNumber, getSourceFile } from "./utils";
+import { KindTable, ParsedProgram, Side } from "../shared/language";
+import colorFn from "kleur";
+import { fail } from "../debug";
 
 type TSNode = ts.Node & { text: string };
 
-export function getNodesArray(side: Side, source: string): { nodes: Node[]; kindTable: KindTable } {
+export function getParsedProgram(side: Side, source: string): ParsedProgram {
   const sourceFile = getSourceFile(source);
 
-  const { warnOnInvalidCode, mode } = getOptions();
+  const { warnOnInvalidCode, mode } = _options;
 
-  // deno-lint-ignore no-explicit-any
   if (warnOnInvalidCode && (sourceFile as any).parseDiagnostics.length > 0) {
     console.log(`
-      ${k.yellow("Parse error found in the following code:")}
+      ${colorFn.yellow("Parse error found in the following code:")}
       "${source}"
     `);
   }
@@ -100,8 +101,6 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
       kindTable.set(node.kind, new Set([i]));
     }
 
-    //
-
     const line = node.lineNumberStart;
 
     if (nodesPerLine.has(line)) {
@@ -109,8 +108,6 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
     } else {
       nodesPerLine.set(line, new Set([node.index]));
     }
-
-    //
 
     i++;
   }
@@ -137,43 +134,58 @@ export function getNodesArray(side: Side, source: string): { nodes: Node[]; kind
   return {
     nodes,
     kindTable,
+    side,
   };
 }
 
-function getSourceFile(source: string): SourceFile {
-  return ts.createSourceFile(
-    "source.ts",
-    source,
-    ts.ScriptTarget.ESNext,
-    true,
-  );
+export function getOppositeNodeKind({ kind, prettyKind }: Node): number {
+  switch (kind) {
+    // {
+    case ts.SyntaxKind.OpenBraceToken:
+      return ts.SyntaxKind.CloseBraceToken;
+    // }
+    case ts.SyntaxKind.CloseBraceToken:
+      return ts.SyntaxKind.OpenBraceToken;
+    // [
+    case ts.SyntaxKind.OpenBracketToken:
+      return ts.SyntaxKind.CloseBracketToken;
+    // ]
+    case ts.SyntaxKind.CloseBracketToken:
+      return ts.SyntaxKind.OpenBracketToken;
+    // (
+    case ts.SyntaxKind.OpenParenToken:
+      return ts.SyntaxKind.CloseParenToken;
+    // )
+    case ts.SyntaxKind.CloseParenToken:
+      return ts.SyntaxKind.OpenParenToken;
+
+    default: {
+      fail(`Unknown kind ${prettyKind}`);
+    }
+  }
 }
 
-// All the bellow defined functions are wrappers of TS functions. This is because the underling TS is marked as internal thus there is no type information available
-
-// An array of the positions (of characters) at which the lines in the source code start, for example:
-// [0, 1, 5, 10] means that the first line start at 0 and ends at 1 (non inclusive), next one start at 1 and ends at 5 and so on.
-export function getLineMap(source: string): number[] {
-  const sourceFile = getSourceFile(source);
-  // deno-lint-ignore no-explicit-any
-  return (ts as any).getLineStarts(sourceFile);
+export enum ClosingNodeGroup {
+  Paren = "Paren",
+  Brace = "Brace",
+  Bracket = "Bracket",
 }
 
-// Get the line number (1-indexed) of a given character
-function getLineNumber(sourceFile: ts.SourceFile, pos: number) {
-  // deno-lint-ignore no-explicit-any
-  return (ts as any).getLineAndCharacterOfPosition(sourceFile, pos).line + 1;
-}
+export function getClosingNodeGroup(node: Node): ClosingNodeGroup {
+  switch (node.kind) {
+    case ts.SyntaxKind.OpenParenToken:
+    case ts.SyntaxKind.CloseParenToken:
+      return ClosingNodeGroup.Paren;
 
-function getIfNodeCanBeMatchedAlone(kind: number) {
-  const isLiteral = kind >= ts.SyntaxKind.FirstLiteralToken && kind <= ts.SyntaxKind.LastLiteralToken;
-  const isIdentifier = kind === ts.SyntaxKind.Identifier || kind === ts.SyntaxKind.PrivateIdentifier;
-  const isTemplate = kind === ts.SyntaxKind.FirstTemplateToken || kind === ts.SyntaxKind.LastTemplateToken;
-  const other = kind === ts.SyntaxKind.DebuggerKeyword;
+    case ts.SyntaxKind.OpenBraceToken:
+    case ts.SyntaxKind.CloseBraceToken:
+      return ClosingNodeGroup.Brace;
 
-  if (isLiteral || isIdentifier || isTemplate || other) {
-    return true;
-  } else {
-    return false;
+    case ts.SyntaxKind.OpenBracketToken:
+    case ts.SyntaxKind.CloseBracketToken:
+      return ClosingNodeGroup.Bracket;
+
+    default:
+      fail(`Unknown node kind ${node.prettyKind}`);
   }
 }

@@ -1,7 +1,8 @@
 import { SyntaxKind } from "typescript";
-import { getNodeForPrinting } from "./utils";
-import { ChangeType, Mode, Range, Side } from "./types";
-import { _context } from ".";
+import { DiffType, Mode, Range } from "../types";
+import { _context } from "..";
+import { Side } from "../shared/language";
+import { getNodeForPrinting } from "../debug";
 
 interface NodeArgs {
   side: Side;
@@ -36,7 +37,7 @@ export class Node {
   isClosingNode = false;
 
   // For printing proposes
-  markedAs?: ChangeType;
+  markedAs?: DiffType;
   constructor(args: NodeArgs) {
     const { side, start, end, kind, lineNumberStart, lineNumberEnd, text, mode, numberOfNewlines } = args;
 
@@ -66,9 +67,9 @@ export class Node {
     };
   }
 
-  getOffsettedLineNumber(read: 'start' | 'end' = 'start') {
-    const readFrom = read === 'start' ? 'lineNumberStart' : 'lineNumberEnd'
-    return _context.textAligner.getOffsettedLineNumber(this.side, this[readFrom])
+  getOffsettedLineNumber(read: "start" | "end" = "start") {
+    const readFrom = read === "start" ? "lineNumberStart" : "lineNumberEnd";
+    return _context.textAligner.getOffsettedLineNumber(this.side, this[readFrom]);
   }
 
   draw() {

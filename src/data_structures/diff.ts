@@ -1,12 +1,14 @@
-import { ChangeType, Range, Side, TypeMasks } from "./types";
-import { colorFn, getSourceWithChange } from "./reporter";
-import { _context } from "./index";
-import { assert } from "./debug";
-import { arraySum, getIterFromSide, getPrettyChangeType } from "./utils";
-import { Iterator } from "./iterator";
-import { LineAlignmentTable, insertAddOrDelAlignment } from "./textAligner";
+import { DiffType, Range, TypeMasks } from "../types";
+import { getSourceWithChange } from "../backend/printer";
+import { _context } from "../index";
+import { assert, getPrettyChangeType } from "../debug";
+import { arraySum, getIterFromSide } from "../utils";
+import { Iterator } from "../core/iterator";
+import { insertAddOrDelAlignment, LineAlignmentTable } from "../alignment/text_aligner";
+import colorFn from "kleur";
+import { Side } from "../shared/language";
 
-export class Change<Type extends ChangeType = ChangeType> {
+export class Diff<Type extends DiffType = DiffType> {
   rangeA: Range | undefined;
   rangeB: Range | undefined;
 
@@ -23,12 +25,12 @@ export class Change<Type extends ChangeType = ChangeType> {
     indexesOne: number[],
     indexesTwo?: number[],
   ) {
-    if (type === ChangeType.move) {
+    if (type === DiffType.move) {
       this.indexesA = indexesOne;
       this.indexesB = indexesTwo!;
 
       assert(this.indexesA.length === this.indexesB.length);
-    } else if (type === ChangeType.deletion) {
+    } else if (type === DiffType.deletion) {
       this.indexesA = indexesOne;
     } else {
       this.indexesB = indexesOne;
@@ -62,7 +64,7 @@ export class Change<Type extends ChangeType = ChangeType> {
     const indexes = side === Side.a ? this.indexesA : this.indexesB;
     const iter = side === Side.a ? _context.iterA : _context.iterB;
 
-    this._weight = arraySum(indexes!.map((i) => iter.textNodes[i].text.length));
+    this._weight = arraySum(indexes!.map((i) => iter.nodes[i].text.length));
 
     return this._weight;
   }
@@ -80,20 +82,20 @@ export class Change<Type extends ChangeType = ChangeType> {
     const indexes = side === Side.a ? this.indexesA : this.indexesB;
     const iter = side === Side.a ? _context.iterA : _context.iterB;
 
-    this._newLines = arraySum(indexes!.map((i) => iter.textNodes[i].numberOfNewlines));
+    this._newLines = arraySum(indexes!.map((i) => iter.nodes[i].numberOfNewlines));
 
     return this._newLines;
   }
 
   getWidth(side: Side) {
     const indexes = side === Side.a ? this.indexesA : this.indexesB;
-    const iter = getIterFromSide(side)
+    const iter = getIterFromSide(side);
 
-    const lineStart = iter.textNodes[indexes[0]].lineNumberStart
-    const lineEnd = iter.textNodes[indexes.at(-1)!].lineNumberEnd
-    const newLines = this.getNewLines(side)
+    const lineStart = iter.nodes[indexes[0]].lineNumberStart;
+    const lineEnd = iter.nodes[indexes.at(-1)!].lineNumberEnd;
+    const newLines = this.getNewLines(side);
 
-    return (lineEnd - lineStart) + 1 + newLines
+    return (lineEnd - lineStart) + 1 + newLines;
   }
 
   getFirstIndex(side?: Side) {
@@ -105,17 +107,17 @@ export class Change<Type extends ChangeType = ChangeType> {
   }
 
   getOffsettedLineStart(side: Side) {
-    const index = this.getFirstIndex(side)
-    const iter = getIterFromSide(side)
+    const index = this.getFirstIndex(side);
+    const iter = getIterFromSide(side);
 
-    return iter.textNodes[index].getOffsettedLineNumber('start')
+    return iter.nodes[index].getOffsettedLineNumber("start");
   }
 
   getOffsettedLineEnd(side: Side) {
-    const index = this.getLastIndex(side)
-    const iter = getIterFromSide(side)
+    const index = this.getLastIndex(side);
+    const iter = getIterFromSide(side);
 
-    return iter.textNodes[index].getOffsettedLineNumber('end')
+    return iter.nodes[index].getOffsettedLineNumber("end");
   }
 
   private getIndex(side: Side, position: number): number {
@@ -128,22 +130,22 @@ export class Change<Type extends ChangeType = ChangeType> {
     if (passedInSide) {
       return passedInSide;
     } else {
-      return this.type === ChangeType.deletion ? Side.a : Side.b;
+      return this.type === DiffType.deletion ? Side.a : Side.b;
     }
   }
 
   getNodesPerLine(side: Side) {
-    const indexes = side === Side.a ? this.indexesA : this.indexesB
-    const iter = getIterFromSide(side)
+    const indexes = side === Side.a ? this.indexesA : this.indexesB;
+    const iter = getIterFromSide(side);
 
     const nodesPerLine: Map<number, Set<number>> = new Map();
 
     for (const i of indexes) {
-      const node = iter.textNodes[i];
+      const node = iter.nodes[i];
 
       assert(node);
 
-      const line = node.getOffsettedLineNumber('start');
+      const line = node.getOffsettedLineNumber("start");
 
       if (nodesPerLine.has(line)) {
         nodesPerLine.get(line)!.add(node.index);
@@ -152,12 +154,12 @@ export class Change<Type extends ChangeType = ChangeType> {
       }
     }
 
-    return nodesPerLine
+    return nodesPerLine;
   }
 
   applyOffset(): LineAlignmentTable {
-    const { offsetTracker } = _context;
-    if (this.type === ChangeType.deletion) {
+    const { semanticAligner } = _context;
+    if (this.type === DiffType.deletion) {
       // Alignment for deletions:
       //
       // A          B
@@ -172,15 +174,15 @@ export class Change<Type extends ChangeType = ChangeType> {
       // 1          -
       // 2          2
       this.indexesA!.map((index) => {
-        _context.offsetTracker.add(Side.b, {
-          type: ChangeType.deletion,
-          index: offsetTracker.getOffset(Side.a, index),
+        _context.semanticAligner.add(Side.b, {
+          type: DiffType.deletion,
+          index: semanticAligner.getOffset(Side.a, index),
           numberOfNewLines: this.getNewLines(),
           change: this,
         });
       });
 
-      return insertAddOrDelAlignment(this)
+      return insertAddOrDelAlignment(this);
     } else {
       // Alignment for additions:
       //
@@ -197,15 +199,15 @@ export class Change<Type extends ChangeType = ChangeType> {
       // y          y
       // -          z
       this.indexesB!.map((index) => {
-        _context.offsetTracker.add(Side.a, {
-          type: ChangeType.addition,
-          index: offsetTracker.getOffset(Side.b, index),
+        _context.semanticAligner.add(Side.a, {
+          type: DiffType.addition,
+          index: semanticAligner.getOffset(Side.b, index),
           numberOfNewLines: this.getNewLines(),
           change: this,
         });
       });
 
-      return insertAddOrDelAlignment(this)
+      return insertAddOrDelAlignment(this);
     }
   }
 
@@ -213,7 +215,7 @@ export class Change<Type extends ChangeType = ChangeType> {
     const indexes = side === Side.a ? this.indexesA : this.indexesB;
     const iter = getIterFromSide(side);
 
-    return indexes.map((i) => iter.textNodes[i].text).join(" ");
+    return indexes.map((i) => iter.nodes[i].text).join(" ");
   }
 
   draw() {
@@ -229,7 +231,7 @@ export class Change<Type extends ChangeType = ChangeType> {
     if (this.rangeA) {
       console.log("----A----");
 
-      const renderFn = this.type === ChangeType.move ? colorFn.yellow : colorFn.red;
+      const renderFn = this.type === DiffType.move ? colorFn.yellow : colorFn.red;
 
       console.log(
         getSourceWithChange(
@@ -245,7 +247,7 @@ export class Change<Type extends ChangeType = ChangeType> {
     if (this.rangeB) {
       console.log("----B----");
 
-      const renderFn = this.type === ChangeType.move ? colorFn.yellow : colorFn.green;
+      const renderFn = this.type === DiffType.move ? colorFn.yellow : colorFn.green;
 
       console.log(
         getSourceWithChange(
@@ -274,14 +276,14 @@ function indexesCompatible(a: number[], b: number[]): boolean {
   }
 }
 
-export function compactChanges(type: ChangeType.deletion | ChangeType.addition, _changes: (Change & { seen?: boolean })[]) {
+export function compactChanges(type: DiffType.deletion | DiffType.addition, _changes: (Diff & { seen?: boolean })[]) {
   if (!_changes.length) {
     return [];
   }
 
   assert(type & TypeMasks.AddOrDel);
 
-  const indexesProp = type === ChangeType.deletion ? "indexesA" : "indexesB";
+  const indexesProp = type === DiffType.deletion ? "indexesA" : "indexesB";
   const sortedChanges = _changes.sort((a, b) => {
     const indexA = a.getFirstIndex();
     const indexB = b.getFirstIndex();
@@ -289,19 +291,19 @@ export function compactChanges(type: ChangeType.deletion | ChangeType.addition, 
     return indexA < indexB ? -1 : 1;
   });
 
-  const finalChanges: Change[] = [];
+  const finalChanges: Diff[] = [];
 
   for (let index = 0; index < sortedChanges.length; index++) {
-    let current = sortedChanges[index];
-    let next = sortedChanges[index + 1];
+    const current = sortedChanges[index];
+    const next = sortedChanges[index + 1];
 
     if (!next) {
       finalChanges.push(current);
       break;
     }
 
-    let currentIndexes = current[indexesProp];
-    let nextIndexes = next[indexesProp];
+    const currentIndexes = current[indexesProp];
+    const nextIndexes = next[indexesProp];
 
     if (!indexesCompatible(currentIndexes, nextIndexes)) {
       finalChanges.push(current);
@@ -314,7 +316,6 @@ export function compactChanges(type: ChangeType.deletion | ChangeType.addition, 
 
     // Values to accumulate
     const indexes = [...currentIndexes, ...nextIndexes]; // Skip first two entries since we know they are compatible
-    const closingNodeIndexes: number[] = [];
 
     innerLoop:
     while (true) {
@@ -340,7 +341,7 @@ export function compactChanges(type: ChangeType.deletion | ChangeType.addition, 
       innerCursor++;
     }
 
-    const newChange = new Change(
+    const newChange = new Diff(
       type,
       indexes,
     );
@@ -385,7 +386,7 @@ function getRange(iter: Iterator, indexes: number[]): Range {
   const endIndex = indexes.at(-1)!;
 
   return {
-    start: iter.textNodes[startIndex].start,
-    end: iter.textNodes[endIndex].end,
+    start: iter.nodes[startIndex].start,
+    end: iter.nodes[endIndex].end,
   };
 }

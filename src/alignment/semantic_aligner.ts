@@ -1,20 +1,21 @@
-import { _context } from ".";
-import { Change } from "./change";
-import { assert } from "./debug";
-import { ChangeType, Side } from "./types";
-import { range } from "./utils";
+import { _context } from "..";
+import { Diff } from "../data_structures/diff";
+import { assert } from "../debug";
+import { Side } from "../shared/language";
+import { DiffType } from "../types";
+import { range } from "../utils";
 
 export interface Offset {
   index: number;
-  type: ChangeType;
+  type: DiffType;
   numberOfNewLines: number;
-  change?: Change;
+  change?: Diff;
 }
 
 // number = index
 export type OffsetsMap = Map<number, Offset>;
 
-export class OffsetTracker {
+export class SemanticAligner {
   offsetsA: OffsetsMap = new Map();
   offsetsB: OffsetsMap = new Map();
 
@@ -97,7 +98,7 @@ export class OffsetTracker {
 
       // The offset trackers contains allegement from all the change types, but when it comes to movement alignment
       //  we are only interested in the ones coming from`moves`
-      if (!offset || offset.type !== ChangeType.move) {
+      if (!offset || offset.type !== DiffType.move) {
         continue;
       }
 

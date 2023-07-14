@@ -1,36 +1,33 @@
-import { getNodeForPrinting, getOppositeNodeKind, getSequence } from "./utils";
-import { colorFn, getSourceWithChange, k } from "./reporter";
-import { Node } from "./node";
-import { ChangeType, KindTable, Side } from "./types";
-import { _context } from ".";
-import { OpenCloseStack } from "./openCloseVerifier";
-import { getNodesArray } from "./ts-util";
-
-interface IteratorOptions {
-  side: Side;
-  source: string;
-}
+import { getSequence } from "../utils";
+import { getSourceWithChange } from "../backend/printer";
+import { Node } from "../data_structures/node";
+import { _context } from "..";
+import { OpenCloseStack } from "../open_close_verifier";
+import { KindTable, ParsedProgram, Side } from "../shared/language";
+import colorFn from "kleur";
+import { DiffType } from "../types";
+import { getOppositeNodeKind } from "../frontend/typescript";
+import { getNodeForPrinting } from "../debug";
 
 export class Iterator {
   side: Side;
   matchNumber = 0;
-  textNodes: Node[];
+  nodes: Node[];
   kindTable: KindTable;
 
   // Only read when printing nodes
   private indexOfLastItem = 0;
 
-  constructor({ side, source }: IteratorOptions) {
-    const { nodes, kindTable } = getNodesArray(side, source);
+  constructor({ nodes, kindTable, side }: ParsedProgram) {
     this.side = side;
-    this.textNodes = nodes;
+    this.nodes = nodes;
     this.kindTable = kindTable;
   }
 
   // Get the next unmatched node in the iterator, optionally after a given index
   next(startFrom?: number) {
-    for (let i = startFrom ?? 0; i < this.textNodes.length; i++) {
-      const item = this.textNodes[i];
+    for (let i = startFrom ?? 0; i < this.nodes.length; i++) {
+      const item = this.nodes[i];
 
       if (item.matched) {
         continue;
@@ -52,7 +49,7 @@ export class Iterator {
       const next = this.peek(i);
       i++;
 
-      if (i > this.textNodes.length) {
+      if (i > this.nodes.length) {
         break;
       }
 
@@ -76,7 +73,7 @@ export class Iterator {
   }
 
   peek(index: number) {
-    const item = this.textNodes[index];
+    const item = this.nodes[index];
 
     if (!item || item.matched) {
       return;
@@ -85,24 +82,24 @@ export class Iterator {
     return item;
   }
 
-  mark(index: number, markedAs: ChangeType, done = false) {
+  mark(index: number, markedAs: DiffType, done = false) {
     // TODO: Should only apply for moves, otherwise a move, addition and move
     // will display 1 for the first move and 3 for the second
     this.matchNumber++;
-    this.textNodes[index].matched = true;
-    this.textNodes[index].matchNumber = this.matchNumber;
-    this.textNodes[index].markedAs = markedAs;
+    this.nodes[index].matched = true;
+    this.nodes[index].matchNumber = this.matchNumber;
+    this.nodes[index].markedAs = markedAs;
 
     // Optimization, done is only set to `true` when we are calling this from `oneSidedIteration`,  by that time we don't need to update the kindTable
     if (!done) {
       // We remove the index from the table so that:
       // - We don't need to check if the node is matched or not when we use it
       // - To improve performance, this way we have less nodes to check
-      this.kindTable.get(this.textNodes[index].kind)!.delete(index);
+      this.kindTable.get(this.nodes[index].kind)!.delete(index);
     }
   }
 
-  markMultiple(startIndex: number, numberOfNodes: number, markAs: ChangeType) {
+  markMultiple(startIndex: number, numberOfNodes: number, markAs: DiffType) {
     let i = startIndex;
     while (i < startIndex + numberOfNodes) {
       this.mark(i, markAs);
@@ -123,7 +120,7 @@ export class Iterator {
     }
 
     for (const candidateIndex of candidateNodes) {
-      const node = this.textNodes[candidateIndex];
+      const node = this.nodes[candidateIndex];
 
       // If the start of the sequence doesn't match then we know it's not a candidate, skipping
       if (startOfSequence.text !== node.text) {
@@ -153,7 +150,7 @@ export class Iterator {
     }
 
     for (const candidateIndex of rawCandidates) {
-      const node = this.textNodes[candidateIndex];
+      const node = this.nodes[candidateIndex];
 
       // No need to compare kinds since we got the nodes from the kind table
       if (targetNode.text !== node.text) {
@@ -168,7 +165,7 @@ export class Iterator {
 
   getLineNumber(index: number) {
     // TODO: Contemplate lineNumberStart !== lineNumberEnd
-    return this.textNodes[index].lineNumberStart;
+    return this.nodes[index].lineNumberStart;
   }
 
   printList(nodesToPrint?: Node[]) {
@@ -177,25 +174,25 @@ export class Iterator {
 
     const list: string[] = [];
 
-    const _nodes = Array.isArray(nodesToPrint) ? nodesToPrint : this.textNodes;
+    const _nodes = Array.isArray(nodesToPrint) ? nodesToPrint : this.nodes;
 
     for (const node of _nodes) {
-      let colorFn;
+      let color;
       switch (node.markedAs) {
-        case ChangeType.addition: {
-          colorFn = k.green;
+        case DiffType.addition: {
+          color = colorFn.green;
           break;
         }
-        case ChangeType.deletion: {
-          colorFn = k.red;
+        case DiffType.deletion: {
+          color = colorFn.red;
           break;
         }
-        case ChangeType.move: {
-          colorFn = k.blue;
+        case DiffType.move: {
+          color = colorFn.blue;
           break;
         }
         default: {
-          colorFn = k.grey;
+          color = colorFn.grey;
         }
       }
 
@@ -208,13 +205,13 @@ export class Iterator {
       const _text = ` ${text}`;
       const newLines = String(node.numberOfNewlines).padStart(4).padEnd(7);
 
-      const row = `${index}|${matchNumber}|${newLines}|${colorFn(_kind)}|${_text}`;
+      const row = `${index}|${matchNumber}|${newLines}|${color(_kind)}|${_text}`;
 
       if (node.index === this.indexOfLastItem) {
-        colorFn = k.yellow;
+        color = colorFn.yellow;
       }
 
-      list.push(colorFn(row));
+      list.push(color(row));
     }
 
     console.log(list.join("\n"));

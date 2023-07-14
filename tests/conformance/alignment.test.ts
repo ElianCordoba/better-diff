@@ -1,7 +1,7 @@
 import { describe } from "vitest";
 import { getTestFn } from "../utils";
 import { OutputType, getDiff } from "../../src";
-import { colorFn } from "../../src/reporter";
+import colorFn from "kleur";
 
 const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: colorFn.cyan("<<Alignment>>"), ignoreChangeMarkers: true })
 

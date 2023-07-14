@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { Range } from "../src/types";
-import { tryMergeRanges } from "../src/change";
+import { tryMergeRanges } from "../src/data_structures/diff";
 
 describe("Should detect range overlapping", () => {
   test("Case 1: Same range", () => {
