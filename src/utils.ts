@@ -2,10 +2,10 @@ import ts from "typescript";
 import { Node } from "./data_structures/node";
 import { ChangeType, NewChangeInfo, Range, Side } from "./types";
 import { fail } from "./debug";
-import { LCSResult } from "./sequence";
-import { Iterator } from "./iterator";
+import { Iterator } from "./core/iterator";
 import { prettyRenderFn } from "./backend/printer";
 import { _context } from ".";
+import { LCSResult } from "./core/find_diffs";
 
 export function getPrettyChangeType(type: ChangeType, withColor = false): string {
   const renderFn = withColor ? prettyRenderFn[type] : (i: string) => i;

@@ -1,10 +1,10 @@
-import { getNodeForPrinting, getOppositeNodeKind, getSequence } from "./utils";
-import { getSourceWithChange, } from "./backend/printer";
-import { Node } from "./data_structures/node";
-import { ChangeType, KindTable, Side } from "./types";
-import { _context } from ".";
-import { OpenCloseStack } from "./openCloseVerifier";
-import { ParsedProgram } from "./shared/language";
+import { getNodeForPrinting, getOppositeNodeKind, getSequence } from "../utils";
+import { getSourceWithChange, } from "../backend/printer";
+import { Node } from "../data_structures/node";
+import { ChangeType, KindTable, Side } from "../types";
+import { _context } from "..";
+import { OpenCloseStack } from "../openCloseVerifier";
+import { ParsedProgram } from "../shared/language";
 import colorFn from 'kleur'
 
 export class Iterator {

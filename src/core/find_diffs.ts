@@ -1,6 +1,6 @@
 import { Diff } from '../data_structures/diff';
 import { assert } from '../debug';
-import { Iterator } from '../iterator'
+import { Iterator } from './iterator'
 import { Node } from '../data_structures/node';
 import { ChangeType } from '../types';
 import { equals, getSequence, normalize, range } from '../utils';

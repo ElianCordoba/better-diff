@@ -4,7 +4,7 @@ import { getSideFromChangeType, oppositeSide, range } from "./utils";
 import { Diff } from "./data_structures/diff";
 import { createTextTable } from "./backend/printer";
 import { assert, fail } from "./debug";
-import { Iterator } from './iterator'
+import { Iterator } from './core/iterator'
 import { getLineMap } from "./frontend/utils";
 import colorFn from 'kleur'
 

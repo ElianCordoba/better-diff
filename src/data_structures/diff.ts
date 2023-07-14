@@ -3,7 +3,7 @@ import { getSourceWithChange } from "../backend/printer";
 import { _context } from "../index";
 import { assert } from "../debug";
 import { arraySum, getIterFromSide, getPrettyChangeType } from "../utils";
-import { Iterator } from "../iterator";
+import { Iterator } from "../core/iterator";
 import { LineAlignmentTable, insertAddOrDelAlignment } from "../textAligner";
 import colorFn from 'kleur'
 

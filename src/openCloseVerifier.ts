@@ -1,5 +1,5 @@
 import { Node } from "./data_structures/node";
-import { Iterator } from "./iterator";
+import { Iterator } from "./core/iterator";
 import { ClosingNodeGroup, getClosingNodeGroup, getOppositeNodeKind, getPrettyKind } from "./utils";
 import { assert } from "./debug";
 import { ChangeType, TypeMasks } from "./types";

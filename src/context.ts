@@ -1,5 +1,5 @@
 import { Diff } from "./data_structures/diff";
-import { Iterator } from "./iterator";
+import { Iterator } from "./core/iterator";
 import { TextAligner } from "./textAligner";
 import { OffsetTracker } from "./alignment/offset_tracker";
 import { ChangeType } from "./types";
