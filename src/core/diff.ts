@@ -1,14 +1,14 @@
-import { ChangeType, Side } from "./types";
-import { equals, getSequence, normalize, oppositeSide, range } from "./utils";
-import { Iterator } from "./iterator";
-import { Change, compactChanges } from "./change";
-import { _context } from "./index";
-import { Node } from "./node";
-import { assert } from "./debug";
-import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from "./sequence";
-import { OpenCloseVerifier } from "./openCloseVerifier";
-import { LineAlignmentTable, compactAlignments, insertMoveAlignment, insertNewLineAlignment } from "./textAligner";
-import { ParsedProgram } from "./frontend/typescript";
+import { ChangeType, Side } from "../types";
+import { equals, getSequence, normalize, oppositeSide, range } from "../utils";
+import { Iterator } from "../iterator";
+import { Change, compactChanges } from "../change";
+import { _context } from "../index";
+import { Node } from "../node";
+import { assert } from "../debug";
+import { getLCS, getSequenceSingleDirection, LCSResult, SequenceDirection } from "../sequence";
+import { OpenCloseVerifier } from "../openCloseVerifier";
+import { LineAlignmentTable, compactAlignments, insertMoveAlignment, insertNewLineAlignment } from "../textAligner";
+import { ParsedProgram } from "../frontend/typescript";
 
 export function computeDiff(programA: ParsedProgram, programB: ParsedProgram): Change[] {
   const changes: Change[] = [];

@@ -1,4 +1,4 @@
-import { computeDiff } from "./main";
+import { computeDiff } from "./core/diff";
 import { applyAlignments, applyChangesToSources, prettyRenderFn } from "./reporter";
 import { serialize } from "./serializer";
 import { Mode, SerializedResponse, Side } from "./types";
