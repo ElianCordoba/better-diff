@@ -1,7 +1,7 @@
 import { Diff } from "./data_structures/diff";
 import { Iterator } from "./iterator";
 import { TextAligner } from "./textAligner";
-import { OffsetTracker } from "./offsetTracker";
+import { OffsetTracker } from "./alignment/offset_tracker";
 import { ChangeType } from "./types";
 
 export class Context {
