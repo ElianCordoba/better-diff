@@ -4,7 +4,7 @@ import { Node } from "./node";
 import { ChangeType, KindTable, Side } from "./types";
 import { _context } from ".";
 import { OpenCloseStack } from "./openCloseVerifier";
-import { getNodes } from "./frontend/ts-util";
+import { getNodes } from "./frontend/typescript";
 
 interface IteratorOptions {
   side: Side;
