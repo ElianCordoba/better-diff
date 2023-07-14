@@ -1,0 +1,21 @@
+{
+  "exclude": [
+    "ui",
+    "scripts",
+    "tests",
+    "node_modules",
+    "internal",
+    "dist",
+    "*.md"
+  ],
+  "lint": {
+    "rules": {
+      "exclude": [
+        "no-explicit-any"
+      ]
+    }
+  },
+  "fmt": {
+    "lineWidth": 300
+  }
+}
