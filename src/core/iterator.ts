@@ -1,11 +1,12 @@
-import { getNodeForPrinting, getOppositeNodeKind, getSequence } from "../utils";
-import { getSourceWithChange, } from "../backend/printer";
+import { getSequence } from "../utils";
+import { getNodeForPrinting, getSourceWithChange, } from "../backend/printer";
 import { Node } from "../data_structures/node";
-import { DiffType } from "../types";
 import { _context } from "..";
 import { OpenCloseStack } from "../open_close_verifier";
 import { KindTable, ParsedProgram, Side } from "../shared/language";
 import colorFn from 'kleur'
+import { DiffType } from "../types";
+import { getOppositeNodeKind } from "../frontend/typescript";
 
 export class Iterator {
   side: Side;

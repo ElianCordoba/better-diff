@@ -4,6 +4,7 @@ import { _context, _options } from "..";
 import { getIfNodeCanBeMatchedAlone, getLineMap, getLineNumber, getSourceFile } from "./utils";
 import { KindTable, ParsedProgram, Side } from "../shared/language";
 import colorFn from 'kleur'
+import { fail } from "../debug";
 
 type TSNode = ts.Node & { text: string };
 
@@ -135,4 +136,56 @@ export function getParsedProgram(side: Side, source: string): ParsedProgram {
     kindTable,
     side
   };
+}
+
+export function getOppositeNodeKind({ kind, prettyKind }: Node): number {
+  switch (kind) {
+    // {
+    case ts.SyntaxKind.OpenBraceToken:
+      return ts.SyntaxKind.CloseBraceToken;
+    // }
+    case ts.SyntaxKind.CloseBraceToken:
+      return ts.SyntaxKind.OpenBraceToken;
+    // [
+    case ts.SyntaxKind.OpenBracketToken:
+      return ts.SyntaxKind.CloseBracketToken;
+    // ]
+    case ts.SyntaxKind.CloseBracketToken:
+      return ts.SyntaxKind.OpenBracketToken;
+    // (
+    case ts.SyntaxKind.OpenParenToken:
+      return ts.SyntaxKind.CloseParenToken;
+    // )
+    case ts.SyntaxKind.CloseParenToken:
+      return ts.SyntaxKind.OpenParenToken;
+
+    default: {
+      fail(`Unknown kind ${prettyKind}`);
+    }
+  }
+}
+
+export enum ClosingNodeGroup {
+  Paren = "Paren",
+  Brace = "Brace",
+  Bracket = "Bracket",
+}
+
+export function getClosingNodeGroup(node: Node): ClosingNodeGroup {
+  switch (node.kind) {
+    case ts.SyntaxKind.OpenParenToken:
+    case ts.SyntaxKind.CloseParenToken:
+      return ClosingNodeGroup.Paren;
+
+    case ts.SyntaxKind.OpenBraceToken:
+    case ts.SyntaxKind.CloseBraceToken:
+      return ClosingNodeGroup.Brace;
+
+    case ts.SyntaxKind.OpenBracketToken:
+    case ts.SyntaxKind.CloseBracketToken:
+      return ClosingNodeGroup.Bracket;
+
+    default:
+      fail(`Unknown node kind ${node.prettyKind}`);
+  }
 }

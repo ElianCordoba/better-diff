@@ -1,10 +1,11 @@
 import { Node } from "./data_structures/node";
 import { Iterator } from "./core/iterator";
-import { ClosingNodeGroup, getClosingNodeGroup, getOppositeNodeKind, getPrettyKind } from "./utils";
 import { assert } from "./debug";
 import { DiffType, TypeMasks } from "./types";
 import { Diff } from "./data_structures/diff";
 import { _context } from ".";
+import { ClosingNodeGroup, getClosingNodeGroup, getOppositeNodeKind } from "./frontend/typescript";
+import { getPrettyKind } from "./backend/printer";
 
 export class OpenCloseStack {
   allowedKind: number[];

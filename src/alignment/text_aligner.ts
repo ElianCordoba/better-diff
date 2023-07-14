@@ -1,6 +1,6 @@
 import { _context } from "..";
 import { DiffType, TypeMasks } from "../types";
-import { getSideFromChangeType, oppositeSide, range } from "../utils";
+import { oppositeSide, range } from "../utils";
 import { Diff } from "../data_structures/diff";
 import { createTextTable } from "../backend/printer";
 import { assert, fail } from "../debug";
@@ -498,5 +498,16 @@ export function compactAlignments(a: LineAlignmentTable, b: LineAlignmentTable) 
         }
       }
     }
+  }
+}
+
+function getSideFromChangeType(type: DiffType): Side {
+  switch (type) {
+    case DiffType.deletion:
+      return Side.a;
+    case DiffType.addition:
+      return Side.b;
+    default:
+      fail();
   }
 }

@@ -1,3 +1,4 @@
+import ts from "typescript";
 import Table from "cli-table3";
 
 import { _context, _options } from "..";
@@ -237,4 +238,39 @@ export function createTextTable(
   }
 
   return table.toString();
+}
+
+export function getPrettyChangeType(type: DiffType, withColor = false): string {
+  const renderFn = withColor ? prettyRenderFn[type] : (i: string) => i;
+  switch (type) {
+    case DiffType.deletion:
+      return renderFn("Deletion");
+    case DiffType.addition:
+      return renderFn("Addition");
+    case DiffType.move:
+      return renderFn("Move");
+  }
+}
+
+export function getPrettyKind(kind: number): string {
+  return (ts as any).Debug.formatSyntaxKind(kind);
+}
+
+export function getNodeForPrinting(kind: number, text: string | undefined) {
+  const isString = kind === ts.SyntaxKind.StringLiteral;
+
+  let _text = "";
+
+  if (text) {
+    if (isString) {
+      _text = `"${text}"`;
+    } else {
+      _text = text;
+    }
+  }
+
+  return {
+    kind: getPrettyKind(kind),
+    text: _text,
+  };
 }
