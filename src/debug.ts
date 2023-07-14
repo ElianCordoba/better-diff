@@ -1,5 +1,5 @@
-import ts from 'typescript'
-import Table from 'cli-table3'
+import ts from "typescript";
+import Table from "cli-table3";
 import { DiffType } from "./types";
 import colorFn from "kleur";
 
@@ -10,7 +10,7 @@ enum ErrorType {
 }
 
 class BaseError {
-  constructor(public type: ErrorType, public message: string, public serializedError?: string, public extra?: unknown) { }
+  constructor(public type: ErrorType, public message: string, public serializedError?: string, public extra?: unknown) {}
 }
 
 class DebugFailure extends BaseError {
@@ -52,15 +52,15 @@ export const asciiRenderFn: DiffRendererFn = {
 };
 
 const _defaultTextTableOptions = {
-  lineCounterStartAt: 1
-}
+  lineCounterStartAt: 1,
+};
 
 export function createTextTable(
   sourceA: string,
   sourceB: string,
-  options?: typeof _defaultTextTableOptions
+  options?: typeof _defaultTextTableOptions,
 ) {
-  const parsedOptions = { ..._defaultTextTableOptions, ...options }
+  const parsedOptions = { ..._defaultTextTableOptions, ...options };
 
   const aLines = sourceA.split("\n");
   const bLines = sourceB.split("\n");

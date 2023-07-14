@@ -16,5 +16,5 @@ export class Context {
   constructor(
     public sourceA: string,
     public sourceB: string,
-  ) { }
+  ) {}
 }

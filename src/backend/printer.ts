@@ -1,13 +1,10 @@
 import { _context, _options } from "..";
 import { DiffType } from "../types";
 import { Diff } from "../data_structures/diff";
-import { RenderFn, asciiRenderFn, assert, fail } from "../debug";
+import { asciiRenderFn, assert, fail, RenderFn } from "../debug";
 import { getUpdatedLineMap } from "../alignment/text_aligner";
 
-
 import { Side } from "../shared/language";
-
-
 
 export function applyChangesToSources(
   sourceA: string,
@@ -125,7 +122,7 @@ export function getTextAligned(side: Side, changes: Diff[]) {
   const lineOffsets = textAligner[side];
 
   let source = side === Side.a ? sourceA : sourceB;
-  const lines = source.split('\n')
+  const lines = source.split("\n");
 
   if (lineOffsets.size === 0) {
     return source;
@@ -153,7 +150,7 @@ export function getTextAligned(side: Side, changes: Diff[]) {
     updateChanges(changes, side, lineMap.get(lineNumber)!);
   }
 
-  source = lines.join('\n')
+  source = lines.join("\n");
   lineMap = getUpdatedLineMap(source);
 
   return source;
@@ -184,4 +181,3 @@ function updateChanges(changes: Diff[], sideToUpdate: Side, startPosition: numbe
     changes[i] = change;
   }
 }
-

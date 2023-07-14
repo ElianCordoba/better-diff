@@ -1,9 +1,9 @@
-import { Diff } from '../data_structures/diff';
-import { assert } from '../debug';
-import { Iterator } from './iterator'
-import { Node } from '../data_structures/node';
-import { DiffType } from '../types';
-import { equals, getSequence, normalize, range } from '../utils';
+import { Diff } from "../data_structures/diff";
+import { assert } from "../debug";
+import { Iterator } from "./iterator";
+import { Node } from "../data_structures/node";
+import { DiffType } from "../types";
+import { equals, getSequence, normalize, range } from "../utils";
 
 export function findBestMatch(iterA: Iterator, iterB: Iterator, startNode: Node): LCSResult {
   const candidateOppositeSide = iterB.find(startNode);

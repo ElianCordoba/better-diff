@@ -1,12 +1,12 @@
 import { DiffType } from "../types";
 import { equals, oppositeSide } from "../utils";
 import { Iterator } from "./iterator";
-import { Diff, compactChanges } from "../data_structures/diff";
+import { compactChanges, Diff } from "../data_structures/diff";
 import { _context } from "../index";
 import { Node } from "../data_structures/node";
 import { assert } from "../debug";
 import { OpenCloseVerifier } from "../open_close_verifier";
-import { LineAlignmentTable, compactAlignments, insertMoveAlignment, insertNewLineAlignment } from "../alignment/text_aligner";
+import { compactAlignments, insertMoveAlignment, insertNewLineAlignment, LineAlignmentTable } from "../alignment/text_aligner";
 import { ParsedProgram, Side } from "../shared/language";
 import { findBestMatch } from "./find_diffs";
 
@@ -97,7 +97,7 @@ export function computeDiff(programA: ParsedProgram, programB: ParsedProgram): D
 
   const moves = processMoves(matches);
 
-  const { a: aAlignments, b: bAlignments } = _context.textAligner
+  const { a: aAlignments, b: bAlignments } = _context.textAligner;
   compactAlignments(aAlignments, bAlignments);
 
   return [...additions, ...deletions, ...moves];
@@ -105,38 +105,36 @@ export function computeDiff(programA: ParsedProgram, programB: ParsedProgram): D
 
 function processAddAndDel(additions: Diff[], deletions: Diff[]) {
   // Merge all the alignments
-  let additionsOffsets: LineAlignmentTable = new Map()
-  additions.map(x => {
-    const offsets = x.applyOffset()
+  const additionsOffsets: LineAlignmentTable = new Map();
+  additions.map((x) => {
+    const offsets = x.applyOffset();
     for (const [l, n] of offsets) {
-      additionsOffsets.set(l, n)
+      additionsOffsets.set(l, n);
     }
-  })
+  });
 
-
-  let deletionOffsets: LineAlignmentTable = new Map()
-  deletions.map(x => {
-    const offsets = x.applyOffset()
+  const deletionOffsets: LineAlignmentTable = new Map();
+  deletions.map((x) => {
+    const offsets = x.applyOffset();
     for (const [l, n] of offsets) {
-      deletionOffsets.set(l, n)
+      deletionOffsets.set(l, n);
     }
-  })
+  });
 
-
-  compactAlignments(deletionOffsets, additionsOffsets)
+  compactAlignments(deletionOffsets, additionsOffsets);
 
   // Apply the non-compacted changes
 
   const unifiedList = [...additionsOffsets, ...deletionOffsets].sort((a, b) => {
-    const indexA = a[1].index!
-    const indexB = b[1].index!
+    const indexA = a[1].index!;
+    const indexB = b[1].index!;
 
-    return indexA < indexB ? -1 : 1
-  })
+    return indexA < indexB ? -1 : 1;
+  });
 
   for (const [, alignment] of unifiedList) {
-    alignment.lineNumber = _context.textAligner.getOffsettedLineNumber(oppositeSide(alignment.side!), alignment.lineNumber)
-    _context.textAligner.add(alignment.side!, alignment)
+    alignment.lineNumber = _context.textAligner.getOffsettedLineNumber(oppositeSide(alignment.side!), alignment.lineNumber);
+    _context.textAligner.add(alignment.side!, alignment);
   }
 }
 
@@ -176,7 +174,7 @@ function processMoves(matches: Diff[]) {
 
   // Process matches starting with the most relevant ones, the ones with the most text involved
   for (const match of sortedMatches) {
-    let didApplyFormatAlignment = false
+    let didApplyFormatAlignment = false;
 
     if (matchesToIgnore.includes(match.index)) {
       // TODO-NOW Format?
@@ -196,8 +194,8 @@ function processMoves(matches: Diff[]) {
 
     // If the nodes are aligned after calculating the offset means that there is no extra work needed
     if (offsettedIndexA === offsettedIndexB) {
-      insertNewLineAlignment(match, true)
-      didApplyFormatAlignment = true
+      insertNewLineAlignment(match, true);
+      didApplyFormatAlignment = true;
       continue;
     }
 

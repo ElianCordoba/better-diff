@@ -1,6 +1,6 @@
 import { computeDiff } from "./core/main";
 import { applyAlignments, applyChangesToSources } from "./backend/printer";
-import { SerializedResponse, serialize } from "./backend/serializer";
+import { serialize, SerializedResponse } from "./backend/serializer";
 import { Mode } from "./types";
 import { fail, prettyRenderFn } from "./debug";
 import { Context } from "./context";
@@ -17,8 +17,8 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
 
   _context = new Context(sourceA, sourceB);
 
-  const programA = getParsedProgram(Side.a, sourceA)
-  const programB = getParsedProgram(Side.b, sourceB)
+  const programA = getParsedProgram(Side.a, sourceA);
+  const programB = getParsedProgram(Side.b, sourceB);
 
   const diff = computeDiff(programA, programB);
 
@@ -44,7 +44,7 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
       const { changes, ...alignedResult } = applyAlignments(sourceA, sourceB, diff);
 
       if (options?.ignoreChangeMarkers) {
-        return alignedResult as ResultTypeMapper[_OutputType]
+        return alignedResult as ResultTypeMapper[_OutputType];
       }
       return applyChangesToSources(alignedResult.sourceA, alignedResult.sourceB, changes) as ResultTypeMapper[_OutputType];
     }
@@ -100,7 +100,7 @@ const defaultOptions: Options = {
   outputType: OutputType.text,
   warnOnInvalidCode: false,
   alignmentText: "",
-  ignoreChangeMarkers: false
+  ignoreChangeMarkers: false,
 };
 
 export let _options: Required<Options>;

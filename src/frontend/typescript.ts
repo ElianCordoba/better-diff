@@ -3,7 +3,7 @@ import { Node } from "../data_structures/node";
 import { _context, _options } from "..";
 import { getIfNodeCanBeMatchedAlone, getLineMap, getLineNumber, getSourceFile } from "./utils";
 import { KindTable, ParsedProgram, Side } from "../shared/language";
-import colorFn from 'kleur'
+import colorFn from "kleur";
 import { fail } from "../debug";
 
 type TSNode = ts.Node & { text: string };
@@ -134,7 +134,7 @@ export function getParsedProgram(side: Side, source: string): ParsedProgram {
   return {
     nodes,
     kindTable,
-    side
+    side,
   };
 }
 

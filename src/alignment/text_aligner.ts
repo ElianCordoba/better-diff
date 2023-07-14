@@ -3,9 +3,9 @@ import { DiffType, TypeMasks } from "../types";
 import { oppositeSide, range } from "../utils";
 import { Diff } from "../data_structures/diff";
 import { assert, createTextTable, fail } from "../debug";
-import { Iterator } from '../core/iterator'
+import { Iterator } from "../core/iterator";
 import { getLineMap } from "../frontend/utils";
-import colorFn from 'kleur'
+import colorFn from "kleur";
 import { Side } from "../shared/language";
 
 // line number (one-based) -> line start position
@@ -27,11 +27,11 @@ interface LineAlignment {
 
   nodeText: string;
 
-  side?: Side
-  index?: number
+  side?: Side;
+  index?: number;
 }
 
-export type LineAlignmentTable = Map<number, LineAlignment>
+export type LineAlignmentTable = Map<number, LineAlignment>;
 
 export class TextAligner {
   lineMapA: LineMapTable = new Map();
@@ -48,20 +48,20 @@ export class TextAligner {
   add(side: Side, newAlignment: LineAlignment) {
     const { lineNumber, reasons, nodeText } = newAlignment;
 
-    const insertAtLine = lineNumber
+    const insertAtLine = lineNumber;
 
     const existingAlignment = this[side].get(insertAtLine);
-    const formattedReason = colorFn.magenta(`${reasons} "${nodeText}"`)
+    const formattedReason = colorFn.magenta(`${reasons} "${nodeText}"`);
 
     // TODO(Perf): Skip some of the info, like the "nodeText" in release mode
     if (existingAlignment) {
       // Append new reason
-      existingAlignment.reasons = existingAlignment.reasons.concat(formattedReason)
+      existingAlignment.reasons = existingAlignment.reasons.concat(formattedReason);
 
       this[side].set(insertAtLine, existingAlignment);
     } else {
-      newAlignment.lineNumber = insertAtLine
-      newAlignment.reasons = [formattedReason]
+      newAlignment.lineNumber = insertAtLine;
+      newAlignment.reasons = [formattedReason];
 
       this[side].set(insertAtLine, newAlignment);
     }
@@ -78,7 +78,7 @@ export class TextAligner {
 
     for (const alignment of offsets.values()) {
       if (alignment.lineNumber <= lineNumber) {
-        lineNumber++
+        lineNumber++;
       } else {
         break;
       }
@@ -127,19 +127,19 @@ export class TextAligner {
   //
   // With `pushAlignmentDown` in `false`: We will return 2 from the function meaning that the alignment will be ignored, since it's already present
   // With `pushAlignmentDown` in `true`: We will find the next free spot, which is 4 and return that
-  findInsertionPoint(side: Side, lineNumber: number, pushAlignmentDown: boolean) {
+  findInsertionPoint(lineNumber: number) {
     // if (!pushAlignmentDown) {
     return lineNumber;
     // }
 
-    let currentLine = lineNumber;
-    while (true) {
-      if (!this[side].has(currentLine)) {
-        return currentLine;
-      }
+    // let currentLine = lineNumber;
+    // while (true) {
+    //   if (!this[side].has(currentLine)) {
+    //     return currentLine;
+    //   }
 
-      currentLine++;
-    }
+    //   currentLine++;
+    // }
   }
 
   // Returns true if all the nodes in a given line are involved in a change, for example:
@@ -149,14 +149,13 @@ export class TextAligner {
   wholeLineAffected(side: Side, lineNumber: number, numberOfNodesAffected: number) {
     const readFrom = side === Side.a ? "nodesPerLineA" : "nodesPerLineB";
 
-    const nodesAtGivenLine = this[readFrom].get(lineNumber)
+    const nodesAtGivenLine = this[readFrom].get(lineNumber);
 
     if (nodesAtGivenLine === undefined) {
-      return true
+      return true;
     } else {
       return nodesAtGivenLine === numberOfNodesAffected;
     }
-
   }
 
   draw() {
@@ -179,7 +178,7 @@ export class TextAligner {
     const alignments = this[side];
 
     for (const { lineNumber, reasons } of alignments.values()) {
-      lines.splice(lineNumber - 1, 0, reasons.join(colorFn.yellow(' | ')).slice(0, -1));
+      lines.splice(lineNumber - 1, 0, reasons.join(colorFn.yellow(" | ")).slice(0, -1));
     }
 
     return lines.join("\n");
@@ -212,7 +211,6 @@ export function getUpdatedLineMap(source: string) {
   // this.sortLineMap(side)
 }
 
-
 // Text alignment functions
 
 // We want to insert a text alignment if the full line is deleted
@@ -239,7 +237,6 @@ export function insertAddOrDelAlignment(change: Diff) {
   // This function should only be called with additions or deletions
   assert(change.type & TypeMasks.AddOrDel, () => "Tried to insert alignment in a change that wasn't a addition or deletion");
 
-  let indexes: number[];
   let iter: Iterator;
   // It's the opposite side of where the change happened
   let sideToInsertAlignment: Side;
@@ -248,17 +245,15 @@ export function insertAddOrDelAlignment(change: Diff) {
 
   if (change.type === DiffType.deletion) {
     sideToInsertAlignment = Side.b;
-    indexes = change.indexesA;
     iter = _context.iterA;
     alignmentReason = LineAlignmentReason.DeletionAffectedWholeLine;
   } else {
     sideToInsertAlignment = Side.a;
-    indexes = change.indexesB;
     iter = _context.iterB;
     alignmentReason = LineAlignmentReason.AdditionAffectedWholeLine;
   }
 
-  const nodesPerLine = change.getNodesPerLine(oppositeSide(sideToInsertAlignment))
+  const nodesPerLine = change.getNodesPerLine(oppositeSide(sideToInsertAlignment));
 
   // Instead of actually storing the alignment right away we defer this until we have all the addition and deletions alignments
   // This is to compact it so that this case can work fine
@@ -283,13 +278,13 @@ export function insertAddOrDelAlignment(change: Diff) {
   //
   // Then compaction happens and both of them get removed
 
-  const alignments: LineAlignmentTable = new Map()
-  const { textAligner } = _context
+  const alignments: LineAlignmentTable = new Map();
+  const { textAligner } = _context;
   const side = getSideFromChangeType(change.type);
-  const index = side === Side.a ? change.indexesA[0] : change.indexesB[0]
+  const index = side === Side.a ? change.indexesA[0] : change.indexesB[0];
   for (const [lineNumber, nodes] of nodesPerLine) {
     if (textAligner.wholeLineAffected(side, lineNumber, nodes.size)) {
-      const offsettedLineNumber = textAligner.getOffsettedLineNumber(side, lineNumber) - iter.nodes[index].numberOfNewlines
+      const offsettedLineNumber = textAligner.getOffsettedLineNumber(side, lineNumber) - iter.nodes[index].numberOfNewlines;
 
       alignments.set(offsettedLineNumber, {
         side: oppositeSide(side),
@@ -297,12 +292,12 @@ export function insertAddOrDelAlignment(change: Diff) {
         change,
         reasons: [alignmentReason],
         nodeText: change.getText(side).trim(),
-        index
-      })
+        index,
+      });
     }
   }
 
-  return alignments
+  return alignments;
 }
 
 export function insertNewLineAlignment(change: Diff, alignedChange: boolean) {
@@ -311,11 +306,11 @@ export function insertNewLineAlignment(change: Diff, alignedChange: boolean) {
 
   // TODO-NOW example
   if (!alignedChange) {
-    const offsetA = change.getOffsettedLineStart(Side.a) - iterA.nodes[change.indexesA[0]].lineNumberStart
-    const lineStartA = change.getOffsettedLineStart(Side.a) - iterA.nodes[indexesA[0]].numberOfNewlines + 1
-    const lineEndA = change.getOffsettedLineEnd(Side.a) + 1
+    const offsetA = change.getOffsettedLineStart(Side.a) - iterA.nodes[change.indexesA[0]].lineNumberStart;
+    const lineStartA = change.getOffsettedLineStart(Side.a) - iterA.nodes[indexesA[0]].numberOfNewlines + 1;
+    const lineEndA = change.getOffsettedLineEnd(Side.a) + 1;
 
-    const nodesA = change.getNodesPerLine(Side.a)
+    const nodesA = change.getNodesPerLine(Side.a);
 
     for (const i of range(lineStartA, lineEndA)) {
       if (!nodesA.has(i) || textAligner.wholeLineAffected(Side.a, i - offsetA, nodesA.get(i)!.size)) {
@@ -323,11 +318,11 @@ export function insertNewLineAlignment(change: Diff, alignedChange: boolean) {
       }
     }
 
-    const offsetB = change.getOffsettedLineStart(Side.b) - iterB.nodes[change.indexesB[0]].lineNumberStart
-    const lineStartB = change.getOffsettedLineStart(Side.b) - iterB.nodes[indexesB[0]].numberOfNewlines + 1
-    const lineEndB = change.getOffsettedLineEnd(Side.b) + 1
+    const offsetB = change.getOffsettedLineStart(Side.b) - iterB.nodes[change.indexesB[0]].lineNumberStart;
+    const lineStartB = change.getOffsettedLineStart(Side.b) - iterB.nodes[indexesB[0]].numberOfNewlines + 1;
+    const lineEndB = change.getOffsettedLineEnd(Side.b) + 1;
 
-    const nodesB = change.getNodesPerLine(Side.b)
+    const nodesB = change.getNodesPerLine(Side.b);
 
     for (const i of range(lineStartB, lineEndB)) {
       if (!nodesB.get(i) || textAligner.wholeLineAffected(Side.b, i - offsetB, nodesB.get(i)!.size)) {
@@ -335,7 +330,7 @@ export function insertNewLineAlignment(change: Diff, alignedChange: boolean) {
       }
     }
 
-    return
+    return;
   }
 
   for (let i = 0; i < indexesA.length; i++) {
@@ -345,8 +340,8 @@ export function insertNewLineAlignment(change: Diff, alignedChange: boolean) {
     const nodeA = iterA.nodes.at(indexA)!;
     const nodeB = iterB.nodes.at(indexB)!;
 
-    const offsettedLineA = nodeA.getOffsettedLineNumber()
-    const offsettedLineB = nodeB.getOffsettedLineNumber()
+    const offsettedLineA = nodeA.getOffsettedLineNumber();
+    const offsettedLineB = nodeB.getOffsettedLineNumber();
 
     // No need to insert formatting alignments if they are already aligned
     if (offsettedLineA === offsettedLineB) {
@@ -354,21 +349,18 @@ export function insertNewLineAlignment(change: Diff, alignedChange: boolean) {
     }
 
     if (nodeA.numberOfNewlines !== nodeB.numberOfNewlines) {
-
       const sideToInsertAlignment = nodeA.numberOfNewlines < nodeB.numberOfNewlines ? Side.a : Side.b;
 
       // If we are inserting in A we read the width from B, and viscera
-      const nodeToReadData = sideToInsertAlignment === Side.a ? nodeB : nodeA
+      const nodeToReadData = sideToInsertAlignment === Side.a ? nodeB : nodeA;
 
-      const insertAlignmentAt = nodeToReadData.getOffsettedLineNumber('end')
-
+      const insertAlignmentAt = nodeToReadData.getOffsettedLineNumber("end");
 
       const linesToInsert = Math.abs(nodeA.numberOfNewlines - nodeB.numberOfNewlines);
       for (const i of range(insertAlignmentAt - linesToInsert, insertAlignmentAt)) {
         textAligner.add(sideToInsertAlignment, { lineNumber: i, change: change, reasons: [LineAlignmentReason.NewLineDiff], nodeText: nodeA.text.trim() });
       }
     }
-
   }
 }
 
@@ -392,17 +384,17 @@ export function insertMoveAlignment(change: Diff, offsettedIndexA: number, offse
   const { iterA, iterB, semanticAligner } = _context;
   const indexDiff = Math.abs(offsettedIndexA - offsettedIndexB);
 
-  const firstIndexA = change.getFirstIndex(Side.a)
-  const lastIndexA = change.getLastIndex(Side.a)
+  const firstIndexA = change.getFirstIndex(Side.a);
+  const lastIndexA = change.getLastIndex(Side.a);
 
-  const lineStartA = iterA.nodes[firstIndexA].getOffsettedLineNumber('start')
-  const lineEndA = iterA.nodes[lastIndexA].getOffsettedLineNumber('end')
+  const lineStartA = iterA.nodes[firstIndexA].getOffsettedLineNumber("start");
+  const lineEndA = iterA.nodes[lastIndexA].getOffsettedLineNumber("end");
 
-  const firstIndexB = change.getFirstIndex(Side.b)
-  const lastIndexB = change.getLastIndex(Side.b)
+  const firstIndexB = change.getFirstIndex(Side.b);
+  const lastIndexB = change.getLastIndex(Side.b);
 
-  const lineStartB = iterB.nodes[firstIndexB].getOffsettedLineNumber('start')
-  const lineEndB = iterB.nodes[lastIndexB].getOffsettedLineNumber('end')
+  const lineStartB = iterB.nodes[firstIndexB].getOffsettedLineNumber("start");
+  const lineEndB = iterB.nodes[lastIndexB].getOffsettedLineNumber("end");
 
   const linesDiff = Math.abs(lineStartA - lineStartB);
 
@@ -413,7 +405,7 @@ export function insertMoveAlignment(change: Diff, offsettedIndexA: number, offse
     }
 
     if (ignore) {
-      return
+      return;
     }
     // Apply text offset
     for (const i of range(lineNumberStart, lineNumberStart + linesDiff)) {
@@ -437,7 +429,7 @@ export function insertMoveAlignment(change: Diff, offsettedIndexA: number, offse
   // aa         aa
   // b          -    <- Align at the end on B, inserting _after_
   //
-  const sideToAlignStart = lineStartA < lineStartB ? Side.a : Side.b
+  const sideToAlignStart = lineStartA < lineStartB ? Side.a : Side.b;
 
   if (sideToAlignStart === Side.a) {
     apply(Side.a, offsettedIndexA, lineStartA);
@@ -483,17 +475,17 @@ export function compactAlignments(a: LineAlignmentTable, b: LineAlignmentTable) 
 
       for (const [_line, val] of new Map([...a.entries()].reverse())) {
         if (_line > alignmentAt) {
-          a.delete(_line)
-          val.lineNumber = val.lineNumber - 1
-          a.set(_line + 1, val)
+          a.delete(_line);
+          val.lineNumber = val.lineNumber - 1;
+          a.set(_line + 1, val);
         }
       }
 
       for (const [_line, val] of new Map([...b.entries()].reverse())) {
         if (_line > alignmentAt) {
-          b.delete(_line)
-          val.lineNumber = val.lineNumber - 1
-          b.set(_line + 1, val)
+          b.delete(_line);
+          val.lineNumber = val.lineNumber - 1;
+          b.set(_line + 1, val);
         }
       }
     }

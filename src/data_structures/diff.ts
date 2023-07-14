@@ -4,8 +4,8 @@ import { _context } from "../index";
 import { assert, getPrettyChangeType } from "../debug";
 import { arraySum, getIterFromSide } from "../utils";
 import { Iterator } from "../core/iterator";
-import { LineAlignmentTable, insertAddOrDelAlignment } from "../alignment/text_aligner";
-import colorFn from 'kleur'
+import { insertAddOrDelAlignment, LineAlignmentTable } from "../alignment/text_aligner";
+import colorFn from "kleur";
 import { Side } from "../shared/language";
 
 export class Diff<Type extends DiffType = DiffType> {
@@ -89,13 +89,13 @@ export class Diff<Type extends DiffType = DiffType> {
 
   getWidth(side: Side) {
     const indexes = side === Side.a ? this.indexesA : this.indexesB;
-    const iter = getIterFromSide(side)
+    const iter = getIterFromSide(side);
 
-    const lineStart = iter.nodes[indexes[0]].lineNumberStart
-    const lineEnd = iter.nodes[indexes.at(-1)!].lineNumberEnd
-    const newLines = this.getNewLines(side)
+    const lineStart = iter.nodes[indexes[0]].lineNumberStart;
+    const lineEnd = iter.nodes[indexes.at(-1)!].lineNumberEnd;
+    const newLines = this.getNewLines(side);
 
-    return (lineEnd - lineStart) + 1 + newLines
+    return (lineEnd - lineStart) + 1 + newLines;
   }
 
   getFirstIndex(side?: Side) {
@@ -107,17 +107,17 @@ export class Diff<Type extends DiffType = DiffType> {
   }
 
   getOffsettedLineStart(side: Side) {
-    const index = this.getFirstIndex(side)
-    const iter = getIterFromSide(side)
+    const index = this.getFirstIndex(side);
+    const iter = getIterFromSide(side);
 
-    return iter.nodes[index].getOffsettedLineNumber('start')
+    return iter.nodes[index].getOffsettedLineNumber("start");
   }
 
   getOffsettedLineEnd(side: Side) {
-    const index = this.getLastIndex(side)
-    const iter = getIterFromSide(side)
+    const index = this.getLastIndex(side);
+    const iter = getIterFromSide(side);
 
-    return iter.nodes[index].getOffsettedLineNumber('end')
+    return iter.nodes[index].getOffsettedLineNumber("end");
   }
 
   private getIndex(side: Side, position: number): number {
@@ -135,8 +135,8 @@ export class Diff<Type extends DiffType = DiffType> {
   }
 
   getNodesPerLine(side: Side) {
-    const indexes = side === Side.a ? this.indexesA : this.indexesB
-    const iter = getIterFromSide(side)
+    const indexes = side === Side.a ? this.indexesA : this.indexesB;
+    const iter = getIterFromSide(side);
 
     const nodesPerLine: Map<number, Set<number>> = new Map();
 
@@ -145,7 +145,7 @@ export class Diff<Type extends DiffType = DiffType> {
 
       assert(node);
 
-      const line = node.getOffsettedLineNumber('start');
+      const line = node.getOffsettedLineNumber("start");
 
       if (nodesPerLine.has(line)) {
         nodesPerLine.get(line)!.add(node.index);
@@ -154,7 +154,7 @@ export class Diff<Type extends DiffType = DiffType> {
       }
     }
 
-    return nodesPerLine
+    return nodesPerLine;
   }
 
   applyOffset(): LineAlignmentTable {
@@ -182,7 +182,7 @@ export class Diff<Type extends DiffType = DiffType> {
         });
       });
 
-      return insertAddOrDelAlignment(this)
+      return insertAddOrDelAlignment(this);
     } else {
       // Alignment for additions:
       //
@@ -207,7 +207,7 @@ export class Diff<Type extends DiffType = DiffType> {
         });
       });
 
-      return insertAddOrDelAlignment(this)
+      return insertAddOrDelAlignment(this);
     }
   }
 
@@ -294,16 +294,16 @@ export function compactChanges(type: DiffType.deletion | DiffType.addition, _cha
   const finalChanges: Diff[] = [];
 
   for (let index = 0; index < sortedChanges.length; index++) {
-    let current = sortedChanges[index];
-    let next = sortedChanges[index + 1];
+    const current = sortedChanges[index];
+    const next = sortedChanges[index + 1];
 
     if (!next) {
       finalChanges.push(current);
       break;
     }
 
-    let currentIndexes = current[indexesProp];
-    let nextIndexes = next[indexesProp];
+    const currentIndexes = current[indexesProp];
+    const nextIndexes = next[indexesProp];
 
     if (!indexesCompatible(currentIndexes, nextIndexes)) {
       finalChanges.push(current);
@@ -316,7 +316,6 @@ export function compactChanges(type: DiffType.deletion | DiffType.addition, _cha
 
     // Values to accumulate
     const indexes = [...currentIndexes, ...nextIndexes]; // Skip first two entries since we know they are compatible
-    const closingNodeIndexes: number[] = [];
 
     innerLoop:
     while (true) {

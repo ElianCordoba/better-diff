@@ -1,10 +1,10 @@
 import { getSequence } from "../utils";
-import { getSourceWithChange, } from "../backend/printer";
+import { getSourceWithChange } from "../backend/printer";
 import { Node } from "../data_structures/node";
 import { _context } from "..";
 import { OpenCloseStack } from "../open_close_verifier";
 import { KindTable, ParsedProgram, Side } from "../shared/language";
-import colorFn from 'kleur'
+import colorFn from "kleur";
 import { DiffType } from "../types";
 import { getOppositeNodeKind } from "../frontend/typescript";
 import { getNodeForPrinting } from "../debug";

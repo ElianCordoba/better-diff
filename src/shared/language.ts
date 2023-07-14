@@ -13,7 +13,6 @@ export enum Side {
   b = "b",
 }
 
-
 type SyntaxKind = number;
 
 // A table with the syntax kind as the key an a set of indexes where an _unmatched_ node with that kind is found. Nodes get removed from the table as they get marked
