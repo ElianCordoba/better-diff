@@ -1,7 +1,7 @@
 import { assert } from "./debug";
 import { equals } from "./utils";
 import { Iterator } from "./iterator";
-import { Diff } from "./diff";
+import { Diff } from "./data_structures/diff";
 
 export function getSequenceSingleDirection(
   iterA: Iterator,

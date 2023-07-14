@@ -1,9 +1,9 @@
 import { ChangeType, Side } from "../types";
 import { equals, oppositeSide, range } from "../utils";
 import { Iterator } from "../iterator";
-import { Diff, compactChanges } from "../diff";
+import { Diff, compactChanges } from "../data_structures/diff";
 import { _context } from "../index";
-import { Node } from "../node";
+import { Node } from "../data_structures/node";
 import { assert } from "../debug";
 import { OpenCloseVerifier } from "../openCloseVerifier";
 import { LineAlignmentTable, compactAlignments, insertMoveAlignment, insertNewLineAlignment } from "../textAligner";

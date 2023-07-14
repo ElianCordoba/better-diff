@@ -1,6 +1,6 @@
 import { getNodeForPrinting, getOppositeNodeKind, getSequence } from "./utils";
 import { colorFn, getSourceWithChange, k } from "./reporter";
-import { Node } from "./node";
+import { Node } from "./data_structures/node";
 import { ChangeType, KindTable, Side } from "./types";
 import { _context } from ".";
 import { OpenCloseStack } from "./openCloseVerifier";

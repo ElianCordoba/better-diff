@@ -1,4 +1,4 @@
-import { Diff } from "./diff";
+import { Diff } from "./data_structures/diff";
 import { Iterator } from "./iterator";
 import { TextAligner } from "./textAligner";
 import { OffsetTracker } from "./offsetTracker";

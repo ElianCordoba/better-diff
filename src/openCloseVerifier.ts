@@ -1,9 +1,9 @@
-import { Node } from "./node";
+import { Node } from "./data_structures/node";
 import { Iterator } from "./iterator";
 import { ClosingNodeGroup, getClosingNodeGroup, getOppositeNodeKind, getPrettyKind } from "./utils";
 import { assert } from "./debug";
 import { ChangeType, TypeMasks } from "./types";
-import { Diff } from "./diff";
+import { Diff } from "./data_structures/diff";
 import { _context } from ".";
 
 export class OpenCloseStack {

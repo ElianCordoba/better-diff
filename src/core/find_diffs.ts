@@ -1,7 +1,7 @@
-import { Diff } from '../diff';
+import { Diff } from '../data_structures/diff';
 import { assert } from '../debug';
 import { Iterator } from '../iterator'
-import { Node } from '../node';
+import { Node } from '../data_structures/node';
 import { LCSResult, SequenceDirection, getLCS, getSequenceSingleDirection } from '../sequence';
 import { ChangeType } from '../types';
 import { getSequence, normalize, range } from '../utils';

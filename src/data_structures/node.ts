@@ -1,7 +1,7 @@
 import { SyntaxKind } from "typescript";
-import { getNodeForPrinting } from "./utils";
-import { ChangeType, Mode, Range, Side } from "./types";
-import { _context } from ".";
+import { getNodeForPrinting } from "../utils";
+import { ChangeType, Mode, Range, Side } from "../types";
+import { _context } from "..";
 
 interface NodeArgs {
   side: Side;

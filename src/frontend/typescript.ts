@@ -1,5 +1,5 @@
 import ts from "typescript";
-import { Node } from "../node";
+import { Node } from "../data_structures/node";
 import { k } from "../reporter";
 import { _context, getOptions } from "..";
 import { KindTable, Side } from "../types";

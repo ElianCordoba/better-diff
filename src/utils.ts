@@ -1,5 +1,5 @@
 import ts from "typescript";
-import { Node } from "./node";
+import { Node } from "./data_structures/node";
 import { ChangeType, NewChangeInfo, Range, Side } from "./types";
 import { fail } from "./debug";
 import { LCSResult } from "./sequence";
