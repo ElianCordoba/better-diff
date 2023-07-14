@@ -21,6 +21,7 @@ export class Iterator {
   private indexOfLastItem = 0;
 
   constructor({ side, source }: IteratorOptions) {
+    // @TODO(Infra): Refactor to support different languages
     const { nodes, kindTable } = getNodes(side, source);
     this.side = side;
     this.textNodes = nodes;

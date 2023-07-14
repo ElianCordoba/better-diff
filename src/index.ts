@@ -52,35 +52,35 @@ export function getDiff<_OutputType extends OutputType = OutputType.text>(
 
   switch (_options.outputType) {
     case OutputType.serializedChunks: {
-      return serialize(sourceA, sourceB, diff) as any;
+      return serialize(sourceA, sourceB, diff) as ResultTypeMapper[_OutputType];
     }
 
     case OutputType.serializedAlignedChunks: {
       const alignedResult = applyAlignments(sourceA, sourceB, diff);
-      return serialize(alignedResult.sourceA, alignedResult.sourceB, alignedResult.changes) as any;
+      return serialize(alignedResult.sourceA, alignedResult.sourceB, alignedResult.changes) as ResultTypeMapper[_OutputType];
     }
 
     case OutputType.text: {
-      return applyChangesToSources(sourceA, sourceB, diff) as any;
+      return applyChangesToSources(sourceA, sourceB, diff) as ResultTypeMapper[_OutputType];
     }
 
     case OutputType.prettyText: {
-      return applyChangesToSources(sourceA, sourceB, diff, prettyRenderFn) as any;
+      return applyChangesToSources(sourceA, sourceB, diff, prettyRenderFn) as ResultTypeMapper[_OutputType];
     }
 
     case OutputType.alignedText: {
-      const alignedResult = applyAlignments(sourceA, sourceB, diff);
+      const { changes, ...alignedResult } = applyAlignments(sourceA, sourceB, diff);
 
       if (options?.ignoreChangeMarkers) {
-        return alignedResult as any
+        return alignedResult as ResultTypeMapper[_OutputType]
       }
-      return applyChangesToSources(alignedResult.sourceA, alignedResult.sourceB, alignedResult.changes) as any;
+      return applyChangesToSources(alignedResult.sourceA, alignedResult.sourceB, changes) as ResultTypeMapper[_OutputType];
     }
 
     // Used mainly for benchmarking the core algorithm on it's own. Without this the total execution time of the `getDiff`
     // function will include the time it takes to do the reporting, which can be quite a lot
     case OutputType.noop: {
-      return undefined as any;
+      return undefined as ResultTypeMapper[_OutputType];
     }
 
     default: {
