@@ -27,14 +27,25 @@ export class Iterator {
   }
 
   next(_startFrom?: Node): Node | undefined {
-    const nextNode = this._next(_startFrom)
+    let nextNode
+    while (true) {
+      nextNode = this._next(_startFrom)
 
-    if (!nextNode) {
-      return this.lastNode = this.ast
+      if (!nextNode) {
+        if (this.ast.matched) {
+          return undefined
+        } else {
+          return this.lastNode = this.ast
+        }
+      }
+
+      if (nextNode.matched) {
+        return this.next(nextNode)
+      } else {
+        this.lastNode = nextNode;
+        return nextNode
+      }
     }
-
-    this.lastNode = nextNode;
-    return nextNode;
   }
 
   _next(_startFrom?: Node): Node | undefined {
@@ -73,37 +84,9 @@ export class Iterator {
     }
   }
 
-  // next2(startFrom?: Node): Node | undefined {
-  //   const nextNode = this._next2(startFrom)
-
-  //   // TODO: The first node could be matched already
-  //   if (!nextNode) {
-  //     this.lastNode = this.ast
-  //     return this.ast
-  //   }
-
-  //   return nextNode
-  // }
-
-  // _next2(startFrom?: Node): Node | undefined {
-  //   if (startFrom) {
-  //     return startFrom.next()
-  //   }
-
-  //   // If it's the first time `next` is called we start from the root
-  //   if (!this.lastNode) {
-  //     return this.lastNode = this.ast
-  //   }
-
-  //   // Otherwise we find the next in a breath-first order
-  //   const nextNode = this.lastNode.next()
-
-  //   if (!nextNode) {
-  //     return undefined
-  //   }
-
-  //   return this.lastNode = nextNode
-  // }
+  resetWalkingOrder() {
+    this.lastNode = this.ast
+  }
 
   printNode(node: Node) {
     const source = this.side === Side.a ? _context.sourceA : _context.sourceB;

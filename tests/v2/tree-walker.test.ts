@@ -120,23 +120,24 @@ test("Ensure the tree walker ignores matched nodes", () => {
     const node = iter.next()!
 
     if (nodesToMatch.includes(node.id)) {
-      console.log(node.prettyKind)
       node.mark()
     }
 
     if (node.prettyKind === "EndOfFileToken") break
   }
 
+  iter.resetWalkingOrder()
+
   const nodes = []
   // Second pass to gather the non-matched nodes
   while (true) {
     const node = iter.next()!
 
-    nodes.push(node)
+    nodes.push(node.prettyKind)
 
     if (node.prettyKind === "EndOfFileToken") break
   }
 
-  expect(nodes.length).toBe(expectedNodes2.length)
+  expect(nodes).toMatchObject(expectedNodes2)
 
 });
