@@ -25,6 +25,7 @@ export class Node {
   parent: Node | undefined;
   children: Node[] = []
 
+  matched = false
   prettyKind: string;
 
   constructor(args: NewNodeArgs) {
@@ -51,6 +52,10 @@ export class Node {
       start: this.start,
       end: this.end,
     };
+  }
+
+  mark() {
+    this.matched = true;
   }
 
   /*
