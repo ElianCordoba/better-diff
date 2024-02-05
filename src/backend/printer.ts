@@ -80,7 +80,7 @@ export function getSourceWithChange(
   // This is to handle cases like EndOfFile
   // TODO: Think if this is the best way to handle this, maybe we can just ignore the EOF node altogether or modify it
   if (start === end) {
-    return chars
+    return chars;
   }
 
   const head = chars.slice(0, start);

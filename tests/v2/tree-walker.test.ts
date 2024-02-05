@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { Iterator } from "../../src/v2/iterator";
 import { Side } from "../../src/shared/language";
 
-const source = "1 + (2 + 3)"
+const source = "1 + (2 + 3)";
 const expectedNodes = [
   "SourceFile",
   "SyntaxList",
@@ -21,79 +21,79 @@ const expectedNodes = [
 ];
 
 test("Ensure the tree walker visits all nodes in order", () => {
-  const iter = new Iterator(source, Side.a)
+  const iter = new Iterator(source, Side.a);
 
   // Prime the walker so that we skip the "SourceFile", we will use that to detect when the iteration start over
-  const nodes: string[] = [iter.next()!.prettyKind]
+  const nodes: string[] = [iter.next()!.prettyKind];
 
   while (true) {
-    const next = iter.next()!.prettyKind
+    const next = iter.next()!.prettyKind;
 
-    if (next === 'SourceFile') {
-      break
+    if (next === "SourceFile") {
+      break;
     }
 
-    nodes.push(next)
+    nodes.push(next);
   }
 
   expect(nodes).toMatchObject(expectedNodes);
 });
 
 test("Ensure the tree walker visits all nodes by passing one node that the time", () => {
-  const iter = new Iterator(source, Side.a)
+  const iter = new Iterator(source, Side.a);
 
-  const nodes: string[] = []
+  const nodes: string[] = [];
 
   const one = iter.next();
-  nodes.push(one!.prettyKind)
+  nodes.push(one!.prettyKind);
   const two = iter.next(one);
-  nodes.push(two!.prettyKind)
+  nodes.push(two!.prettyKind);
   const three = iter.next(two);
-  nodes.push(three!.prettyKind)
+  nodes.push(three!.prettyKind);
   const four = iter.next(three);
-  nodes.push(four!.prettyKind)
+  nodes.push(four!.prettyKind);
   const five = iter.next(four);
-  nodes.push(five!.prettyKind)
+  nodes.push(five!.prettyKind);
   const six = iter.next(five);
-  nodes.push(six!.prettyKind)
+  nodes.push(six!.prettyKind);
   const seven = iter.next(six);
-  nodes.push(seven!.prettyKind)
+  nodes.push(seven!.prettyKind);
   const eight = iter.next(seven);
-  nodes.push(eight!.prettyKind)
+  nodes.push(eight!.prettyKind);
   const nine = iter.next(eight);
-  nodes.push(nine!.prettyKind)
+  nodes.push(nine!.prettyKind);
   const ten = iter.next(nine);
-  nodes.push(ten!.prettyKind)
+  nodes.push(ten!.prettyKind);
   const eleven = iter.next(ten);
-  nodes.push(eleven!.prettyKind)
+  nodes.push(eleven!.prettyKind);
   const twelve = iter.next(eleven);
-  nodes.push(twelve!.prettyKind)
+  nodes.push(twelve!.prettyKind);
   const thirteen = iter.next(twelve);
-  nodes.push(thirteen!.prettyKind)
+  nodes.push(thirteen!.prettyKind);
   const fourteen = iter.next(thirteen);
-  nodes.push(fourteen!.prettyKind)
+  nodes.push(fourteen!.prettyKind);
 
   expect(nodes).toMatchObject(expectedNodes);
 });
 
 test("Ensure the tree walker loops back after visiting all the nodes", () => {
-  const iter = new Iterator(source, Side.a)
+  const iter = new Iterator(source, Side.a);
 
   let lastNode;
 
   let i = 0;
   while (i < expectedNodes.length) {
-    lastNode = iter.next()
-    i++
+    lastNode = iter.next();
+    i++;
   }
 
-  const shouldBeFirstNode = iter.next()!.prettyKind
+  const shouldBeFirstNode = iter.next()!.prettyKind;
 
-  expect(shouldBeFirstNode).toBe(expectedNodes[0])
+  expect(shouldBeFirstNode).toBe(expectedNodes[0]);
 });
 
 test("Ensure the tree walker ignores matched nodes", () => {
-  const iter = new Iterator(source, Side.a)
+  const iter = new Iterator(source, Side.a);
 
   // Given the full node list, lets ignore the following
   const expectedNodes2 = [
@@ -113,31 +113,47 @@ test("Ensure the tree walker ignores matched nodes", () => {
     "EndOfFileToken",
   ];
 
-  const nodesToMatch = [0, 7, 11]
+  const nodesToMatch = [0, 7, 11];
 
   // First pass over the node to mark a few as matched
   while (true) {
-    const node = iter.next()!
+    const node = iter.next()!;
 
     if (nodesToMatch.includes(node.id)) {
-      node.mark()
+      node.mark();
     }
 
-    if (node.prettyKind === "EndOfFileToken") break
+    if (node.prettyKind === "EndOfFileToken") break;
   }
 
-  iter.resetWalkingOrder()
+  iter.resetWalkingOrder();
 
-  const nodes = []
+  const nodes = [];
   // Second pass to gather the non-matched nodes
   while (true) {
-    const node = iter.next()!
+    const node = iter.next()!;
 
-    nodes.push(node.prettyKind)
+    nodes.push(node.prettyKind);
 
-    if (node.prettyKind === "EndOfFileToken") break
+    if (node.prettyKind === "EndOfFileToken") break;
   }
 
-  expect(nodes).toMatchObject(expectedNodes2)
+  expect(nodes).toMatchObject(expectedNodes2);
+});
 
+test("Ensure the tree walker returns undefined after all nodes are matched", () => {
+  const iter = new Iterator(source, Side.a);
+
+  while (true) {
+    const node = iter.next()!;
+    node.mark();
+
+    if (node.prettyKind === "EndOfFileToken") break;
+  }
+
+  iter.resetWalkingOrder();
+
+  expect(iter.next()).toBe(undefined);
+  expect(iter.next()).toBe(undefined);
+  expect(iter.next()).toBe(undefined);
 });

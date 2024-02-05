@@ -1,8 +1,8 @@
-import { Node } from "./node"
+import { Node } from "./node";
 
-export type SyntaxKind = number
+export type SyntaxKind = number;
 
-export type NodesTable = Map<SyntaxKind, Node[]>
+export type NodesTable = Map<SyntaxKind, Node[]>;
 
 export interface ParsedProgram {
   ast: Node;

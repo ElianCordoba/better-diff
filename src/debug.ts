@@ -10,7 +10,7 @@ enum ErrorType {
 }
 
 class BaseError {
-  constructor(public type: ErrorType, public message: string, public serializedError?: string, public extra?: unknown) { }
+  constructor(public type: ErrorType, public message: string, public serializedError?: string, public extra?: unknown) {}
 }
 
 class DebugFailure extends BaseError {
