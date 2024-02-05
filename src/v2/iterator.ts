@@ -26,37 +26,84 @@ export class Iterator {
     this.nodesQueue = [ast];
   }
 
-  next(startFrom?: Node): Node | undefined {
-    const nextNode = this._next(startFrom)
+  next(_startFrom?: Node): Node | undefined {
+    const nextNode = this._next(_startFrom)
 
-    // TODO: The first node could be matched already
     if (!nextNode) {
-      this.lastNode = this.ast
-      return this.ast
-    }
-
-    return nextNode
-  }
-
-  _next(startFrom?: Node): Node | undefined {
-    if (startFrom) {
-      return startFrom.next()
-    }
-
-    // If it's the first time `next` is called we start from the root
-    if (!this.lastNode) {
       return this.lastNode = this.ast
     }
 
-    // Otherwise we find the next in a breath-first order
-    const nextNode = this.lastNode.next()
+    this.lastNode = nextNode;
+    return nextNode;
+  }
 
-    if (!nextNode) {
-      return undefined
+  _next(_startFrom?: Node): Node | undefined {
+    let current = _startFrom || this.lastNode
+
+    // Special case if we are in the first iteration, return the root node
+    if (!current) {
+      return this.ast
     }
 
-    return this.lastNode = nextNode
+    // Node has children, lets go to the first one
+    if (!current.isLeafNode()) {
+      return current.children[0]
+    }
+
+    // If we are in a leaf node we need to
+    // - Go to the sibling node, if exist, or
+    // - Go up and find a sibling node there
+    while (true) {
+      const parent = current.parent
+
+
+      if (!parent) {
+        return
+      }
+
+      // We found a node with children, we need to check if there are any sibling remaining
+      const currentNodeIndex = parent.children.findIndex(x => x.id === current.id)
+      const hasSibling = parent.children[currentNodeIndex + 1]
+
+      if (hasSibling) {
+        return hasSibling
+      }
+
+      current = current.parent!
+    }
   }
+
+  // next2(startFrom?: Node): Node | undefined {
+  //   const nextNode = this._next2(startFrom)
+
+  //   // TODO: The first node could be matched already
+  //   if (!nextNode) {
+  //     this.lastNode = this.ast
+  //     return this.ast
+  //   }
+
+  //   return nextNode
+  // }
+
+  // _next2(startFrom?: Node): Node | undefined {
+  //   if (startFrom) {
+  //     return startFrom.next()
+  //   }
+
+  //   // If it's the first time `next` is called we start from the root
+  //   if (!this.lastNode) {
+  //     return this.lastNode = this.ast
+  //   }
+
+  //   // Otherwise we find the next in a breath-first order
+  //   const nextNode = this.lastNode.next()
+
+  //   if (!nextNode) {
+  //     return undefined
+  //   }
+
+  //   return this.lastNode = nextNode
+  // }
 
   printNode(node: Node) {
     const source = this.side === Side.a ? _context.sourceA : _context.sourceB;

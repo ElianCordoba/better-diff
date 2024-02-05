@@ -95,18 +95,36 @@ test("Ensure the tree walker loops back after visiting all the nodes", () => {
 test("Ensure the tree walker ignores matched nodes", () => {
   const iter = new Iterator(source, Side.a)
 
-  const nodesToMatch = [0, 2, 5, 11]
+  // Given the full node list, lets ignore the following
+  const expectedNodes2 = [
+    //"SourceFile",               // index 0, root node
+    "SyntaxList",
+    "ExpressionStatement",
+    "BinaryExpression",
+    "NumericLiteral",
+    "PlusToken",
+    "ParenthesizedExpression",
+    //"OpenParenToken",          // index 7, has siblings
+    "BinaryExpression",
+    "NumericLiteral",
+    "PlusToken",
+    //"NumericLiteral",          // index 11, last sibling
+    "CloseParenToken",
+    "EndOfFileToken",
+  ];
+
+  const nodesToMatch = [0, 7, 11]
 
   // First pass over the node to mark a few as matched
   while (true) {
     const node = iter.next()!
 
-    if (node.prettyKind === "EndOfFileToken") break
-
     if (nodesToMatch.includes(node.id)) {
       console.log(node.prettyKind)
       node.mark()
     }
+
+    if (node.prettyKind === "EndOfFileToken") break
   }
 
   const nodes = []
@@ -114,11 +132,11 @@ test("Ensure the tree walker ignores matched nodes", () => {
   while (true) {
     const node = iter.next()!
 
-    if (node.prettyKind === "EndOfFileToken") break
-
     nodes.push(node)
+
+    if (node.prettyKind === "EndOfFileToken") break
   }
 
-  expect(nodes.length).toBe(10)
+  expect(nodes.length).toBe(expectedNodes2.length)
 
 });
