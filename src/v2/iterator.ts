@@ -29,36 +29,4 @@ export class Iterator {
 
     return this.lastNode = nextNode
   }
-
-  next2(startFrom?: Node): Node | undefined {
-    if (startFrom) {
-      return startFrom.next()
-    }
-
-    if (this.nodesQueue.length === 0) {
-      return;
-    }
-
-    const currentNode = this.nodesQueue.shift()!;
-
-    if (!currentNode.isLeafNode()) {
-      this.nodesQueue.push(...currentNode.children);
-    }
-
-    return currentNode
-  }
-
-  nextBASE(): Node | undefined {
-    if (this.nodesQueue.length === 0) {
-      return;
-    }
-
-    const currentNode = this.nodesQueue.shift()!;
-
-    if (!currentNode.isLeafNode()) {
-      this.nodesQueue.push(...currentNode.children);
-    }
-
-    return currentNode
-  }
 }
