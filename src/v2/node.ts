@@ -1,28 +1,41 @@
 import { getPrettyKind } from "../debug";
 import { SyntaxKind } from "./types";
-
+import { Range } from '../types'
+import { Side } from "../shared/language";
+import { _context } from ".";
 interface NewNodeArgs {
+  side: Side
   id: number;
   kind: SyntaxKind;
   text: string;
+
+  start: number;
+  end: number
+
   parent: Node | undefined;
 }
 
 export class Node {
+  side: Side
   id: number;
   kind: SyntaxKind;
   text: string;
+  start: number;
+  end: number
   parent: Node | undefined;
   children: Node[] = []
 
   prettyKind: string;
 
   constructor(args: NewNodeArgs) {
-    const { id, kind, text, parent } = args
+    const { side, id, kind, text, parent, start, end } = args
 
+    this.side = side
     this.id = id;
     this.kind = kind;
     this.text = text;
+    this.start = start
+    this.end = end
     this.parent = parent
 
     this.prettyKind = getPrettyKind(kind)
@@ -31,6 +44,13 @@ export class Node {
 
   isLeafNode() {
     return this.children.length === 0;
+  }
+
+  getRange(): Range {
+    return {
+      start: this.start,
+      end: this.end,
+    };
   }
 
   /*
@@ -72,5 +92,11 @@ export class Node {
 
     // Case 3: Return first children
     return this.children[0]
+  }
+
+  draw() {
+    const iter = _context[this.side === Side.a ? "iterA" : "iterB"];
+
+    iter.printNode(this);
   }
 }

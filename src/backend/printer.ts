@@ -77,6 +77,12 @@ export function getSourceWithChange(
   end: number,
   colorFn: RenderFn,
 ) {
+  // This is to handle cases like EndOfFile
+  // TODO: Think if this is the best way to handle this, maybe we can just ignore the EOF node altogether or modify it
+  if (start === end) {
+    return chars
+  }
+
   const head = chars.slice(0, start);
 
   const text = chars.slice(start, end).join("");
