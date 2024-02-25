@@ -2,6 +2,9 @@ import ts from "typescript";
 import Table from "cli-table3";
 import { DiffType } from "./types";
 import colorFn from "kleur";
+import { Sequence } from "./v2/types";
+import { getSourceWithChange } from "./backend/printer";
+import { _context as _context2 } from "./v2/index";
 
 enum ErrorType {
   DebugFailure = "DebugFailure",
@@ -120,4 +123,84 @@ export function getNodeForPrinting(kind: number, text: string | undefined) {
     kind: getPrettyKind(kind),
     text: _text,
   };
+}
+
+// V2
+const COLOR_ROULETTE = [
+  colorFn.red,
+  colorFn.green,
+  colorFn.yellow,
+  colorFn.blue,
+  colorFn.magenta,
+  colorFn.cyan,
+]
+
+let _currentColor = -1
+export function getColor() {
+  _currentColor++
+
+  if (_currentColor >= COLOR_ROULETTE.length) {
+    _currentColor = 0
+  }
+
+  return COLOR_ROULETTE[_currentColor]
+}
+
+function resetColorRoulette() {
+  _currentColor = 0
+}
+
+export function getPrettyPrintSequence(sequence: Sequence, sourceA: string, sourceB: string) {
+  const { iterA, iterB } = _context2
+  let charsA = sourceA.split('')
+  let charsB = sourceB.split('')
+
+  for (const segment of sequence.segments) {
+    const [indexStartA, indexEndA] = segment.a
+    const [indexStartB, indexEndB] = segment.b    
+
+    const startA = iterA.nodes[indexStartA].start;
+    const endA = iterA.nodes[indexEndA].end;
+
+    const startB = iterB.nodes[indexStartB].start;
+    const endB = iterB.nodes[indexEndB].end;
+
+    console.log("A", startA, endA)
+    console.log("B", startB, endB)
+
+    // console.log("A Start", colorFn.magenta(iterA.nodes[indexStartA].prettyKind), colorFn.blue(indexStartA))
+    // console.log("A End", colorFn.magenta(iterA.nodes[indexEndA].prettyKind), colorFn.blue(indexEndA))
+    // console.log(getSourceWithChange(sourceA.split(''), startA, endA, colorFn.green).join(''))
+
+    // console.log("B Start", colorFn.magenta(iterB.nodes[indexStartB].prettyKind), colorFn.blue(indexStartB))
+    // console.log("B End", colorFn.magenta(iterB.nodes[indexEndB].prettyKind), colorFn.blue(indexEndB))
+    // console.log(getSourceWithChange(sourceB.split(''), startB, endB, colorFn.green).join(''))
+
+
+    
+    const color = getColor()
+
+    charsA = getSourceWithChange(charsA, startA, endA, color)
+    charsB = getSourceWithChange(charsB, startB, endB, color)
+  }
+
+  resetColorRoulette()
+
+  return {
+    a: charsA.join(''),
+    b: charsB.join('')
+  }
+}
+
+export function prettyPrintSequences(a: string, b: string, sequences: Sequence[]) {
+  let sequenceCounter = -1
+  for (const sequence of sequences) {
+    sequenceCounter++
+    console.log(`\n---------- Starter ${sequence.starterNode.prettyKind} ${`"${sequence.starterNode.text}"` || ''} Length: ${sequence.length} Segments ${sequence.segments.length} Skips: ${sequence.skips} ----------\n`)
+    const sourcesWithColor = getPrettyPrintSequence(sequence, a, b)
+  
+    const table = createTextTable(sourcesWithColor.a, sourcesWithColor.b)
+  
+    console.log(table)
+  }
 }

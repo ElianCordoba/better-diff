@@ -6,6 +6,8 @@ import { NodesTable, ParsedProgram } from "./types";
 
 export function getAST(source: string, side: Side): ParsedProgram {
   const ast = getSourceFile(source);
+  const nodes: Node[] = [];
+
   const nodesTable: NodesTable = new Map();
 
   let i = 0;
@@ -35,6 +37,8 @@ export function getAST(source: string, side: Side): ParsedProgram {
     });
     i++;
 
+    nodes.push(newNode)
+
     storeNodeInNodeTable(nodesTable, newNode);
 
     if (!isLeafNode) {
@@ -49,6 +53,7 @@ export function getAST(source: string, side: Side): ParsedProgram {
   return {
     ast: newAst,
     nodesTable,
+    nodes
   };
 }
 

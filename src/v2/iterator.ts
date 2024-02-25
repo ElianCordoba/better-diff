@@ -8,8 +8,12 @@ import { NodesTable } from "./types";
 
 export class Iterator {
   ast: Node;
+  nodes: Node[]
   nodesQueue: Node[];
   lastNode!: Node;
+
+  lastNodeVisited!: Node;
+
   source: string;
   side: Side;
 
@@ -18,7 +22,9 @@ export class Iterator {
   constructor(source: string, side: Side) {
     this.side = side;
     this.source = source;
-    const { ast, nodesTable } = getAST(source, side);
+    const { ast, nodesTable, nodes } = getAST(source, side);
+
+    this.nodes = nodes
 
     this.ast = ast;
     this.nodesTable = nodesTable;
@@ -26,7 +32,31 @@ export class Iterator {
     this.nodesQueue = [ast];
   }
 
-  next(_startFrom?: Node): Node | undefined {
+   // Get the next unmatched node in the iterator, optionally after a given index
+   nextArray(index?: number) {
+    const start = index ?? 0
+    for (let i = start; i < this.nodes.length; i++) {
+      const node = this.nodes[i];
+
+      if (node.matched) {
+        continue;
+      }
+      
+      return this.lastNodeVisited = node;
+    }
+  }
+
+  peek(index: number) {
+    const item = this.nodes[index];
+
+    if (!item || item.matched) {
+      return;
+    }
+
+    return item;
+  }
+
+  next(_startFrom?: Node, startOver = false): Node | undefined {
     let nextNode;
     while (true) {
       nextNode = this._next(_startFrom);
@@ -85,6 +115,16 @@ export class Iterator {
 
   resetWalkingOrder() {
     this.lastNode = this.ast;
+  }
+
+  getMatchingNodes(targetNode: Node) {
+    const rawCandidates = this.nodesTable.get(targetNode.kind);
+
+    if (!rawCandidates) {
+      return [];
+    }
+
+    return rawCandidates.filter(x => x.text === targetNode.text);
   }
 
   printNode(node: Node) {
