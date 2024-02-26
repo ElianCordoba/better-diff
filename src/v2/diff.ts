@@ -32,16 +32,16 @@ export function getSequence(nodeA: Node, nodeB: Node): Sequence {
   let skips = 0;
 
   // Where the segment starts
-  let segmentAStart = nodeA.id
-  let segmentBStart = nodeB.id
+  let segmentAStart = nodeA.index
+  let segmentBStart = nodeB.index
 
-  let indexA = nodeA.id
-  let indexB = nodeB.id
+  let indexA = nodeA.index
+  let indexB = nodeB.index
 
   mainLoop: while (true) {
     // TODO-2 First iteration already has the nodes
-    const nextA = iterA.nextArray(indexA);
-    const nextB = iterB.nextArray(indexB);
+    const nextA = iterA.next(indexA);
+    const nextB = iterB.next(indexB);
 
     // If one of the iterators ends then there is no more search to do
     if (!nextA || !nextB) {

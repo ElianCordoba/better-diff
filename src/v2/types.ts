@@ -6,13 +6,13 @@ export type SyntaxKind = number;
 export type NodesTable = Map<SyntaxKind, Node[]>;
 
 export interface ParsedProgram {
-  ast: Node;
   nodes: Node[]
+  allNodes: Node[]
   nodesTable: NodesTable;
 }
 
 // Start is inclusive, end is not inclusive
-type SegmentRange = [startIndex: number, endIndex: number]
+export type SegmentRange = [startIndex: number, endIndex: number]
 
 export interface Segment {
   type: DiffType;

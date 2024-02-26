@@ -5,7 +5,10 @@ import { Side } from "../shared/language";
 import { _context } from ".";
 interface NewNodeArgs {
   side: Side;
-  id: number;
+
+  index: number;
+  globalIndex: number;
+
   kind: SyntaxKind;
   text: string;
 
@@ -13,37 +16,37 @@ interface NewNodeArgs {
   end: number;
 
   parent: Node | undefined;
+  isTextNode: boolean
 }
 
 export class Node {
   side: Side;
-  id: number;
+  index: number;
+  globalIndex: number;
   kind: SyntaxKind;
   text: string;
   start: number;
   end: number;
   parent: Node | undefined;
-  children: Node[] = [];
+  isTextNode: boolean;
 
   matched = false;
   prettyKind: string;
 
   constructor(args: NewNodeArgs) {
-    const { side, id, kind, text, parent, start, end } = args;
+    const { side, index, globalIndex, kind, text, parent, start, end, isTextNode } = args;
 
     this.side = side;
-    this.id = id;
+    this.index = index;
+    this.globalIndex = globalIndex;
     this.kind = kind;
     this.text = text;
     this.start = start;
     this.end = end;
     this.parent = parent;
+    this.isTextNode = isTextNode
 
     this.prettyKind = getPrettyKind(kind);
-  }
-
-  isLeafNode() {
-    return this.children.length === 0;
   }
 
   getRange(): Range {

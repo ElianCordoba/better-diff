@@ -1,12 +1,14 @@
-import { Node as TsNode } from "typescript";
+import { SyntaxKind, Node as TsNode } from "typescript";
 import { Node } from "./node";
 import { getSourceFile } from "../frontend/utils";
 import { Side } from "../shared/language";
 import { NodesTable, ParsedProgram } from "./types";
 
-export function getAST(source: string, side: Side): ParsedProgram {
+export function getTsNodes(source: string, side: Side): ParsedProgram {
   const ast = getSourceFile(source);
+
   const nodes: Node[] = [];
+  const allNodes: Node[] = [];
 
   const nodesTable: NodesTable = new Map();
 
@@ -25,36 +27,52 @@ export function getAST(source: string, side: Side): ParsedProgram {
     const start = node.pos + node.getLeadingTriviaWidth();
     const end = node.end;
 
+    const isTextNode = verifyTextNode(node)
+
     const newNode = new Node({
       side,
-      id: i,
+      index: nodes.length,
+      globalIndex: i,
       kind: node.kind,
       // In typescript a non-leaf node contains as string the whole children text combined, so we ignore it
-      text: isLeafNode ? node.getText() : "",
+      text: isTextNode ? node.getText() : "",
       start,
       end,
       parent,
+      isTextNode
     });
     i++;
 
-    nodes.push(newNode)
+    allNodes.push(newNode)
+
+    if (isTextNode) {
+      nodes.push(newNode)
+    }
+    
+    
 
     storeNodeInNodeTable(nodesTable, newNode);
-
-    if (!isLeafNode) {
-      newNode.children = node.getChildren().map((x) => walk(x, newNode));
-    }
-
+  
+    node.getChildren().map((x) => walk(x, newNode));
+  
     return newNode;
   }
 
-  const newAst = walk(ast, undefined);
+  walk(ast, undefined);
 
   return {
-    ast: newAst,
     nodesTable,
-    nodes
+    nodes,
+    allNodes
   };
+}
+
+
+function verifyTextNode(node: TsNode) {
+  const isReservedWord = node.kind >= SyntaxKind.FirstKeyword && node.kind <= SyntaxKind.LastKeyword;
+  const isPunctuation = node.kind >= SyntaxKind.FirstPunctuation && node.kind <= SyntaxKind.LastPunctuation;
+
+  return (node as any).text && node.kind !== SyntaxKind.SourceFile || isReservedWord || isPunctuation
 }
 
 function storeNodeInNodeTable(nodesTable: NodesTable, node: Node) {
