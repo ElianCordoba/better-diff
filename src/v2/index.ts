@@ -1,7 +1,7 @@
 import { Context, getIndexesFromSegment } from "./utils";
 import { Side } from "../shared/language";
 import { Iterator } from "./iterator";
-import { getBestMatch, getSubSequenceNodes, oneSidedIteration } from "./core";
+import { getBestMatch, getSubSequenceNodes, isNewCandidateBetter, oneSidedIteration } from "./core";
 import { Change, Segment } from "./diff";
 import { DiffType } from "../types";
 import { fail } from "../debug";
@@ -70,9 +70,9 @@ export function getDiff2(sourceA: string, sourceB: string) {
     let bestCandidate = bestMatchForB;
 
     for (const node of subSequenceNodesToCheck) {
-      const _bestMatch = getBestMatch(node);
+      const newCandidate = getBestMatch(node);
 
-      if (!_bestMatch) {
+      if (!newCandidate) {
         const addition = Change.createAddition(b);
         changes.push(addition);
         iterB.mark(b.index, DiffType.addition);
@@ -80,8 +80,8 @@ export function getDiff2(sourceA: string, sourceB: string) {
         continue;
       }
 
-      if (_bestMatch.length > bestCandidate.length) {
-        bestCandidate = _bestMatch;
+      if (isNewCandidateBetter(bestCandidate, newCandidate)) {
+        bestCandidate = newCandidate;
       }
     }
 
@@ -90,6 +90,8 @@ export function getDiff2(sourceA: string, sourceB: string) {
     markMatched(move);
     continue;
   }
+
+  return changes;
 }
 
 function markMatched(change: Change) {

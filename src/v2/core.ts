@@ -1,7 +1,7 @@
 import { _context } from ".";
 import { SyntaxKind } from "./types";
 import { Node } from "./node";
-import { CandidateMatch, Change, findSegmentLength, Segment } from "./diff";
+import { CandidateMatch, Change, getCandidateMatch } from "./diff";
 import { getAllNodesFromMatch } from "./utils";
 import { fail } from "../debug";
 import { Iterator } from "./iterator";
@@ -13,8 +13,9 @@ import { DiffType } from "../types";
 export function getBestMatch(nodeB: Node): CandidateMatch | undefined {
   const aSideCandidates = _context.iterA.getMatchingNodes(nodeB);
 
+  // The given B node wasn't found, it was added
   if (aSideCandidates.length === 0) {
-    fail("WTF2");
+    return;
   }
 
   let bestMatch: CandidateMatch = {
@@ -24,10 +25,10 @@ export function getBestMatch(nodeB: Node): CandidateMatch | undefined {
   };
 
   for (const candidate of aSideCandidates) {
-    const currentMatch = findSegmentLength(candidate, nodeB);
+    const newCandidate = getCandidateMatch(candidate, nodeB);
 
-    if (currentMatch.length > bestMatch.length) {
-      bestMatch = currentMatch;
+    if (isNewCandidateBetter(bestMatch, newCandidate)) {
+      bestMatch = newCandidate;
     }
   }
 
@@ -37,26 +38,19 @@ export function getBestMatch(nodeB: Node): CandidateMatch | undefined {
 export function getSubSequenceNodes(match: CandidateMatch, starterNode: Node) {
   const nodesInMatch = getAllNodesFromMatch(match);
 
-  const kinds = new Set<SyntaxKind>();
+  const allNodes = new Set<Node>();
 
   for (const node of nodesInMatch) {
-    kinds.add(node.kind);
-  }
+    const similarNodes = _context.iterB.getMatchingNodes(node);
 
-  const allNodes: Node[] = [];
-  for (const kind of kinds) {
-    const nodesOfKind = _context.iterB.nodesTable.get(kind);
-
-    if (!nodesOfKind) {
-      fail();
+    for (const _node of similarNodes) {
+      allNodes.add(_node);
     }
-    allNodes.push(...nodesOfKind);
   }
 
-  const indexOfStartNode = allNodes.findIndex((x) => x.index === starterNode.index);
-  allNodes.splice(indexOfStartNode, 1);
+  allNodes.delete(starterNode);
 
-  return allNodes;
+  return [...allNodes];
 }
 
 export function oneSidedIteration(
@@ -66,7 +60,7 @@ export function oneSidedIteration(
 ): Change[] {
   const changes: Change[] = [];
 
-  let node = iter.next(startFrom);
+  let node = iter.next();
 
   // TODO: Compactar?
   while (node) {
@@ -78,9 +72,29 @@ export function oneSidedIteration(
       change = Change.createDeletion(node);
     }
 
+    changes.push(change);
     iter.mark(node.index, typeOfChange);
     node = iter.next(node.index + 1);
   }
 
   return changes;
+}
+
+/**
+ * TODO: MAybe compute a score fn
+ */
+export function isNewCandidateBetter(currentCandidate: CandidateMatch, newCandidate: CandidateMatch): boolean {
+  if (newCandidate.length > currentCandidate.length) {
+    return true;
+  } else if (newCandidate.length < currentCandidate.length) {
+    return false;
+  }
+
+  if (newCandidate.segments.length > currentCandidate.segments.length) {
+    return false;
+  } else if (newCandidate.segments.length < currentCandidate.segments.length) {
+    return false;
+  }
+
+  return newCandidate.skips < currentCandidate.skips;
 }

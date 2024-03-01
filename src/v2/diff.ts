@@ -1,7 +1,7 @@
 import { _context } from ".";
 import { assert } from "../debug";
 import { Side } from "../shared/language";
-import { DiffType } from "../types";
+import { DiffType, TypeMasks } from "../types";
 import { range } from "../utils";
 import { Node } from "./node";
 import { getIndexesFromSegment } from "./utils";
@@ -23,9 +23,8 @@ export class Change {
     public segments: Segment[],
     public skips = 0,
   ) {
-    const { b } = getIndexesFromSegment(segments[0]);
-    this.startNode = _context.iterA.nodes[b.start];
-    this.length = calculateLength(segments);
+    this.startNode = getStarterNode(type, segments);
+    this.length = calculateCandidateMatchLength(segments);
   }
 
   static createAddition(node: Node) {
@@ -44,7 +43,7 @@ export class Change {
 
   static createDeletion(node: Node) {
     assert(node.side === Side.a);
-    return new Change(DiffType.addition, [
+    return new Change(DiffType.deletion, [
       [
         // Start A
         node.index,
@@ -64,14 +63,14 @@ export class Change {
 // SCORE FN PARAMETERS
 const MAX_NODE_SKIPS = 5;
 
-export function findSegmentLength(
+export function getCandidateMatch(
   nodeA: Node,
   nodeB: Node,
-): { segments: Segment[]; skips: number; length: number } {
+): CandidateMatch {
   const segments: Segment[] = [];
   const { iterA, iterB } = _context;
 
-  let bestSequence = 1;
+  let bestSequence = 0;
   let skips = 0;
 
   // Where the segment starts
@@ -80,6 +79,8 @@ export function findSegmentLength(
 
   let indexA = nodeA.index;
   let indexB = nodeB.index;
+
+  assert(equals(nodeA, nodeB), () => "Misaligned matched");
 
   mainLoop: while (true) {
     // TODO-2 First iteration already has the nodes
@@ -131,6 +132,7 @@ export function findSegmentLength(
         segmentBStart = indexB;
         indexA = nextIndexA;
         skips = numberOfSkips;
+        bestSequence = 0;
         continue mainLoop;
       }
     }
@@ -140,7 +142,7 @@ export function findSegmentLength(
   }
 
   return {
-    length: bestSequence,
+    length: calculateCandidateMatchLength(segments),
     skips,
     segments,
   };
@@ -150,7 +152,7 @@ function equals(nodeOne: Node, nodeTwo: Node): boolean {
   return nodeOne.kind === nodeTwo.kind && nodeOne.text === nodeTwo.text;
 }
 
-function calculateLength(segments: Segment[]) {
+export function calculateCandidateMatchLength(segments: Segment[]) {
   let sum = 0;
 
   for (const segment of segments) {
@@ -158,4 +160,17 @@ function calculateLength(segments: Segment[]) {
   }
 
   return sum;
+}
+
+function getStarterNode(type: DiffType, segments: Segment[]) {
+  const { a, b } = getIndexesFromSegment(segments[0]);
+
+  const iter = type & TypeMasks.AddOrMove ? _context.iterB : _context.iterA;
+  const index = type & TypeMasks.AddOrMove ? b.start : a.start;
+
+  const node = iter.nodes[index];
+
+  assert(node, () => "Failed to get starter node");
+
+  return node;
 }
