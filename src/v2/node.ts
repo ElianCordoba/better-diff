@@ -1,6 +1,6 @@
 import { getPrettyKind } from "../debug";
 import { SyntaxKind } from "./types";
-import { Range } from "../types";
+import { DiffType, Range } from "../types";
 import { Side } from "../shared/language";
 import { _context } from ".";
 interface NewNodeArgs {
@@ -16,7 +16,7 @@ interface NewNodeArgs {
   end: number;
 
   parent: Node | undefined;
-  isTextNode: boolean
+  isTextNode: boolean;
 }
 
 export class Node {
@@ -32,6 +32,9 @@ export class Node {
 
   matched = false;
   prettyKind: string;
+  matchNumber = 0;
+  // For printing proposes
+  markedAs?: DiffType;
 
   constructor(args: NewNodeArgs) {
     const { side, index, globalIndex, kind, text, parent, start, end, isTextNode } = args;
@@ -44,7 +47,7 @@ export class Node {
     this.start = start;
     this.end = end;
     this.parent = parent;
-    this.isTextNode = isTextNode
+    this.isTextNode = isTextNode;
 
     this.prettyKind = getPrettyKind(kind);
   }

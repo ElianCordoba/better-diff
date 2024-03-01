@@ -101,18 +101,18 @@ export function getSourceWithChange(
   const compliment = getComplimentArray(charsToAdd);
 
   // Since we might display the changes in a table, where we split by newlines, simply coloring the whole segment won't work, for example:
-  // 
+  //
   // (COLOR_START) a
   //  b (COLOR END)
   //
   // When splitted you will get ["(COLOR_START) a", " b (COLOR END)"] where only the first line would be colored, not the second
-  // So to fix it we wrap all the tokens individually 
-  // 
+  // So to fix it we wrap all the tokens individually
+  //
   // (COLOR_START) a (COLOR END)
   // (COLOR_START) b (COLOR END)
   //
   // So that when splitted you get ["(COLOR_START) a (COLOR END)", "(COLOR_START) b (COLOR END)"] which produces the desired output
-  text = text.split(' ').map(x => colorFn(x)).join(' ')
+  text = text.split(" ").map((x) => colorFn(x)).join(" ");
 
   return [...head, colorFn(text), ...compliment, ...tail];
 }

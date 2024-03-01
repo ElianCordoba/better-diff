@@ -12,7 +12,7 @@ export class Change {
     public rangeB: Range | undefined,
     public nodeA: Node | undefined,
     public nodeB: Node | undefined,
-  ) { }
+  ) {}
 
   draw() {
     const { sourceA, sourceB } = getContext();

@@ -17,8 +17,8 @@ describe("Properly report moves in a same sequence", () => {
     expB: `
       print('elian')
       ⏩let age = 24⏪
-    `
-  })
+    `,
+  });
 
   test({
     name: "Case 2",
@@ -35,8 +35,8 @@ describe("Properly report moves in a same sequence", () => {
     expB: `
       let age = 24
       print('elian')
-    `
-  })
+    `,
+  });
 
   test({
     name: "Case 3",
@@ -53,8 +53,8 @@ describe("Properly report moves in a same sequence", () => {
     expB: `
       let age = ⏩24⏪
       print('elian')
-    `
-  })
+    `,
+  });
 
   test({
     name: "Case 4",
@@ -71,8 +71,8 @@ describe("Properly report moves in a same sequence", () => {
     expB: `
       print('elian')
       ⏩let age =⏪ 24
-    `
-  })
+    `,
+  });
 
   test({
     name: "Back and forth",
@@ -93,8 +93,8 @@ describe("Properly report moves in a same sequence", () => {
     expB: `
       let age = 24 ➕||➕ ⏩fn()⏪
       print('elian')
-    `
-  })
+    `,
+  });
 
   // TODO: Can be improved
   test({
@@ -114,8 +114,8 @@ describe("Properly report moves in a same sequence", () => {
     expB: `
       let middle;
       ➕let down;➕
-    `
-  })
+    `,
+  });
 });
 
 describe("Recursive matching", () => {
@@ -136,8 +136,8 @@ describe("Recursive matching", () => {
     expB: `
       ➕1➕
       import { bar } from "bar";
-    `
-  })
+    `,
+  });
 
   test({
     name: "Recursive matching 2",
@@ -164,8 +164,8 @@ describe("Recursive matching", () => {
       0
       0➕
       1 2 3 4
-    `
-  })
+    `,
+  });
 
   test({
     name: "Recursive matching 3",
@@ -194,8 +194,8 @@ describe("Recursive matching", () => {
       ➕0
       0➕
       ⏩12 34⏪
-    `
-  })
+    `,
+  });
 
   test({
     name: "Recursive matching 4",
@@ -224,8 +224,8 @@ describe("Recursive matching", () => {
       ➕0
       0➕
       ⏩12 34⏪
-    `
-  })
+    `,
+  });
 
   // This tests going backward in the LCS calculation
   test({
@@ -265,8 +265,8 @@ describe("Recursive matching", () => {
           start: range.start
         };
       }
-    `
-  })
+    `,
+  });
 
   // This tests the subsequence matching
   test({
@@ -288,9 +288,8 @@ describe("Recursive matching", () => {
     expB: `
       1
       import { X } from "./x";
-    `
-  })
-
+    `,
+  });
 
   test({
     name: "Random 1",
@@ -311,14 +310,14 @@ describe("Recursive matching", () => {
     expB: `
       33
       ⏩2⏪
-    `
-  })
+    `,
+  });
 
   // The bug that we are testing here is if we have 2 moves, crossing each other and both are of the same length. The result
   // is that depending of which one gets processed first, that will be aligned, this means that the result is not the same A to B and B to A,
   // this is why I had to create the cases separated
   test({
-    only: 'standard',
+    only: "standard",
     name: "Random 2 standard",
     a: `
       1
@@ -341,11 +340,11 @@ describe("Recursive matching", () => {
       ➕5➕
       4
       ⏩3⏪
-    `
-  })
+    `,
+  });
 
   test({
-    only: 'inversed',
+    only: "inversed",
     name: "Random 2 inversed",
     a: `
       1
@@ -368,8 +367,8 @@ describe("Recursive matching", () => {
       ➕5➕
       ⏩4⏪
       3
-    `
-  })
+    `,
+  });
 
   // Used to crash when inserting new line alignments in "processMoves" when aligning two moves
   test({
@@ -391,6 +390,6 @@ describe("Recursive matching", () => {
       22
       ➕x➕
       ⏩1⏪
-    `
-  })
-})
+    `,
+  });
+});

@@ -14,8 +14,8 @@ describe("Properly report lines added and removed", () => {
     expB: `
       let name;
       ➕let age;➕
-    `
-  })
+    `,
+  });
 
   test({
     name: "Single line added above",
@@ -32,8 +32,8 @@ describe("Properly report lines added and removed", () => {
     expB: `
       ➕let age;➕
       let name;
-    `
-  })
+    `,
+  });
 
   test({
     name: "Multiple lines added 1",
@@ -44,8 +44,8 @@ describe("Properly report lines added and removed", () => {
     expB: `
       ➕let a;
       let b;➕
-    `
-  })
+    `,
+  });
 
   test({
     name: "Multiple lines added 2",
@@ -58,8 +58,8 @@ describe("Properly report lines added and removed", () => {
       ➕let a;
       let b;
       let c;➕
-    `
-  })
+    `,
+  });
 
   test({
     name: "Multiple lines added 3. With trivia",
@@ -68,8 +68,8 @@ describe("Properly report lines added and removed", () => {
     `,
     expB: `➕let a;
     let b;➕
-  `
-  })
+  `,
+  });
 
   test({
     name: "Added wrapped code",
@@ -88,8 +88,8 @@ describe("Properly report lines added and removed", () => {
       ➕while (true) {➕
         callFn()
       ➕}➕
-    `
-  })
+    `,
+  });
 
   // This used to crash
   test({
@@ -105,6 +105,6 @@ describe("Properly report lines added and removed", () => {
     `,
     expB: `
       ➕() {}➕
-    `
-  })
+    `,
+  });
 });

@@ -1,12 +1,14 @@
-import { Context } from "./utils";
+import { Context, getIndexesFromSegment } from "./utils";
 import { Side } from "../shared/language";
 import { Iterator } from "./iterator";
-import { Change, getSequence } from "./diff";
-import { Sequence } from "./types";
+import { getBestMatch, getSubSequenceNodes, oneSidedIteration } from "./core";
+import { Change, Segment } from "./diff";
+import { DiffType } from "../types";
+import { fail } from "../debug";
+import { range } from "../utils";
+import { Diff } from "../data_structures/diff";
 
 export function getDiff2(sourceA: string, sourceB: string) {
-  const changes: Change[] = [];
-
   const iterA = new Iterator(sourceA, Side.a);
   const iterB = new Iterator(sourceB, Side.b);
 
@@ -24,66 +26,84 @@ export function getDiff2(sourceA: string, sourceB: string) {
 
   _context.iterA = iterA;
   _context.iterB = iterB;
-  
-  const sequences: Sequence[] = []
 
-  // 1- For every node on B, we look for candidates on A
-  for (const nodeB of iterB.nodes) {
-    const aSideCandidates = iterA.getMatchingNodes(nodeB)
+  const changes: Change[] = [];
 
-    if (aSideCandidates.length === 0) {
-      // Report missing 
-      console.log('Missing node found', nodeB.prettyKind, nodeB.text)
-      continue
+  while (true) {
+    const a = iterA.next();
+    const b = iterB.next();
+
+    // No more nodes to process. We are done
+    if (!a && !b) {
+      break;
     }
-    
-    // 2- For every candidate we find their sequences and store them in the global sequence list
-    for (const candidate of aSideCandidates) {
-      const possibleSequences = getSequence(candidate, nodeB)
 
-      sequences.push(possibleSequences)
+    // One of the iterators ran out of nodes. We will mark the remaining unmatched nodes
+    if (!a || !b) {
+      // If A finished means that B still have nodes, they are additions. If B finished means that A have nodes, they are deletions
+      const iterOn = !a ? iterB : iterA;
+      const type = !a ? DiffType.addition : DiffType.deletion;
+      const startFrom = !a ? b?.index : a.index;
+
+      const remainingChanges = oneSidedIteration(iterOn, type, startFrom!);
+      changes.push(...remainingChanges);
+      break;
+    }
+
+    // 1-
+    const bestMatchForB = getBestMatch(b);
+
+    if (!bestMatchForB) {
+      const addition = Change.createAddition(b);
+      changes.push(addition);
+      iterB.mark(b.index, DiffType.addition);
+
+      continue;
+    }
+
+    const subSequenceNodesToCheck = getSubSequenceNodes(bestMatchForB, b);
+
+    if (!subSequenceNodesToCheck.length) {
+      fail("IDK");
+    }
+
+    let bestCandidate = bestMatchForB;
+
+    for (const node of subSequenceNodesToCheck) {
+      const _bestMatch = getBestMatch(node);
+
+      if (!_bestMatch) {
+        const addition = Change.createAddition(b);
+        changes.push(addition);
+        iterB.mark(b.index, DiffType.addition);
+
+        continue;
+      }
+
+      if (_bestMatch.length > bestCandidate.length) {
+        bestCandidate = _bestMatch;
+      }
+    }
+
+    const move = Change.createMove(bestCandidate);
+    changes.push(move);
+    markMatched(move);
+    continue;
+  }
+}
+
+function markMatched(change: Change) {
+  for (const segment of change.segments) {
+    const { a, b } = getIndexesFromSegment(segment);
+
+    for (const index of range(a.start, a.end)) {
+      _context.iterA.mark(index, change.type);
+    }
+
+    for (const index of range(b.start, b.end)) {
+      _context.iterB.mark(index, change.type);
     }
   }
-
-  return sequences
-
-  // 3- Sort the sequences by length
-  // 4- For though all of them, checking if they are still applicable, if so record the move, otherwise skip it. (count matched nodes to skip early if possible)
-
-
-
-  // const sortedSequences = sequences.sort((a,b) => {
-  //   if (a.length < b.length) {
-  //     return 1
-  //   } else if (a.length > b.length) {
-  //     return -1
-  //   } else {
-  //     return a.skips >= b.skips ? 1 : -1
-  //   }
-  // })
-
-  // return sortedSequences
-
-  // let matchedANodes = 0
-  // let matchedBNodes = 0
-  // for (const seq of sortedSequences) {
-  //   if (!stillApplicable(seq)) {
-  //     continue
-  //   }
-
-  //   const [matchedA, matchedB] = applySequence(seq)
-
-  //   matchedANodes += matchedA
-  //   matchedBNodes += matchedB
-
-  //   if (iterA.nodes.length === matchedANodes) {
-  //     // Report adds
-  //   }
-
-  //   if (iterB.nodes.length === matchedBNodes) {
-  //     // Report dels
-  //   }
-  // }
 }
 
 export let _context: Context;

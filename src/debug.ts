@@ -2,10 +2,11 @@ import ts from "typescript";
 import Table from "cli-table3";
 import { DiffType } from "./types";
 import colorFn from "kleur";
-import { SegmentRange, Sequence } from "./v2/types";
 import { getSourceWithChange } from "./backend/printer";
 import { _context as _context2 } from "./v2/index";
-import { Iterator } from './v2/iterator'
+import { Iterator } from "./v2/iterator";
+import { getIndexesFromSegment } from "./v2/utils";
+import { Change } from "./v2/diff";
 
 enum ErrorType {
   DebugFailure = "DebugFailure",
@@ -14,12 +15,26 @@ enum ErrorType {
 }
 
 class BaseError {
-  constructor(public type: ErrorType, public message: string, public serializedError?: string, public extra?: unknown) {}
+  constructor(
+    public type: ErrorType,
+    public message: string,
+    public serializedError?: string,
+    public extra?: unknown,
+  ) {}
 }
 
 class DebugFailure extends BaseError {
-  constructor(public message: string, public error?: Error, public extra?: unknown) {
-    super(ErrorType.DebugFailure, message, error ? JSON.stringify(error) : undefined, extra);
+  constructor(
+    public message: string,
+    public error?: Error,
+    public extra?: unknown,
+  ) {
+    super(
+      ErrorType.DebugFailure,
+      message,
+      error ? JSON.stringify(error) : undefined,
+      extra,
+    );
   }
 }
 
@@ -29,7 +44,10 @@ export function fail(errorMessage?: string): never {
 
 // It receives a function instead of a raw string so that the content gets evaluated lazily. Without this, an error message that
 // uses the function `getPrettyKind` will trigger it independently if the assertion passes of not
-export function assert<T>(condition: T, errorMessage?: () => string): asserts condition is NonNullable<T> {
+export function assert<T>(
+  condition: T,
+  errorMessage?: () => string,
+): asserts condition is NonNullable<T> {
   if (!condition) {
     fail(errorMessage?.());
   }
@@ -71,7 +89,11 @@ export function createTextTable(
   const maxLength = Math.max(aLines.length, bLines.length);
 
   const table = new Table({
-    head: [colorFn.yellow("Nº"), colorFn.red("Source"), colorFn.green("Revision")],
+    head: [
+      colorFn.yellow("Nº"),
+      colorFn.red("Source"),
+      colorFn.green("Revision"),
+    ],
     colAligns: ["left", "left"],
     colWidths: [5, 30, 30],
     style: {
@@ -134,64 +156,73 @@ const COLOR_ROULETTE = [
   colorFn.blue,
   colorFn.magenta,
   colorFn.cyan,
-]
+];
 
-let _currentColor = -1
+let _currentColor = -1;
 export function getColor() {
-  _currentColor++
+  _currentColor++;
 
   if (_currentColor >= COLOR_ROULETTE.length) {
-    _currentColor = 0
+    _currentColor = 0;
   }
 
-  return COLOR_ROULETTE[_currentColor]
+  return COLOR_ROULETTE[_currentColor];
 }
 
 function resetColorRoulette() {
-  _currentColor = 0
+  _currentColor = 0;
 }
 
-function getStringPositionsFromRange(iter: Iterator, range: SegmentRange): [start: number, end: number] {
-  const [indexStart, indexEnd] = range
-
+function getStringPositionsFromRange(
+  iter: Iterator,
+  indexStart: number,
+  indexEnd: number,
+): [start: number, end: number] {
   const start = iter.nodes[indexStart].start;
   const end = iter.nodes[indexEnd].end;
 
-  return [start, end]
+  return [start, end];
 }
 
-export function getPrettyPrintSequence(sequence: Sequence, sourceA: string, sourceB: string) {
-  const { iterA, iterB } = _context2
-  let charsA = sourceA.split('')
-  let charsB = sourceB.split('')
+export function getPrettyStringFromChange(
+  change: Change,
+  sourceA: string,
+  sourceB: string,
+) {
+  const { iterA, iterB } = _context2;
+  let charsA = sourceA.split("");
+  let charsB = sourceB.split("");
 
-  for (const segment of sequence.segments) {
-    const [startA, endA] = getStringPositionsFromRange(iterA, segment.a)
-    const [startB, endB] = getStringPositionsFromRange(iterB, segment.b)
-    
-    const color = getColor()
+  for (const segment of change.segments) {
+    const { a, b } = getIndexesFromSegment(segment);
+    const [startA, endA] = getStringPositionsFromRange(iterA, a.start, a.end);
+    const [startB, endB] = getStringPositionsFromRange(iterB, b.start, b.end);
 
-    charsA = getSourceWithChange(charsA, startA, endA, color)
-    charsB = getSourceWithChange(charsB, startB, endB, color)
+    const color = getColor();
+
+    charsA = getSourceWithChange(charsA, startA, endA, color);
+    charsB = getSourceWithChange(charsB, startB, endB, color);
   }
 
   return {
-    a: charsA.join(''),
-    b: charsB.join('')
-  }
+    a: charsA.join(""),
+    b: charsB.join(""),
+  };
 }
 
-export function prettyPrintSequences(a: string, b: string, sequences: Sequence[]) {
-  let sequenceCounter = -1
-  for (const sequence of sequences) {
-    sequenceCounter++
-    console.log(`\n---------- Starter ${sequence.starterNode.prettyKind} ${`"${sequence.starterNode.text}"` || ''} Length: ${sequence.length} Segments ${sequence.segments.length} Skips: ${sequence.skips} ----------\n`)
-    const sourcesWithColor = getPrettyPrintSequence(sequence, a, b)
-  
-    const table = createTextTable(sourcesWithColor.a, sourcesWithColor.b)
-  
-    console.log(table)
+export function prettyPrintChanges(a: string, b: string, changes: Change[]) {
+  let sequenceCounter = -1;
+  for (const change of changes) {
+    sequenceCounter++;
+    console.log(
+      `\n---------- Starter ${change.startNode.prettyKind} ${`"${change.startNode.text}"` || ""} Length: ${change.length} Segments ${change.segments.length} Skips: ${change.skips} ----------\n`,
+    );
+    const sourcesWithColor = getPrettyStringFromChange(change, a, b);
 
-    resetColorRoulette()
+    const table = createTextTable(sourcesWithColor.a, sourcesWithColor.b);
+
+    console.log(table);
+
+    resetColorRoulette();
   }
 }

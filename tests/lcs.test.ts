@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import { getSequenceSingleDirection } from "../src/core/find_diffs";
 
 class MockIterator {
-  constructor(public items: any[]) { }
+  constructor(public items: any[]) {}
 
   peek(index: number) {
     return this.items[index];

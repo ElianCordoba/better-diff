@@ -19,8 +19,8 @@ describe("Properly report lines added", () => {
     expB: `
       ⏩b⏪
       aa
-    `
-  })
+    `,
+  });
 
   test({
     name: "Simple move 2",
@@ -39,8 +39,8 @@ describe("Properly report lines added", () => {
     expB: `
       ⏩1⏪
       1 2
-    `
-  })
+    `,
+  });
 
   test({
     name: "Multi characters move 2",
@@ -63,8 +63,8 @@ describe("Properly report lines added", () => {
       ⏩let age;⏪
       console.log()
       let name = 'Elian'
-    `
-  })
+    `,
+  });
 
   test({
     name: "LCS case 1",
@@ -93,8 +93,8 @@ describe("Properly report lines added", () => {
       1
       2
       3
-    `
-  })
+    `,
+  });
 
   test({
     name: "LCS case 2",
@@ -125,8 +125,8 @@ describe("Properly report lines added", () => {
       ➕1
       2➕
       3
-    `
-  })
+    `,
+  });
 
   test({
     name: "Mix of move with deletions and additions",
@@ -141,8 +141,8 @@ describe("Properly report lines added", () => {
     `,
     expB: `
       ➕fn(➕console.log(➕2➕)➕)➕
-    `
-  })
+    `,
+  });
 
   test({
     name: "Mix of move with deletions and additions 2",
@@ -157,8 +157,8 @@ describe("Properly report lines added", () => {
     `,
     expB: `
       ➕console.log(➕fn(➕1➕)➕)➕
-    `
-  })
+    `,
+  });
 
   test({
     name: "Mix of move with deletions and additions 3",
@@ -173,8 +173,8 @@ describe("Properly report lines added", () => {
     `,
     expB: `
       ➕fn(➕console.log(➕2➕)➕)➕
-    `
-  })
+    `,
+  });
 
   test({
     name: "Properly match closing paren",
@@ -189,8 +189,8 @@ describe("Properly report lines added", () => {
     `,
     expB: `
       console.log(➕fn()➕)
-    `
-  })
+    `,
+  });
 
   test({
     name: "Properly match closing paren 2",
@@ -213,8 +213,8 @@ describe("Properly report lines added", () => {
       ➕z➕
       print(➕123➕)
       ➕x➕
-    `
-  })
+    `,
+  });
 
   test({
     name: "Properly match closing paren 3",
@@ -233,8 +233,8 @@ describe("Properly report lines added", () => {
       ➕function asd () {➕
         console.log(➕"hi"➕)
       ➕}➕
-    `
-  })
+    `,
+  });
 
   test({
     name: "Properly match closing paren 4",
@@ -255,8 +255,8 @@ describe("Properly report lines added", () => {
     `,
     expB: `
       print(➕123➕)
-    `
-  })
+    `,
+  });
 
   test({
     name: "Properly match closing paren 5",
@@ -271,8 +271,8 @@ describe("Properly report lines added", () => {
     `,
     expB: `
       ➕console.log(➕fn(➕1➕)➕)➕
-    `
-  })
+    `,
+  });
 
   test({
     name: "Properly match closing paren 6",
@@ -309,8 +309,8 @@ describe("Properly report lines added", () => {
           a: 1
         }
       ➕}➕
-    `
-  })
+    `,
+  });
 
   // Test closing the paren on a deletion / addition on the "verifySingle"
   test({
@@ -334,8 +334,8 @@ describe("Properly report lines added", () => {
     `,
     expB: `
       ➕console.log(➕1➕)➕
-    `
-  })
+    `,
+  });
 
   // Test closing the paren on a move with syntax error
   test({
@@ -365,8 +365,8 @@ describe("Properly report lines added", () => {
         123
         123
         ➕Z➕
-    `
-  })
+    `,
+  });
 
   // Test for another syntax error, this hit the branch where we initialize a stack with a closing paren
   test({
@@ -382,8 +382,8 @@ describe("Properly report lines added", () => {
     `,
     expB: `
       ➕}{➕
-    `
-  })
+    `,
+  });
 
   // Test the ignore matches in the process moves
   test({
@@ -409,8 +409,8 @@ describe("Properly report lines added", () => {
         { x } = obj
         ➕z➕
       }
-    `
-  })
+    `,
+  });
 
   // Also test the match ignoring logic, now inside the true branch on the alignment
 
@@ -439,8 +439,8 @@ describe("Properly report lines added", () => {
       {
         (➕c➕)
       }
-    `
-  })
+    `,
+  });
 
   // Testing single node matching
   test({
@@ -476,8 +476,8 @@ describe("Properly report lines added", () => {
     expB: `
       ➕const➕ var1 = foo()
       ➕const➕ var2 = bar()
-    `
-  })
+    `,
+  });
 
   // This used to break the inverse
   test({
@@ -493,6 +493,6 @@ describe("Properly report lines added", () => {
     `,
     expB: `
       ➕(➕1➕)➕
-    `
-  })
+    `,
+  });
 });

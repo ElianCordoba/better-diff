@@ -1,13 +1,13 @@
 import { describe } from "vitest";
 import { getTestFn } from "../utils";
-import { OutputType, getDiff } from "../../src";
+import { getDiff, OutputType } from "../../src";
 import colorFn from "kleur";
 
-const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: colorFn.cyan("<<Alignment>>"), ignoreChangeMarkers: true })
+const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: colorFn.cyan("<<Alignment>>"), ignoreChangeMarkers: true });
 
 describe.skip("Properly align code", () => {
   test({
-    name: 'Basic case 1',
+    name: "Basic case 1",
     a: `
       1
       2
@@ -25,11 +25,11 @@ describe.skip("Properly align code", () => {
       1
       <<Alignment>>
       <<Alignment>>
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Basic case 2',
+    name: "Basic case 2",
     a: `
       1
       2
@@ -48,11 +48,11 @@ describe.skip("Properly align code", () => {
       1
       2
       <<Alignment>>
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Basic case 3',
+    name: "Basic case 3",
     a: `
       1
       2
@@ -71,11 +71,11 @@ describe.skip("Properly align code", () => {
       1
       <<Alignment>>
       3
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Basic case 4',
+    name: "Basic case 4",
     a: `
       1
       2
@@ -93,11 +93,11 @@ describe.skip("Properly align code", () => {
       <<Alignment>>
       <<Alignment>>
       3
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Basic case 5',
+    name: "Basic case 5",
     a: `
       1
       2
@@ -115,11 +115,11 @@ describe.skip("Properly align code", () => {
       <<Alignment>>
       <<Alignment>>
       3
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Basic case 6',
+    name: "Basic case 6",
     a: `
       123
       A
@@ -137,12 +137,12 @@ describe.skip("Properly align code", () => {
       B
       123
       <<Alignment>>
-    `
-  })
+    `,
+  });
 
   test({
-    only: 'standard',
-    name: 'Basic case 7',
+    only: "standard",
+    name: "Basic case 7",
     a: `
       A
       123
@@ -151,10 +151,10 @@ describe.skip("Properly align code", () => {
       B
       123
     `,
-  })
+  });
 
   test({
-    name: 'Basic case 8',
+    name: "Basic case 8",
     a: `
       x
       123
@@ -172,11 +172,11 @@ describe.skip("Properly align code", () => {
       <<Alignment>>  
       123
       x
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Basic case 9',
+    name: "Basic case 9",
     disabled: true,
     a: `
       123
@@ -196,11 +196,11 @@ describe.skip("Properly align code", () => {
       x
       123
       z
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Basic case 10',
+    name: "Basic case 10",
     a: `
       123
       x
@@ -225,11 +225,11 @@ describe.skip("Properly align code", () => {
       z
       <<Alignment>>
       5
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Basic case 11',
+    name: "Basic case 11",
     a: `
       x y
       123
@@ -247,11 +247,11 @@ describe.skip("Properly align code", () => {
       <<Alignment>>
       123
       x
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Basic case 12',
+    name: "Basic case 12",
     a: `
       console.log()
     `,
@@ -272,17 +272,17 @@ describe.skip("Properly align code", () => {
       2
       3
       console.log()
-    `
-  })
+    `,
+  });
 
   // Test insertion into "lastA" and "lastB"
   test({
-    name: 'Basic case 13',
+    name: "Basic case 13",
     a: "xx\n1",
     b: "1\nxx",
     expA: "<<Alignment>>\nxx\n1",
-    expB: "1\nxx\n<<Alignment>>"
-  })
+    expB: "1\nxx\n<<Alignment>>",
+  });
 
   test({
     name: "Basic case 13b",
@@ -303,13 +303,13 @@ describe.skip("Properly align code", () => {
       1
       xx
       <<Alignment>>
-    `
-  })
+    `,
+  });
 
   // Ignored backward because it's order dependant
   test({
-    name: 'Basic case 14',
-    only: 'standard',
+    name: "Basic case 14",
+    only: "standard",
     a: `
       1
       2
@@ -335,12 +335,12 @@ describe.skip("Properly align code", () => {
       5
       console
       .log()
-    `
-  })
+    `,
+  });
 
   // TODO(Alignment): Take the most wight in order to specify where to put the alignment, either at the beginning or the end
   test({
-    name: 'Basic case 15',
+    name: "Basic case 15",
     a: `
       x
       if (true) {}
@@ -362,11 +362,11 @@ describe.skip("Properly align code", () => {
       if (true) {}
       z 
     `,
-  })
+  });
 
   test({
-    name: 'Basic case 16',
-    only: 'standard',
+    name: "Basic case 16",
+    only: "standard",
     a: `
       zzz
       1
@@ -399,11 +399,11 @@ describe.skip("Properly align code", () => {
       3
       4
     `,
-  })
+  });
 
   // TODO(Alignment): Take the most wight in order to specify where to put the alignment, either at the beginning or the end
   test({
-    name: 'Basic case 17',
+    name: "Basic case 17",
     a: `
       1
       print(true) {}
@@ -429,11 +429,11 @@ describe.skip("Properly align code", () => {
         true
       ) {
 
-      }`
+      }`,
   });
 
   test({
-    name: 'Basic case 18',
+    name: "Basic case 18",
     a: `
       x
       z
@@ -456,10 +456,10 @@ describe.skip("Properly align code", () => {
       2
       z
     `,
-  })
+  });
 
   test({
-    name: 'Basic case 19',
+    name: "Basic case 19",
     a: `
       x z
       1 2
@@ -478,11 +478,11 @@ describe.skip("Properly align code", () => {
       x
       <<Alignment>>
       3
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Basic case 20',
+    name: "Basic case 20",
     a: `
       x
       console.log(0)
@@ -502,17 +502,17 @@ describe.skip("Properly align code", () => {
       console.log(1)
       x
       z
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Basic case 21',
+    name: "Basic case 21",
     a: "fn(x)",
     b: "console.log(fn(1))",
-  })
+  });
 
   test({
-    name: 'Basic case 22',
+    name: "Basic case 22",
     a: `
       {
         { a, b, x } = obj
@@ -535,11 +535,11 @@ describe.skip("Properly align code", () => {
         { x } = obj
         z
       }
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Basic case 23',
+    name: "Basic case 23",
     a: `
       1 x
     `,
@@ -554,11 +554,11 @@ describe.skip("Properly align code", () => {
     expB: `
       2
       x
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Basic case 24',
+    name: "Basic case 24",
     a: `
       1 {
         a: 1
@@ -584,11 +584,11 @@ describe.skip("Properly align code", () => {
           a: 1
         }
       }
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Basic case 25',
+    name: "Basic case 25",
     a: `
       1
       1
@@ -638,13 +638,13 @@ describe.skip("Properly align code", () => {
 
       x z
       zz
-    `
-  })
-})
+    `,
+  });
+});
 
-describe.skip('Properly ignore alignments', () => {
+describe.skip("Properly ignore alignments", () => {
   test({
-    name: 'Ignore alignment 1',
+    name: "Ignore alignment 1",
     a: `
       1 2
     `,
@@ -654,10 +654,10 @@ describe.skip('Properly ignore alignments', () => {
     expA: `
       1 2
     `,
-  })
+  });
 
   test({
-    name: 'Ignore alignment 2',
+    name: "Ignore alignment 2",
     a: `
       x
       1 2
@@ -672,6 +672,6 @@ describe.skip('Properly ignore alignments', () => {
     expB: `
       <<Alignment>>
       1
-    `
-  })
-})
+    `,
+  });
+});

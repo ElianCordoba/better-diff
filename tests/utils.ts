@@ -1,16 +1,16 @@
 import { expect, test as vTest } from "vitest";
-import { Options, OutputType, getDiff } from "../src";
+import { getDiff, Options, OutputType } from "../src";
 
 // Re-use type
 type TestFn = (...args: any[]) => {
   sourceA: string;
   sourceB: string;
-}
+};
 
 interface TestInfo {
   disabled?: boolean;
-  only?: 'standard' | 'inversed',
-  name?: string | number,
+  only?: "standard" | "inversed";
+  name?: string | number;
   a?: string;
   b?: string;
   expA?: string;
@@ -18,56 +18,56 @@ interface TestInfo {
 }
 
 export function getTestFn(testFn: TestFn, testOptions: Options = {}) {
-  const options = { outputType: OutputType.text, ...testOptions }
+  const options = { outputType: OutputType.text, ...testOptions };
   return function test(testInfo: TestInfo) {
-    const { a = '', b = '', expA, expB, name = "anonymous" } = testInfo;
+    const { a = "", b = "", expA, expB, name = "anonymous" } = testInfo;
 
     if (a === expA && b === expB) {
-      throw new Error(`Invalid test ${name}, input and output are the same`)
+      throw new Error(`Invalid test ${name}, input and output are the same`);
     }
 
     if (testInfo.disabled) {
-      return
+      return;
     }
 
-    const skipStandardTest = testInfo.only === 'inversed';
+    const skipStandardTest = testInfo.only === "inversed";
 
     if (!skipStandardTest) {
       vTest(`Test ${name}`, () => {
-        const { sourceA: resultA, sourceB: resultB } = testFn(a, b, options)
+        const { sourceA: resultA, sourceB: resultB } = testFn(a, b, options);
 
         validateDiff(expA || a, expB || b, resultA, resultB);
       });
     }
 
-    const skipInversedTest = testInfo.only === 'standard';
+    const skipInversedTest = testInfo.only === "standard";
 
     if (!skipInversedTest) {
       vTest(`Test ${name} inverse`, () => {
-        const { sourceA: resultA, sourceB: resultB } = testFn(b, a, options)
+        const { sourceA: resultA, sourceB: resultB } = testFn(b, a, options);
 
         const inversedExpectedA = getInversedExpectedResult(expB || b);
-        const inversedExpectedB = getInversedExpectedResult(expA || a)
+        const inversedExpectedB = getInversedExpectedResult(expA || a);
 
         validateDiff(inversedExpectedA, inversedExpectedB, resultA, resultB);
       });
     }
-  }
+  };
 }
 
 export function getInversedExpectedResult(expected: string) {
-  return expected.split('').map(char => {
+  return expected.split("").map((char) => {
     if (char === "➖") {
-      return "➕"
+      return "➕";
     } else if (char === "➕") {
-      return "➖"
+      return "➖";
     } else {
-      return char
+      return char;
     }
-  }).join('')
+  }).join("");
 }
 
-export const test = getTestFn(getDiff)
+export const test = getTestFn(getDiff);
 
 export function validateDiff(
   expectedA: string,

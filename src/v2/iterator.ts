@@ -5,9 +5,10 @@ import { getTsNodes } from "./compilers";
 import { Node } from "./node";
 import colorFn from "kleur";
 import { NodesTable } from "./types";
+import { DiffType } from "../types";
 
 export class Iterator {
-  nodes: Node[]
+  nodes: Node[];
 
   lastNodeVisited!: Node;
 
@@ -16,26 +17,28 @@ export class Iterator {
 
   nodesTable: NodesTable;
 
+  matchNumber = 0;
+
   constructor(source: string, side: Side) {
     this.side = side;
     this.source = source;
     const { nodesTable, nodes } = getTsNodes(source, side);
 
-    this.nodes = nodes
+    this.nodes = nodes;
 
     this.nodesTable = nodesTable;
   }
 
-   // Get the next unmatched node in the iterator, optionally after a given index
-   next(index?: number) {
-    const start = index ?? 0
+  // Get the next unmatched node in the iterator, optionally after a given index
+  next(index?: number) {
+    const start = index ?? 0;
     for (let i = start; i < this.nodes.length; i++) {
       const node = this.nodes[i];
 
       if (node.matched) {
         continue;
       }
-      
+
       return this.lastNodeVisited = node;
     }
   }
@@ -50,6 +53,18 @@ export class Iterator {
     return item;
   }
 
+  mark(index: number, markedAs: DiffType) {
+    // TODO: Should only apply for moves, otherwise a move, addition and move
+    // will display 1 for the first move and 3 for the second
+    this.matchNumber++;
+    this.nodes[index].matched = true;
+    this.nodes[index].matchNumber = this.matchNumber;
+    this.nodes[index].markedAs = markedAs;
+
+    // TODO2: Maybe we can delete the node from the `nodesTable` so that the `getMatchingNodes` doesn't need to filter out the marked ones
+    //this.nodesTable.get(this.nodes[index].kind)!.findIndex/()
+  }
+
   getMatchingNodes(targetNode: Node) {
     const rawCandidates = this.nodesTable.get(targetNode.kind);
 
@@ -57,7 +72,7 @@ export class Iterator {
       return [];
     }
 
-    return rawCandidates.filter(x => x.text === targetNode.text);
+    return rawCandidates.filter((x) => !x.matched && x.text === targetNode.text);
   }
 
   printNode(node: Node) {

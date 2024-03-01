@@ -1,4 +1,4 @@
-import { SyntaxKind, Node as TsNode } from "typescript";
+import { Node as TsNode, SyntaxKind } from "typescript";
 import { Node } from "./node";
 import { getSourceFile } from "../frontend/utils";
 import { Side } from "../shared/language";
@@ -27,7 +27,7 @@ export function getTsNodes(source: string, side: Side): ParsedProgram {
     const start = node.pos + node.getLeadingTriviaWidth();
     const end = node.end;
 
-    const isTextNode = verifyTextNode(node)
+    const isTextNode = verifyTextNode(node);
 
     const newNode = new Node({
       side,
@@ -39,22 +39,20 @@ export function getTsNodes(source: string, side: Side): ParsedProgram {
       start,
       end,
       parent,
-      isTextNode
+      isTextNode,
     });
     i++;
 
-    allNodes.push(newNode)
+    allNodes.push(newNode);
 
     if (isTextNode) {
-      nodes.push(newNode)
+      nodes.push(newNode);
     }
-    
-    
 
     storeNodeInNodeTable(nodesTable, newNode);
-  
+
     node.getChildren().map((x) => walk(x, newNode));
-  
+
     return newNode;
   }
 
@@ -63,16 +61,15 @@ export function getTsNodes(source: string, side: Side): ParsedProgram {
   return {
     nodesTable,
     nodes,
-    allNodes
+    allNodes,
   };
 }
-
 
 function verifyTextNode(node: TsNode) {
   const isReservedWord = node.kind >= SyntaxKind.FirstKeyword && node.kind <= SyntaxKind.LastKeyword;
   const isPunctuation = node.kind >= SyntaxKind.FirstPunctuation && node.kind <= SyntaxKind.LastPunctuation;
 
-  return (node as any).text && node.kind !== SyntaxKind.SourceFile || isReservedWord || isPunctuation
+  return (node as any).text && node.kind !== SyntaxKind.SourceFile || isReservedWord || isPunctuation;
 }
 
 function storeNodeInNodeTable(nodesTable: NodesTable, node: Node) {

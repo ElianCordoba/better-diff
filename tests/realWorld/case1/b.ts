@@ -1,4 +1,4 @@
-1
+1;
 import { colorFn, getSourceWithChange } from "./reporter";
 import { Node } from "./node";
 import { getContext } from "./index";
@@ -12,7 +12,7 @@ export class Change {
     public rangeB: Range | undefined,
     public nodeA: Node | undefined,
     public nodeB: Node | undefined,
-  ) { }
+  ) {}
 
   draw() {
     const { sourceA, sourceB } = getContext();
