@@ -3,7 +3,7 @@ import { assert, fail } from "../debug";
 import { Side } from "../shared/language";
 import { Iterator } from "./iterator";
 import { DiffType, TypeMasks } from "../types";
-import { range } from "../utils";
+import { range, rangeEq } from "../utils";
 import { Node } from "./node";
 import { getIndexesFromSegment } from "./utils";
 import { getBestMatch, isLatterCandidateBetter } from "./core";
@@ -78,6 +78,7 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
   const { iterA, iterB } = _context;
 
   let segmentLength = 0;
+  let skips = 0
   let skipsOnA = 0;
   let skipsOnB = 0;
 
@@ -115,136 +116,44 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
     segments.push([currentASegmentStart, currentBSegmentStart, segmentLength]);
     segmentLength = 0
 
-    const skipBUntil = Math.min(iterB.nodes.length, indexB + MAX_NODE_SKIPS)
+    let skipsInLookaheadB = 0
 
-    let bSkips = 0
-    lookaheadB: for (const newIndexB of range(indexB, skipBUntil)) {
-      bSkips++
-      const newB = iterA.peek(newIndexB)
+    const skipBUntil = Math.min(iterB.nodes.length - 1, indexB + MAX_NODE_SKIPS)
+
+    for (const newIndexB of rangeEq(indexB, skipBUntil)) {
+      const newB = iterB.next(newIndexB)
 
       if (!newB) {
-        continue lookaheadB
+        break mainLoop
       }
 
-      if (equals(newB, nextA)) {
-        // resume 
-        
-        skipsOnA += bSkips
-        bSkips = 0
+      let skipsInLookaheadA = 0
+      // OJO + 1 ya 
+      const skipAUntil = Math.min(iterA.nodes.length - 1, indexA + MAX_NODE_SKIPS)      
+      lookaheadA: for (const newIndexA of rangeEq(indexA, skipAUntil)) {
+        assert(newB)
 
-        indexA = newIndexB
-        
-        break lookaheadB
-      }
-    }
+        const newA = iterA.next(newIndexA)
 
-    
-
-    const skipAUntil = Math.min(iterA.nodes.length, indexA + MAX_NODE_SKIPS)
-
-    let aSkips = 0
-    lookaheadA: for (const newIndexA of range(indexA, skipAUntil)) {
-      aSkips++
-      const newA = iterA.peek(newIndexA)
-
-      if (!newA) {
-        continue lookaheadA
-      }
-
-      if (equals(newA, nextB)) {
-        // resume 
-        
-        skipsOnA += aSkips
-        aSkips = 0
-
-        indexA = newIndexA
-        
-        break lookaheadA
-      }
-    }
-
-    // We skipped on A but didn't find a match, now lets consider skipping B
-
-   
-
-
-    // For example for
-    //
-    // 1 2 3 4 5
-    // 1 2 X 4 5
-    const resultA = exploreMatchBySkipping(iterA, nextA, nextB);
-    const resultB = exploreMatchBySkipping(iterB, nextB, nextA);
-    
-    if (resultA.length === 0 && resultB.length === 0) {
-      fail('0 both')
-    }
-
-    if (isLatterCandidateBetter(resultA, resultB)) {
-      resumeWith(resultB)
-    } else {
-      resumeWith(resultA)
-    }
-
-    continue mainLoop;
-
-    function exploreMatchBySkipping(
-      iter: Iterator,
-      startAfterNode: Node,
-      wantedNode: Node
-    ): CandidateMatch {
-      let numberOfSkips = 0;
-
-      // Start by skipping the current node
-      const from = startAfterNode.index + 1;
-
-      // Look until we reach the skip limit or the end of the iterator, whatever happens first
-      const until = Math.min(
-        startAfterNode.index + MAX_NODE_SKIPS,
-        iter.nodes.length
-      );
-
-      let bestCandidate = getEmptyCandidate()
-
-      for (const nextNodeIndex of range(from, until)) {
-        numberOfSkips++;
-
-        const newCandidate = iter.peek(nextNodeIndex);
-
-        if (!newCandidate) {
-          continue;
+        if (!newA) {
+          break lookaheadA
         }
 
-        if (equals(newCandidate, wantedNode)) {
-          let candidate: CandidateMatch;
-          if (iter.side === Side.a) {
-            assert(startAfterNode.side === Side.a)
-            assert(wantedNode.side === Side.b)
+        if (equals(newA, newB)) {
+          indexA = newIndexA
+          indexB = newIndexB
 
-            candidate = exploreForward(nextNodeIndex, wantedNode.index, iter.side)
-          } else {
-            assert(startAfterNode.side === Side.b)
-            assert(wantedNode.side === Side.a)
+          currentASegmentStart = newIndexA
+          currentBSegmentStart = newIndexB
 
-            candidate = exploreForward(wantedNode.index, nextNodeIndex, iter.side)
-          }
-
-          if (isLatterCandidateBetter(bestCandidate, candidate)) {
-            bestCandidate = candidate;
-          }
+          skips += skipsInLookaheadA + skipsInLookaheadB
+          continue mainLoop
         }
+
+        skipsInLookaheadA++
       }
 
-      return bestCandidate;
-    }
-
-    function resumeWith(candidate: CandidateMatch) {
-      const [startA, startB] = candidate.segments[0];
-      currentASegmentStart = startA;
-      currentBSegmentStart = startB;
-      indexA = startA;
-      indexB = startB;
-      skips += candidate.skips;
-      segmentLength = 0;
+      skipsInLookaheadB++
     }
   }
 
