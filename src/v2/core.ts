@@ -27,7 +27,7 @@ export function getBestMatch(nodeB: Node): CandidateMatch | undefined {
   for (const candidate of aSideCandidates) {
     const newCandidate = getCandidateMatch(candidate, nodeB);
 
-    if (isNewCandidateBetter(bestMatch, newCandidate)) {
+    if (isLatterCandidateBetter(bestMatch, newCandidate)) {
       bestMatch = newCandidate;
     }
   }
@@ -83,7 +83,7 @@ export function oneSidedIteration(
 /**
  * TODO: MAybe compute a score fn
  */
-export function isNewCandidateBetter(currentCandidate: CandidateMatch, newCandidate: CandidateMatch): boolean {
+export function isLatterCandidateBetter(currentCandidate: CandidateMatch, newCandidate: CandidateMatch): boolean {
   if (newCandidate.length > currentCandidate.length) {
     return true;
   } else if (newCandidate.length < currentCandidate.length) {

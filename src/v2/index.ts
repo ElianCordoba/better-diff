@@ -1,7 +1,7 @@
 import { Context, getIndexesFromSegment } from "./utils";
 import { Side } from "../shared/language";
 import { Iterator } from "./iterator";
-import { getBestMatch, getSubSequenceNodes, isNewCandidateBetter, oneSidedIteration } from "./core";
+import { getBestMatch, getSubSequenceNodes, isLatterCandidateBetter, oneSidedIteration } from "./core";
 import { Change, Segment } from "./diff";
 import { DiffType } from "../types";
 import { fail } from "../debug";
@@ -80,7 +80,7 @@ export function getDiff2(sourceA: string, sourceB: string) {
         continue;
       }
 
-      if (isNewCandidateBetter(bestCandidate, newCandidate)) {
+      if (isLatterCandidateBetter(bestCandidate, newCandidate)) {
         bestCandidate = newCandidate;
       }
     }

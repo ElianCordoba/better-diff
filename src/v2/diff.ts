@@ -1,10 +1,12 @@
 import { _context } from ".";
-import { assert } from "../debug";
+import { assert, fail } from "../debug";
 import { Side } from "../shared/language";
+import { Iterator } from "./iterator";
 import { DiffType, TypeMasks } from "../types";
 import { range } from "../utils";
 import { Node } from "./node";
 import { getIndexesFromSegment } from "./utils";
+import { getBestMatch, isLatterCandidateBetter } from "./core";
 
 // Start is inclusive, end is not inclusive
 export type Segment = [indexA: number, indexB: number, length: number];
@@ -15,13 +17,21 @@ export interface CandidateMatch {
   segments: Segment[];
 }
 
+export function getEmptyCandidate(): CandidateMatch {
+  return {
+    length: 0,
+    segments: [],
+    skips: 0,
+  };
+}
+
 export class Change {
   startNode: Node;
   length: number;
   constructor(
     public type: DiffType,
     public segments: Segment[],
-    public skips = 0,
+    public skips = 0
   ) {
     this.startNode = getStarterNode(type, segments);
     this.length = calculateCandidateMatchLength(segments);
@@ -63,19 +73,15 @@ export class Change {
 // SCORE FN PARAMETERS
 const MAX_NODE_SKIPS = 5;
 
-export function getCandidateMatch(
-  nodeA: Node,
-  nodeB: Node,
-): CandidateMatch {
+export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
   const segments: Segment[] = [];
   const { iterA, iterB } = _context;
 
-  let bestSequence = 0;
+  let segmentLength = 0;
   let skips = 0;
 
-  // Where the segment starts
-  let segmentAStart = nodeA.index;
-  let segmentBStart = nodeB.index;
+  let currentASegmentStart = nodeA.index;
+  let currentBSegmentStart = nodeB.index;
 
   let indexA = nodeA.index;
   let indexB = nodeB.index;
@@ -89,56 +95,102 @@ export function getCandidateMatch(
 
     // If one of the iterators ends then there is no more search to do
     if (!nextA || !nextB) {
-      segments.push([segmentAStart, segmentBStart, bestSequence]);
+      segments.push([
+        currentASegmentStart,
+        currentBSegmentStart,
+        segmentLength,
+      ]);
       break mainLoop;
     }
 
-    // Here two things can happen, either the match continues so we keep on advancing the cursors
     if (equals(nextA, nextB)) {
-      bestSequence++;
+      segmentLength++;
       indexA++;
       indexB++;
       continue;
     }
 
-    // Or, we find a discrepancy. Before try to skip nodes to recover the match we record the current segment
-    segments.push([segmentAStart, segmentBStart, bestSequence]);
+    // We found a discrepancy. Before try to skip nodes to recover the match we record the current segment
+    segments.push([currentASegmentStart, currentBSegmentStart, segmentLength]);
 
-    // TODO-2 This could be a source of Change type diff, maybe
-    // "A B C" transformed into "A b C" where "B" changed into "b"
-    // if (areNodesSimilar(nextA, nextB)) {
-    //   continue
-    // }
-
-    // We will try match the current B node with the following N nodes on A
-
-    let numberOfSkips = 0;
-
-    // Look until we reach the skip limit or the end of the iterator, whatever happens first
-    const lookForwardUntil = Math.min(
-      indexA + MAX_NODE_SKIPS,
-      iterA.nodes.length,
-    );
-
-    // Start by skipping the current node
-    for (const nextIndexA of range(indexA + 1, lookForwardUntil)) {
-      numberOfSkips++;
-
-      const newCandidate = iterA.peek(nextIndexA)!;
-
-      // We found a match, so we will resume the matching in a new segment from there
-      if (equals(newCandidate, nextB)) {
-        segmentAStart = nextIndexA;
-        segmentBStart = indexB;
-        indexA = nextIndexA;
-        skips = numberOfSkips;
-        bestSequence = 0;
-        continue mainLoop;
-      }
+    // For example for
+    //
+    // 1 2 3 4 5
+    // 1 2 X 4 5
+    const resultA = exploreMatchBySkipping(iterA, nextA, nextB);
+    const resultB = exploreMatchBySkipping(iterB, nextB, nextA);
+    
+    if (resultA.length === 0 && resultB.length === 0) {
+      fail('0 both')
     }
 
-    // We didn't find a candidate after advancing the cursor, we are done
-    break;
+    if (isLatterCandidateBetter(resultA, resultB)) {
+      resumeWith(resultB)
+    } else {
+      resumeWith(resultA)
+    }
+
+    continue mainLoop;
+
+    function exploreMatchBySkipping(
+      iter: Iterator,
+      startAfterNode: Node,
+      wantedNode: Node
+    ): CandidateMatch {
+      let numberOfSkips = 0;
+
+      // Start by skipping the current node
+      const from = startAfterNode.index + 1;
+
+      // Look until we reach the skip limit or the end of the iterator, whatever happens first
+      const until = Math.min(
+        startAfterNode.index + MAX_NODE_SKIPS,
+        iter.nodes.length
+      );
+
+      let bestCandidate = getEmptyCandidate()
+
+      for (const nextNodeIndex of range(from, until)) {
+        numberOfSkips++;
+
+        const newCandidate = iter.peek(nextNodeIndex);
+
+        if (!newCandidate) {
+          continue;
+        }
+
+        if (equals(newCandidate, wantedNode)) {
+          let candidate: CandidateMatch;
+          if (iter.side === Side.a) {
+            assert(startAfterNode.side === Side.a)
+            assert(wantedNode.side === Side.b)
+
+            candidate = exploreForward(nextNodeIndex, wantedNode.index, iter.side)
+          } else {
+            assert(startAfterNode.side === Side.b)
+            assert(wantedNode.side === Side.a)
+
+            candidate = exploreForward(wantedNode.index, nextNodeIndex, iter.side)
+          }
+
+          if (isLatterCandidateBetter(bestCandidate, candidate)) {
+            bestCandidate = candidate;
+          }
+        }
+      }
+
+      return bestCandidate;
+    }
+
+    function resumeWith(candidate: CandidateMatch) {
+      const [startA, startB] = candidate.segments[0];
+      currentASegmentStart = startA;
+      currentBSegmentStart = startB;
+      indexA = startA;
+      indexB = startB;
+      skips += candidate.skips;
+      segmentLength = 0;
+    }
   }
 
   return {
@@ -173,4 +225,52 @@ function getStarterNode(type: DiffType, segments: Segment[]) {
   assert(node, () => "Failed to get starter node");
 
   return node;
+}
+
+function exploreForward(
+  indexA: number,
+  indexB: number,
+  skipOn: Side
+): CandidateMatch {
+  const ogIndexA = indexA;
+  const ogIndexB = indexB;
+
+  let sequenceLength = 0;
+  let skips = 0;
+
+  const { iterA, iterB } = _context;
+
+  while (true) {
+    const nextA = iterA.next(indexA);
+    const nextB = iterB.next(indexB);
+
+    if (!nextA || !nextB) {
+      break;
+    }
+
+    if (equals(nextA, nextB)) {
+      indexA++;
+      indexB++;
+      sequenceLength++;
+      continue;
+    }
+
+    skips++;
+
+    if (skips > MAX_NODE_SKIPS) {
+      break;
+    }
+
+    if (skipOn === Side.a) {
+      indexA++;
+    } else {
+      indexB++;
+    }
+  }
+
+  return {
+    segments: [[ogIndexA, ogIndexB, sequenceLength]],
+    length: sequenceLength,
+    skips,
+  };
 }
