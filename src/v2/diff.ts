@@ -78,7 +78,8 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
   const { iterA, iterB } = _context;
 
   let segmentLength = 0;
-  let skips = 0;
+  let skipsOnA = 0;
+  let skipsOnB = 0;
 
   let currentASegmentStart = nodeA.index;
   let currentBSegmentStart = nodeB.index;
@@ -112,6 +113,60 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
 
     // We found a discrepancy. Before try to skip nodes to recover the match we record the current segment
     segments.push([currentASegmentStart, currentBSegmentStart, segmentLength]);
+    segmentLength = 0
+
+    const skipBUntil = Math.min(iterB.nodes.length, indexB + MAX_NODE_SKIPS)
+
+    let bSkips = 0
+    lookaheadB: for (const newIndexB of range(indexB, skipBUntil)) {
+      bSkips++
+      const newB = iterA.peek(newIndexB)
+
+      if (!newB) {
+        continue lookaheadB
+      }
+
+      if (equals(newB, nextA)) {
+        // resume 
+        
+        skipsOnA += bSkips
+        bSkips = 0
+
+        indexA = newIndexB
+        
+        break lookaheadB
+      }
+    }
+
+    
+
+    const skipAUntil = Math.min(iterA.nodes.length, indexA + MAX_NODE_SKIPS)
+
+    let aSkips = 0
+    lookaheadA: for (const newIndexA of range(indexA, skipAUntil)) {
+      aSkips++
+      const newA = iterA.peek(newIndexA)
+
+      if (!newA) {
+        continue lookaheadA
+      }
+
+      if (equals(newA, nextB)) {
+        // resume 
+        
+        skipsOnA += aSkips
+        aSkips = 0
+
+        indexA = newIndexA
+        
+        break lookaheadA
+      }
+    }
+
+    // We skipped on A but didn't find a match, now lets consider skipping B
+
+   
+
 
     // For example for
     //
