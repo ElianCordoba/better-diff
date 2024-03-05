@@ -118,6 +118,22 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
 
     let skipsInLookaheadB = 0
 
+    function getSameNodesAhead(iter: Iterator, wantedNode: Node, lastIndex: number) {
+      const nodes: Node[] = []
+      for (const index of rangeEq(wantedNode.index + 1, lastIndex)) {
+        const next = iter.next(index)
+
+        if (!next) {
+          continue
+        }
+
+        if (equals(wantedNode, next)) {
+          nodes.push(next)
+        }
+      }
+      return nodes
+    }
+
     const skipBUntil = Math.min(iterB.nodes.length, indexB + MAX_NODE_SKIPS)
 
     for (const newIndexB of range(indexB, skipBUntil)) {
@@ -140,14 +156,44 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
         }
 
         if (equals(newA, newB)) {
-          indexA = newIndexA
-          indexB = newIndexB
+          const sameNodesAhead = getSameNodesAhead(iterB, newB, skipBUntil)
 
-          currentASegmentStart = newIndexA
-          currentBSegmentStart = newIndexB
+          if (sameNodesAhead.length) {
+            let bestCandidate = getEmptyCandidate();
+    
+            for (const node of sameNodesAhead) {
+              const newCandidate = getBestMatch(node);
+    
+              if (!newCandidate) {
+                fail()
+              }
+    
+              if (isLatterCandidateBetter(bestCandidate, newCandidate)) {
+                bestCandidate = newCandidate;
+              }
+            }
 
-          skips += skipsInLookaheadA + skipsInLookaheadB
-          continue mainLoop
+            const { a, b } = getIndexesFromSegment(bestCandidate.segments[0])
+
+            indexA = a.start
+            indexB = b.start
+  
+            currentASegmentStart = a.start
+            currentBSegmentStart = b.start
+  
+            skips += skipsInLookaheadA + skipsInLookaheadB
+
+            continue mainLoop
+          } else {
+            indexA = newIndexA
+            indexB = newIndexB
+  
+            currentASegmentStart = newIndexA
+            currentBSegmentStart = newIndexB
+  
+            skips += skipsInLookaheadA + skipsInLookaheadB
+            continue mainLoop
+          }  
         }
 
         skipsInLookaheadA++
