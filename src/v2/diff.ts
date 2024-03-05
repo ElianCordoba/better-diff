@@ -118,9 +118,9 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
 
     let skipsInLookaheadB = 0
 
-    const skipBUntil = Math.min(iterB.nodes.length - 1, indexB + MAX_NODE_SKIPS)
+    const skipBUntil = Math.min(iterB.nodes.length, indexB + MAX_NODE_SKIPS)
 
-    for (const newIndexB of rangeEq(indexB, skipBUntil)) {
+    for (const newIndexB of range(indexB, skipBUntil)) {
       const newB = iterB.next(newIndexB)
 
       if (!newB) {
@@ -129,8 +129,8 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
 
       let skipsInLookaheadA = 0
       // OJO + 1 ya 
-      const skipAUntil = Math.min(iterA.nodes.length - 1, indexA + MAX_NODE_SKIPS)      
-      lookaheadA: for (const newIndexA of rangeEq(indexA, skipAUntil)) {
+      const skipAUntil = Math.min(iterA.nodes.length, indexA + MAX_NODE_SKIPS)      
+      lookaheadA: for (const newIndexA of range(indexA, skipAUntil)) {
         assert(newB)
 
         const newA = iterA.next(newIndexA)
