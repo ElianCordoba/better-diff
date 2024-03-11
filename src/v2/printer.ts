@@ -1,10 +1,13 @@
-import { asciiRenderFn, assert, createTextTable, fail, RenderFn } from "../debug";
-import { DiffType } from "../types";
+import Table from "cli-table3";
+import colorFn from "kleur";
+
+import { asciiRenderFn, assert, fail, prettyRenderFn, RenderFn } from "../debug";
+import { DiffType, TypeMasks } from "../types";
 import { Change } from "./diff";
-import { getIndexesFromSegment } from "./utils";
+import { capitalizeFirstLetter, getIndexesFromSegment } from "./utils";
 import { Iterator } from "./iterator";
 import { _context } from ".";
-import colorFn from "kleur";
+import { rangeEq } from "../utils";
 
 export function applyChangesToSources(
   sourceA: string,
@@ -213,13 +216,26 @@ export function getPrettyStringFromChange(
   for (const segment of change.segments) {
     // switch diff type render add del move separtely
     const { a, b } = getIndexesFromSegment(segment);
-    const [startA, endA] = getStringPositionsFromRange(iterA, a.start, a.end - 1);
-    const [startB, endB] = getStringPositionsFromRange(iterB, b.start, b.end - 1);
+    
+    const color = prettyRenderFn[change.type];
 
-    const color = getColor();
+    if (change.type & TypeMasks.DelOrMove) {
+      const [startA, endA] = getStringPositionsFromRange(
+        iterA,
+        a.start,
+        a.end - 1,
+      );
+      charsA = getSourceWithChange(charsA, startA, endA, color);
+    }
 
-    charsA = getSourceWithChange(charsA, startA, endA, color);
-    charsB = getSourceWithChange(charsB, startB, endB, color);
+    if (change.type & TypeMasks.AddOrMove) {
+      const [startB, endB] = getStringPositionsFromRange(
+        iterB,
+        b.start,
+        b.end - 1,
+      );
+      charsB = getSourceWithChange(charsB, startB, endB, color);
+    }
   }
 
   return {
@@ -229,18 +245,52 @@ export function getPrettyStringFromChange(
 }
 
 export function prettyPrintChanges(a: string, b: string, changes: Change[]) {
-  let sequenceCounter = -1;
-  for (const change of changes) {
-    sequenceCounter++;
-    console.log(
-      `\n---------- Starter ${change.startNode.prettyKind} ${`"${change.startNode.text}"` || ""} Length: ${change.length} Segments ${change.segments.length} Skips: ${change.skips} ----------\n`,
-    );
-    const sourcesWithColor = getPrettyStringFromChange(change, a, b);
+  const table = new Table({
+    head: [
+      colorFn.magenta("Type"),
+      colorFn.blue("Length"),
+      colorFn.grey("Skips"),
+      colorFn.cyan("Start"),
+      colorFn.yellow("Line Nº"),
+      colorFn.red("Source"),
+      colorFn.green("Revision"),
+    ],
+    colAligns: ["center", "center", "center", "center"],
+  });
 
-    const table = createTextTable(sourcesWithColor.a, sourcesWithColor.b);
+  const sortedByLength = changes.sort((a, b) => (a.length < b.length ? 1 : -1));
 
-    console.log(table);
+  const lineNumberString = getLinesOfCodeString(a, b);
 
-    resetColorRoulette();
+  for (const change of sortedByLength) {
+    const changeName = capitalizeFirstLetter(DiffType[change.type]);
+    const changeColorFn = prettyRenderFn[change.type];
+
+    const sourceWithChange = getPrettyStringFromChange(change, a, b);
+
+    table.push([
+      changeColorFn(changeName),
+      colorFn.blue(change.length),
+      colorFn.grey(change.skips || "-"),
+      colorFn.cyan(`"${change.startNode.text}"`),
+      colorFn.yellow(lineNumberString),
+      sourceWithChange.a,
+      sourceWithChange.b,
+    ]);
   }
+
+  console.log(table.toString());
+}
+
+function getLinesOfCodeString(a: string, b: string) {
+  const aLines = a.split("\n");
+  const bLines = b.split("\n");
+  const linesOfCode = Math.max(aLines.length, bLines.length);
+
+  let str = "";
+  for (const lineNumber of rangeEq(1, linesOfCode)) {
+    str += `${lineNumber}\n`;
+  }
+
+  return str;
 }

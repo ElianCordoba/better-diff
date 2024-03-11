@@ -26,7 +26,6 @@ export function* rangeEq(start: number, end: number) {
   }
 }
 
-
 export function oppositeSide(side: Side): Side {
   return side === Side.a ? Side.b : Side.a;
 }
