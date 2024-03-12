@@ -31,7 +31,7 @@ export class Change {
   constructor(
     public type: DiffType,
     public segments: Segment[],
-    public skips = 0
+    public skips = 0,
   ) {
     this.startNode = getStarterNode(type, segments);
     this.length = calculateCandidateMatchLength(segments);
@@ -78,7 +78,7 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
   const { iterA, iterB } = _context;
 
   let segmentLength = 0;
-  let skips = 0
+  let skips = 0;
   let skipsOnA = 0;
   let skipsOnB = 0;
 
@@ -114,92 +114,118 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
 
     // We found a discrepancy. Before try to skip nodes to recover the match we record the current segment
     segments.push([currentASegmentStart, currentBSegmentStart, segmentLength]);
-    segmentLength = 0
+    segmentLength = 0;
 
-    let skipsInLookaheadB = 0
+    let skipsInLookaheadB = 0;
 
-    function getSameNodesAhead(iter: Iterator, wantedNode: Node, lastIndex: number) {
-      const nodes: Node[] = []
+    // Verify the following n number of nodes ahead storing the ones equals to the wanted node
+    //
+    // A B C B C B B
+    // 0 1 2 3 4 5 6
+    //
+    // Looking for node "B" at index 3 you will get back nodes at indexes 3 and 6
+    function getSameNodesAhead(
+      iter: Iterator,
+      wantedNode: Node,
+      lastIndex: number,
+    ) {
+      const nodes: Node[] = [];
       for (const index of rangeEq(wantedNode.index + 1, lastIndex)) {
-        const next = iter.next(index)
+        const next = iter.next(index);
 
         if (!next) {
-          continue
+          continue;
         }
 
         if (equals(wantedNode, next)) {
-          nodes.push(next)
+          nodes.push(next);
         }
       }
-      return nodes
+      return nodes;
     }
 
-    const skipBUntil = Math.min(iterB.nodes.length, indexB + MAX_NODE_SKIPS)
+    const skipBUntil = Math.min(iterB.nodes.length, indexB + MAX_NODE_SKIPS);
 
     for (const newIndexB of range(indexB, skipBUntil)) {
-      const newB = iterB.next(newIndexB)
+      const newB = iterB.next(newIndexB);
 
       if (!newB) {
-        break mainLoop
+        break mainLoop;
       }
 
-      let skipsInLookaheadA = 0
-      // OJO + 1 ya 
-      const skipAUntil = Math.min(iterA.nodes.length, indexA + MAX_NODE_SKIPS)      
-      lookaheadA: for (const newIndexA of range(indexA, skipAUntil)) {
-        assert(newB)
+      let skipsInLookaheadA = 0;
 
-        const newA = iterA.next(newIndexA)
+      const skipAUntil = Math.min(iterA.nodes.length, indexA + MAX_NODE_SKIPS);
+      lookaheadA: for (const newIndexA of range(indexA, skipAUntil)) {
+        assert(newB);
+
+        const newA = iterA.next(newIndexA);
 
         if (!newA) {
-          break lookaheadA
+          break lookaheadA;
         }
 
         if (equals(newA, newB)) {
-          const sameNodesAhead = getSameNodesAhead(iterB, newB, skipBUntil)
+          const sameNodesAheadA = getSameNodesAhead(iterA, newA, skipAUntil);
+          const sameNodesAheadB = getSameNodesAhead(iterB, newB, skipBUntil);
 
-          if (sameNodesAhead.length) {
-            let bestCandidate = getEmptyCandidate();
-    
-            for (const node of sameNodesAhead) {
-              const newCandidate = getBestMatch(node);
-    
-              if (!newCandidate) {
-                fail()
-              }
-    
-              if (isLatterCandidateBetter(bestCandidate, newCandidate)) {
-                bestCandidate = newCandidate;
-              }
+          if (!sameNodesAheadA.length && !sameNodesAheadB.length) {
+            indexA = newIndexA;
+            indexB = newIndexB;
+
+            currentASegmentStart = newIndexA;
+            currentBSegmentStart = newIndexB;
+
+            skips += skipsInLookaheadA + skipsInLookaheadB;
+            continue mainLoop;
+          }
+
+          let bestCandidate = getEmptyCandidate();
+
+          // TODO instead of getBestMatch use getCandidateMatch so that it skips node if necessary
+          // TODO also getBestMatch has hardcoded B side 
+
+          for (const node of sameNodesAheadA) {
+            const newCandidate = getBestMatch(node);
+
+            if (!newCandidate) {
+              fail();
             }
 
-            const { a, b } = getIndexesFromSegment(bestCandidate.segments[0])
+            if (isLatterCandidateBetter(bestCandidate, newCandidate)) {
+              bestCandidate = newCandidate;
+            }
+          }
 
-            indexA = a.start
-            indexB = b.start
-  
-            currentASegmentStart = a.start
-            currentBSegmentStart = b.start
-  
-            skips += skipsInLookaheadA + skipsInLookaheadB
+          for (const node of sameNodesAheadB) {
+            const newCandidate = getBestMatch(node);
 
-            continue mainLoop
-          } else {
-            indexA = newIndexA
-            indexB = newIndexB
-  
-            currentASegmentStart = newIndexA
-            currentBSegmentStart = newIndexB
-  
-            skips += skipsInLookaheadA + skipsInLookaheadB
-            continue mainLoop
-          }  
+            if (!newCandidate) {
+              fail();
+            }
+
+            if (isLatterCandidateBetter(bestCandidate, newCandidate)) {
+              bestCandidate = newCandidate;
+            }
+          }
+
+          const { a, b } = getIndexesFromSegment(bestCandidate.segments[0]);
+
+          indexA = a.start;
+          indexB = b.start;
+
+          currentASegmentStart = a.start;
+          currentBSegmentStart = b.start;
+
+          skips += skipsInLookaheadA + skipsInLookaheadB;
+
+          continue mainLoop;
         }
 
-        skipsInLookaheadA++
+        skipsInLookaheadA++;
       }
 
-      skipsInLookaheadB++
+      skipsInLookaheadB++;
     }
   }
 
@@ -240,7 +266,7 @@ function getStarterNode(type: DiffType, segments: Segment[]) {
 function exploreForward(
   indexA: number,
   indexB: number,
-  skipOn: Side
+  skipOn: Side,
 ): CandidateMatch {
   const ogIndexA = indexA;
   const ogIndexB = indexB;

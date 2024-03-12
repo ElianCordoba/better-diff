@@ -216,7 +216,7 @@ export function getPrettyStringFromChange(
   for (const segment of change.segments) {
     // switch diff type render add del move separtely
     const { a, b } = getIndexesFromSegment(segment);
-    
+
     const color = prettyRenderFn[change.type];
 
     if (change.type & TypeMasks.DelOrMove) {
