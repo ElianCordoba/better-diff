@@ -38,7 +38,7 @@ export class Change {
   }
 
   static createAddition(node: Node) {
-    assert(node.side === Side.b);
+    assert(node.side === Side.b, () => "Trying to create a deletion but received an A side node");
     return new Change(DiffType.addition, [
       [
         // Start A
@@ -52,7 +52,7 @@ export class Change {
   }
 
   static createDeletion(node: Node) {
-    assert(node.side === Side.a);
+    assert(node.side === Side.a, () => "Trying to create a deletion but received an B side node");
     return new Change(DiffType.deletion, [
       [
         // Start A
@@ -79,8 +79,6 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
 
   let segmentLength = 0;
   let skips = 0;
-  let skipsOnA = 0;
-  let skipsOnB = 0;
 
   let currentASegmentStart = nodeA.index;
   let currentBSegmentStart = nodeB.index;
@@ -92,11 +90,13 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
 
   mainLoop: while (true) {
     // TODO-2 First iteration already has the nodes
-    const nextA = iterA.next(indexA);
-    const nextB = iterB.next(indexB);
+    const nextA = iterA.peek(indexA);
+    const nextB = iterB.peek(indexB);
 
     // If one of the iterators ends then there is no more search to do
     if (!nextA || !nextB) {
+      assert(segmentLength > 0, () => "Segment length is 0")
+
       segments.push([
         currentASegmentStart,
         currentBSegmentStart,
@@ -111,6 +111,8 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
       indexB++;
       continue;
     }
+
+    assert(segmentLength > 0, () => "Segment length is 0")
 
     // We found a discrepancy. Before try to skip nodes to recover the match we record the current segment
     segments.push([currentASegmentStart, currentBSegmentStart, segmentLength]);
@@ -131,7 +133,7 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
     ) {
       const nodes: Node[] = [];
       for (const index of rangeEq(wantedNode.index + 1, lastIndex)) {
-        const next = iter.next(index);
+        const next = iter.peek(index);
 
         if (!next) {
           continue;
@@ -147,7 +149,7 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
     const skipBUntil = Math.min(iterB.nodes.length, indexB + MAX_NODE_SKIPS);
 
     for (const newIndexB of range(indexB, skipBUntil)) {
-      const newB = iterB.next(newIndexB);
+      const newB = iterB.peek(newIndexB);
 
       if (!newB) {
         break mainLoop;
@@ -159,7 +161,7 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
       lookaheadA: for (const newIndexA of range(indexA, skipAUntil)) {
         assert(newB);
 
-        const newA = iterA.next(newIndexA);
+        const newA = iterA.peek(newIndexA);
 
         if (!newA) {
           break lookaheadA;
@@ -236,6 +238,8 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
 
       skipsInLookaheadB++;
     }
+
+    break mainLoop
   }
 
   return {
@@ -256,6 +260,8 @@ export function calculateCandidateMatchLength(segments: Segment[]) {
     sum += segment[2];
   }
 
+  assert(sum > 0, () => "Segment length is 0")
+
   return sum;
 }
 
@@ -270,52 +276,4 @@ function getStarterNode(type: DiffType, segments: Segment[]) {
   assert(node, () => "Failed to get starter node");
 
   return node;
-}
-
-function exploreForward(
-  indexA: number,
-  indexB: number,
-  skipOn: Side,
-): CandidateMatch {
-  const ogIndexA = indexA;
-  const ogIndexB = indexB;
-
-  let sequenceLength = 0;
-  let skips = 0;
-
-  const { iterA, iterB } = _context;
-
-  while (true) {
-    const nextA = iterA.next(indexA);
-    const nextB = iterB.next(indexB);
-
-    if (!nextA || !nextB) {
-      break;
-    }
-
-    if (equals(nextA, nextB)) {
-      indexA++;
-      indexB++;
-      sequenceLength++;
-      continue;
-    }
-
-    skips++;
-
-    if (skips > MAX_NODE_SKIPS) {
-      break;
-    }
-
-    if (skipOn === Side.a) {
-      indexA++;
-    } else {
-      indexB++;
-    }
-  }
-
-  return {
-    segments: [[ogIndexA, ogIndexB, sequenceLength]],
-    length: sequenceLength,
-    skips,
-  };
 }

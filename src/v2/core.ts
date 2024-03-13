@@ -90,8 +90,8 @@ export function isLatterCandidateBetter(currentCandidate: CandidateMatch, newCan
     return false;
   }
 
-  if (newCandidate.segments.length > currentCandidate.segments.length) {
-    return false;
+  if (newCandidate.segments.length < currentCandidate.segments.length) {
+    return true;
   } else if (newCandidate.segments.length < currentCandidate.segments.length) {
     return false;
   }
