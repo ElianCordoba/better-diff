@@ -122,10 +122,10 @@ export class Iterator {
       table.push([
         color(node.index),
         color(node.text),
-        color(node.prettyKind)
-      ])
+        color(node.prettyKind),
+      ]);
     }
 
-    console.log(table.toString())
+    console.log(table.toString());
   }
 }

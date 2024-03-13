@@ -1,7 +1,7 @@
 import Table from "cli-table3";
 import colorFn from "kleur";
 
-import { asciiRenderFn, assert, fail, prettyRenderFn, RenderFn } from "../debug";
+import { asciiRenderFn, assert, createTextTable, fail, prettyRenderFn, RenderFn } from "../debug";
 import { DiffType, TypeMasks } from "../types";
 import { Change } from "./diff";
 import { capitalizeFirstLetter, getIndexesFromSegment } from "./utils";
@@ -153,7 +153,7 @@ export function getSourceWithChange(
     .map((x) => colorFn(x))
     .join(" ");
 
-  return [...head, colorFn(text), ...compliment, ...tail];
+  return [...head, text, ...compliment, ...tail];
 }
 
 export function getComplimentArray(
@@ -244,7 +244,16 @@ export function getPrettyStringFromChange(
   };
 }
 
+export function prettyPrintSources(a: string, b: string) {
+  console.log(createTextTable(a, b));
+}
+
 export function prettyPrintChanges(a: string, b: string, changes: Change[]) {
+  const sourcesWithChanges = applyChangesToSources(a, b, changes, prettyRenderFn);
+  console.log(createTextTable(sourcesWithChanges.sourceA, sourcesWithChanges.sourceB));
+}
+
+export function prettyPrintChangesInSequence(a: string, b: string, changes: Change[]) {
   const table = new Table({
     head: [
       colorFn.magenta("Type"),

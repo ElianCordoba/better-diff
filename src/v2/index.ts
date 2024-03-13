@@ -2,13 +2,20 @@ import { Context, getIndexesFromSegment } from "./utils";
 import { Side } from "../shared/language";
 import { Iterator } from "./iterator";
 import { getBestMatch, getSubSequenceNodes, isLatterCandidateBetter, oneSidedIteration } from "./core";
-import { Change, Segment } from "./diff";
+import { Change } from "./diff";
 import { DiffType } from "../types";
-import { fail } from "../debug";
+import { asciiRenderFn, fail, prettyRenderFn } from "../debug";
 import { range } from "../utils";
-import { Diff } from "../data_structures/diff";
+import { Options, OutputType, ResultTypeMapper } from "./types";
+import { applyChangesToSources } from "./printer";
 
-export function getDiff2(sourceA: string, sourceB: string) {
+const defaultOptions: Options = {
+  outputType: OutputType.changes,
+};
+
+export function getDiff2<_OutputType extends OutputType = OutputType.changes>(sourceA: string, sourceB: string, options?: Options<_OutputType>): ResultTypeMapper[_OutputType] {
+  const _options = { ...defaultOptions, ...(options || {}) };
+
   const iterA = new Iterator(sourceA, Side.a);
   const iterB = new Iterator(sourceB, Side.b);
 
@@ -61,11 +68,8 @@ export function getDiff2(sourceA: string, sourceB: string) {
       continue;
     }
 
+    // May be empty if the node we are looking for was the only one
     const subSequenceNodesToCheck = getSubSequenceNodes(bestMatchForB, b);
-
-    if (!subSequenceNodesToCheck.length) {
-      fail("IDK");
-    }
 
     let bestCandidate = bestMatchForB;
 
@@ -91,7 +95,19 @@ export function getDiff2(sourceA: string, sourceB: string) {
     continue;
   }
 
-  return changes;
+  switch (_options.outputType) {
+    case OutputType.changes: {
+      return changes as ResultTypeMapper[_OutputType];
+    }
+    case OutputType.text: {
+      return applyChangesToSources(sourceA, sourceB, changes, asciiRenderFn) as ResultTypeMapper[_OutputType];
+    }
+    case OutputType.prettyText: {
+      return applyChangesToSources(sourceA, sourceB, changes, prettyRenderFn) as ResultTypeMapper[_OutputType];
+    }
+    default:
+      fail();
+  }
 }
 
 function markMatched(change: Change) {
