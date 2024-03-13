@@ -253,7 +253,7 @@ export function prettyPrintChanges(a: string, b: string, changes: Change[]) {
   console.log(createTextTable(sourcesWithChanges.sourceA, sourcesWithChanges.sourceB));
 }
 
-export function prettyPrintChangesInSequence(a: string, b: string, changes: Change[]) {
+export function prettyPrintChangesInSequence(a: string, b: string, changes: Change[], options: { sortByLength: boolean } = { sortByLength: true }) {
   const table = new Table({
     head: [
       colorFn.magenta("Type"),
@@ -267,7 +267,7 @@ export function prettyPrintChangesInSequence(a: string, b: string, changes: Chan
     colAligns: ["center", "center", "center", "center"],
   });
 
-  const sortedByLength = changes.sort((a, b) => (a.length < b.length ? 1 : -1));
+  const sortedByLength = options.sortByLength ? changes.sort((a, b) => (a.length < b.length ? 1 : -1)) : changes;
 
   const lineNumberString = getLinesOfCodeString(a, b);
 

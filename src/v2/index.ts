@@ -29,12 +29,12 @@ export function getDiff2<_OutputType extends OutputType = OutputType.changes>(so
   //   console.log(i, "|", x.start, x.end, x.prettyKind, `"${x.text}"`)
   // })
 
-  _context = new Context(sourceA, sourceB);
+  const changes: Change[] = [];
+
+  _context = new Context(sourceA, sourceB, changes);
 
   _context.iterA = iterA;
   _context.iterB = iterB;
-
-  const changes: Change[] = [];
 
   while (true) {
     const a = iterA.next();

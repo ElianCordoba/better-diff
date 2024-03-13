@@ -2,7 +2,7 @@ import { _context } from ".";
 import { assert } from "../debug";
 import { Side } from "../shared/language";
 import { range } from "../utils";
-import { CandidateMatch, Segment } from "./diff";
+import { CandidateMatch, Change, Segment } from "./diff";
 import { Iterator } from "./iterator";
 import { Node } from "./node";
 
@@ -14,6 +14,7 @@ export class Context {
   constructor(
     public sourceA: string,
     public sourceB: string,
+    public changes: Change[]
   ) {}
 }
 
