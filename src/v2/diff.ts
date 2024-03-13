@@ -193,6 +193,14 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
             }
 
             if (isLatterCandidateBetter(bestCandidate, newCandidate)) {
+              // Give this input
+              // A B C C D
+              // 0 1 2 3 4
+              //
+              // Lets say we need to pick between one of the "C", picking the first one will mean no skip, picking the second one will imply one skip
+              // 1: A B C
+              // 2: A B _ C
+              skipsInLookaheadA += node.index - newA.index
               bestCandidate = newCandidate;
             }
           }
@@ -205,6 +213,7 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
             }
 
             if (isLatterCandidateBetter(bestCandidate, newCandidate)) {
+              skipsInLookaheadB += node.index - newB.index
               bestCandidate = newCandidate;
             }
           }
