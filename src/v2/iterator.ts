@@ -1,9 +1,11 @@
+import Table from "cli-table3";
+import colorFn from "kleur";
+
 import { _context } from ".";
 import { getSourceWithChange } from "../backend/printer";
 import { Side } from "../shared/language";
 import { getTsNodes } from "./compilers";
 import { Node } from "./node";
-import colorFn from "kleur";
 import { NodesTable } from "./types";
 import { DiffType } from "../types";
 
@@ -85,5 +87,45 @@ export class Iterator {
     const result = getSourceWithChange(chars, start, end, color);
 
     console.log(result.join(""));
+  }
+
+  printNodes() {
+    const table = new Table({
+      head: [
+        colorFn.blue("Index"),
+        colorFn.yellow("Text"),
+        colorFn.red("Kind"),
+      ],
+      colAligns: ["center", "center", "center"],
+    });
+
+    for (const node of this.nodes) {
+      let color;
+      switch (node.markedAs) {
+        case DiffType.addition: {
+          color = colorFn.green;
+          break;
+        }
+        case DiffType.deletion: {
+          color = colorFn.red;
+          break;
+        }
+        case DiffType.move: {
+          color = colorFn.blue;
+          break;
+        }
+        default: {
+          color = colorFn.grey;
+        }
+      }
+
+      table.push([
+        color(node.index),
+        color(node.text),
+        color(node.prettyKind)
+      ])
+    }
+
+    console.log(table.toString())
   }
 }
