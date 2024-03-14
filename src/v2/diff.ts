@@ -1,73 +1,55 @@
 import { _context } from ".";
 import { assert, fail } from "../debug";
-import { Side } from "../shared/language";
 import { Iterator } from "./iterator";
-import { DiffType, TypeMasks } from "../types";
 import { range, rangeEq } from "../utils";
 import { Node } from "./node";
-import { getIndexesFromSegment } from "./utils";
-import { getBestMatch, isLatterCandidateBetter } from "./core";
+import { calculateCandidateMatchLength, equals, getAllNodesFromMatch, getEmptyCandidate, getIndexesFromSegment, isLatterCandidateBetter } from "./utils";
+import { CandidateMatch, Segment } from "./types";
 
-// Start is inclusive, end is not inclusive
-export type Segment = [indexA: number, indexB: number, length: number];
+/**
+ * Returns the longest possible match for the given node, this is including possible skips to improve the match length.
+ */
+export function getBestMatch(nodeB: Node): CandidateMatch | undefined {
+  const aSideCandidates = _context.iterA.getMatchingNodes(nodeB);
 
-export interface CandidateMatch {
-  length: number;
-  skips: number;
-  segments: Segment[];
-}
+  // The given B node wasn't found, it was added
+  if (aSideCandidates.length === 0) {
+    return;
+  }
 
-export function getEmptyCandidate(): CandidateMatch {
-  return {
+  let bestMatch: CandidateMatch = {
     length: 0,
-    segments: [],
     skips: 0,
+    segments: [],
   };
+
+  for (const candidate of aSideCandidates) {
+    const newCandidate = getCandidateMatch(candidate, nodeB);
+
+    if (isLatterCandidateBetter(bestMatch, newCandidate)) {
+      bestMatch = newCandidate;
+    }
+  }
+
+  return bestMatch;
 }
 
-export class Change {
-  startNode: Node;
-  length: number;
-  constructor(
-    public type: DiffType,
-    public segments: Segment[],
-    public skips = 0,
-  ) {
-    this.startNode = getStarterNode(type, segments);
-    this.length = calculateCandidateMatchLength(segments);
+export function getSubSequenceNodes(match: CandidateMatch, starterNode: Node) {
+  const nodesInMatch = getAllNodesFromMatch(match);
+
+  const allNodes = new Set<Node>();
+
+  for (const node of nodesInMatch) {
+    const similarNodes = _context.iterB.getMatchingNodes(node);
+
+    for (const _node of similarNodes) {
+      allNodes.add(_node);
+    }
   }
 
-  static createAddition(node: Node) {
-    assert(node.side === Side.b, () => "Trying to create a deletion but received an A side node");
-    return new Change(DiffType.addition, [
-      [
-        // Start A
-        -1,
-        // Start B
-        node.index,
-        // Length
-        1,
-      ],
-    ]);
-  }
+  allNodes.delete(starterNode);
 
-  static createDeletion(node: Node) {
-    assert(node.side === Side.a, () => "Trying to create a deletion but received an B side node");
-    return new Change(DiffType.deletion, [
-      [
-        // Start A
-        node.index,
-        // Start B
-        -1,
-        // Length
-        1,
-      ],
-    ]);
-  }
-
-  static createMove(match: CandidateMatch) {
-    return new Change(DiffType.move, match.segments, match.skips);
-  }
+  return [...allNodes];
 }
 
 // SCORE FN PARAMETERS
@@ -95,7 +77,7 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
 
     // If one of the iterators ends then there is no more search to do
     if (!nextA || !nextB) {
-      assert(segmentLength > 0, () => "Segment length is 0")
+      assert(segmentLength > 0, () => "Segment length is 0");
 
       segments.push([
         currentASegmentStart,
@@ -112,7 +94,7 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
       continue;
     }
 
-    assert(segmentLength > 0, () => "Segment length is 0")
+    assert(segmentLength > 0, () => "Segment length is 0");
 
     // We found a discrepancy. Before try to skip nodes to recover the match we record the current segment
     segments.push([currentASegmentStart, currentBSegmentStart, segmentLength]);
@@ -239,7 +221,7 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
       skipsInLookaheadB++;
     }
 
-    break mainLoop
+    break mainLoop;
   }
 
   return {
@@ -247,33 +229,4 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
     skips,
     segments,
   };
-}
-
-function equals(nodeOne: Node, nodeTwo: Node): boolean {
-  return nodeOne.kind === nodeTwo.kind && nodeOne.text === nodeTwo.text;
-}
-
-export function calculateCandidateMatchLength(segments: Segment[]) {
-  let sum = 0;
-
-  for (const segment of segments) {
-    sum += segment[2];
-  }
-
-  assert(sum > 0, () => "Segment length is 0")
-
-  return sum;
-}
-
-function getStarterNode(type: DiffType, segments: Segment[]) {
-  const { a, b } = getIndexesFromSegment(segments[0]);
-
-  const iter = type & TypeMasks.AddOrMove ? _context.iterB : _context.iterA;
-  const index = type & TypeMasks.AddOrMove ? b.start : a.start;
-
-  const node = iter.nodes[index];
-
-  assert(node, () => "Failed to get starter node");
-
-  return node;
 }

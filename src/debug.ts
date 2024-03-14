@@ -2,11 +2,7 @@ import ts from "typescript";
 import Table from "cli-table3";
 import { DiffType } from "./types";
 import colorFn from "kleur";
-import { getSourceWithChange } from "./backend/printer";
 import { _context as _context2 } from "./v2/index";
-import { Iterator } from "./v2/iterator";
-import { getIndexesFromSegment } from "./v2/utils";
-import { Change } from "./v2/diff";
 
 enum ErrorType {
   DebugFailure = "DebugFailure",

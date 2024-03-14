@@ -3,11 +3,11 @@ import colorFn from "kleur";
 
 import { asciiRenderFn, assert, createTextTable, fail, prettyRenderFn, RenderFn } from "../debug";
 import { DiffType, TypeMasks } from "../types";
-import { Change } from "./diff";
 import { capitalizeFirstLetter, getIndexesFromSegment } from "./utils";
 import { Iterator } from "./iterator";
 import { _context } from ".";
 import { rangeEq } from "../utils";
+import { Change } from "./change";
 
 export function applyChangesToSources(
   sourceA: string,

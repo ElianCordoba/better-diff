@@ -1,62 +1,92 @@
 import { _context } from ".";
-import { SyntaxKind } from "./types";
-import { Node } from "./node";
-import { CandidateMatch, Change, getCandidateMatch } from "./diff";
-import { getAllNodesFromMatch } from "./utils";
-import { fail } from "../debug";
+import { getBestMatch, getSubSequenceNodes } from "./diff";
+import { getIndexesFromSegment, isLatterCandidateBetter } from "./utils";
 import { Iterator } from "./iterator";
 import { DiffType } from "../types";
+import { Change } from "./change";
+import { range } from "../utils";
 
-/**
- * Returns the longest possible match for the given node, this is including possible skips to improve the match length.
- */
-export function getBestMatch(nodeB: Node): CandidateMatch | undefined {
-  const aSideCandidates = _context.iterA.getMatchingNodes(nodeB);
+export function computeDiff() {
+  const { iterA, iterB, changes } = _context;
 
-  // The given B node wasn't found, it was added
-  if (aSideCandidates.length === 0) {
-    return;
-  }
+  while (true) {
+    const a = iterA.next();
+    const b = iterB.next();
 
-  let bestMatch: CandidateMatch = {
-    length: 0,
-    skips: 0,
-    segments: [],
-  };
-
-  for (const candidate of aSideCandidates) {
-    const newCandidate = getCandidateMatch(candidate, nodeB);
-
-    if (isLatterCandidateBetter(bestMatch, newCandidate)) {
-      bestMatch = newCandidate;
+    // No more nodes to process. We are done
+    if (!a && !b) {
+      break;
     }
+
+    // One of the iterators ran out of nodes. We will mark the remaining unmatched nodes
+    if (!a || !b) {
+      // If A finished means that B still have nodes, they are additions. If B finished means that A have nodes, they are deletions
+      const iterOn = !a ? iterB : iterA;
+      const type = !a ? DiffType.addition : DiffType.deletion;
+
+      const remainingChanges = oneSidedIteration(iterOn, type);
+      changes.push(...remainingChanges);
+      break;
+    }
+
+    // 1-
+    const bestMatchForB = getBestMatch(b);
+
+    if (!bestMatchForB) {
+      const addition = Change.createAddition(b);
+      changes.push(addition);
+      iterB.mark(b.index, DiffType.addition);
+
+      continue;
+    }
+
+    // May be empty if the node we are looking for was the only one
+    const subSequenceNodesToCheck = getSubSequenceNodes(bestMatchForB, b);
+
+    let bestCandidate = bestMatchForB;
+
+    for (const node of subSequenceNodesToCheck) {
+      const newCandidate = getBestMatch(node);
+
+      if (!newCandidate) {
+        const addition = Change.createAddition(b);
+        changes.push(addition);
+        iterB.mark(b.index, DiffType.addition);
+
+        continue;
+      }
+
+      if (isLatterCandidateBetter(bestCandidate, newCandidate)) {
+        bestCandidate = newCandidate;
+      }
+    }
+
+    const move = Change.createMove(bestCandidate);
+    changes.push(move);
+    markMatched(move);
+    continue;
   }
 
-  return bestMatch;
+  return changes;
 }
 
-export function getSubSequenceNodes(match: CandidateMatch, starterNode: Node) {
-  const nodesInMatch = getAllNodesFromMatch(match);
+function markMatched(change: Change) {
+  for (const segment of change.segments) {
+    const { a, b } = getIndexesFromSegment(segment);
 
-  const allNodes = new Set<Node>();
+    for (const index of range(a.start, a.end)) {
+      _context.iterA.mark(index, change.type);
+    }
 
-  for (const node of nodesInMatch) {
-    const similarNodes = _context.iterB.getMatchingNodes(node);
-
-    for (const _node of similarNodes) {
-      allNodes.add(_node);
+    for (const index of range(b.start, b.end)) {
+      _context.iterB.mark(index, change.type);
     }
   }
-
-  allNodes.delete(starterNode);
-
-  return [...allNodes];
 }
 
 export function oneSidedIteration(
   iter: Iterator,
   typeOfChange: DiffType.addition | DiffType.deletion,
-  startFrom: number,
 ): Change[] {
   const changes: Change[] = [];
 
@@ -78,23 +108,4 @@ export function oneSidedIteration(
   }
 
   return changes;
-}
-
-/**
- * TODO: MAybe compute a score fn
- */
-export function isLatterCandidateBetter(currentCandidate: CandidateMatch, newCandidate: CandidateMatch): boolean {
-  if (newCandidate.length > currentCandidate.length) {
-    return true;
-  } else if (newCandidate.length < currentCandidate.length) {
-    return false;
-  }
-
-  if (newCandidate.segments.length < currentCandidate.segments.length) {
-    return true;
-  } else if (newCandidate.segments.length < currentCandidate.segments.length) {
-    return false;
-  }
-
-  return newCandidate.skips < currentCandidate.skips;
 }
