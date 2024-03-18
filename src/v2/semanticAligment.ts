@@ -1,10 +1,10 @@
 import { applyAlignments } from "../backend/printer";
 import { Side } from "../shared/language";
 import { DiffType } from "../types";
-import { rangeEq } from "../utils";
+import { range, rangeEq } from "../utils";
 import { Change } from "./change";
 import { Segment } from "./types";
-import { getIndexesFromSegment } from "./utils";
+import { calculateCandidateMatchLength, getIndexesFromSegment } from "./utils";
 
 export interface Offset {
   index: number;
@@ -21,56 +21,80 @@ const alignmentTable = {
 };
 
 export function computeMoveAlignment(changes: Change[]): Change[] {
-  const resultChanges: Change[] = [];
+  const unalignedChanges: Change[] = [];
 
   for (const change of changes) {
-    let canMoveBeAligned = true;
-    segmentLoop: for (const segment of change.segments) {
-      if (!canSegmentBeAligned(segment)) {
-        canMoveBeAligned = false;
-        break segmentLoop;
+    const unalignedSegments: Segment[] = [];
+
+    for (const segment of change.segments) {
+      if (canSegmentBeAligned(segment)) {
+        addAlignment(segment);
+      } else {
+        unalignedSegments.push(segment);
       }
     }
 
-    if (canMoveBeAligned) {
-      const { side, offset } = getAlignment()
-      addAlignment(side, offset);
+    if (unalignedSegments.length === 0) {
+      // Fully aligned
+      continue
     } else {
-      resultChanges.push(change);
+      if (unalignedSegments.length !== change.length) {
+        change.segments = unalignedSegments;
+        change.length = calculateCandidateMatchLength(unalignedSegments);
+      }
+
+      unalignedChanges.push(change);
     }
   }
 
-  return resultChanges;
+  return unalignedChanges;
 }
 
-function getAlignment(change: Change): { side: Side, offset: Offset } {
-  for (const segment of change.segments) {
-    const 
+function addAlignment(segment: Segment) {
+  const { a, b } = getIndexesFromSegment(segment);
+
+  const offsettedA = { start: getOffsettedIndex(Side.a, a.start), end: getOffsettedIndex(Side.a, a.end) };
+  const offsettedB = { start: getOffsettedIndex(Side.b, b.start), end: getOffsettedIndex(Side.b, b.end) };
+
+  const indexDiff = Math.abs(offsettedA.start - offsettedB.start);
+  
+  const sideToAlignStart = offsettedA.start < offsettedB.start ? Side.a : Side.b;
+
+  function apply(side: Side, index: number) {
+    for (const i of range(index, index + indexDiff)) {
+      alignmentTable[side].set(i, { index: i, type: DiffType.move });
+    }
+  }
+
+  if (sideToAlignStart === Side.a) {
+    apply(Side.a, offsettedA.start);
+    apply(Side.b, offsettedB.end);
+  } else {
+    apply(Side.a, offsettedA.end);
+    apply(Side.b, offsettedB.start);
   }
 }
 
-function addAlignment(side: Side, offset: Offset) {
-  alignmentTable[side].set(offset.index, offset)
-}
+type SegmentAlignmentCheckResult =
+  | { canBeAligned: false }
+  | { canBeAligned: true; offsets: Offset[]; sideToAlign: Side };
 
-function canSegmentBeAligned(segment: Segment): { canBeAligned: boolean, offsets?: Offset[] } {
+function canSegmentBeAligned(segment: Segment): boolean {
   const { a, b } = getIndexesFromSegment(segment);
 
   const offsettedAIndex = getOffsettedIndex(Side.a, a.start);
   const offsettedBIndex = getOffsettedIndex(Side.b, b.start);
 
   if (offsettedAIndex === offsettedBIndex) {
-    return { canBeAligned: true };
+    return true
   }
 
   const sideToIterate = offsettedAIndex < offsettedBIndex ? Side.a : Side.b;
   const offsetsToCheck = alignmentTable[sideToIterate];
-  const startIndex = sideToIterate === Side.a ? offsettedAIndex : offsettedBIndex;
+  const startIndex =
+    sideToIterate === Side.a ? offsettedAIndex : offsettedBIndex;
   const indexDiff = Math.abs(offsettedAIndex - offsettedBIndex);
 
-  const offsets: Offset[] = []
-
-  let canBeAligned = true;
   for (const i of rangeEq(startIndex, startIndex + indexDiff)) {
     const offset = offsetsToCheck.get(i);
 
@@ -80,29 +104,21 @@ function canSegmentBeAligned(segment: Segment): { canBeAligned: boolean, offsets
       continue;
     }
 
-    offsets.push({
-      index: i,
-      type: DiffType.move,
-    })
-  
-    canBeAligned = false
-    break;
+   
+    return false;
   }
 
-  return {
-    canBeAligned,
-    offsets
-  }
+  return true;
 }
 
 function getOffsettedIndex(side: Side, targetIndex: number) {
   const ogIndex = targetIndex;
-  const _side = alignmentTable[side]
+  const _side = alignmentTable[side];
 
   let offset = 0;
   // TODO: Use and array with insertion sort
   // The offset is unsorted, so we need to order the indexes first before processing it
-  for (const index of [..._side.keys()].sort((a, b) => a > b ? 1 : -1)) {
+  for (const index of [..._side.keys()].sort((a, b) => (a > b ? 1 : -1))) {
     if (index <= targetIndex) {
       // We increase the target index so that if we are inside an alignment (example bellow) we can read the offsets properly, for example:
       //
