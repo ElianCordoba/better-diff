@@ -6,6 +6,7 @@ import { asciiRenderFn, fail, prettyRenderFn } from "../debug";
 import { Options, OutputType, ResultTypeMapper } from "./types";
 import { applyChangesToSources } from "./printer";
 import { Change } from "./change";
+import { computeMoveAlignment } from "./semanticAligment";
 
 const defaultOptions: Required<Options> = {
   outputType: OutputType.changes,
@@ -23,6 +24,10 @@ export function getDiff2<_OutputType extends OutputType = OutputType.changes>(so
   _context = new Context(sourceA, sourceB, iterA, iterB, changes);
 
   changes = computeDiff();
+
+  if (_options.tryAlignMoves) {
+    changes = computeMoveAlignment(changes)
+  }
 
   switch (_options.outputType) {
     case OutputType.changes: {
