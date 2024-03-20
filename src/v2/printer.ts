@@ -21,87 +21,43 @@ export function applyChangesToSources(
   const { iterA, iterB } = _context;
 
   for (const change of changes) {
-    // TODO-2 refactor to reuse code
-    switch (change.type) {
-      case DiffType.addition: {
-        for (const segment of change.segments) {
-          const { b } = getIndexesFromSegment(segment);
+    for (const segment of change.segments) {
+      if (TypeMasks.AddOrMove & change.type) {
+        const { b } = getIndexesFromSegment(segment);
 
-          const { start: startIndex, end: endIndex } = b;
+        const { start: startIndex, end: endIndex } = b;
 
-          const [start, end] = getStringPositionsFromRange(
-            iterB,
-            startIndex,
-            endIndex - 1,
-          );
+        const [start, end] = getStringPositionsFromRange(
+          iterB,
+          startIndex,
+          endIndex - 1,
+        );
 
-          charsB = getSourceWithChange(
-            charsB,
-            start,
-            end,
-            renderFn[DiffType.addition],
-          );
-        }
-        break;
+        charsB = getSourceWithChange(
+          charsB,
+          start,
+          end,
+          renderFn[DiffType.addition],
+        );
       }
 
-      case DiffType.deletion: {
-        for (const segment of change.segments) {
-          const { a } = getIndexesFromSegment(segment);
+      if (TypeMasks.DelOrMove & change.type) {
+        const { a } = getIndexesFromSegment(segment);
 
-          const { start: startIndex, end: endIndex } = a;
-          const [start, end] = getStringPositionsFromRange(
-            iterA,
-            startIndex,
-            endIndex - 1,
-          );
+        const { start: startIndex, end: endIndex } = a;
+        const [start, end] = getStringPositionsFromRange(
+          iterA,
+          startIndex,
+          endIndex - 1,
+        );
 
-          charsA = getSourceWithChange(
-            charsA,
-            start,
-            end,
-            renderFn[DiffType.deletion],
-          );
-        }
-        break;
+        charsA = getSourceWithChange(
+          charsA,
+          start,
+          end,
+          renderFn[DiffType.deletion],
+        );
       }
-
-      case DiffType.move: {
-        for (const segment of change.segments) {
-          const { a, b } = getIndexesFromSegment(segment);
-
-          const { start: startIndexA, end: endIndexA } = a;
-          const { start: startIndexB, end: endIndexB } = b;
-
-          const [startA, endA] = getStringPositionsFromRange(
-            iterA,
-            startIndexA,
-            endIndexA - 1,
-          );
-          const [startB, endB] = getStringPositionsFromRange(
-            iterB,
-            startIndexB,
-            endIndexB - 1,
-          );
-
-          charsA = getSourceWithChange(
-            charsA,
-            startA,
-            endA,
-            renderFn[DiffType.move],
-          );
-          charsB = getSourceWithChange(
-            charsB,
-            startB,
-            endB,
-            renderFn[DiffType.move],
-          );
-        }
-        break;
-      }
-
-      default:
-        fail(`Unhandled type "${change.type}"`);
     }
   }
 
