@@ -136,22 +136,43 @@ export function getSourceWithChange(
 
   const compliment = getComplimentArray(charsToAdd);
 
-  // Since we might display the changes in a table, where we split by newlines, simply coloring the whole segment won't work, for example:
-  //
-  // (COLOR_START) a
-  //  b (COLOR END)
-  //
-  // When splitted you will get ["(COLOR_START) a", " b (COLOR END)"] where only the first line would be colored, not the second
-  // So to fix it we wrap all the tokens individually
-  //
-  // (COLOR_START) a (COLOR END)
-  // (COLOR_START) b (COLOR END)
-  //
-  // So that when splitted you get ["(COLOR_START) a (COLOR END)", "(COLOR_START) b (COLOR END)"] which produces the desired output
-  text = text
-    .split(" ")
-    .map((x) => colorFn(x))
-    .join(" ");
+  if (text.includes("\n")) {
+    // One edge case we need to be aware of is that the text highlighted may be across newlines so simply coloring the whole segment won't work, for example:
+    //
+    // (COLOR_START) a
+    //  b (COLOR END)
+    //
+    // Later on the line the printer breaks down this code into newlines, so you get ["(COLOR_START) a", " b (COLOR END)"] where only the first line would be colored, not the second
+    // So to fix it we check if the highlighted text crosses multiple lines, if so we wrap all the tokens individually:
+    //
+    // (COLOR_START) a (COLOR END)
+    // (COLOR_START) b (COLOR END)
+    //
+    // So that when splitted you get ["(COLOR_START) a (COLOR END)", "(COLOR_START) b (COLOR END)"] which produces the desired output
+
+    // Here we will perform the above mentioned by:
+    // - Iterate for each line of code (separated by new lines)
+    // - Split the text to highlight into words (separated by spaces)
+    // - Color each word
+    // - Join back the words (with spaces)
+    // - Join back the lines (with new lines)
+    const lines = text.split("\n").map((line) => {
+      let words = line.split(" ");
+      return words
+        .map((x) => {
+          if (x === "") {
+            return "";
+          }
+          return colorFn(x);
+        })
+        .join(" ");
+    });
+
+    text = lines.join("\n");
+  } else {
+    // If the the to highline is in a single line we can just color the whole thing
+    text = colorFn(text);
+  }
 
   return [...head, text, ...compliment, ...tail];
 }
