@@ -21,47 +21,48 @@ export function applyChangesToSources(
   const { iterA, iterB } = _context;
 
   for (const change of changes) {
+    // TODO-2 refactor to reuse code
     switch (change.type) {
       case DiffType.addition: {
-        assert(change.segments.length === 1);
+        for (const segment of change.segments) {
+          const { b } = getIndexesFromSegment(segment);
 
-        const { b } = getIndexesFromSegment(change.segments[0]);
+          const { start: startIndex, end: endIndex } = b;
 
-        const { start: startIndex, end: endIndex } = b;
+          const [start, end] = getStringPositionsFromRange(
+            iterB,
+            startIndex,
+            endIndex - 1,
+          );
 
-        const [start, end] = getStringPositionsFromRange(
-          iterB,
-          startIndex,
-          endIndex - 1,
-        );
-
-        charsB = getSourceWithChange(
-          charsB,
-          start,
-          end,
-          renderFn[DiffType.addition],
-        );
+          charsB = getSourceWithChange(
+            charsB,
+            start,
+            end,
+            renderFn[DiffType.addition],
+          );
+        }
         break;
       }
 
       case DiffType.deletion: {
-        assert(change.segments.length === 1);
+        for (const segment of change.segments) {
+          const { a } = getIndexesFromSegment(segment);
 
-        const { a } = getIndexesFromSegment(change.segments[0]);
+          const { start: startIndex, end: endIndex } = a;
+          const [start, end] = getStringPositionsFromRange(
+            iterA,
+            startIndex,
+            endIndex - 1,
+          );
 
-        const { start: startIndex, end: endIndex } = a;
-        const [start, end] = getStringPositionsFromRange(
-          iterA,
-          startIndex,
-          endIndex - 1,
-        );
-
-        charsA = getSourceWithChange(
-          charsA,
-          start,
-          end,
-          renderFn[DiffType.deletion],
-        );
+          charsA = getSourceWithChange(
+            charsA,
+            start,
+            end,
+            renderFn[DiffType.deletion],
+          );
+        }
         break;
       }
 
@@ -270,11 +271,23 @@ export function prettyPrintSources(a: string, b: string) {
 }
 
 export function prettyPrintChanges(a: string, b: string, changes: Change[]) {
-  const sourcesWithChanges = applyChangesToSources(a, b, changes, prettyRenderFn);
-  console.log(createTextTable(sourcesWithChanges.sourceA, sourcesWithChanges.sourceB));
+  const sourcesWithChanges = applyChangesToSources(
+    a,
+    b,
+    changes,
+    prettyRenderFn,
+  );
+  console.log(
+    createTextTable(sourcesWithChanges.sourceA, sourcesWithChanges.sourceB),
+  );
 }
 
-export function prettyPrintChangesInSequence(a: string, b: string, changes: Change[], options: { sortByLength: boolean } = { sortByLength: true }) {
+export function prettyPrintChangesInSequence(
+  a: string,
+  b: string,
+  changes: Change[],
+  options: { sortByLength: boolean } = { sortByLength: true },
+) {
   const table = new Table({
     head: [
       colorFn.magenta("Type"),
