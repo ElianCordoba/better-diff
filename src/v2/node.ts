@@ -1,5 +1,5 @@
 import { getPrettyKind } from "../debug";
-import { SyntaxKind } from "./types";
+import { Segment, SyntaxKind } from "./types";
 import { DiffType, Range } from "../types";
 import { Side } from "../shared/language";
 import { _context } from ".";
@@ -37,7 +37,17 @@ export class Node {
   markedAs?: DiffType;
 
   constructor(args: NewNodeArgs) {
-    const { side, index, globalIndex, kind, text, parent, start, end, isTextNode } = args;
+    const {
+      side,
+      index,
+      globalIndex,
+      kind,
+      text,
+      parent,
+      start,
+      end,
+      isTextNode,
+    } = args;
 
     this.side = side;
     this.index = index;
@@ -57,6 +67,28 @@ export class Node {
       start: this.start,
       end: this.end,
     };
+  }
+
+  getSegment(diffType: DiffType.addition | DiffType.deletion): Segment {
+    if (diffType === DiffType.addition) {
+      return [
+        // Start A
+        -1,
+        // Start B
+        this.index,
+        // Length
+        1,
+      ];
+    } else {
+      return [
+        // Start A
+        this.index,
+        // Start B
+        -1,
+        // Length
+        1,
+      ];
+    }
   }
 
   mark() {

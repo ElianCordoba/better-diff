@@ -16,6 +16,8 @@ export class Context {
     public iterA: Iterator,
     public iterB: Iterator,
     public changes: Change[],
+    public deletions: Segment[],
+    public additions: Segment[],
   ) {}
 }
 

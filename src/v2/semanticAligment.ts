@@ -26,7 +26,7 @@ export function computeMoveAlignment(changes: Change[]): Change[] {
   for (const change of changes) {
     if (change.type !== DiffType.move) {
       unalignedChanges.push(change);
-      continue
+      continue;
     }
 
     const unalignedSegments: Segment[] = [];
@@ -41,7 +41,7 @@ export function computeMoveAlignment(changes: Change[]): Change[] {
 
     if (unalignedSegments.length === 0) {
       // Fully aligned
-      continue
+      continue;
     } else {
       if (unalignedSegments.length !== change.length) {
         change.segments = unalignedSegments;
@@ -62,7 +62,7 @@ function addAlignment(segment: Segment) {
   const offsettedB = { start: getOffsettedIndex(Side.b, b.start), end: getOffsettedIndex(Side.b, b.end) };
 
   const indexDiff = Math.abs(offsettedA.start - offsettedB.start);
-  
+
   const sideToAlignStart = offsettedA.start < offsettedB.start ? Side.a : Side.b;
 
   function apply(side: Side, index: number) {
@@ -91,13 +91,12 @@ function canSegmentBeAligned(segment: Segment): boolean {
   const offsettedBIndex = getOffsettedIndex(Side.b, b.start);
 
   if (offsettedAIndex === offsettedBIndex) {
-    return true
+    return true;
   }
 
   const sideToIterate = offsettedAIndex < offsettedBIndex ? Side.a : Side.b;
   const offsetsToCheck = alignmentTable[sideToIterate];
-  const startIndex =
-    sideToIterate === Side.a ? offsettedAIndex : offsettedBIndex;
+  const startIndex = sideToIterate === Side.a ? offsettedAIndex : offsettedBIndex;
   const indexDiff = Math.abs(offsettedAIndex - offsettedBIndex);
 
   for (const i of rangeEq(startIndex, startIndex + indexDiff)) {
@@ -109,7 +108,6 @@ function canSegmentBeAligned(segment: Segment): boolean {
       continue;
     }
 
-   
     return false;
   }
 

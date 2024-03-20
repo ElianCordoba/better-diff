@@ -18,32 +18,14 @@ export class Change {
     this.length = calculateCandidateMatchLength(segments);
   }
 
-  static createAddition(node: Node) {
-    assert(node.side === Side.b, () => "Trying to create a deletion but received an A side node");
-    return new Change(DiffType.addition, [
-      [
-        // Start A
-        -1,
-        // Start B
-        node.index,
-        // Length
-        1,
-      ],
-    ]);
+  static createAddition(segments: Segment[]) {
+    assert(segments.length !== 0, () => "No segments received");
+    return new Change(DiffType.addition, segments);
   }
 
-  static createDeletion(node: Node) {
-    assert(node.side === Side.a, () => "Trying to create a deletion but received an B side node");
-    return new Change(DiffType.deletion, [
-      [
-        // Start A
-        node.index,
-        // Start B
-        -1,
-        // Length
-        1,
-      ],
-    ]);
+  static createDeletion(segments: Segment[]) {
+    assert(segments.length !== 0, () => "No segments received");
+    return new Change(DiffType.deletion, segments);
   }
 
   static createMove(match: CandidateMatch) {

@@ -7,7 +7,7 @@ import { Change } from "./change";
 import { range } from "../utils";
 
 export function computeDiff() {
-  const { iterA, iterB, changes } = _context;
+  const { iterA, iterB, changes, additions } = _context;
 
   while (true) {
     const a = iterA.next();
@@ -24,8 +24,7 @@ export function computeDiff() {
       const iterOn = !a ? iterB : iterA;
       const type = !a ? DiffType.addition : DiffType.deletion;
 
-      const remainingChanges = oneSidedIteration(iterOn, type);
-      changes.push(...remainingChanges);
+      oneSidedIteration(iterOn, type);
       break;
     }
 
@@ -33,8 +32,7 @@ export function computeDiff() {
     const bestMatchForB = getBestMatch(b);
 
     if (!bestMatchForB) {
-      const addition = Change.createAddition(b);
-      changes.push(addition);
+      additions.push(b.getSegment(DiffType.addition));
       iterB.mark(b.index, DiffType.addition);
 
       continue;
@@ -49,8 +47,7 @@ export function computeDiff() {
       const newCandidate = getBestMatch(node);
 
       if (!newCandidate) {
-        const addition = Change.createAddition(b);
-        changes.push(addition);
+        additions.push(b.getSegment(DiffType.addition));
         iterB.mark(b.index, DiffType.addition);
 
         continue;
@@ -87,25 +84,18 @@ function markMatched(change: Change) {
 export function oneSidedIteration(
   iter: Iterator,
   typeOfChange: DiffType.addition | DiffType.deletion,
-): Change[] {
-  const changes: Change[] = [];
+) {
+  const { additions, deletions } = _context;
 
   let node = iter.next();
-
-  // TODO: Compactar?
   while (node) {
-    let change: Change;
-
     if (typeOfChange === DiffType.addition) {
-      change = Change.createAddition(node);
+      additions.push(node.getSegment(DiffType.addition));
     } else {
-      change = Change.createDeletion(node);
+      deletions.push(node.getSegment(DiffType.deletion));
     }
 
-    changes.push(change);
     iter.mark(node.index, typeOfChange);
     node = iter.next(node.index + 1);
   }
-
-  return changes;
 }
