@@ -24,6 +24,11 @@ export function computeMoveAlignment(changes: Change[]): Change[] {
   const unalignedChanges: Change[] = [];
 
   for (const change of changes) {
+    if (change.type !== DiffType.move) {
+      unalignedChanges.push(change);
+      continue
+    }
+
     const unalignedSegments: Segment[] = [];
 
     for (const segment of change.segments) {
