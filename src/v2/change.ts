@@ -2,7 +2,7 @@ import { Node } from "./node";
 import { Side } from "../shared/language";
 import { DiffType, TypeMasks } from "../types";
 import { CandidateMatch, Segment } from "./types";
-import { calculateCandidateMatchLength, getIndexesFromSegment } from "./utils";
+import { getTextLengthFromSegments, getIndexesFromSegment } from "./utils";
 import { assert } from "../debug";
 import { _context } from ".";
 
@@ -15,7 +15,7 @@ export class Change {
     public skips = 0,
   ) {
     this.startNode = getStarterNode(type, segments);
-    this.length = calculateCandidateMatchLength(segments);
+    this.length = getTextLengthFromSegments(segments);
   }
 
   static createAddition(segments: Segment[]) {

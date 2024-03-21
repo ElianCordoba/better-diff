@@ -32,7 +32,7 @@ export interface ResultTypeMapper {
 export type Segment = [indexA: number, indexB: number, length: number];
 
 export interface CandidateMatch {
-  length: number;
+  textLength: number;
   skips: number;
   segments: Segment[];
 }

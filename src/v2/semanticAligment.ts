@@ -4,7 +4,7 @@ import { DiffType } from "../types";
 import { range, rangeEq } from "../utils";
 import { Change } from "./change";
 import { Segment } from "./types";
-import { calculateCandidateMatchLength, getIndexesFromSegment } from "./utils";
+import { getTextLengthFromSegments, getIndexesFromSegment } from "./utils";
 
 export interface Offset {
   index: number;
@@ -45,7 +45,7 @@ export function computeMoveAlignment(changes: Change[]): Change[] {
     } else {
       if (unalignedSegments.length !== change.length) {
         change.segments = unalignedSegments;
-        change.length = calculateCandidateMatchLength(unalignedSegments);
+        change.length = getTextLengthFromSegments(unalignedSegments);
       }
 
       unalignedChanges.push(change);

@@ -1,7 +1,7 @@
 import { _context } from ".";
 import { assert } from "../debug";
 import { Side } from "../shared/language";
-import { range } from "../utils";
+import { range, rangeEq } from "../utils";
 import { Change } from "./change";
 import { Iterator } from "./iterator";
 import { Node } from "./node";
@@ -29,9 +29,9 @@ export function equals(nodeOne: Node, nodeTwo: Node): boolean {
  * TODO: MAybe compute a score fn
  */
 export function isLatterCandidateBetter(currentCandidate: CandidateMatch, newCandidate: CandidateMatch): boolean {
-  if (newCandidate.length > currentCandidate.length) {
+  if (newCandidate.textLength > currentCandidate.textLength) {
     return true;
-  } else if (newCandidate.length < currentCandidate.length) {
+  } else if (newCandidate.textLength < currentCandidate.textLength) {
     return false;
   }
 
@@ -44,11 +44,24 @@ export function isLatterCandidateBetter(currentCandidate: CandidateMatch, newCan
   return newCandidate.skips < currentCandidate.skips;
 }
 
-export function calculateCandidateMatchLength(segments: Segment[]) {
+// This function iterate for all the nodes (on both side if needed) of the match adding up the text length
+export function getTextLengthFromSegments(segments: Segment[]) {
   let sum = 0;
 
   for (const segment of segments) {
-    sum += segment[2];
+    const { a, b } = getIndexesFromSegment(segment)
+
+    if (a.start !== -1) {
+      for (const i of range(a.start, a.end)) {
+        sum += _context.iterA.nodes[i].text.length
+      }
+    }
+
+    if (b.start !== -1) {
+      for (const i of range(b.start, b.end)) {
+        sum += _context.iterB.nodes[i].text.length
+      }
+    }
   }
 
   assert(sum > 0, () => "Segment length is 0");
@@ -58,7 +71,7 @@ export function calculateCandidateMatchLength(segments: Segment[]) {
 
 export function getEmptyCandidate(): CandidateMatch {
   return {
-    length: 0,
+    textLength: 0,
     segments: [],
     skips: 0,
   };

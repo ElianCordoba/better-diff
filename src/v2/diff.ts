@@ -3,7 +3,7 @@ import { assert, fail } from "../debug";
 import { Iterator } from "./iterator";
 import { range, rangeEq } from "../utils";
 import { Node } from "./node";
-import { calculateCandidateMatchLength, equals, getAllNodesFromMatch, getEmptyCandidate, getIndexesFromSegment, isLatterCandidateBetter } from "./utils";
+import { getTextLengthFromSegments, equals, getAllNodesFromMatch, getEmptyCandidate, getIndexesFromSegment, isLatterCandidateBetter } from "./utils";
 import { CandidateMatch, Segment } from "./types";
 
 /**
@@ -18,7 +18,7 @@ export function getBestMatch(nodeB: Node): CandidateMatch | undefined {
   }
 
   let bestMatch: CandidateMatch = {
-    length: 0,
+    textLength: 0,
     skips: 0,
     segments: [],
   };
@@ -225,7 +225,7 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
   }
 
   return {
-    length: calculateCandidateMatchLength(segments),
+    textLength: getTextLengthFromSegments(segments),
     skips,
     segments,
   };
