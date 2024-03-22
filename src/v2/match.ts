@@ -12,15 +12,19 @@ export class CandidateMatch {
   }
 
   isBetterThan(otherCandidate: CandidateMatch) {
-    if (otherCandidate.textLength !== this.textLength) {
-      return otherCandidate.textLength < this.textLength;
+    if (this.textLength > otherCandidate.textLength) {
+      return true;
+    } else if (this.textLength < otherCandidate.textLength) {
+      return false;
     }
 
-    if (otherCandidate.segments.length !== this.segments.length) {
-      return otherCandidate.segments.length < this.segments.length;
+    if (this.segments.length < otherCandidate.segments.length) {
+      return true;
+    } else if (this.segments.length > otherCandidate.segments.length) {
+      return false;
     }
 
-    return otherCandidate.skips < this.skips;
+    return this.skips < otherCandidate.skips;
   }
 
   draw() {

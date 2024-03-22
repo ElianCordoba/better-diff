@@ -27,7 +27,7 @@ export function getTestFn(testFn: typeof getDiff2) {
     const skipStandardTest = testInfo.only === "inversed";
 
     if (!skipStandardTest) {
-      vTest(`${name}`, () => {
+      vTest(`[Standard] ${name}`, () => {
         const { sourceA: resultA, sourceB: resultB } = testFn(a, b, { outputType: OutputType.text });
 
         validateDiff(expA || a, expB || b, resultA, resultB);
@@ -37,20 +37,32 @@ export function getTestFn(testFn: typeof getDiff2) {
     const skipInversedTest = testInfo.only === "standard";
 
     if (!skipInversedTest) {
-      vTest(`[Inverse] ${name}`, () => {
-        const { sourceA: resultA, sourceB: resultB } = testFn(b, a, { outputType: OutputType.text });
+      vTest(`[Inversed] ${name}`, () => {
+        const { sourceA: resultAA, sourceB: resultBB } = testFn(b, a, { outputType: OutputType.text });
 
         const inversedExpectedA = getInversedExpectedResult(expB || b);
         const inversedExpectedB = getInversedExpectedResult(expA || a);
 
-        validateDiff(inversedExpectedA, inversedExpectedB, resultA, resultB);
+        validateDiff(inversedExpectedA, inversedExpectedB, resultAA, resultBB);
       });
     }
   };
 }
 
 function getInversedExpectedResult(expected: string) {
-  return expected.replaceAll("➕", "➖").replaceAll("➖", "➕");
+  return expected.split("").map((char) => {
+    if (char === "➖") {
+      return "➕";
+    } else if (char === "➕") {
+      return "➖";
+    } else {
+      return char;
+    }
+  }).join("");
+}
+
+function trimLines(text: string) {
+  return text.split("\n").map((s) => s.trim()).join("");
 }
 
 function validateDiff(
@@ -59,12 +71,11 @@ function validateDiff(
   resultA: string,
   resultB: string,
 ) {
-  function trimLines(text: string) {
-    return text.split("\n").map((s) => s.trim()).join("");
-  }
+  // expect(trimLines(resultA)).toEqual(trimLines(expectedA));
+  // expect(trimLines(resultB)).toEqual(trimLines(expectedB));
 
-  expect(trimLines(resultA)).toEqual(trimLines(expectedA));
-  expect(trimLines(resultB)).toEqual(trimLines(expectedB));
+  expect(resultA).toEqual(expectedA);
+  expect(resultB).toEqual(expectedB);
 }
 
 export const test = getTestFn(getDiff2);

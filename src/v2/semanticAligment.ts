@@ -14,20 +14,25 @@ export interface Offset {
 // number = index
 export type OffsetsMap = Map<number, Offset>;
 
-const alignmentTable = {
-  a: new Map() as OffsetsMap,
-  b: new Map() as OffsetsMap,
-};
+interface AlignmentTable {
+  a: OffsetsMap;
+  b: OffsetsMap;
+}
 
 export function computeMoveAlignment(changes: Move[]): Move[] {
+  const alignmentTable: AlignmentTable = {
+    a: new Map(),
+    b: new Map(),
+  };
+
   const unalignedChanges: Move[] = [];
 
   for (const change of changes) {
     const unalignedSegments: Segment[] = [];
 
     for (const segment of change.segments) {
-      if (canSegmentBeAligned(segment)) {
-        addAlignment(segment);
+      if (canSegmentBeAligned(alignmentTable, segment)) {
+        addAlignment(alignmentTable, segment);
       } else {
         unalignedSegments.push(segment);
       }
@@ -49,11 +54,11 @@ export function computeMoveAlignment(changes: Move[]): Move[] {
   return unalignedChanges;
 }
 
-function addAlignment(segment: Segment) {
+function addAlignment(alignmentTable: AlignmentTable, segment: Segment) {
   const { a, b } = getIndexesFromSegment(segment);
 
-  const offsettedA = { start: getOffsettedIndex(Side.a, a.start), end: getOffsettedIndex(Side.a, a.end) };
-  const offsettedB = { start: getOffsettedIndex(Side.b, b.start), end: getOffsettedIndex(Side.b, b.end) };
+  const offsettedA = { start: getOffsettedIndex(alignmentTable, Side.a, a.start), end: getOffsettedIndex(alignmentTable, Side.a, a.end) };
+  const offsettedB = { start: getOffsettedIndex(alignmentTable, Side.b, b.start), end: getOffsettedIndex(alignmentTable, Side.b, b.end) };
 
   const indexDiff = Math.abs(offsettedA.start - offsettedB.start);
 
@@ -74,11 +79,11 @@ function addAlignment(segment: Segment) {
   }
 }
 
-function canSegmentBeAligned(segment: Segment): boolean {
+function canSegmentBeAligned(alignmentTable: AlignmentTable, segment: Segment): boolean {
   const { a, b } = getIndexesFromSegment(segment);
 
-  const offsettedAIndex = getOffsettedIndex(Side.a, a.start);
-  const offsettedBIndex = getOffsettedIndex(Side.b, b.start);
+  const offsettedAIndex = getOffsettedIndex(alignmentTable, Side.a, a.start);
+  const offsettedBIndex = getOffsettedIndex(alignmentTable, Side.b, b.start);
 
   if (offsettedAIndex === offsettedBIndex) {
     return true;
@@ -104,7 +109,7 @@ function canSegmentBeAligned(segment: Segment): boolean {
   return true;
 }
 
-function getOffsettedIndex(side: Side, targetIndex: number) {
+function getOffsettedIndex(alignmentTable: AlignmentTable, side: Side, targetIndex: number) {
   const ogIndex = targetIndex;
   const _side = alignmentTable[side];
 

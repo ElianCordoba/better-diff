@@ -21,6 +21,7 @@ export function applyChangesToSources(
   const { iterA, iterB } = _context;
 
   for (const change of changes) {
+    const renderWith = renderFn[change.type];
     for (const segment of change.segments) {
       if (TypeMasks.AddOrMove & change.type) {
         const { b } = getIndexesFromSegment(segment);
@@ -37,7 +38,7 @@ export function applyChangesToSources(
           charsB,
           start,
           end,
-          renderFn[DiffType.addition],
+          renderWith,
         );
       }
 
@@ -55,7 +56,7 @@ export function applyChangesToSources(
           charsA,
           start,
           end,
-          renderFn[DiffType.deletion],
+          renderWith,
         );
       }
     }
