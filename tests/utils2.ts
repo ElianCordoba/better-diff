@@ -30,7 +30,7 @@ export function getTestFn(testFn: typeof getDiff2) {
       vTest(`[Standard] ${name}`, () => {
         const { sourceA: resultA, sourceB: resultB } = testFn(a, b, { outputType: OutputType.text });
 
-        validateDiff(expA || a, expB || b, resultA, resultB);
+        validateDiff(a, b, expA || a, expB || b, resultA, resultB);
       });
     }
 
@@ -43,7 +43,7 @@ export function getTestFn(testFn: typeof getDiff2) {
         const inversedExpectedA = getInversedExpectedResult(expB || b);
         const inversedExpectedB = getInversedExpectedResult(expA || a);
 
-        validateDiff(inversedExpectedA, inversedExpectedB, resultAA, resultBB);
+        validateDiff(b, a, inversedExpectedA, inversedExpectedB, resultAA, resultBB);
       });
     }
   };
@@ -66,16 +66,15 @@ function trimLines(text: string) {
 }
 
 function validateDiff(
+  sourceA: string,
+  sourceB: string,
   expectedA: string,
   expectedB: string,
   resultA: string,
   resultB: string,
 ) {
-  // expect(trimLines(resultA)).toEqual(trimLines(expectedA));
-  // expect(trimLines(resultB)).toEqual(trimLines(expectedB));
-
-  expect(resultA).toEqual(expectedA);
-  expect(resultB).toEqual(expectedB);
+  expect(trimLines(resultA), sourceA).toEqual(trimLines(expectedA));
+  expect(trimLines(resultB), sourceB).toEqual(trimLines(expectedB));
 }
 
 export const test = getTestFn(getDiff2);

@@ -13,8 +13,9 @@ export function applyChangesToSources(
   sourceA: string,
   sourceB: string,
   changes: Change[],
-  renderFn = asciiRenderFn,
+  forDebug: boolean,
 ) {
+  const renderFn = forDebug ? prettyRenderFn : asciiRenderFn;
   let charsA = sourceA.split("");
   let charsB = sourceB.split("");
 
@@ -39,6 +40,7 @@ export function applyChangesToSources(
           start,
           end,
           renderWith,
+          forDebug,
         );
       }
 
@@ -57,6 +59,7 @@ export function applyChangesToSources(
           start,
           end,
           renderWith,
+          forDebug,
         );
       }
     }
@@ -70,6 +73,8 @@ export function getSourceWithChange(
   start: number,
   end: number,
   colorFn: RenderFn,
+  // This will be true for `prettyRenderFn`, it enables patching the string in a way that it looks nice on the table. This patching would break the tests
+  forDebug: boolean,
 ) {
   // This is to handle cases like EndOfFile
   // TODO: Think if this is the best way to handle this, maybe we can just ignore the EOF node altogether or modify it
@@ -94,7 +99,9 @@ export function getSourceWithChange(
 
   const compliment = getComplimentArray(charsToAdd);
 
-  if (text.includes("\n")) {
+  if (!forDebug) {
+    text = colorFn(text);
+  } else if (text.includes("\n")) {
     // One edge case we need to be aware of is that the text highlighted may be across newlines so simply coloring the whole segment won't work, for example:
     //
     // (COLOR_START) a
@@ -108,23 +115,7 @@ export function getSourceWithChange(
     //
     // So that when splitted you get ["(COLOR_START) a (COLOR END)", "(COLOR_START) b (COLOR END)"] which produces the desired output
 
-    // Here we will perform the above mentioned by:
-    // - Iterate for each line of code (separated by new lines)
-    // - Split the text to highlight into words (separated by spaces)
-    // - Color each word
-    // - Join back the words (with spaces)
-    // - Join back the lines (with new lines)
-    const lines = text.split("\n").map((line) => {
-      let words = line.split(" ");
-      return words
-        .map((x) => {
-          if (x === "") {
-            return "";
-          }
-          return colorFn(x);
-        })
-        .join(" ");
-    });
+    const lines = text.split("\n").map(colorFn);
 
     text = lines.join("\n");
   } else {
@@ -204,7 +195,7 @@ export function getPrettyStringFromChange(
         a.start,
         a.end - 1,
       );
-      charsA = getSourceWithChange(charsA, startA, endA, color);
+      charsA = getSourceWithChange(charsA, startA, endA, color, true);
     }
 
     if (change.type & TypeMasks.AddOrMove) {
@@ -213,7 +204,7 @@ export function getPrettyStringFromChange(
         b.start,
         b.end - 1,
       );
-      charsB = getSourceWithChange(charsB, startB, endB, color);
+      charsB = getSourceWithChange(charsB, startB, endB, color, true);
     }
   }
 
@@ -232,7 +223,7 @@ export function prettyPrintChanges(a: string, b: string, changes: Change[]) {
     a,
     b,
     changes,
-    prettyRenderFn,
+    true,
   );
   console.log(
     createTextTable(sourcesWithChanges.sourceA, sourcesWithChanges.sourceB),

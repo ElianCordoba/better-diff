@@ -52,10 +52,10 @@ export function getDiff2<_OutputType extends OutputType = OutputType.changes>(so
       return changes as ResultTypeMapper[_OutputType];
     }
     case OutputType.text: {
-      return applyChangesToSources(sourceA, sourceB, changes, asciiRenderFn) as ResultTypeMapper[_OutputType];
+      return applyChangesToSources(sourceA, sourceB, changes, false) as ResultTypeMapper[_OutputType];
     }
     case OutputType.prettyText: {
-      return applyChangesToSources(sourceA, sourceB, changes, prettyRenderFn) as ResultTypeMapper[_OutputType];
+      return applyChangesToSources(sourceA, sourceB, changes, true) as ResultTypeMapper[_OutputType];
     }
     default:
       fail();
