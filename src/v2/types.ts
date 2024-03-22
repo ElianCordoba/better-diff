@@ -30,9 +30,3 @@ export interface ResultTypeMapper {
 
 // Start is inclusive, end is not inclusive
 export type Segment = [indexA: number, indexB: number, length: number];
-
-export interface CandidateMatch {
-  textLength: number;
-  skips: number;
-  segments: Segment[];
-}

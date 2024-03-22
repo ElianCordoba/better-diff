@@ -5,7 +5,7 @@ import { computeDiff } from "./core";
 import { asciiRenderFn, fail, prettyRenderFn } from "../debug";
 import { Options, OutputType, ResultTypeMapper, Segment } from "./types";
 import { applyChangesToSources } from "./printer";
-import { Change } from "./change";
+import { Change, Move } from "./change";
 import { computeMoveAlignment } from "./semanticAligment";
 import { compactAndCreateDiff } from "./compact";
 import { DiffType } from "../types";
@@ -21,21 +21,22 @@ export function getDiff2<_OutputType extends OutputType = OutputType.changes>(so
   const iterA = new Iterator(sourceA, Side.a);
   const iterB = new Iterator(sourceB, Side.b);
 
-  let changes: Change[] = [];
+  let moves: Move[] = [];
 
   const deletions: Segment[] = [];
   const additions: Segment[] = [];
 
-  _context = new Context(sourceA, sourceB, iterA, iterB, changes, deletions, additions);
+  _context = new Context(sourceA, sourceB, iterA, iterB, moves, deletions, additions);
 
-  changes = computeDiff();
+  moves = computeDiff();
 
   if (_options.tryAlignMoves) {
-    changes = computeMoveAlignment(changes);
+    moves = computeMoveAlignment(moves);
   }
 
   // We compact all tracked additions and deletions into a single change with multiple segments, we also compact them if possible
 
+  const changes: Change[] = moves;
   if (_context.additions.length) {
     const additionsChange = compactAndCreateDiff(DiffType.addition, additions);
     changes.push(additionsChange);

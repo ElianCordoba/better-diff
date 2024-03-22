@@ -1,13 +1,13 @@
 import { _context } from ".";
 import { getBestMatch, getSubSequenceNodes } from "./diff";
-import { getIndexesFromSegment, isLatterCandidateBetter } from "./utils";
+import { getIndexesFromSegment, sort } from "./utils";
 import { Iterator } from "./iterator";
 import { DiffType } from "../types";
 import { Change } from "./change";
 import { range } from "../utils";
 
 export function computeDiff() {
-  const { iterA, iterB, changes, additions } = _context;
+  const { iterA, iterB, moves, additions } = _context;
 
   while (true) {
     const a = iterA.next();
@@ -53,18 +53,18 @@ export function computeDiff() {
         continue;
       }
 
-      if (isLatterCandidateBetter(bestCandidate, newCandidate)) {
+      if (newCandidate.isBetterThan(bestCandidate)) {
         bestCandidate = newCandidate;
       }
     }
 
     const move = Change.createMove(bestCandidate);
-    changes.push(move);
+    moves.push(move);
     markMatched(move);
     continue;
   }
 
-  return changes;
+  return moves.sort((a, b) => sort.desc(a.textLength, b.textLength));
 }
 
 function markMatched(change: Change) {

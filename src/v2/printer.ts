@@ -257,7 +257,7 @@ export function prettyPrintChangesInSequence(
     colAligns: ["center", "center", "center", "center"],
   });
 
-  const sortedByLength = options.sortByLength ? changes.sort((a, b) => (a.length < b.length ? 1 : -1)) : changes;
+  const sortedByLength = options.sortByLength ? changes.sort((a, b) => (a.textLength < b.textLength ? 1 : -1)) : changes;
 
   const lineNumberString = getLinesOfCodeString(a, b);
 
@@ -269,7 +269,7 @@ export function prettyPrintChangesInSequence(
 
     table.push([
       changeColorFn(changeName),
-      colorFn.blue(change.length),
+      colorFn.blue(change.textLength),
       colorFn.grey(change.skips || "-"),
       colorFn.cyan(`"${change.startNode.text}"`),
       colorFn.yellow(lineNumberString),

@@ -3,8 +3,9 @@ import { assert, fail } from "../debug";
 import { Iterator } from "./iterator";
 import { range, rangeEq } from "../utils";
 import { Node } from "./node";
-import { getTextLengthFromSegments, equals, getAllNodesFromMatch, getEmptyCandidate, getIndexesFromSegment, isLatterCandidateBetter } from "./utils";
-import { CandidateMatch, Segment } from "./types";
+import { equals, getAllNodesFromMatch, getIndexesFromSegment, getTextLengthFromSegments } from "./utils";
+import { Segment } from "./types";
+import { CandidateMatch } from "./match";
 
 /**
  * Returns the longest possible match for the given node, this is including possible skips to improve the match length.
@@ -17,16 +18,12 @@ export function getBestMatch(nodeB: Node): CandidateMatch | undefined {
     return;
   }
 
-  let bestMatch: CandidateMatch = {
-    textLength: 0,
-    skips: 0,
-    segments: [],
-  };
+  let bestMatch = CandidateMatch.createEmpty();
 
   for (const candidate of aSideCandidates) {
     const newCandidate = getCandidateMatch(candidate, nodeB);
 
-    if (isLatterCandidateBetter(bestMatch, newCandidate)) {
+    if (newCandidate.isBetterThan(bestMatch)) {
       bestMatch = newCandidate;
     }
   }
@@ -164,7 +161,7 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
             continue mainLoop;
           }
 
-          let bestCandidate = getEmptyCandidate();
+          let bestCandidate = CandidateMatch.createEmpty();
 
           // TODO instead of getBestMatch use getCandidateMatch so that it skips node if necessary
           // TODO also getBestMatch has hardcoded B side
@@ -176,7 +173,7 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
               fail();
             }
 
-            if (isLatterCandidateBetter(bestCandidate, newCandidate)) {
+            if (newCandidate.isBetterThan(bestCandidate)) {
               // Give this input
               // A B C C D
               // 0 1 2 3 4
@@ -196,7 +193,7 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
               fail();
             }
 
-            if (isLatterCandidateBetter(bestCandidate, newCandidate)) {
+            if (newCandidate.isBetterThan(bestCandidate)) {
               skipsInLookaheadB += node.index - newB.index;
               bestCandidate = newCandidate;
             }
@@ -224,9 +221,5 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
     break mainLoop;
   }
 
-  return {
-    textLength: getTextLengthFromSegments(segments),
-    skips,
-    segments,
-  };
+  return new CandidateMatch(segments, getTextLengthFromSegments(segments), skips);
 }

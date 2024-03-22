@@ -1,10 +1,9 @@
-import { applyAlignments } from "../backend/printer";
 import { Side } from "../shared/language";
 import { DiffType } from "../types";
 import { range, rangeEq } from "../utils";
-import { Change } from "./change";
+import { Change, Move } from "./change";
 import { Segment } from "./types";
-import { getTextLengthFromSegments, getIndexesFromSegment } from "./utils";
+import { getIndexesFromSegment, getTextLengthFromSegments } from "./utils";
 
 export interface Offset {
   index: number;
@@ -20,15 +19,10 @@ const alignmentTable = {
   b: new Map() as OffsetsMap,
 };
 
-export function computeMoveAlignment(changes: Change[]): Change[] {
-  const unalignedChanges: Change[] = [];
+export function computeMoveAlignment(changes: Move[]): Move[] {
+  const unalignedChanges: Move[] = [];
 
   for (const change of changes) {
-    if (change.type !== DiffType.move) {
-      unalignedChanges.push(change);
-      continue;
-    }
-
     const unalignedSegments: Segment[] = [];
 
     for (const segment of change.segments) {
@@ -43,9 +37,9 @@ export function computeMoveAlignment(changes: Change[]): Change[] {
       // Fully aligned
       continue;
     } else {
-      if (unalignedSegments.length !== change.length) {
+      if (unalignedSegments.length !== change.textLength) {
         change.segments = unalignedSegments;
-        change.length = getTextLengthFromSegments(unalignedSegments);
+        change.textLength = getTextLengthFromSegments(unalignedSegments);
       }
 
       unalignedChanges.push(change);
@@ -79,10 +73,6 @@ function addAlignment(segment: Segment) {
     apply(Side.b, offsettedB.start);
   }
 }
-
-type SegmentAlignmentCheckResult =
-  | { canBeAligned: false }
-  | { canBeAligned: true; offsets: Offset[]; sideToAlign: Side };
 
 function canSegmentBeAligned(segment: Segment): boolean {
   const { a, b } = getIndexesFromSegment(segment);
