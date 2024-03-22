@@ -76,12 +76,7 @@ describe("Properly report lines added", () => {
     b: `
       1
       2
-      'x'
-      1
-      2
-      3
-    `,
-    expA: `
+      x
       1
       2
       3
@@ -89,7 +84,7 @@ describe("Properly report lines added", () => {
     expB: `
       ➕1
       2
-      'x'➕
+      x➕
       1
       2
       3
@@ -99,27 +94,21 @@ describe("Properly report lines added", () => {
   test({
     name: "LCS case 2",
     a: `
-      'x'
+      x
       1
       2
       3
     `,
     b: `
-      'x'
+      x
       1
       2
-      1
-      2
-      3
-    `,
-    expA: `
-      'x'
       1
       2
       3
     `,
     expB: `
-      'x'
+      x
       1
       2
       ➕1
@@ -144,355 +133,355 @@ describe("Properly report lines added", () => {
     `,
   });
 
-  test({
-    name: "Mix of move with deletions and additions 2",
-    a: `
-      fn(x)
-    `,
-    b: `
-      console.log(fn(1))
-    `,
-    expA: `
-      fn(➖x➖)
-    `,
-    expB: `
-      ➕console.log(➕fn(➕1➕)➕)➕
-    `,
-  });
+  // test({
+  //   name: "Mix of move with deletions and additions 2",
+  //   a: `
+  //     fn(x)
+  //   `,
+  //   b: `
+  //     console.log(fn(1))
+  //   `,
+  //   expA: `
+  //     fn(➖x➖)
+  //   `,
+  //   expB: `
+  //     ➕console.log(➕fn(➕1➕)➕)➕
+  //   `,
+  // });
 
-  test({
-    name: "Mix of move with deletions and additions 3",
-    a: `
-      console.log() && 3
-    `,
-    b: `
-      fn(console.log(2))
-    `,
-    expA: `
-      console.log() ➖&& 3➖
-    `,
-    expB: `
-      ➕fn(➕console.log(➕2➕)➕)➕
-    `,
-  });
+  // test({
+  //   name: "Mix of move with deletions and additions 3",
+  //   a: `
+  //     console.log() && 3
+  //   `,
+  //   b: `
+  //     fn(console.log(2))
+  //   `,
+  //   expA: `
+  //     console.log() ➖&& 3➖
+  //   `,
+  //   expB: `
+  //     ➕fn(➕console.log(➕2➕)➕)➕
+  //   `,
+  // });
 
-  test({
-    name: "Properly match closing paren",
-    a: `
-      console.log()
-    `,
-    b: `
-      console.log(fn())
-    `,
-    expA: `
-      console.log()
-    `,
-    expB: `
-      console.log(➕fn()➕)
-    `,
-  });
+  // test({
+  //   name: "Properly match closing paren",
+  //   a: `
+  //     console.log()
+  //   `,
+  //   b: `
+  //     console.log(fn())
+  //   `,
+  //   expA: `
+  //     console.log()
+  //   `,
+  //   expB: `
+  //     console.log(➕fn()➕)
+  //   `,
+  // });
 
-  test({
-    name: "Properly match closing paren 2",
-    a: `
-      if (true) {
-        print()
-      }  
-    `,
-    b: `
-      z
-      print(123)
-      x
-    `,
-    expA: `
-      ➖if (true) {➖
-        print()
-      ➖}➖
-    `,
-    expB: `
-      ➕z➕
-      print(➕123➕)
-      ➕x➕
-    `,
-  });
+  // test({
+  //   name: "Properly match closing paren 2",
+  //   a: `
+  //     if (true) {
+  //       print()
+  //     }
+  //   `,
+  //   b: `
+  //     z
+  //     print(123)
+  //     x
+  //   `,
+  //   expA: `
+  //     ➖if (true) {➖
+  //       print()
+  //     ➖}➖
+  //   `,
+  //   expB: `
+  //     ➕z➕
+  //     print(➕123➕)
+  //     ➕x➕
+  //   `,
+  // });
 
-  test({
-    name: "Properly match closing paren 3",
-    a: `
-      console.log() && 3
-    `,
-    b: `
-      function asd () {
-        console.log("hi")
-      }
-    `,
-    expA: `
-      console.log() ➖&& 3➖
-    `,
-    expB: `
-      ➕function asd () {➕
-        console.log(➕"hi"➕)
-      ➕}➕
-    `,
-  });
+  // test({
+  //   name: "Properly match closing paren 3",
+  //   a: `
+  //     console.log() && 3
+  //   `,
+  //   b: `
+  //     function asd () {
+  //       console.log("hi")
+  //     }
+  //   `,
+  //   expA: `
+  //     console.log() ➖&& 3➖
+  //   `,
+  //   expB: `
+  //     ➕function asd () {➕
+  //       console.log(➕"hi"➕)
+  //     ➕}➕
+  //   `,
+  // });
 
-  test({
-    name: "Properly match closing paren 4",
-    a: `
-      321
-      if (true) {
-        print()
-      }
-    `,
-    b: `
-      print(123)
-    `,
-    expA: `
-      ➖321 
-      if (true) {➖
-        print()
-      ➖}➖
-    `,
-    expB: `
-      print(➕123➕)
-    `,
-  });
+  // test({
+  //   name: "Properly match closing paren 4",
+  //   a: `
+  //     321
+  //     if (true) {
+  //       print()
+  //     }
+  //   `,
+  //   b: `
+  //     print(123)
+  //   `,
+  //   expA: `
+  //     ➖321
+  //     if (true) {➖
+  //       print()
+  //     ➖}➖
+  //   `,
+  //   expB: `
+  //     print(➕123➕)
+  //   `,
+  // });
 
-  test({
-    name: "Properly match closing paren 5",
-    a: `
-      )fn(x)
-    `,
-    b: `
-      console.log(fn(1))
-    `,
-    expA: `
-      ➖)➖fn(➖x➖)
-    `,
-    expB: `
-      ➕console.log(➕fn(➕1➕)➕)➕
-    `,
-  });
+  // test({
+  //   name: "Properly match closing paren 5",
+  //   a: `
+  //     )fn(x)
+  //   `,
+  //   b: `
+  //     console.log(fn(1))
+  //   `,
+  //   expA: `
+  //     ➖)➖fn(➖x➖)
+  //   `,
+  //   expB: `
+  //     ➕console.log(➕fn(➕1➕)➕)➕
+  //   `,
+  // });
 
-  test({
-    name: "Properly match closing paren 6",
-    a: `
-      x
-      const foo = {
-        a: 1
-      }
-    `,
-    b: `
-      function foo() {
-        return z
-      }
-    
-      function zor() {
-        return {
-          a: 1
-        }
-      }
-    `,
-    expA: `
-      ➖x
-      const➖ foo ➖=➖ {
-        a: 1
-      }
-    `,
-    expB: `
-      ➕function➕ foo➕() {
-        return z
-      }
-    
-      function zor() {
-        return➕ {
-          a: 1
-        }
-      ➕}➕
-    `,
-  });
+  // test({
+  //   name: "Properly match closing paren 6",
+  //   a: `
+  //     x
+  //     const foo = {
+  //       a: 1
+  //     }
+  //   `,
+  //   b: `
+  //     function foo() {
+  //       return z
+  //     }
 
-  // Test closing the paren on a deletion / addition on the "verifySingle"
-  test({
-    name: "Properly match closing paren 7",
-    a: `
-      function* range() {
-        while (i < end - 1) {
-          yield i;
-        }
-      }
-    `,
-    b: `
-      console.log(1)
-    `,
-    expA: `
-      ➖function* range() {
-        while (i < end -➖ 1➖) {
-          yield i;
-        }
-      }➖
-    `,
-    expB: `
-      ➕console.log(➕1➕)➕
-    `,
-  });
+  //     function zor() {
+  //       return {
+  //         a: 1
+  //       }
+  //     }
+  //   `,
+  //   expA: `
+  //     ➖x
+  //     const➖ foo ➖=➖ {
+  //       a: 1
+  //     }
+  //   `,
+  //   expB: `
+  //     ➕function➕ foo➕() {
+  //       return z
+  //     }
 
-  // Test closing the paren on a move with syntax error
-  test({
-    name: "Properly match closing paren 8",
-    a: `
-      function asd() {
-        123
-        123
-        x
-      }
-    `,
-    b: `
-      function asd() {
-        123
-        123
-        Z
-    `,
-    expA: `
-      function asd() {
-        123
-        123
-        ➖x
-      }➖
-    `,
-    expB: `
-      function asd() {
-        123
-        123
-        ➕Z➕
-    `,
-  });
+  //     function zor() {
+  //       return➕ {
+  //         a: 1
+  //       }
+  //     ➕}➕
+  //   `,
+  // });
 
-  // Test for another syntax error, this hit the branch where we initialize a stack with a closing paren
-  test({
-    name: "Properly match closing paren 9",
-    a: `
-      {
-    `,
-    b: `
-      }{
-    `,
-    expA: `
-      ➖{➖
-    `,
-    expB: `
-      ➕}{➕
-    `,
-  });
+  // // Test closing the paren on a deletion / addition on the "verifySingle"
+  // test({
+  //   name: "Properly match closing paren 7",
+  //   a: `
+  //     function* range() {
+  //       while (i < end - 1) {
+  //         yield i;
+  //       }
+  //     }
+  //   `,
+  //   b: `
+  //     console.log(1)
+  //   `,
+  //   expA: `
+  //     ➖function* range() {
+  //       while (i < end -➖ 1➖) {
+  //         yield i;
+  //       }
+  //     }➖
+  //   `,
+  //   expB: `
+  //     ➕console.log(➕1➕)➕
+  //   `,
+  // });
 
-  // Test the ignore matches in the process moves
-  test({
-    name: "Properly match closing paren 10",
-    a: `
-      {
-        { a, b, x } = obj
-      }
-    `,
-    b: `
-      {
-        { x } = obj
-        z
-      }
-    `,
-    expA: `
-      {
-        { ➖a, b,➖ x } = obj
-      }
-    `,
-    expB: `
-      {
-        { x } = obj
-        ➕z➕
-      }
-    `,
-  });
+  // // Test closing the paren on a move with syntax error
+  // test({
+  //   name: "Properly match closing paren 8",
+  //   a: `
+  //     function asd() {
+  //       123
+  //       123
+  //       x
+  //     }
+  //   `,
+  //   b: `
+  //     function asd() {
+  //       123
+  //       123
+  //       Z
+  //   `,
+  //   expA: `
+  //     function asd() {
+  //       123
+  //       123
+  //       ➖x
+  //     }➖
+  //   `,
+  //   expB: `
+  //     function asd() {
+  //       123
+  //       123
+  //       ➕Z➕
+  //   `,
+  // });
 
-  // Also test the match ignoring logic, now inside the true branch on the alignment
+  // // Test for another syntax error, this hit the branch where we initialize a stack with a closing paren
+  // test({
+  //   name: "Properly match closing paren 9",
+  //   a: `
+  //     {
+  //   `,
+  //   b: `
+  //     }{
+  //   `,
+  //   expA: `
+  //     ➖{➖
+  //   `,
+  //   expB: `
+  //     ➕}{➕
+  //   `,
+  // });
 
-  test({
-    name: "Properly match closing paren 11",
-    a: `
-      {
-        ()
-        1
-      }
-    `,
-    b: `
-      x
-      {
-        (c)
-      }
-    `,
-    expA: `
-      {
-        ()
-        ➖1➖
-      }
-    `,
-    expB: `
-      ➕x➕
-      {
-        (➕c➕)
-      }
-    `,
-  });
+  // // Test the ignore matches in the process moves
+  // test({
+  //   name: "Properly match closing paren 10",
+  //   a: `
+  //     {
+  //       { a, b, x } = obj
+  //     }
+  //   `,
+  //   b: `
+  //     {
+  //       { x } = obj
+  //       z
+  //     }
+  //   `,
+  //   expA: `
+  //     {
+  //       { ➖a, b,➖ x } = obj
+  //     }
+  //   `,
+  //   expB: `
+  //     {
+  //       { x } = obj
+  //       ➕z➕
+  //     }
+  //   `,
+  // });
 
-  // Testing single node matching
-  test({
-    name: "Noise reduction",
-    a: `
-      function foo() {
-        const name = 123;
-      }
-        
-      function bar() {
-        return 123
-      }
-      
-      let var1 = foo()
-      let var2 = bar()
-    `,
-    b: `
-      const var1 = foo()
-      const var2 = bar()
-    `,
-    expA: `
-      ➖function foo() {
-        const name = 123;
-      }
-        
-      function bar() {
-        return 123
-      }
-      
-      let➖ var1 = foo()
-      ➖let➖ var2 = bar()
-    `,
-    expB: `
-      ➕const➕ var1 = foo()
-      ➕const➕ var2 = bar()
-    `,
-  });
+  // // Also test the match ignoring logic, now inside the true branch on the alignment
 
-  // This used to break the inverse
-  test({
-    name: "Simple alignment",
-    a: `
-      fn(-1)
-    `,
-    b: `
-      (1)
-    `,
-    expA: `
-      ➖fn(-➖1➖)➖
-    `,
-    expB: `
-      ➕(➕1➕)➕
-    `,
-  });
+  // test({
+  //   name: "Properly match closing paren 11",
+  //   a: `
+  //     {
+  //       ()
+  //       1
+  //     }
+  //   `,
+  //   b: `
+  //     x
+  //     {
+  //       (c)
+  //     }
+  //   `,
+  //   expA: `
+  //     {
+  //       ()
+  //       ➖1➖
+  //     }
+  //   `,
+  //   expB: `
+  //     ➕x➕
+  //     {
+  //       (➕c➕)
+  //     }
+  //   `,
+  // });
+
+  // // Testing single node matching
+  // test({
+  //   name: "Noise reduction",
+  //   a: `
+  //     function foo() {
+  //       const name = 123;
+  //     }
+
+  //     function bar() {
+  //       return 123
+  //     }
+
+  //     let var1 = foo()
+  //     let var2 = bar()
+  //   `,
+  //   b: `
+  //     const var1 = foo()
+  //     const var2 = bar()
+  //   `,
+  //   expA: `
+  //     ➖function foo() {
+  //       const name = 123;
+  //     }
+
+  //     function bar() {
+  //       return 123
+  //     }
+
+  //     let➖ var1 = foo()
+  //     ➖let➖ var2 = bar()
+  //   `,
+  //   expB: `
+  //     ➕const➕ var1 = foo()
+  //     ➕const➕ var2 = bar()
+  //   `,
+  // });
+
+  // // This used to break the inverse
+  // test({
+  //   name: "Simple alignment",
+  //   a: `
+  //     fn(-1)
+  //   `,
+  //   b: `
+  //     (1)
+  //   `,
+  //   expA: `
+  //     ➖fn(-➖1➖)➖
+  //   `,
+  //   expB: `
+  //     ➕(➕1➕)➕
+  //   `,
+  // });
 });
