@@ -1,27 +1,32 @@
 import { _context } from ".";
 import { assert, fail } from "../debug";
 import { Iterator } from "./iterator";
-import { range, rangeEq } from "../utils";
+import { oppositeSide, range, rangeEq } from "../utils";
 import { Node } from "./node";
-import { equals, getAllNodesFromMatch, getIndexesFromSegment, getTextLengthFromSegments } from "./utils";
+import { equals, getAllNodesFromMatch, getIndexesFromSegment, getIterFromSide, getTextLengthFromSegments } from "./utils";
 import { Segment } from "./types";
 import { CandidateMatch } from "./match";
+import { Side } from "../shared/language";
 
 /**
  * Returns the longest possible match for the given node, this is including possible skips to improve the match length.
  */
-export function getBestMatch(nodeB: Node): CandidateMatch | undefined {
-  const aSideCandidates = _context.iterA.getMatchingNodes(nodeB);
+export function getBestMatch(node: Node): CandidateMatch | undefined {
+  // Since this function can be called with both A-sided and B-sided nodes, we need to get the iter dynamically
+  // The iterator we need is the opposite of the given node since there is where we need to get the match from
+  const sideToLook = oppositeSide(node.side);
+  const iter = getIterFromSide(sideToLook);
+  const otherSideCandidates = iter.getMatchingNodes(node);
 
-  // The given B node wasn't found, it was added
-  if (aSideCandidates.length === 0) {
+  // The given node wasn't found, it was added
+  if (otherSideCandidates.length === 0) {
     return;
   }
 
   let bestMatch = CandidateMatch.createEmpty();
 
-  for (const candidate of aSideCandidates) {
-    const newCandidate = getCandidateMatch(candidate, nodeB);
+  for (const candidate of otherSideCandidates) {
+    const newCandidate = node.side === Side.a ? getCandidateMatch(node, candidate) : getCandidateMatch(candidate, node);
 
     if (newCandidate.isBetterThan(bestMatch)) {
       bestMatch = newCandidate;
@@ -53,6 +58,8 @@ export function getSubSequenceNodes(match: CandidateMatch, starterNode: Node) {
 const MAX_NODE_SKIPS = 5;
 
 export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
+  assert(nodeA.side === Side.a && nodeB.side === Side.b, () => "Wrong sided nodes");
+
   const segments: Segment[] = [];
   const { iterA, iterB } = _context;
 

@@ -1,8 +1,9 @@
 import { describe } from "vitest";
-import { getTestFn } from "../utils";
+import { getTestFn } from "../utils2";
 import { getDiff, OutputType } from "../../src";
+import { getDiff2 } from "../../src/v2";
 
-const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: "    <<Alignment>>", ignoreChangeMarkers: true });
+const test = getTestFn(getDiff2); // { outputType: OutputType.alignedText, alignmentText: "    <<Alignment>>", ignoreChangeMarkers: true }
 
 describe.skip("Properly align formatted code", () => {
   test({

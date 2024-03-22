@@ -1,5 +1,5 @@
 import { describe } from "vitest";
-import { test } from "../utils";
+import { test } from "../utils2";
 
 describe("Properly report lines added", () => {
   test({

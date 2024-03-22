@@ -65,7 +65,7 @@ function trimLines(text: string) {
   return text.split("\n").map((s) => s.trim()).join("");
 }
 
-function validateDiff(
+export function validateDiff(
   sourceA: string,
   sourceB: string,
   expectedA: string,

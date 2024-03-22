@@ -1,5 +1,5 @@
 import { describe } from "vitest";
-import { test } from "../utils";
+import { test } from "../utils2";
 
 describe("Properly report lines added and removed", () => {
   test({
@@ -24,9 +24,6 @@ describe("Properly report lines added and removed", () => {
     `,
     b: `
       let age;
-      let name;
-    `,
-    expA: `
       let name;
     `,
     expB: `

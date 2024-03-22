@@ -9,6 +9,7 @@
   },
   "scripts": {
     "test": "vitest -c ./vitest.config.js",
+    "testNew": "vitest -c ./vitest.config.js additions-removals changes",
     "test-v2": "vitest -c ./vitest.config.js ./tests/v2",
     "build": "tsc --watch",
     "check": "npm run format && npm run lint",

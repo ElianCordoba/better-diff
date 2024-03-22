@@ -1,5 +1,5 @@
 import { describe, test as vTest } from "vitest";
-import { test } from "../utils";
+import { test } from "../utils2";
 
 describe("Properly report moves in a same sequence", () => {
   test({
