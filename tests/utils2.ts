@@ -27,7 +27,7 @@ export function getTestFn(testFn: typeof getDiff2) {
     const skipStandardTest = testInfo.only === "inversed";
 
     if (!skipStandardTest) {
-      vTest(`Test ${name}`, () => {
+      vTest(`${name}`, () => {
         const { sourceA: resultA, sourceB: resultB } = testFn(a, b, { outputType: OutputType.text });
 
         validateDiff(expA || a, expB || b, resultA, resultB);
@@ -37,7 +37,7 @@ export function getTestFn(testFn: typeof getDiff2) {
     const skipInversedTest = testInfo.only === "standard";
 
     if (!skipInversedTest) {
-      vTest(`Test ${name} inverse`, () => {
+      vTest(`[Inverse] ${name}`, () => {
         const { sourceA: resultA, sourceB: resultB } = testFn(b, a, { outputType: OutputType.text });
 
         const inversedExpectedA = getInversedExpectedResult(expB || b);
@@ -49,21 +49,11 @@ export function getTestFn(testFn: typeof getDiff2) {
   };
 }
 
-export function getInversedExpectedResult(expected: string) {
-  return expected.split("").map((char) => {
-    if (char === "➖") {
-      return "➕";
-    } else if (char === "➕") {
-      return "➖";
-    } else {
-      return char;
-    }
-  }).join("");
+function getInversedExpectedResult(expected: string) {
+  return expected.replaceAll("➕", "➖").replaceAll("➖", "➕");
 }
 
-export const test = getTestFn(getDiff2);
-
-export function validateDiff(
+function validateDiff(
   expectedA: string,
   expectedB: string,
   resultA: string,
@@ -76,3 +66,5 @@ export function validateDiff(
   expect(trimLines(resultA)).toEqual(trimLines(expectedA));
   expect(trimLines(resultB)).toEqual(trimLines(expectedB));
 }
+
+export const test = getTestFn(getDiff2);
