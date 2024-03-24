@@ -55,11 +55,10 @@ function getSubSequenceNodes(match: CandidateMatch, starterNode: Node) {
   return [...allNodes];
 }
 
-// SCORE FN PARAMETERS
-const MAX_NODE_SKIPS = 5;
-
 function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
   assert(nodeA.side === Side.a && nodeB.side === Side.b, () => "Wrong sided nodes");
+
+  const MAX_NODE_SKIPS = _context.options.maxNodeSkips;
 
   const segments: Segment[] = [];
   const { iterA, iterB } = _context;

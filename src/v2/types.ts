@@ -14,6 +14,7 @@ export interface ParsedProgram {
 export interface Options<_OutputType extends OutputType = OutputType.changes> {
   outputType?: _OutputType;
   tryAlignMoves?: boolean;
+  maxNodeSkips?: number;
 }
 
 export enum OutputType {

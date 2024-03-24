@@ -5,13 +5,21 @@ import { range } from "../utils";
 import { Move } from "./change";
 import { Iterator } from "./iterator";
 import { Node } from "./node";
-import { Segment } from "./types";
+import { Options, OutputType, Segment } from "./types";
 import { CandidateMatch } from "./match";
 
-export class Context {
+const defaultOptions: Required<Options> = {
+  outputType: OutputType.changes,
+  tryAlignMoves: true,
+  maxNodeSkips: 5,
+};
+
+export class Context<_OutputType extends OutputType = OutputType.changes> {
   // Iterators will get stored once they are initialize, which happens later on the execution
 
+  options: any;
   constructor(
+    options: Options<_OutputType> | undefined,
     public sourceA: string,
     public sourceB: string,
     public iterA: Iterator,
@@ -19,7 +27,9 @@ export class Context {
     public moves: Move[],
     public deletions: Segment[],
     public additions: Segment[],
-  ) {}
+  ) {
+    this.options = { ...defaultOptions, ...(options || {}) };
+  }
 }
 
 export function equals(nodeOne: Node, nodeTwo: Node): boolean {

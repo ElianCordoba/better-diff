@@ -2,7 +2,7 @@ import { Context } from "./utils";
 import { Side } from "../shared/language";
 import { Iterator } from "./iterator";
 import { computeDiff } from "./core";
-import { asciiRenderFn, fail, prettyRenderFn } from "../debug";
+import { fail } from "../debug";
 import { Options, OutputType, ResultTypeMapper, Segment } from "./types";
 import { applyChangesToSources } from "./printer";
 import { Change, Move } from "./change";
@@ -10,14 +10,7 @@ import { computeMoveAlignment } from "./semanticAligment";
 import { compactAndCreateDiff } from "./compact";
 import { DiffType } from "../types";
 
-const defaultOptions: Required<Options> = {
-  outputType: OutputType.changes,
-  tryAlignMoves: true,
-};
-
 export function getDiff2<_OutputType extends OutputType = OutputType.changes>(sourceA: string, sourceB: string, options?: Options<_OutputType>): ResultTypeMapper[_OutputType] {
-  const _options = { ...defaultOptions, ...(options || {}) };
-
   const iterA = new Iterator(sourceA, Side.a);
   const iterB = new Iterator(sourceB, Side.b);
 
@@ -26,7 +19,9 @@ export function getDiff2<_OutputType extends OutputType = OutputType.changes>(so
   const deletions: Segment[] = [];
   const additions: Segment[] = [];
 
-  _context = new Context(sourceA, sourceB, iterA, iterB, moves, deletions, additions);
+  _context = new Context(options, sourceA, sourceB, iterA, iterB, moves, deletions, additions);
+
+  const _options = _context.options;
 
   moves = computeDiff();
 
@@ -58,7 +53,7 @@ export function getDiff2<_OutputType extends OutputType = OutputType.changes>(so
       return applyChangesToSources(sourceA, sourceB, changes, true) as ResultTypeMapper[_OutputType];
     }
     default:
-      fail();
+      fail("Unknown output type");
   }
 }
 
