@@ -7,6 +7,7 @@ import { equals, getAllNodesFromMatch, getIndexesFromSegment, getIterFromSide, g
 import { Segment } from "./types";
 import { CandidateMatch } from "./match";
 import { Side } from "../shared/language";
+import { DiffType } from "../types";
 
 /**
  * Returns the longest possible match for the given node, this is including possible skips to improve the match length.
@@ -36,7 +37,7 @@ export function getBestMatch(node: Node): CandidateMatch | undefined {
   return bestMatch;
 }
 
-export function getSubSequenceNodes(match: CandidateMatch, starterNode: Node) {
+function getSubSequenceNodes(match: CandidateMatch, starterNode: Node) {
   const nodesInMatch = getAllNodesFromMatch(match);
 
   const allNodes = new Set<Node>();
@@ -57,7 +58,7 @@ export function getSubSequenceNodes(match: CandidateMatch, starterNode: Node) {
 // SCORE FN PARAMETERS
 const MAX_NODE_SKIPS = 5;
 
-export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
+function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
   assert(nodeA.side === Side.a && nodeB.side === Side.b, () => "Wrong sided nodes");
 
   const segments: Segment[] = [];
@@ -229,4 +230,30 @@ export function getCandidateMatch(nodeA: Node, nodeB: Node): CandidateMatch {
   }
 
   return new CandidateMatch(segments, getTextLengthFromSegments(segments), skips);
+}
+
+export function getBestMatchFromSubsequenceNodes(currentBestMatch: CandidateMatch, b: Node) {
+  const { iterB, additions } = _context;
+
+  // May be empty if the node we are looking for was the only one
+  const subSequenceNodesToCheck = getSubSequenceNodes(currentBestMatch, b);
+
+  let bestSubsequenceMatch = currentBestMatch;
+
+  for (const node of subSequenceNodesToCheck) {
+    const newCandidate = getBestMatch(node);
+
+    if (!newCandidate) {
+      additions.push(b.getSegment(DiffType.addition));
+      iterB.mark(b.index, DiffType.addition);
+
+      continue;
+    }
+
+    if (newCandidate.isBetterThan(bestSubsequenceMatch)) {
+      bestSubsequenceMatch = newCandidate;
+    }
+  }
+
+  return bestSubsequenceMatch;
 }

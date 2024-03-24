@@ -1,5 +1,5 @@
 import { _context } from ".";
-import { getBestMatch, getSubSequenceNodes } from "./diff";
+import { getBestMatch, getBestMatchFromSubsequenceNodes } from "./diff";
 import { getIndexesFromSegment, sort } from "./utils";
 import { Iterator } from "./iterator";
 import { DiffType } from "../types";
@@ -13,14 +13,13 @@ export function computeDiff() {
     const a = iterA.next();
     const b = iterB.next();
 
-    // No more nodes to process. We are done
     if (!a && !b) {
       break;
     }
 
-    // One of the iterators ran out of nodes. We will mark the remaining unmatched nodes
     if (!a || !b) {
-      // If A finished means that B still have nodes, they are additions. If B finished means that A have nodes, they are deletions
+      // If A finished means that B still have nodes, report them as additions
+      // If B finished means that A still have nodes, report them as deletions
       const iterOn = !a ? iterB : iterA;
       const type = !a ? DiffType.addition : DiffType.deletion;
 
@@ -28,8 +27,8 @@ export function computeDiff() {
       break;
     }
 
-    // 1-
-    const bestMatchForB = getBestMatch(b);
+    // 1- Get the best match for the current node
+    let bestMatchForB = getBestMatch(b);
 
     if (!bestMatchForB) {
       additions.push(b.getSegment(DiffType.addition));
@@ -38,27 +37,11 @@ export function computeDiff() {
       continue;
     }
 
-    // May be empty if the node we are looking for was the only one
-    const subSequenceNodesToCheck = getSubSequenceNodes(bestMatchForB, b);
+    // 2- Get all possible matches from subsequence nodes and compare it with the original match found. Pick the best
+    bestMatchForB = getBestMatchFromSubsequenceNodes(bestMatchForB, b);
 
-    let bestCandidate = bestMatchForB;
-
-    for (const node of subSequenceNodesToCheck) {
-      const newCandidate = getBestMatch(node);
-
-      if (!newCandidate) {
-        additions.push(b.getSegment(DiffType.addition));
-        iterB.mark(b.index, DiffType.addition);
-
-        continue;
-      }
-
-      if (newCandidate.isBetterThan(bestCandidate)) {
-        bestCandidate = newCandidate;
-      }
-    }
-
-    const move = Change.createMove(bestCandidate);
+    // 3- Store the match, mark nodes and continue
+    const move = Change.createMove(bestMatchForB);
     moves.push(move);
     markMatched(move);
     continue;
