@@ -97,10 +97,11 @@
     "./tests",
     "./scripts",
     "./bench",
-    "./examples"
+    "internal/examples"
   ],
   "exclude": [
     "./ui",
-    "./tests/realWorld"
+    "./tests/realWorld",
+    "./algos/*"
   ]
 }

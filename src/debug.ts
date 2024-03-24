@@ -2,6 +2,7 @@ import ts from "typescript";
 import Table from "cli-table3";
 import { DiffType } from "./types";
 import colorFn from "kleur";
+import { _context as _context2 } from "./v2/index";
 
 enum ErrorType {
   DebugFailure = "DebugFailure",
@@ -10,12 +11,26 @@ enum ErrorType {
 }
 
 class BaseError {
-  constructor(public type: ErrorType, public message: string, public serializedError?: string, public extra?: unknown) {}
+  constructor(
+    public type: ErrorType,
+    public message: string,
+    public serializedError?: string,
+    public extra?: unknown,
+  ) {}
 }
 
 class DebugFailure extends BaseError {
-  constructor(public message: string, public error?: Error, public extra?: unknown) {
-    super(ErrorType.DebugFailure, message, error ? JSON.stringify(error) : undefined, extra);
+  constructor(
+    public message: string,
+    public error?: Error,
+    public extra?: unknown,
+  ) {
+    super(
+      ErrorType.DebugFailure,
+      message,
+      error ? JSON.stringify(error) : undefined,
+      extra,
+    );
   }
 }
 
@@ -25,7 +40,10 @@ export function fail(errorMessage?: string): never {
 
 // It receives a function instead of a raw string so that the content gets evaluated lazily. Without this, an error message that
 // uses the function `getPrettyKind` will trigger it independently if the assertion passes of not
-export function assert<T>(condition: T, errorMessage?: () => string): asserts condition is NonNullable<T> {
+export function assert<T>(
+  condition: T,
+  errorMessage?: () => string,
+): asserts condition is NonNullable<T> {
   if (!condition) {
     fail(errorMessage?.());
   }
@@ -67,7 +85,11 @@ export function createTextTable(
   const maxLength = Math.max(aLines.length, bLines.length);
 
   const table = new Table({
-    head: [colorFn.yellow("Nº"), colorFn.red("Source"), colorFn.green("Revision")],
+    head: [
+      colorFn.yellow("Nº"),
+      colorFn.red("Source"),
+      colorFn.green("Revision"),
+    ],
     colAligns: ["left", "left"],
     colWidths: [5, 30, 30],
     style: {

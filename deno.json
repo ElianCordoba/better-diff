@@ -2,7 +2,6 @@
   "exclude": [
     "ui",
     "scripts",
-    "tests",
     "node_modules",
     "internal",
     "dist",

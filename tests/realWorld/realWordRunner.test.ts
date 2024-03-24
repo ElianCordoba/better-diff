@@ -1,54 +1,54 @@
-import { readdirSync, promises } from 'node:fs'
-import { join } from 'node:path'
-import { describe, expect, test } from 'vitest'
-import { getDiff } from '../../src'
+import { promises, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, test } from "vitest";
+import { getDiff } from "../../src";
 
 // TODO: Fix
-const IGNORED_TESTS: string[] = []
+const IGNORED_TESTS: string[] = [];
 
-const path = join(__dirname, './')
-let dirs = readdirSync(path)
+const path = join(__dirname, "./");
+let dirs = readdirSync(path);
 
 // Remove the test runner file which is always the last one
-dirs.splice(dirs.length - 1, 1)
+dirs.splice(dirs.length - 1, 1);
 
-describe('Real world tests', async () => {
+describe("Real world tests", async () => {
   for (const testCase of dirs) {
     if (IGNORED_TESTS.includes(testCase)) {
-      continue
+      continue;
     }
 
-    const { a, b } = await getTestFilesFromDir(testCase)
+    const { a, b } = await getTestFilesFromDir(testCase);
 
     test(testCase, () => {
       try {
-        getDiff(a, b)
+        getDiff(a, b);
       } catch (error) {
-        expect((error as any)?.message).toBe(undefined)
+        expect((error as any)?.message).toBe(undefined);
       }
-    })
+    });
 
     test(`${testCase} inverse`, async () => {
       try {
-        getDiff(b, a)
+        getDiff(b, a);
       } catch (error) {
-        expect((error as any)?.message).toBe(undefined)
+        expect((error as any)?.message).toBe(undefined);
       }
-    })
+    });
   }
-})
+});
 
 async function getTestFilesFromDir(dir: string) {
-  const pathA = join(path, dir, 'a.ts')
-  const pathB = join(path, dir, 'b.ts')
+  const pathA = join(path, dir, "a.ts");
+  const pathB = join(path, dir, "b.ts");
 
   const [a, b] = await Promise.all([
     promises.readFile(pathA),
     promises.readFile(pathB),
-  ])
+  ]);
 
   return {
     a: a.toString(),
-    b: b.toString()
-  }
+    b: b.toString(),
+  };
 }

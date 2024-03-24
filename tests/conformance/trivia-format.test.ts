@@ -1,12 +1,13 @@
 import { describe } from "vitest";
-import { getTestFn } from "../utils";
-import { OutputType, getDiff } from "../../src";
+import { getTestFn } from "../utils2";
+import { getDiff, OutputType } from "../../src";
+import { getDiff2 } from "../../src/v2";
 
-const test = getTestFn(getDiff, { outputType: OutputType.alignedText, alignmentText: "    <<Alignment>>", ignoreChangeMarkers: true })
+const test = getTestFn(getDiff2); // { outputType: OutputType.alignedText, alignmentText: "    <<Alignment>>", ignoreChangeMarkers: true }
 
 describe.skip("Properly align formatted code", () => {
   test({
-    name: 'Case 1',
+    name: "Case 1",
     a: `
         x
       `,
@@ -17,11 +18,11 @@ describe.skip("Properly align formatted code", () => {
     expA: `
         <<Alignment>>
         x 
-      `
-  })
+      `,
+  });
 
   test({
-    name: 'Case 2',
+    name: "Case 2",
     a: `
       x
     `,
@@ -34,11 +35,11 @@ describe.skip("Properly align formatted code", () => {
       <<Alignment>>
       <<Alignment>>
       x 
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Case 3',
+    name: "Case 3",
     a: `
 
         print()
@@ -55,9 +56,8 @@ describe.skip("Properly align formatted code", () => {
       `,
   });
 
-
   test({
-    name: 'Case 4',
+    name: "Case 4",
     a: `
       1
       print()
@@ -76,7 +76,7 @@ describe.skip("Properly align formatted code", () => {
 
   // TODO(Improve): If a whole line is deleted / added and to the other side we have a matching alignment, we could skip both. The bellow example can be compacted
   test({
-    name: 'Case 5',
+    name: "Case 5",
     a: `
       1
       print()
@@ -99,7 +99,7 @@ describe.skip("Properly align formatted code", () => {
 
   // TODO(Improve): Another example of compaction as mentioned above
   test({
-    name: 'Case 6',
+    name: "Case 6",
     a: `
       1
       x
@@ -121,12 +121,11 @@ describe.skip("Properly align formatted code", () => {
       <<Alignment>>
 
       2
-    `
+    `,
   });
 
-
   test({
-    name: 'Case 7',
+    name: "Case 7",
     a: `
       1
       print()
@@ -147,7 +146,7 @@ describe.skip("Properly align formatted code", () => {
   });
 
   test({
-    name: 'Case 8',
+    name: "Case 8",
     a: `
       1
       2
@@ -172,7 +171,7 @@ describe.skip("Properly align formatted code", () => {
   });
 
   test({
-    name: 'Case 9',
+    name: "Case 9",
     a: `
       1x
     `,
@@ -181,12 +180,12 @@ describe.skip("Properly align formatted code", () => {
     `,
     expA: `
     1x
-    `
+    `,
   });
 
   // TODO(Alignment): Take the most wight in order to specify where to put the alignment, either at the beginning or the end
   test({
-    name: 'Case 10',
+    name: "Case 10",
     a: `
       print()
     `,
@@ -201,7 +200,7 @@ describe.skip("Properly align formatted code", () => {
   });
 
   test({
-    name: 'Case 11',
+    name: "Case 11",
     a: `
       print()
     `,
@@ -219,9 +218,8 @@ describe.skip("Properly align formatted code", () => {
     `,
   });
 
-
   test({
-    name: 'Case 12',
+    name: "Case 12",
     a: `
       console.log()
     `,
@@ -248,7 +246,7 @@ describe.skip("Properly align formatted code", () => {
       console
       .
       log()
-    `
+    `,
   });
 
   test({
@@ -279,8 +277,8 @@ describe.skip("Properly align formatted code", () => {
       <<Alignment>> 
       <<Alignment>> 
       <<Alignment>> 
-    `
-  })
+    `,
+  });
 
   test({
     name: "Case 14",
@@ -297,7 +295,7 @@ describe.skip("Properly align formatted code", () => {
       <<Alignment>>
       ()
     `,
-  })
+  });
 
   test({
     name: "Case 15",
@@ -318,10 +316,10 @@ describe.skip("Properly align formatted code", () => {
       <<Alignment>>
       )
     `,
-  })
+  });
 
   test({
-    name: 'Case 16',
+    name: "Case 16",
     a: `
       console.log()
     `,
@@ -336,11 +334,11 @@ describe.skip("Properly align formatted code", () => {
     expB: `
       console.log(
       )
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Case 17',
+    name: "Case 17",
     a: `
       console.log()
     `,
@@ -355,11 +353,11 @@ describe.skip("Properly align formatted code", () => {
       <<Alignment>>
       <<Alignment>>
       console.log()
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Case 18',
+    name: "Case 18",
     a: `
       {}
     `,
@@ -372,11 +370,11 @@ describe.skip("Properly align formatted code", () => {
       <<Alignment>>
       <<Alignment>>
       {}
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Case 19',
+    name: "Case 19",
     a: `
       ()
       x
@@ -392,8 +390,8 @@ describe.skip("Properly align formatted code", () => {
       <<Alignment>>
       ()
       x
-    `
-  })
+    `,
+  });
 
   test({
     name: "Case 20",
@@ -424,11 +422,11 @@ describe.skip("Properly align formatted code", () => {
 
       )
       end
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Case 21',
+    name: "Case 21",
     a: `
       ()
       x
@@ -470,11 +468,11 @@ describe.skip("Properly align formatted code", () => {
       )
       x
       zz
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Case 22',
+    name: "Case 22",
     a: `
       1 2
       x
@@ -485,22 +483,22 @@ describe.skip("Properly align formatted code", () => {
     expB: `
       <<Alignment>>
       1 2 x
-    `
-  })
+    `,
+  });
 
   // TODO: Another example of compression
   test({
-    name: 'Case 23',
+    name: "Case 23",
     a: `
       ()
     `,
     b: `
       (x)
     `,
-  })
+  });
 
   test({
-    name: 'Case 24',
+    name: "Case 24",
     a: `
       1 2 3
     `,
@@ -514,11 +512,11 @@ describe.skip("Properly align formatted code", () => {
       <<Alignment>>
       1 2 3
     `,
-  })
+  });
 
   // Testing the ignoring the push down of alignments
   test({
-    name: 'Case 25',
+    name: "Case 25",
     a: `
       x z 1
     `,
@@ -536,8 +534,8 @@ describe.skip("Properly align formatted code", () => {
       1
 
       x z
-    `
-  })
+    `,
+  });
 
   test({
     name: "Case 26",
@@ -564,11 +562,11 @@ describe.skip("Properly align formatted code", () => {
       2
       3
       <<Alignment>>
-    `
-  })
+    `,
+  });
 
   test({
-    name: 'Case 27',
+    name: "Case 27",
     a: `
       console.log()
       1
@@ -581,5 +579,5 @@ describe.skip("Properly align formatted code", () => {
       console.log()
       1
     `,
-  })
-})
+  });
+});

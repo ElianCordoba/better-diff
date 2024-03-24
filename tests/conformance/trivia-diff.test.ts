@@ -1,6 +1,7 @@
 import { describe, test } from "vitest";
-import { getDiff } from "../../src";
-import { validateDiff } from "../utils";
+import { getDiff2 } from "../../src/v2";
+import { validateDiff } from "../utils2";
+import { OutputType } from "../../src/v2/types";
 
 describe("Ignore trivia", () => {
   test("Case 1", () => {
@@ -13,9 +14,9 @@ describe("Ignore trivia", () => {
     const resultA = a;
     const resultB = b;
 
-    const { sourceA, sourceB } = getDiff(a, b);
+    const { sourceA, sourceB } = getDiff2(a, b, { outputType: OutputType.text });
 
-    validateDiff(resultA, resultB, sourceA, sourceB);
+    validateDiff(a, b, resultA, resultB, sourceA, sourceB);
   });
 
   test("Case 2", () => {
@@ -28,9 +29,9 @@ describe("Ignore trivia", () => {
     const resultA = a;
     const resultB = b;
 
-    const { sourceA, sourceB } = getDiff(a, b);
+    const { sourceA, sourceB } = getDiff2(a, b, { outputType: OutputType.text });
 
-    validateDiff(resultA, resultB, sourceA, sourceB);
+    validateDiff(a, b, resultA, resultB, sourceA, sourceB);
   });
 
   test("Case 3", () => {
@@ -45,8 +46,8 @@ describe("Ignore trivia", () => {
     const resultA = a;
     const resultB = b;
 
-    const { sourceA, sourceB } = getDiff(a, b);
+    const { sourceA, sourceB } = getDiff2(a, b, { outputType: OutputType.text });
 
-    validateDiff(resultA, resultB, sourceA, sourceB);
+    validateDiff(a, b, resultA, resultB, sourceA, sourceB);
   });
 });

@@ -6,7 +6,7 @@ import { KindTable, ParsedProgram, Side } from "../shared/language";
 import colorFn from "kleur";
 import { fail } from "../debug";
 
-type TSNode = ts.Node & { text: string };
+type TsNode = ts.Node & { text: string };
 
 export function getParsedProgram(side: Side, source: string): ParsedProgram {
   const sourceFile = getSourceFile(source);
@@ -21,7 +21,7 @@ export function getParsedProgram(side: Side, source: string): ParsedProgram {
   }
 
   const nodes: Node[] = [];
-  function walk(node: TSNode) {
+  function walk(node: TsNode) {
     const isReservedWord = node.kind >= ts.SyntaxKind.FirstKeyword && node.kind <= ts.SyntaxKind.LastKeyword;
     const isPunctuation = node.kind >= ts.SyntaxKind.FirstPunctuation && node.kind <= ts.SyntaxKind.LastPunctuation;
 
@@ -76,10 +76,10 @@ export function getParsedProgram(side: Side, source: string): ParsedProgram {
       nodes.push(newNode);
     }
 
-    node.getChildren().forEach((x) => walk(x as TSNode));
+    node.getChildren().forEach((x) => walk(x as TsNode));
   }
 
-  sourceFile.getChildren().forEach((x) => walk(x as TSNode));
+  sourceFile.getChildren().forEach((x) => walk(x as TsNode));
 
   const kindTable: KindTable = new Map();
 

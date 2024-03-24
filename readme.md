@@ -1,5 +1,14 @@
 ## BetterDiff 🔀
 
+## WIP V2
+
+Folder structure, everything currently being worked on is in the v2 folder
+
+- `index.ts` exposes the `getDiff2` function, the main entry point. Parses options, set up the context, gets the diff and outputs the changes in the desired format
+- `core.ts` contains the main loop, getting the next nodes in line, finding matches, marking them as matched and moving on
+- `diff.ts` contains the algorithm for the best match finder
+
+
 This is a _heavily experimental_ tool designed as an alternative to `git diff`, a program used to compare two text files a see the differences between them. 
 The tool generates an output that details the differences between the files, which can be viewed either through the included frontend or as text by running it in the CLI. 
 In contrast with `git diff` and other existing tools, this project offers:

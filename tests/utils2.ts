@@ -1,11 +1,6 @@
 import { expect, test as vTest } from "vitest";
-import { getDiff, Options, OutputType } from "../src";
-
-// Re-use type
-type TestFn = (...args: any[]) => {
-  sourceA: string;
-  sourceB: string;
-};
+import { getDiff2 } from "../src/v2/index";
+import { OutputType } from "../src/v2/types";
 
 interface TestInfo {
   disabled?: boolean;
@@ -17,8 +12,7 @@ interface TestInfo {
   expB?: string;
 }
 
-export function getTestFn(testFn: TestFn, testOptions: Options = {}) {
-  const options = { outputType: OutputType.text, ...testOptions };
+export function getTestFn(testFn: typeof getDiff2) {
   return function test(testInfo: TestInfo) {
     const { a = "", b = "", expA, expB, name = "anonymous" } = testInfo;
 
@@ -33,29 +27,29 @@ export function getTestFn(testFn: TestFn, testOptions: Options = {}) {
     const skipStandardTest = testInfo.only === "inversed";
 
     if (!skipStandardTest) {
-      vTest(`Test ${name}`, () => {
-        const { sourceA: resultA, sourceB: resultB } = testFn(a, b, options);
+      vTest(`[Standard] ${name}`, () => {
+        const { sourceA: resultA, sourceB: resultB } = testFn(a, b, { outputType: OutputType.text });
 
-        validateDiff(expA || a, expB || b, resultA, resultB);
+        validateDiff(a, b, expA || a, expB || b, resultA, resultB);
       });
     }
 
     const skipInversedTest = testInfo.only === "standard";
 
     if (!skipInversedTest) {
-      vTest(`Test ${name} inverse`, () => {
-        const { sourceA: resultA, sourceB: resultB } = testFn(b, a, options);
+      vTest(`[Inversed] ${name}`, () => {
+        const { sourceA: resultAA, sourceB: resultBB } = testFn(b, a, { outputType: OutputType.text });
 
         const inversedExpectedA = getInversedExpectedResult(expB || b);
         const inversedExpectedB = getInversedExpectedResult(expA || a);
 
-        validateDiff(inversedExpectedA, inversedExpectedB, resultA, resultB);
+        validateDiff(b, a, inversedExpectedA, inversedExpectedB, resultAA, resultBB);
       });
     }
   };
 }
 
-export function getInversedExpectedResult(expected: string) {
+function getInversedExpectedResult(expected: string) {
   return expected.split("").map((char) => {
     if (char === "➖") {
       return "➕";
@@ -67,18 +61,20 @@ export function getInversedExpectedResult(expected: string) {
   }).join("");
 }
 
-export const test = getTestFn(getDiff);
+function trimLines(text: string) {
+  return text.split("\n").map((s) => s.trim()).join("");
+}
 
 export function validateDiff(
+  sourceA: string,
+  sourceB: string,
   expectedA: string,
   expectedB: string,
   resultA: string,
   resultB: string,
 ) {
-  function trimLines(text: string) {
-    return text.split("\n").map((s) => s.trim()).join("");
-  }
-
-  expect(trimLines(resultA)).toEqual(trimLines(expectedA));
-  expect(trimLines(resultB)).toEqual(trimLines(expectedB));
+  expect(trimLines(resultA), sourceA).toEqual(trimLines(expectedA));
+  expect(trimLines(resultB), sourceB).toEqual(trimLines(expectedB));
 }
+
+export const test = getTestFn(getDiff2);

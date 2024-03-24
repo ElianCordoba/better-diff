@@ -1,5 +1,5 @@
 import { describe } from "vitest";
-import { test } from "../utils";
+import { test } from "../utils2";
 
 describe("Properly report line changed", () => {
   test({
@@ -15,8 +15,8 @@ describe("Properly report line changed", () => {
     `,
     expB: `
       ➕1➕
-    `
-  })
+    `,
+  });
 
   test({
     name: "Single line change 2",
@@ -31,8 +31,8 @@ describe("Properly report line changed", () => {
     `,
     expB: `
       ➕false➕
-    `
-  })
+    `,
+  });
 
   test({
     name: "Single line change 3",
@@ -43,12 +43,12 @@ describe("Properly report line changed", () => {
       let firstName = "elian"
     `,
     expA: `
-      ➖let name➖ = "elian"
+      let ➖name➖ = "elian"
     `,
     expB: `
-      ➕let firstName➕ = "elian"
-    `
-  })
+      let ➕firstName➕ = "elian"
+    `,
+  });
 
   test({
     name: "Single line change 4",
@@ -56,15 +56,15 @@ describe("Properly report line changed", () => {
       let name = "elian"
     `,
     b: `
-      let name = "eliam"
+      let name = "fernando"
     `,
     expA: `
       let name = ➖"elian"➖
     `,
     expB: `
-      let name = ➕"eliam"➕
-    `
-  })
+      let name = ➕"fernando"➕
+    `,
+  });
 
   test({
     name: "Single line change 5",
@@ -79,23 +79,22 @@ describe("Properly report line changed", () => {
     `,
     expB: `
       console.log(➕1➕)
-    `
-  })
+    `,
+  });
 
-  // TODO: This test got downgraded with the inclusion of the single node matching policy, if we introduce an LCS skip count nodes we may regain the old output
   test({
     name: "Multi line change",
     a: `
       let name = "elian"
     `,
     b: `
-      let firstName = "eliam"
+      let firstName = "fernando"
     `,
     expA: `
-      ➖let name = "elian"➖
+      let ➖name➖ = ➖"elian"➖
     `,
     expB: `
-      ➕let firstName = "eliam"➕
-    `
-  })
+      let ➕firstName➕ = ➕"fernando"➕
+    `,
+  });
 });

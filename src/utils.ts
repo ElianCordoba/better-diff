@@ -17,6 +17,15 @@ export function* range(start: number, end: number) {
   }
 }
 
+export function* rangeEq(start: number, end: number) {
+  let i = start - 1;
+
+  while (i <= end - 1) {
+    i++;
+    yield i;
+  }
+}
+
 export function oppositeSide(side: Side): Side {
   return side === Side.a ? Side.b : Side.a;
 }
