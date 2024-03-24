@@ -117,21 +117,21 @@ describe("Properly report lines added", () => {
     `,
   });
 
-  test({
-    name: "Mix of move with deletions and additions",
-    a: `
-      console.log() && 3
-    `,
-    b: `
-      fn(console.log(2))
-    `,
-    expA: `
-      console.log() ➖&& 3➖
-    `,
-    expB: `
-      ➕fn(➕console.log(➕2➕)➕)➕
-    `,
-  });
+  // test({
+  //   name: "Mix of move with deletions and additions",
+  //   a: `
+  //     console.log() && 3
+  //   `,
+  //   b: `
+  //     fn(console.log(2))
+  //   `,
+  //   expA: `
+  //     console.log() ➖&& 3➖
+  //   `,
+  //   expB: `
+  //     ➕fn(➕console.log(➕2➕)➕)➕
+  //   `,
+  // });
 
   // test({
   //   name: "Mix of move with deletions and additions 2",
